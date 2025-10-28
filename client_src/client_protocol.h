@@ -1,0 +1,4 @@
+#ifndef CLIENT_PROTOCOL_H
+#define CLIENT_PROTOCOL_H
+
+#endif //CLIENT_PROTOCOL_H

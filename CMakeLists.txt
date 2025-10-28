@@ -24,13 +24,13 @@ option(TALLER_MAKE_WARNINGS_AS_ERRORS "Enable / disable warnings as errors." ON)
 
 message(CMAKE_CXX_COMPILER_ID="${CMAKE_CXX_COMPILER_ID}")
 
-# Define target: lib common between client, server and editor programs
+# Define target: lib common_src between client_src, server_src and editor programs
 # HEY TODO XXX: change the name to something that you like
 add_library(taller_common STATIC)
 
 # add the source files that make the lib
 # HEY!! TODO XXX: add more subfolders here
-add_subdirectory(common/)
+add_subdirectory(common_src/)
 
 
 # set compiler warnings to the targets
@@ -43,15 +43,15 @@ set_project_warnings(taller_common ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 target_include_directories(taller_common PUBLIC .)
 
 # HEY!! TODO XXX: you need to install some runtime and dev libraries *before*
-# compiling the client/editor code.
+# compiling the client_src/editor code.
 #
 # In xubuntu 24.04 these are:
 #
 # sudo apt-get install libopus-dev libopusfile-dev libxmp-dev libfluidsynth-dev fluidsynth libwavpack1 libwavpack-dev libfreetype-dev wavpack
 #
 
-# Install libSDL2 and libSDL2pp (for client or editor)
-# HEY!! TODO XXX: add more dependendies (either for client, server or editor)
+# Install libSDL2 and libSDL2pp (for client_src or editor)
+# HEY!! TODO XXX: add more dependendies (either for client_src, server_src or editor)
 if(TALLER_CLIENT OR TALLER_EDITOR)
     include(FetchContent)
     FetchContent_Declare(
@@ -103,42 +103,51 @@ endif()
 # ---------------
 if(TALLER_CLIENT)
     # HEY!! TODO XXX: Change the name of the executable to the one you like!
-    add_executable(taller_client)
+    add_executable(client
+            client_src/client_protocol.h
+            client_src/client_protocol.cpp
+            client_src/client_protocol.cpp
+            server_src/server_protocol.h
+            server_src/server_protocol.cpp)
 
     # Make them depend on taller_common lib
-    add_dependencies(taller_client taller_common SDL2pp::SDL2pp)
+    add_dependencies(client taller_common SDL2pp::SDL2pp)
 
     # Add source files and enable warnings
     # HEY!! TODO XXX: add more subfolders here
-    add_subdirectory(client)
+    add_subdirectory(client_src)
 
-    set_project_warnings(taller_client ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
+    set_project_warnings(client_src ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 
     # add libSDL2pp's headers
-    target_include_directories(taller_client PRIVATE ${libSDL2pp_SOURCE_DIR})
+    target_include_directories(client PRIVATE ${libSDL2pp_SOURCE_DIR})
 
     # Link the taller_common lib target
-    target_link_libraries(taller_client taller_common SDL2pp::SDL2pp)
+    target_link_libraries(client taller_common SDL2pp::SDL2pp)
 endif()
 
 if(TALLER_SERVER)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
+
     # HEY!! TODO XXX: Change the name of the executable to the one you like!
-    add_executable(taller_server)
+    add_executable(server)
 
     # Make them depend on taller_common lib
-    add_dependencies(taller_server taller_common)
+    add_dependencies(server taller_common)
 
     # Add source files and enable warnings
     # HEY!! TODO XXX: add more subfolders here
-    add_subdirectory(server)
+    add_subdirectory(server_src)
 
-    set_project_warnings(taller_server ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
+    set_project_warnings(server_src ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 
     # Link the taller_common lib target
-    target_link_libraries(taller_server taller_common)
+    target_link_libraries(server taller_common)
 endif()
 
 if(TALLER_EDITOR)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
+
     # HEY!! TODO XXX: Change the name of the executable to the one you like!
     add_executable(taller_editor)
 
