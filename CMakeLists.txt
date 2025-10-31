@@ -16,6 +16,7 @@ project(taller_tp
         LANGUAGES CXX
 )
 
+# Opciones del proyecto
 option(TALLER_TESTS "Enable / disable tests." ON)
 option(TALLER_CLIENT "Enable / disable client program." ON)
 option(TALLER_SERVER "Enable / disable server program." ON)

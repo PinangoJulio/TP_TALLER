@@ -1,0 +1,23 @@
+#ifndef COMMON_CONSTANTS_H
+#define COMMON_CONSTANTS_H
+
+// Códigos de comando del protocolo
+#define SEND_USERNAME 0x01
+#define SEND_INITIAL_MONEY 0x02
+#define SEND_CURRENT_CAR 0x03
+#define GET_CURRENT_CAR 0x04
+#define GET_MARKET_INFO 0x05
+#define SEND_MARKET_INFO 0x06
+#define BUY_CAR 0x07
+#define SEND_CAR_BOUGHT 0x08
+#define SEND_ERROR_MESSAGE 0x09
+
+// Constantes varias
+#define EXPECTED_ARGC_CLIENT 4
+#define EXPECTED_ARGC_SERVER 3
+#define SUCCESS_EXIT_CODE 0
+#define ERROR_EXIT_CODE 1
+#define BUFFER_RESERVE_SIZE 1024
+#define PRICE_CONVERSION_FACTOR 100
+
+#endif

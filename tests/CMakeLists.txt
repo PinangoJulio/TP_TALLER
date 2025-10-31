@@ -1,7 +1,8 @@
 target_sources(taller_tests
     PRIVATE
     # .cpp files
-    foo.cpp
+    protocol_tests.cpp
+    
     PUBLIC
     # .h files
-    )
+)

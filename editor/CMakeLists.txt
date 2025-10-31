@@ -1,7 +1,8 @@
 target_sources(taller_editor
     PRIVATE
     # .cpp files
-    main.cpp
+    editor_main.cpp
+    
     PUBLIC
     # .h files
-    )
+)

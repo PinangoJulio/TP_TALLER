@@ -1,0 +1,7 @@
+username Richie
+buy_car ToyotaCorolla
+get_current_car
+buy_car FordFocus
+get_current_car
+buy_car HondaCivic
+get_current_car
