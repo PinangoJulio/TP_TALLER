@@ -1,39 +1,31 @@
-#include "common/foo.h"
-
+#include "common_src/foo.h" // Supongo que esto existe
 #include <iostream>
 #include <exception>
 
 #include <SDL2pp/SDL2pp.hh>
 #include <SDL2/SDL.h>
 
-using namespace SDL2pp;
 
-int main() try {
-	// Initialize SDL library
-	SDL sdl(SDL_INIT_VIDEO);
+//using namespace SDL2pp;
 
-	// Create main window: 640x480 dimensions, resizable, "SDL2pp demo" title
-	Window window("SDL2pp demo",
-			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-			640, 480,
-			SDL_WINDOW_RESIZABLE);
+#include <QtWidgets/QApplication>
+#include "lobby_window.h"
+#include <iostream>
 
-	// Create accelerated video renderer with default driver
-	Renderer renderer(window, -1, SDL_RENDERER_ACCELERATED);
+int main(int argc, char *argv[]) {
+    try {
+        // Inicializar la aplicación Qt
+        QApplication app(argc, argv);
 
-	// Clear screen
-	renderer.Clear();
+        // Crear y mostrar la ventana del Lobby
+        LobbyWindow lobby;
+        lobby.show(); // Mostrar la ventana
 
-	// Show rendered frame
-	renderer.Present();
+        // Iniciar el bucle de eventos de Qt. Bloquea hasta que se cierra la ventana.
+        return app.exec();
 
-	// 5 second delay
-	SDL_Delay(5000);
-
-	// Here all resources are automatically released and library deinitialized
-	return 0;
-} catch (std::exception& e) {
-	// If case of error, print it and exit with error
-	std::cerr << e.what() << std::endl;
-	return 1;
+    } catch (std::exception& e) {
+        std::cerr << "Fallo fatal del Cliente: " << e.what() << std::endl;
+        return 1;
+    }
 }

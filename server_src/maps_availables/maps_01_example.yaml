@@ -1,0 +1,51 @@
+# Archivo: server_src/mapas_disponibles/mapa_01_simple.yaml
+
+# ID y Nombre del Recorrido
+ID: 1
+NOMBRE: "Circuito de Prueba Simple"
+CIUDAD: "Liberty City" # Ciudad asociada al recorrido (según el enunciado)
+
+# 1. Parámetros Iniciales
+POSICION_INICIO:
+  X: 10.0
+  Y: 10.0
+ANGULO_INICIO: 0.0 # Orientación inicial del auto (en grados)
+
+# 2. Checkpoints (Puntos de Control que los jugadores deben cruzar)
+# Nota: El primer checkpoint es la línea de partida, el último es la meta.
+CHECKPOINTS:
+  - ID: 1
+    TIPO: "Inicio"
+    X: 10.0
+    Y: 10.0
+    ANCHO: 5.0
+    ALTO: 0.5
+
+  - ID: 2
+    TIPO: "Intermedio"
+    X: 50.0
+    Y: 10.0
+    ANCHO: 5.0
+    ALTO: 0.5
+
+  - ID: 3
+    TIPO: "Meta"
+    X: 90.0
+    Y: 10.0
+    ANCHO: 5.0
+    ALTO: 0.5
+
+# 3. Muros/Geometría (Box2D usará esto para choques)
+# Definimos una pista rectangular simple de prueba.
+GEOMETRIA:
+  - TIPO: "Rectangulo"
+    X: 50.0
+    Y: 0.0
+    ANCHO: 100.0
+    ALTO: 1.0 # Muro Sur
+
+  - TIPO: "Rectangulo"
+    X: 50.0
+    Y: 20.0
+    ANCHO: 100.0
+    ALTO: 1.0 # Muro Norte
