@@ -1,5 +1,7 @@
 # Prerequisites
 *.d
+build/
+.*/
 
 # Compiled Object files
 *.slo
@@ -43,3 +45,22 @@ server
 .*.swp
 *~
 
+# Directorios Generados por CMake
+/build/
+/cmake-build-*/
+/CMakeFiles/
+
+# Directorios de Descarga de FetchContent (La causa de tu error)
+# Esto ignora el código fuente de SDL, Box2D, etc.
+/_deps/
+
+# Binarios y Logs (si no van a la carpeta build)
+*.exe
+*.bin
+*.log
+
+# Ejecutables que van a la raíz (si los tienes ahí)
+/client
+/server
+/taller_editor
+/taller_tests

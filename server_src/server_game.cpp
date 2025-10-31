@@ -3,7 +3,7 @@
 GameSimulator::GameSimulator(Monitor& monitor_ref, Queue<struct Command>& queue):
         is_running(true), monitor(monitor_ref), cars_with_nitro(0), game_queue(queue) {}
 
-void GameSimulator::send_nitro_on(Car& car) {
+void GameSimulator::send_nitro_on() {
     cars_with_nitro++;
     ServerMsg msg;
     msg.type = CodeActions::MSG_SERVER;
@@ -14,7 +14,7 @@ void GameSimulator::send_nitro_on(Car& car) {
 }
 
 
-void GameSimulator::send_nitro_off(Car& car) {
+void GameSimulator::send_nitro_off() {
     cars_with_nitro--;
     ServerMsg msg;
     msg.type = CodeActions::MSG_SERVER;
@@ -38,7 +38,7 @@ void GameSimulator::process_commands() {
         if (cmd.action == CodeActions::NITRO_ON) {
             if (!it->is_nitro_active()) {
                 it->activate_nitro();
-                send_nitro_on(*it);
+                send_nitro_on();
             }
         }
     }
@@ -47,7 +47,7 @@ void GameSimulator::process_commands() {
 void GameSimulator::simulate_cars() {
     for (auto& car: cars) {
         if (car.simulate_tick()) {
-            send_nitro_off(car);
+            send_nitro_off();
         }
     }
 }

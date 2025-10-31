@@ -1,7 +1,7 @@
 target_sources(client
     PRIVATE
     # .cpp files
-    client_main.cpp
+    main.cpp
     client.cpp
     client_protocol.cpp
     

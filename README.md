@@ -43,3 +43,29 @@ ni scripts adicionales (como correr valgrind).
 
 **Eso esta a cargo de los estudiantes,** tal como fue mostrado
 en los tps individuales, recaps y hands-on.
+
+
+# COmandos temporales para probar el tp 
+
+###### **Para correr el instalador:**
+1. darle permisos
+2. Ejecutar con sudo
+```sh
+ sudo make install
+```
+###### **Para compilar:**
+```sh
+ make debug
+```
+###### **Para ejecutar tests:**
+```sh
+ ./taller_tests
+```
+###### **Para correr server - Box2D:**
+```sh
+ ./server config/configuracion.yaml
+```
+###### **Para correr client - desplega ventana de qt:**
+```sh
+ ./client
+```

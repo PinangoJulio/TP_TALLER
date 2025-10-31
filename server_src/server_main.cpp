@@ -3,7 +3,7 @@
 
 #include "server.h"
 
-int main(int argc, const char* argv[]) {
+/*int main(int argc, const char* argv[]) {
     try {
         if (argc != 2) {
             std::cerr << "Error. Usage: ./server <servicename>\n";
@@ -20,3 +20,4 @@ int main(int argc, const char* argv[]) {
                   << e.what() << std::endl;
     }
 }
+*/

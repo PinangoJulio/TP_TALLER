@@ -24,9 +24,9 @@ class GameSimulator: public Thread {
     int cars_with_nitro;
     Queue<struct Command>& game_queue;
 
-    void send_nitro_on(Car& car);
+    void send_nitro_on();
 
-    void send_nitro_off(Car& car);
+    void send_nitro_off();
 
     void process_commands();
 

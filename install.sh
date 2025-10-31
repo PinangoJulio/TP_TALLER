@@ -6,8 +6,9 @@ TP_NAME="NFS-TP"
 BUILD_DIR="build"
 CMAKE_INSTALL_DIR="/opt/cmake" # Debe coincidir con la ubicación de instalación
 
+
 echo "==================================================="
-echo "TALLER TP - $TP_NAME"
+echo               "TALLER TP - $TP_NAME"
 echo "==================================================="
 
 # ----------------------------------------------------
