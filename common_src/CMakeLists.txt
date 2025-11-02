@@ -6,6 +6,8 @@ target_sources(taller_common
     resolver.cpp
     liberror.cpp
     resolvererror.cpp
+    config.cpp
+    lobby_protocol.cpp 
     
     PUBLIC
     # .h files
@@ -17,4 +19,6 @@ target_sources(taller_common
     resolvererror.h
     liberror.h
     utils.h
+    config.h
+    lobby_protocol.h  
 )

@@ -37,7 +37,9 @@ test: debug
 clean:
 	@echo "--- Limpieza Profunda ---"
 	@rm -Rf $(BUILD_DIR)
+	@rm -f client server taller_editor taller_tests
 	@echo "--- Limpieza Completada ---"
+
 
 # =======================================================
 # Target de Instalación (make install)
