@@ -3,6 +3,7 @@
 #define UTILS_H
 
 #define QUIT 'q'
+#include <cstdint>
 
 
 enum CodeActions { NITRO_ON = 0x07, NITRO_OFF = 0x08, MSG_SERVER = 0x10, MSG_CLIENT = 0x04 };

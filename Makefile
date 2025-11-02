@@ -21,7 +21,7 @@ debug:
 # Ejecuta el servidor (después de compilar)
 server: debug
 	@echo "--- Iniciando Servidor ---"
-	@./server juego.yaml
+	@./server config/configuracion.yaml
 
 # Ejecuta el cliente (después de compilar)
 client: debug
