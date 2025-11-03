@@ -2,6 +2,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <cstdint>
 #define QUIT 'q'
 
 
