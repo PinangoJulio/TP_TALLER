@@ -17,9 +17,6 @@ private:
     
     // Lee una cadena de texto del socket
     std::string read_string();
-    
-    // Lee un uint16_t del socket
-    uint16_t read_uint16();
 
 public:
     // Constructor
@@ -49,8 +46,14 @@ public:
     // Recibir confirmación de unión a juego
     uint16_t receive_game_joined();
 
-    // Verificar si hay error
-    bool check_for_error(std::string& error_message);
+    // Lee el tipo de mensaje (para decisiones en el cliente)
+    uint8_t peek_message_type();
+
+    // Lee detalles de error (asume que MSG_ERROR ya fue leído)
+    void read_error_details(std::string& error_message);
+
+    // Lee un uint16_t del socket (público para uso en tests/manejo de respuestas)
+    uint16_t read_uint16();
 
     // Getters
     bool is_connected() const { return connected; }

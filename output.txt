@@ -15,10 +15,23 @@ Press Ctrl+C to stop
 [LobbyServer] DEBUG: Received message type: 1
 [LobbyServer] DEBUG: Reading username string...
 [LobbyServer] DEBUG: read_string() - Reading length...
-[LobbyServer] DEBUG: read_string() - Bytes read for length: 2
-[LobbyServer] DEBUG: read_string() - String length: 1536
-[LobbyServer] Error handling client: Invalid string length: 1536
-
+[LobbyServer] DEBUG: read_string() - Bytes read: 2
+[LobbyServer] DEBUG: read_string() - String length (after ntohs): 6
+[LobbyServer] DEBUG: read_string() - String received: julio1
+[LobbyServer] Client connected: julio1
+[LobbyServer] DEBUG: Sending welcome message...
+[LobbyServer] DEBUG: Welcome sent!
+[LobbyServer] Client 'julio1' requested games list
+[LobbyServer] DEBUG: read_string() - Reading length...
+[LobbyServer] DEBUG: read_string() - Bytes read: 2
+[LobbyServer] DEBUG: read_string() - String length (after ntohs): 6
+[LobbyServer] DEBUG: read_string() - String received: race 1
+[LobbyServer] Client 'julio1' creating game: race 1
+[LobbyManager] Game 'race 1' created with ID 1
+[GameRoom 1] Player 'julio1' joined (1/8)
+[LobbyServer] Client 'julio1' joining game: 1
+[GameRoom 1] Player 'julio1' joined (2/8)
+[LobbyServer] Client 'julio1' disconnected: Connection closed
 
 
 
@@ -28,13 +41,59 @@ julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL/TP_TALLER$ ./lobby_client_te
 ==================================================
     NEED FOR SPEED 2D - LOBBY CLIENT (TEST)
 ==================================================
-Enter your username: julio2
+Enter your username: julio1
 [LobbyClient] Connected to server localhost:8080
-[LobbyClient] DEBUG: Sending 9 bytes: 01 06 00 6A 75 6C 69 6F 32 
-[LobbyClient] Sent username: julio2
+[LobbyClient] DEBUG: Username: 'julio1' (length: 6)
+[LobbyClient] DEBUG: Buffer size: 9 bytes
+[LobbyClient] DEBUG: Buffer content: 01 00 06 6A 75 6C 69 6F 31 
+[LobbyClient] DEBUG: Length encoded in buffer: 6
+[LobbyClient] Sent username: julio1
 [LobbyClient] DEBUG: Waiting for welcome message...
-[ERROR] Connection closed by server
-julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL/TP_TALLER$ 
+[LobbyClient] DEBUG: Received type: 16
+[LobbyClient] DEBUG: Reading welcome string...
+[LobbyClient] Received welcome: Welcome to Need for Speed 2D, julio1!
+
+Welcome to Need for Speed 2D, julio1!
+
+
+--- LOBBY MENU ---
+1. List games
+2. Create game
+3. Join game
+4. Exit
+Choose option: 1
+[LobbyClient] Requested games list
+[LobbyClient] Received 0 games
+
+========== AVAILABLE GAMES ==========
+No games available.
+=====================================
+
+--- LOBBY MENU ---
+1. List games
+2. Create game
+3. Join game
+4. Exit
+Choose option: 2
+Game name: race 1
+Max players (2-8): 8
+[LobbyClient] Requested to create game: race 1
+[LobbyClient] Game created with ID: 1
+
+✅ Game created! ID: 1
+Waiting for other players to join...
+
+--- LOBBY MENU ---
+1. List games
+2. Create game
+3. Join game
+4. Exit
+Choose option: 3
+Game ID to join: 1
+[LobbyClient] Requested to join game: 1
+[ERROR] Expected GAME_JOINED message
+
+
 
 
 

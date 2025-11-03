@@ -99,12 +99,19 @@ int main(int argc, char* argv[]) {
                     
                     client.join_game(game_id);
                     
-                    std::string error_msg;
-                    if (client.check_for_error(error_msg)) {
+                    // Leer el tipo de mensaje de respuesta
+                    uint8_t msg_type = client.peek_message_type();
+                    
+                    if (msg_type == MSG_ERROR) {
+                        std::string error_msg;
+                        client.read_error_details(error_msg);
                         std::cout << "\n❌ Error: " << error_msg << std::endl;
-                    } else {
-                        uint16_t joined_id = client.receive_game_joined();
+                    } else if (msg_type == MSG_GAME_JOINED) {
+                        uint16_t joined_id = client.read_uint16();
                         std::cout << "\n✅ Joined game " << joined_id << "!" << std::endl;
+                    } else {
+                        std::cout << "\n❌ Unexpected message type: " 
+                                  << static_cast<int>(msg_type) << std::endl;
                     }
                     break;
                 }

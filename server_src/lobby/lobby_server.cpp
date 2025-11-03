@@ -23,20 +23,30 @@ std::string LobbyServer::read_string(Socket& socket) {
     
     uint16_t len_net;
     int bytes_read = socket.recvall(&len_net, sizeof(len_net));
-    std::cout << "[LobbyServer] DEBUG: read_string() - Bytes read for length: " 
+    
+    std::cout << "[LobbyServer] DEBUG: read_string() - Bytes read: " 
               << bytes_read << std::endl;
     
+    if (bytes_read == 0) {
+        throw std::runtime_error("Connection closed while reading string length");
+    }
+    
+    // CRÍTICO: Convertir de network byte order a host byte order
     uint16_t len = ntohs(len_net);
-    std::cout << "[LobbyServer] DEBUG: read_string() - String length: " 
+    
+    std::cout << "[LobbyServer] DEBUG: read_string() - String length (after ntohs): " 
               << len << std::endl;
     
-    if (len == 0 || len > 1024) {  // Sanity check
+    // Validación de sanidad
+    if (len == 0 || len > 1024) {
         throw std::runtime_error("Invalid string length: " + std::to_string(len));
     }
     
     std::vector<char> buffer(len);
     socket.recvall(buffer.data(), len);
-    std::cout << "[LobbyServer] DEBUG: read_string() - String data read successfully" << std::endl;
+    
+    std::cout << "[LobbyServer] DEBUG: read_string() - String received: " 
+              << std::string(buffer.begin(), buffer.end()) << std::endl;
     
     return std::string(buffer.begin(), buffer.end());
 }

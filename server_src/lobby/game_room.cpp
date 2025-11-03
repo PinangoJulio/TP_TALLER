@@ -1,4 +1,5 @@
 #include "game_room.h"
+#include <algorithm>
 #include <iostream>
 
 GameRoom::GameRoom(uint16_t id, const std::string& name, uint8_t max_players)
@@ -7,6 +8,14 @@ GameRoom::GameRoom(uint16_t id, const std::string& name, uint8_t max_players)
 bool GameRoom::add_player(const std::string& username) {
     if (is_full() || is_started) {
         return false;
+    }
+    
+    // Verificar si el jugador ya está en la partida
+    auto it = std::find(players.begin(), players.end(), username);
+    if (it != players.end()) {
+        std::cout << "[GameRoom " << game_id << "] Player '" << username 
+                  << "' is already in the game!" << std::endl;
+        return true;  // No es un error, simplemente ya está
     }
     
     players.push_back(username);
