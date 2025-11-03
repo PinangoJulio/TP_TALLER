@@ -8,17 +8,21 @@
 // Tipos de mensajes del Lobby
 enum LobbyMessageType : uint8_t {
     // Cliente → Servidor
-    MSG_USERNAME = 0x01,        // Cliente envía su nombre de usuario
-    MSG_LIST_GAMES = 0x02,      // Cliente pide lista de partidas
-    MSG_CREATE_GAME = 0x03,     // Cliente crea una partida
-    MSG_JOIN_GAME = 0x04,       // Cliente se une a una partida
+    MSG_USERNAME = 0x01,
+    MSG_LIST_GAMES = 0x02,
+    MSG_CREATE_GAME = 0x03,
+    MSG_JOIN_GAME = 0x04,
+    MSG_START_GAME = 0x05,      // NUEVO
+    MSG_LEAVE_GAME = 0x07,      // NUEVO
     
     // Servidor → Cliente
-    MSG_WELCOME = 0x10,         // Servidor confirma conexión
-    MSG_GAMES_LIST = 0x11,      // Servidor envía lista de partidas
-    MSG_GAME_CREATED = 0x12,    // Servidor confirma creación de partida
-    MSG_GAME_JOINED = 0x13,     // Servidor confirma unión a partida
-    MSG_ERROR = 0xFF            // Servidor envía error
+    MSG_WELCOME = 0x10,
+    MSG_GAMES_LIST = 0x11,
+    MSG_GAME_CREATED = 0x12,
+    MSG_GAME_JOINED = 0x13,
+    MSG_GAME_STARTED = 0x14,    // NUEVO
+    
+    MSG_ERROR = 0xFF
 };
 
 // Códigos de error
@@ -26,7 +30,11 @@ enum LobbyErrorCode : uint8_t {
     ERR_GAME_NOT_FOUND = 0x01,
     ERR_GAME_FULL = 0x02,
     ERR_INVALID_USERNAME = 0x03,
-    ERR_GAME_ALREADY_STARTED = 0x04
+    ERR_GAME_ALREADY_STARTED = 0x04,
+    ERR_ALREADY_IN_GAME = 0x05,        // NUEVO
+    ERR_NOT_HOST = 0x06,               // NUEVO
+    ERR_NOT_ENOUGH_PLAYERS = 0x07,     // NUEVO
+    ERR_PLAYER_NOT_IN_GAME = 0x08      // NUEVO
 };
 
 // Estructura para información de una partida
@@ -50,6 +58,7 @@ namespace LobbyProtocol {
     std::vector<uint8_t> serialize_game_created(uint16_t game_id);
     std::vector<uint8_t> serialize_game_joined(uint16_t game_id);
     std::vector<uint8_t> serialize_error(LobbyErrorCode error_code, const std::string& message);
+    std::vector<uint8_t> serialize_game_started(uint16_t game_id);
 }
 
 #endif // LOBBY_PROTOCOL_H

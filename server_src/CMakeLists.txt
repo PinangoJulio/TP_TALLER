@@ -13,11 +13,6 @@ target_sources(server
     server_game.cpp
     server_car.cpp
     
-    # ARCHIVOS DEL LOBBY
-    lobby/game_room.cpp
-    lobby/lobby_manager.cpp
-    lobby/lobby_server.cpp
-    
     PUBLIC
     # .h files
     server.h
@@ -29,27 +24,21 @@ target_sources(server
     server_protocol.h
     server_game.h
     server_car.h
-    
-    # HEADERS DEL LOBBY
-    lobby/game_room.h
-    lobby/lobby_manager.h
-    lobby/lobby_server.h
+
 )
 
 # TEMPORAL: Ejecutable de prueba del lobby
 add_executable(lobby_server_test
     lobby/lobby_main.cpp
-    lobby/lobby_server.cpp
-    lobby/lobby_manager.cpp
-    lobby/game_room.cpp
 )
 
+# ✅ Linkear con taller_lobby
 target_link_libraries(lobby_server_test
     PRIVATE
     taller_common
+    taller_lobby  # NUEVO
 )
 
-# Mover el ejecutable a la raíz
 set_target_properties(lobby_server_test PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
 )

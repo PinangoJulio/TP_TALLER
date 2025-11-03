@@ -23,7 +23,6 @@ std::string LobbyServer::read_string(Socket& socket) {
     
     uint16_t len_net;
     int bytes_read = socket.recvall(&len_net, sizeof(len_net));
-    
     std::cout << "[LobbyServer] DEBUG: read_string() - Bytes read: " 
               << bytes_read << std::endl;
     
@@ -84,13 +83,18 @@ void LobbyServer::process_client_messages(Socket& client_socket, const std::stri
                     std::cout << "[LobbyServer] Client '" << username 
                               << "' creating game: " << game_name << std::endl;
                     
-                    uint16_t game_id = lobby_manager.create_game(game_name, max_players);
+                    // ✅ CORREGIDO: Ahora pasamos el username del creador
+                    uint16_t game_id = lobby_manager.create_game(game_name, username, max_players);
                     
-                    // Agregar al creador al juego
-                    lobby_manager.join_game(game_id, username);
-                    
-                    auto response = LobbyProtocol::serialize_game_created(game_id);
-                    send_buffer(client_socket, response);
+                    if (game_id == 0) {
+                        // El jugador ya está en una partida
+                        auto response = LobbyProtocol::serialize_error(
+                            ERR_ALREADY_IN_GAME, "You are already in a game");
+                        send_buffer(client_socket, response);
+                    } else {
+                        auto response = LobbyProtocol::serialize_game_created(game_id);
+                        send_buffer(client_socket, response);
+                    }
                     break;
                 }
                 
@@ -106,8 +110,53 @@ void LobbyServer::process_client_messages(Socket& client_socket, const std::stri
                         auto response = LobbyProtocol::serialize_game_joined(game_id);
                         send_buffer(client_socket, response);
                     } else {
+                        // Determinar el motivo del error
+                        std::string error_msg;
+                        LobbyErrorCode error_code;
+                        
+                        if (lobby_manager.is_player_in_game(username)) {
+                            error_code = ERR_ALREADY_IN_GAME;
+                            error_msg = "You are already in a game";
+                        } else {
+                            error_code = ERR_GAME_FULL;
+                            error_msg = "Game is full or already started";
+                        }
+                        
+                        auto response = LobbyProtocol::serialize_error(error_code, error_msg);
+                        send_buffer(client_socket, response);
+                    }
+                    break;
+                }
+                
+                case MSG_LEAVE_GAME: {
+                    std::cout << "[LobbyServer] Client '" << username 
+                              << "' leaving game" << std::endl;
+                    
+                    bool success = lobby_manager.leave_game(username);
+                    
+                    if (success) {
+                        // Enviar confirmación (puedes crear un nuevo mensaje MSG_GAME_LEFT)
+                        std::cout << "[LobbyServer] Client '" << username 
+                                  << "' left the game successfully" << std::endl;
+                    }
+                    break;
+                }
+                
+                case MSG_START_GAME: {
+                    uint16_t game_id = read_uint16(client_socket);
+                    
+                    std::cout << "[LobbyServer] Client '" << username 
+                              << "' trying to start game " << game_id << std::endl;
+                    
+                    bool success = lobby_manager.start_game(game_id, username);
+                    
+                    if (success) {
+                        auto response = LobbyProtocol::serialize_game_started(game_id);
+                        send_buffer(client_socket, response);
+                        // TODO: Aquí irá la transición a la fase de juego
+                    } else {
                         auto response = LobbyProtocol::serialize_error(
-                            ERR_GAME_FULL, "Game is full or already started");
+                            ERR_NOT_HOST, "Only the host can start the game");
                         send_buffer(client_socket, response);
                     }
                     break;
@@ -122,6 +171,9 @@ void LobbyServer::process_client_messages(Socket& client_socket, const std::stri
     } catch (const std::exception& e) {
         std::cout << "[LobbyServer] Client '" << username 
                   << "' disconnected: " << e.what() << std::endl;
+        
+        // Limpiar: remover al jugador de su partida
+        lobby_manager.leave_game(username);
     }
 }
 
@@ -141,9 +193,9 @@ void LobbyServer::handle_client(Socket client_socket) {
             return;
         }
         
-        // IMPORTANTE: El tipo ya fue leído, ahora leemos el largo y el username
+        // Leer username
         std::cout << "[LobbyServer] DEBUG: Reading username string..." << std::endl;
-        std::string username = read_string(client_socket);  // ← ESTO ESTÁ BIEN
+        std::string username = read_string(client_socket);
         std::cout << "[LobbyServer] Client connected: " << username << std::endl;
         
         // Enviar bienvenida

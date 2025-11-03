@@ -1,5 +1,4 @@
 Terminal 1: Servidor:
-
 julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL/TP_TALLER$ ./lobby_server_test 8080
 ==================================================
     NEED FOR SPEED 2D - LOBBY SERVER (TEST)
@@ -21,17 +20,32 @@ Press Ctrl+C to stop
 [LobbyServer] Client connected: julio1
 [LobbyServer] DEBUG: Sending welcome message...
 [LobbyServer] DEBUG: Welcome sent!
+[LobbyServer] Client 'julio1' joining game: 1
+[LobbyManager] Game 1 not found
 [LobbyServer] Client 'julio1' requested games list
 [LobbyServer] DEBUG: read_string() - Reading length...
 [LobbyServer] DEBUG: read_string() - Bytes read: 2
-[LobbyServer] DEBUG: read_string() - String length (after ntohs): 6
-[LobbyServer] DEBUG: read_string() - String received: race 1
-[LobbyServer] Client 'julio1' creating game: race 1
-[LobbyManager] Game 'race 1' created with ID 1
-[GameRoom 1] Player 'julio1' joined (1/8)
+[LobbyServer] DEBUG: read_string() - String length (after ntohs): 5
+[LobbyServer] DEBUG: read_string() - String received: race1
+[LobbyServer] Client 'julio1' creating game: race1
+[LobbyManager] Game 'race1' created with ID 1
+[GameRoom 1] Player 'julio1' joined (1/2)
 [LobbyServer] Client 'julio1' joining game: 1
-[GameRoom 1] Player 'julio1' joined (2/8)
+[GameRoom 1] Player 'julio1' is already in the game!
+[LobbyServer] Client 'julio1' joining game: 2
+[LobbyManager] Game 2 not found
+[LobbyServer] DEBUG: read_string() - Reading length...
+[LobbyServer] DEBUG: read_string() - Bytes read: 2
+[LobbyServer] DEBUG: read_string() - String length (after ntohs): 1
+[LobbyServer] DEBUG: read_string() - String received: 2
+[LobbyServer] Client 'julio1' creating game: 2
+[LobbyManager] Game '2' created with ID 2
+[GameRoom 2] Player 'julio1' joined (1/4)
+[LobbyServer] Client 'julio1' requested games list
+[LobbyServer] Client 'julio1' joining game: 2
+[GameRoom 2] Player 'julio1' is already in the game!
 [LobbyServer] Client 'julio1' disconnected: Connection closed
+
 
 
 
@@ -61,6 +75,18 @@ Welcome to Need for Speed 2D, julio1!
 2. Create game
 3. Join game
 4. Exit
+Choose option: 3
+Game ID to join: 1
+[LobbyClient] Requested to join game: 1
+[LobbyClient] Error received (code 2): Game is full or already started
+
+❌ Error: Game is full or already started
+
+--- LOBBY MENU ---
+1. List games
+2. Create game
+3. Join game
+4. Exit
 Choose option: 1
 [LobbyClient] Requested games list
 [LobbyClient] Received 0 games
@@ -75,9 +101,9 @@ No games available.
 3. Join game
 4. Exit
 Choose option: 2
-Game name: race 1
-Max players (2-8): 8
-[LobbyClient] Requested to create game: race 1
+Game name: race1
+Max players (2-8): 2
+[LobbyClient] Requested to create game: race1
 [LobbyClient] Game created with ID: 1
 
 ✅ Game created! ID: 1
@@ -91,7 +117,67 @@ Waiting for other players to join...
 Choose option: 3
 Game ID to join: 1
 [LobbyClient] Requested to join game: 1
-[ERROR] Expected GAME_JOINED message
+
+✅ Joined game 1!
+
+--- LOBBY MENU ---
+1. List games
+2. Create game
+3. Join game
+4. Exit
+Choose option: 3
+Game ID to join: 2
+[LobbyClient] Requested to join game: 2
+[LobbyClient] Error received (code 2): Game is full or already started
+
+❌ Error: Game is full or already started
+
+--- LOBBY MENU ---
+1. List games
+2. Create game
+3. Join game
+4. Exit
+Choose option: 2
+Game name: 2
+Max players (2-8): 4
+[LobbyClient] Requested to create game: 2
+[LobbyClient] Game created with ID: 2
+
+✅ Game created! ID: 2
+Waiting for other players to join...
+
+--- LOBBY MENU ---
+1. List games
+2. Create game
+3. Join game
+4. Exit
+Choose option: 1
+[LobbyClient] Requested games list
+[LobbyClient] Received 2 games
+
+========== AVAILABLE GAMES ==========
+[1] race1 (1/2)
+[2] 2 (1/4)
+=====================================
+
+--- LOBBY MENU ---
+1. List games
+2. Create game
+3. Join game
+4. Exit
+Choose option: 3
+Game ID to join: 2
+[LobbyClient] Requested to join game: 2
+
+✅ Joined game 2!
+
+--- LOBBY MENU ---
+1. List games
+2. Create game
+3. Join game
+4. Exit
+Choose option: 4
+Goodbye!
 
 
 

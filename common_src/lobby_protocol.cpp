@@ -108,4 +108,11 @@ std::vector<uint8_t> serialize_error(LobbyErrorCode error_code, const std::strin
     return buffer;
 }
 
+std::vector<uint8_t> serialize_game_started(uint16_t game_id) {
+    std::vector<uint8_t> buffer;
+    buffer.push_back(MSG_GAME_STARTED);
+    push_uint16(buffer, game_id);
+    return buffer;
+}
+
 } // namespace LobbyProtocol
