@@ -37,16 +37,28 @@ uint16_t LobbyClient::read_uint16() {
 void LobbyClient::send_username(const std::string& username) {
     this->username = username;
     auto buffer = LobbyProtocol::serialize_username(username);
+    
+    // DEBUG: Imprimir el buffer
+    std::cout << "[LobbyClient] DEBUG: Sending " << buffer.size() << " bytes: ";
+    for (size_t i = 0; i < buffer.size(); ++i) {
+        printf("%02X ", buffer[i]);
+    }
+    std::cout << std::endl;
+    
     socket.sendall(buffer.data(), buffer.size());
     std::cout << "[LobbyClient] Sent username: " << username << std::endl;
 }
 
 std::string LobbyClient::receive_welcome() {
+    std::cout << "[LobbyClient] DEBUG: Waiting for welcome message..." << std::endl;
     uint8_t type = read_message_type();
+    std::cout << "[LobbyClient] DEBUG: Received type: " << static_cast<int>(type) << std::endl;
+    
     if (type != MSG_WELCOME) {
         throw std::runtime_error("Expected WELCOME message");
     }
     
+    std::cout << "[LobbyClient] DEBUG: Reading welcome string..." << std::endl;
     std::string message = read_string();
     std::cout << "[LobbyClient] Received welcome: " << message << std::endl;
     return message;

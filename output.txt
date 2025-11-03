@@ -1,0 +1,43 @@
+Terminal 1: Servidor:
+
+julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL/TP_TALLER$ ./lobby_server_test 8080
+==================================================
+    NEED FOR SPEED 2D - LOBBY SERVER (TEST)
+==================================================
+Port: 8080
+Press Ctrl+C to stop
+==================================================
+[LobbyServer] Server started on port 8080
+[LobbyServer] Waiting for connections...
+[LobbyServer] New connection accepted
+[LobbyServer] DEBUG: Starting to handle new client
+[LobbyServer] DEBUG: Waiting to read message type...
+[LobbyServer] DEBUG: Received message type: 1
+[LobbyServer] DEBUG: Reading username string...
+[LobbyServer] DEBUG: read_string() - Reading length...
+[LobbyServer] DEBUG: read_string() - Bytes read for length: 2
+[LobbyServer] DEBUG: read_string() - String length: 1536
+[LobbyServer] Error handling client: Invalid string length: 1536
+
+
+
+
+
+Terminal 2: Cliente 1:
+julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL/TP_TALLER$ ./lobby_client_test localhost 8080
+==================================================
+    NEED FOR SPEED 2D - LOBBY CLIENT (TEST)
+==================================================
+Enter your username: julio2
+[LobbyClient] Connected to server localhost:8080
+[LobbyClient] DEBUG: Sending 9 bytes: 01 06 00 6A 75 6C 69 6F 32 
+[LobbyClient] Sent username: julio2
+[LobbyClient] DEBUG: Waiting for welcome message...
+[ERROR] Connection closed by server
+julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL/TP_TALLER$ 
+
+
+
+
+
+

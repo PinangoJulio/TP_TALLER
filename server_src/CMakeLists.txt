@@ -38,7 +38,7 @@ target_sources(server
 
 # TEMPORAL: Ejecutable de prueba del lobby
 add_executable(lobby_server_test
-    lobby_main.cpp
+    lobby/lobby_main.cpp
     lobby/lobby_server.cpp
     lobby/lobby_manager.cpp
     lobby/game_room.cpp

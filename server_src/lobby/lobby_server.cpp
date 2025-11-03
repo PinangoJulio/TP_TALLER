@@ -19,12 +19,24 @@ uint8_t LobbyServer::read_message_type(Socket& socket) {
 }
 
 std::string LobbyServer::read_string(Socket& socket) {
+    std::cout << "[LobbyServer] DEBUG: read_string() - Reading length..." << std::endl;
+    
     uint16_t len_net;
-    socket.recvall(&len_net, sizeof(len_net));
+    int bytes_read = socket.recvall(&len_net, sizeof(len_net));
+    std::cout << "[LobbyServer] DEBUG: read_string() - Bytes read for length: " 
+              << bytes_read << std::endl;
+    
     uint16_t len = ntohs(len_net);
+    std::cout << "[LobbyServer] DEBUG: read_string() - String length: " 
+              << len << std::endl;
+    
+    if (len == 0 || len > 1024) {  // Sanity check
+        throw std::runtime_error("Invalid string length: " + std::to_string(len));
+    }
     
     std::vector<char> buffer(len);
     socket.recvall(buffer.data(), len);
+    std::cout << "[LobbyServer] DEBUG: read_string() - String data read successfully" << std::endl;
     
     return std::string(buffer.begin(), buffer.end());
 }
@@ -105,20 +117,31 @@ void LobbyServer::process_client_messages(Socket& client_socket, const std::stri
 
 void LobbyServer::handle_client(Socket client_socket) {
     try {
-        // Leer username
+        std::cout << "[LobbyServer] DEBUG: Starting to handle new client" << std::endl;
+        
+        // Leer tipo de mensaje
+        std::cout << "[LobbyServer] DEBUG: Waiting to read message type..." << std::endl;
         uint8_t msg_type = read_message_type(client_socket);
+        std::cout << "[LobbyServer] DEBUG: Received message type: " 
+                  << static_cast<int>(msg_type) << std::endl;
+        
         if (msg_type != MSG_USERNAME) {
-            std::cout << "[LobbyServer] Expected USERNAME message" << std::endl;
+            std::cout << "[LobbyServer] Expected USERNAME message, got: " 
+                      << static_cast<int>(msg_type) << std::endl;
             return;
         }
         
-        std::string username = read_string(client_socket);
+        // IMPORTANTE: El tipo ya fue leído, ahora leemos el largo y el username
+        std::cout << "[LobbyServer] DEBUG: Reading username string..." << std::endl;
+        std::string username = read_string(client_socket);  // ← ESTO ESTÁ BIEN
         std::cout << "[LobbyServer] Client connected: " << username << std::endl;
         
         // Enviar bienvenida
+        std::cout << "[LobbyServer] DEBUG: Sending welcome message..." << std::endl;
         std::string welcome_msg = "Welcome to Need for Speed 2D, " + username + "!";
         auto welcome_buffer = LobbyProtocol::serialize_welcome(welcome_msg);
         send_buffer(client_socket, welcome_buffer);
+        std::cout << "[LobbyServer] DEBUG: Welcome sent!" << std::endl;
         
         // Procesar mensajes del cliente
         process_client_messages(client_socket, username);

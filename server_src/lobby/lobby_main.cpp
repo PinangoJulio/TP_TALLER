@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include "lobby/lobby_server.h"
+#include "lobby_server.h"
 
 int main(int argc, char* argv[]) {
     try {
