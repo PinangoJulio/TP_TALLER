@@ -79,11 +79,18 @@ TEST(LobbyManagerTest, HostTransferOnLeave) {
     LobbyManager manager;
     uint16_t game_id = manager.create_game("Test Game", "player1", 4);
     manager.join_game(game_id, "player2");
+    manager.join_game(game_id, "player3");  // Agregar un 3er jugador
     
-    // player1 (host) se va
+    // player1 (host original) se va
     manager.leave_game("player1");
     
-    // player2 debería ser el nuevo host y poder iniciar
-    manager.join_game(game_id, "player3");
+    // player2 debería ser el nuevo host
+    // El juego NO se destruye porque quedan 2 jugadores (player2 y player3)
+    EXPECT_TRUE(manager.is_player_in_game("player2"));
+    EXPECT_TRUE(manager.is_player_in_game("player3"));
+    EXPECT_TRUE(manager.is_game_ready(game_id));
+    
+    // player2 (nuevo host) puede iniciar el juego
     EXPECT_TRUE(manager.start_game(game_id, "player2"));
 }
+

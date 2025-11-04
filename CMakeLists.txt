@@ -147,7 +147,7 @@ target_link_libraries(taller_lobby PUBLIC
 set_project_warnings(taller_lobby ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 
 # =======================================================
-#  Program section (Ejecutables)
+#  Program section (Ejecutables) - UNA SOLA VEZ
 # =======================================================
 
 # --- CLIENTE ---
@@ -227,93 +227,6 @@ if(TALLER_TESTS)
             PRIVATE
             taller_common
             taller_lobby
-            GTest::gtest_main
-    )
-endif()
-
-# =======================================================
-#  Program section (Ejecutables)
-# =======================================================
-
-# --- CLIENTE ---
-if(TALLER_CLIENT)
-    # AÑADIR ESTA LÍNEA CRÍTICA para forzar el ejecutable a la raíz,
-    # igual que el Servidor y el Editor.
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
-
-    add_executable(client
-            client_src/lobby_window.h
-            client_src/lobby_window.cpp)
-    add_subdirectory(client_src)
-    set_project_warnings(client ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
-
-    target_include_directories(client PRIVATE ${libSDL2pp_SOURCE_DIR})
-
-    # Dependencias consolidadas (NO incluye Box2D)
-    target_link_libraries(client
-            PRIVATE
-            taller_common
-            SDL2pp::SDL2pp
-            SDL2_image
-            SDL2_ttf
-            SDL2_mixer
-            Qt6::Widgets
-            Qt6::Multimedia
-    )
-endif()
-
-# --- SERVIDOR ---
-if(TALLER_SERVER)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
-    add_executable(server)
-    add_subdirectory(server_src)
-    set_project_warnings(server ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
-
-    # CORRECCIÓN CRÍTICA:
-    # 1. Usar la variable de directorio en minúsculas: ${box2d_SOURCE_DIR}.
-    target_include_directories(server PRIVATE ${box2d_SOURCE_DIR})
-    target_link_directories(server PRIVATE ${box2d_SOURCE_DIR})
-
-    # 2. Enlazar con el target en minúsculas: box2d.
-    target_link_libraries(server PRIVATE taller_common box2d)
-endif()
-
-# --- EDITOR ---
-if(TALLER_EDITOR)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
-    add_executable(taller_editor)
-    add_subdirectory(editor)
-    set_project_warnings(taller_editor ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
-
-    target_link_libraries(taller_editor
-            PRIVATE
-            taller_common
-            SDL2pp::SDL2pp
-            Qt6::Widgets
-            Qt6::Multimedia)
-    target_include_directories(taller_editor PRIVATE ${libSDL2pp_SOURCE_DIR})
-endif()
-
-# =======================================================
-# Testing section
-# =======================================================
-
-if(TALLER_TESTS)
-    add_executable(taller_tests)
-    add_subdirectory(tests)
-    set_project_warnings(taller_tests ${TALLER_MAKE_WARNINGS_AS_ERRORS} TRUE)
-
-    # CORRECCIÓN NECESARIA: Añadir las rutas de los headers de GoogleTest/Mock
-    target_include_directories(taller_tests
-            PRIVATE
-            ${googletest_SOURCE_DIR}/googletest/include
-            ${googletest_SOURCE_DIR}/googlemock/include
-    )
-
-    # Link the dependencies
-    target_link_libraries(taller_tests
-            PRIVATE
-            taller_common
             GTest::gtest_main
     )
 endif()
