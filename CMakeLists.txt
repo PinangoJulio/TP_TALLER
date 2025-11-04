@@ -133,14 +133,15 @@ target_link_libraries(taller_common PUBLIC yaml-cpp)
 
 # --- CLIENTE ---
 if(TALLER_CLIENT)
-    # AÑADIR ESTA LÍNEA CRÍTICA para forzar el ejecutable a la raíz,
-    # igual que el Servidor y el Editor.
+    # Forzar el ejecutable a la raíz
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-    add_executable(client
-            client_src/lobby_window.h
-            client_src/lobby_window.cpp)
+    # Crear ejecutable vacío primero
+    add_executable(client)
+    
+    # Agregar subdirectorio que llenará las fuentes
     add_subdirectory(client_src)
+    
     set_project_warnings(client ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 
     target_include_directories(client PRIVATE ${libSDL2pp_SOURCE_DIR})
@@ -157,7 +158,6 @@ if(TALLER_CLIENT)
             Qt6::Multimedia
     )
 endif()
-
 # --- SERVIDOR ---
 if(TALLER_SERVER)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})

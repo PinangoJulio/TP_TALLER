@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
         // Inicializar Qt
         QApplication app(argc, argv);
         
-        // Crear y mostrar el lobby (SDL se inicializa dentro)
+        // Crear y mostrar lobby
         LobbyWindow lobby;
         lobby.show();
         

@@ -1,4 +1,7 @@
 #include "lobby_window.h"
+#include "match_selection_window.h"
+#include "garage_window.h"
+#include "waiting_room_window.h"
 #include <iostream>
 #include <QPainter>
 #include <QCloseEvent>
@@ -9,17 +12,19 @@ LobbyWindow::LobbyWindow(QWidget *parent)
     : QWidget(parent), 
       backgroundMusic(nullptr),
       audioInitialized(false),
-      customFontId(-1) {
+      customFontId(-1),
+      matchSelectionWindow(nullptr),
+      garageWindow(nullptr),
+      waitingRoomWindow(nullptr) {
     
-    // Configuración de la Ventana Qt
+    // 1. Configuración de la Ventana Qt
     setWindowTitle("Need for Speed 2D - Lobby");
     setFixedSize(700, 700);
     
-    // fuente personalizada
+    // 2. Cargar fuente personalizada
     customFontId = QFontDatabase::addApplicationFont("assets/fonts/arcade-classic.ttf");
     if (customFontId == -1) {
         std::cerr << "Error: No se pudo cargar la fuente Arcade Classic" << std::endl;
-        std::cerr << "Asegúrate de que el archivo esté en: assets/fonts/ARCADE_N.TTF" << std::endl;
     } else {
         QStringList fontFamilies = QFontDatabase::applicationFontFamilies(customFontId);
         if (!fontFamilies.isEmpty()) {
@@ -27,22 +32,20 @@ LobbyWindow::LobbyWindow(QWidget *parent)
         }
     }
     
-    // Cargar imagen de fondo con Qt
+    // 3. Cargar imagen de fondo con Qt
     backgroundImage.load("assets/img/menu.png");
     if (backgroundImage.isNull()) {
-        std::cerr << "Error: No se pudo cargar assets/img/lobby.jpeg" << std::endl;
-        std::cerr << "Verifica que la ruta sea correcta desde donde ejecutas el programa" << std::endl;
+        std::cerr << "Error: No se pudo cargar assets/img/menu.png" << std::endl;
     } else {
-        
         backgroundImage = backgroundImage.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
         std::cout << "Imagen de fondo cargada correctamente" << std::endl;
     }
     
-    // reproductor de audio con SDL porque con QT no me dejó
+    // 4. Inicializar audio con SDL
     initAudio();
     loadMusic("assets/music/Tokyo-Drift.mp3");
     
-    
+    // 5. Crear la fuente para usar en los widgets
     QFont customFont;
     if (customFontId != -1) {
         QStringList fontFamilies = QFontDatabase::applicationFontFamilies(customFontId);
@@ -51,19 +54,9 @@ LobbyWindow::LobbyWindow(QWidget *parent)
         }
     }
     
- 
-    if (customFontId != -1) {
-        QFont titleFont = customFont;
-        titleFont.setPointSize(60);
-        titleFont.setBold(true);  
-        
-    }
-    
-
-    
+    // 6. Botones
     connectButton = new QPushButton("Jugar", this);
     
-    //fuente spbre el boton
     if (customFontId != -1) {
         QFont buttonFont = customFont;
         buttonFont.setPointSize(14);
@@ -94,7 +87,6 @@ LobbyWindow::LobbyWindow(QWidget *parent)
     
     quitButton = new QPushButton("Salir", this);
     
-    //fuente spbre botón salir
     if (customFontId != -1) {
         QFont quitFont = customFont;
         quitFont.setPointSize(14);
@@ -118,30 +110,23 @@ LobbyWindow::LobbyWindow(QWidget *parent)
     );
     quitButton->setCursor(Qt::PointingHandCursor);
     
-   
-    // Usamos un layout principal sin layout, posicionamiento absoluto
+    // 7. Layout sin layout automático
     setLayout(nullptr);
     
-    
-    // Botón conectar en esquina inferior izquierda
     connectButton->setGeometry(50, 600, 270, 60);
-    
-    // Botón salir en esquina inferior derecha
     quitButton->setGeometry(375, 600, 270, 60);
     
-  
+    // 8. Conexión de señales
     connect(connectButton, &QPushButton::clicked, this, &LobbyWindow::onConnectClicked);
     connect(quitButton, &QPushButton::clicked, this, &LobbyWindow::close);
 }
 
 void LobbyWindow::initAudio() {
-    // Solo inicializar el subsistema de audio de SDL
     if (SDL_Init(SDL_INIT_AUDIO) < 0) {
         std::cerr << "Error inicializando SDL Audio: " << SDL_GetError() << std::endl;
         return;
     }
     
-    // Inicializar SDL_mixer
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
         std::cerr << "Error inicializando SDL_mixer: " << Mix_GetError() << std::endl;
         SDL_Quit();
@@ -158,18 +143,15 @@ void LobbyWindow::loadMusic(const char* musicPath) {
     backgroundMusic = Mix_LoadMUS(musicPath);
     if (!backgroundMusic) {
         std::cerr << "Error cargando música: " << Mix_GetError() << std::endl;
-        std::cerr << "Intentando cargar desde: " << musicPath << std::endl;
-        std::cerr << "Verifica que la ruta sea correcta desde donde ejecutas el programa" << std::endl;
         return;
     }
     
-    // Reproducir en loop infinito
     if (Mix_PlayMusic(backgroundMusic, -1) == -1) {
         std::cerr << "Error reproduciendo música: " << Mix_GetError() << std::endl;
         return;
     }
     
-    Mix_VolumeMusic(MIX_MAX_VOLUME / 2); // 50% de volumen
+    Mix_VolumeMusic(MIX_MAX_VOLUME / 2);
     std::cout << "Música de fondo iniciada en loop" << std::endl;
 }
 
@@ -177,10 +159,8 @@ void LobbyWindow::paintEvent(QPaintEvent* event) {
     QPainter painter(this);
     
     if (!backgroundImage.isNull()) {
-        //imagen de fondo
         painter.drawPixmap(0, 0, backgroundImage);
     } else {
-        // fondo degradado si no carga la imagen
         QLinearGradient gradient(0, 0, 0, height());
         gradient.setColorAt(0, QColor(20, 20, 60));
         gradient.setColorAt(1, QColor(10, 10, 30));
@@ -211,18 +191,142 @@ void LobbyWindow::cleanupAudio() {
 
 LobbyWindow::~LobbyWindow() {
     cleanupAudio();
+    
+    // Limpiar ventanas secundarias
+    if (matchSelectionWindow) delete matchSelectionWindow;
+    if (garageWindow) delete garageWindow;
+    if (waitingRoomWindow) delete waitingRoomWindow;
 }
 
 void LobbyWindow::onConnectClicked() {
-    //statusLabel->setText("Intentando conectar...");
     connectButton->setEnabled(false);
     
-    
+    // Fade out de música
     if (backgroundMusic) {
-        Mix_FadeOutMusic(1000); // Fade out de 1 segundo
+        Mix_FadeOutMusic(1000);
     }
     
-    std::cout << "DEBUG: Conectar presionado. Iniciando cliente de red..." << std::endl;
+    std::cout << "Abriendo selección de partidas..." << std::endl;
     
-    // AQUÍ integrarías la lógica de red
+    // Crear ventana de selección de partidas
+    matchSelectionWindow = new MatchSelectionWindow();
+    
+    // Conectar señales
+    connect(matchSelectionWindow, &MatchSelectionWindow::joinMatchRequested,
+            this, &LobbyWindow::onJoinMatch);
+    connect(matchSelectionWindow, &MatchSelectionWindow::createMatchRequested,
+            this, &LobbyWindow::onCreateMatch);
+    connect(matchSelectionWindow, &MatchSelectionWindow::backToLobby,
+            this, &LobbyWindow::onBackFromMatchSelection);
+    
+    // Ocultar lobby y mostrar selección
+    this->hide();
+    matchSelectionWindow->show();
+}
+
+void LobbyWindow::onJoinMatch(const QString& matchId) {
+    std::cout << "Uniéndose a partida: " << matchId.toStdString() << std::endl;
+    
+    // Cerrar selección de partidas
+    if (matchSelectionWindow) {
+        matchSelectionWindow->hide();
+    }
+    
+    // Abrir garage para seleccionar auto
+    openGarage();
+}
+
+void LobbyWindow::onCreateMatch() {
+    std::cout << "Creando nueva partida..." << std::endl;
+    
+    // TODO: Aquí pedirías el nombre de la partida al usuario
+    // Por ahora, directamente abrimos el garage
+    
+    if (matchSelectionWindow) {
+        matchSelectionWindow->hide();
+    }
+    
+    openGarage();
+}
+
+void LobbyWindow::openGarage() {
+    garageWindow = new GarageWindow();
+    
+    connect(garageWindow, &GarageWindow::carSelected,
+            this, &LobbyWindow::onCarSelected);
+    connect(garageWindow, &GarageWindow::backRequested,
+            this, &LobbyWindow::onBackFromGarage);
+    
+    garageWindow->show();
+}
+
+void LobbyWindow::onCarSelected(int carIndex) {
+    std::cout << "Auto seleccionado (índice " << carIndex << "), abriendo sala de espera..." << std::endl;
+    
+    if (garageWindow) {
+        garageWindow->hide();
+    }
+    
+    // Abrir sala de espera
+    waitingRoomWindow = new WaitingRoomWindow();
+    
+    connect(waitingRoomWindow, &WaitingRoomWindow::startGameRequested,
+            this, &LobbyWindow::onStartGame);
+    connect(waitingRoomWindow, &WaitingRoomWindow::backRequested,
+            this, &LobbyWindow::onBackFromWaitingRoom);
+    
+    waitingRoomWindow->show();
+}
+
+void LobbyWindow::onStartGame() {
+    std::cout << "¡INICIANDO JUEGO!" << std::endl;
+    
+    // Aquí iniciarías el juego real
+    if (waitingRoomWindow) {
+        waitingRoomWindow->close();
+    }
+    
+    // TODO: Lanzar ventana de juego
+}
+
+void LobbyWindow::onBackFromMatchSelection() {
+    if (matchSelectionWindow) {
+        matchSelectionWindow->close();
+        delete matchSelectionWindow;
+        matchSelectionWindow = nullptr;
+    }
+    
+    connectButton->setEnabled(true);
+    this->show();
+    
+    // Reiniciar música
+    if (backgroundMusic && audioInitialized) {
+        Mix_PlayMusic(backgroundMusic, -1);
+    }
+}
+
+void LobbyWindow::onBackFromGarage() {
+    if (garageWindow) {
+        garageWindow->close();
+        delete garageWindow;
+        garageWindow = nullptr;
+    }
+    
+    // Volver a selección de partidas
+    if (matchSelectionWindow) {
+        matchSelectionWindow->show();
+    }
+}
+
+void LobbyWindow::onBackFromWaitingRoom() {
+    if (waitingRoomWindow) {
+        waitingRoomWindow->close();
+        delete waitingRoomWindow;
+        waitingRoomWindow = nullptr;
+    }
+    
+    // Volver a garage
+    if (garageWindow) {
+        garageWindow->show();
+    }
 }
