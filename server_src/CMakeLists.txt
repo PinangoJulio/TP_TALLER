@@ -12,9 +12,7 @@ target_sources(server
     
     # Game
     game/game_loop.cpp
-    game/game_state.cpp
     game/car.cpp
-    game/physics/physics_world.cpp
     
     # Network
     network/client_handler.cpp
@@ -30,9 +28,7 @@ target_sources(server
     lobby/lobby_manager.h
     lobby/game_room.h
     game/game_loop.h
-    game/game_state.h
     game/car.h
-    game/physics/physics_world.h
     network/client_handler.h
     network/receiver.h
     network/sender.h

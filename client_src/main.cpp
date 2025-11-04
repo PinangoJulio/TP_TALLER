@@ -1,16 +1,11 @@
-#include "common_src/foo.h" // Supongo que esto existe
 #include <iostream>
 #include <exception>
 
 #include <SDL2pp/SDL2pp.hh>
 #include <SDL2/SDL.h>
 
-
-//using namespace SDL2pp;
-
 #include <QtWidgets/QApplication>
-#include "lobby_window.h"
-#include <iostream>
+#include "lobby_window.h"  // Está en client_src/lobby/, CMake sabe dónde buscar
 
 int main(int argc, char *argv[]) {
     try {
@@ -28,4 +23,4 @@ int main(int argc, char *argv[]) {
         std::cerr << "Fallo fatal del Cliente: " << e.what() << std::endl;
         return 1;
     }
-}
+}s

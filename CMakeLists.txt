@@ -154,9 +154,8 @@ set_project_warnings(taller_lobby ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 if(TALLER_CLIENT)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-    add_executable(client
-            client_src/lobby_window.h
-            client_src/lobby_window.cpp)
+    # ✅ CORREGIDO: No especificar archivos aquí, se hace en client_src/CMakeLists.txt
+    add_executable(client)
     add_subdirectory(client_src)
     set_project_warnings(client ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 

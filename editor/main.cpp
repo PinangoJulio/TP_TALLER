@@ -1,5 +1,6 @@
-#include "common_src/foo.h"
+#include <iostream>
 
 int main() {
-    return foo(4);
+    std::cout << "Editor de mapas - En desarrollo" << std::endl;
+    return 0;
 }

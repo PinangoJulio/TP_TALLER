@@ -2,8 +2,7 @@ target_sources(taller_tests
     PRIVATE
     # .cpp files
     protocol_tests.cpp
-    foo.cpp
-    lobby_tests.cpp  # NUEVO
+    lobby_tests.cpp
     
     PUBLIC
     # .h files
