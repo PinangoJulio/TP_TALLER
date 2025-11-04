@@ -1,4 +1,5 @@
 #include "lobby_window.h"
+#include "name_input_window.h"
 #include "match_selection_window.h"
 #include "garage_window.h"
 #include "waiting_room_window.h"
@@ -10,18 +11,21 @@
 
 LobbyWindow::LobbyWindow(QWidget *parent) 
     : QWidget(parent), 
+      playerName(""),
+      selectedCarIndex(0),
       backgroundMusic(nullptr),
       audioInitialized(false),
       customFontId(-1),
+      nameInputWindow(nullptr),
       matchSelectionWindow(nullptr),
       garageWindow(nullptr),
       waitingRoomWindow(nullptr) {
     
-    // 1. Configuración de la Ventana Qt
+    // Configuración de la Ventana Qt
     setWindowTitle("Need for Speed 2D - Lobby");
     setFixedSize(700, 700);
     
-    // 2. Cargar fuente personalizada
+    // Cargar fuente personalizada
     customFontId = QFontDatabase::addApplicationFont("assets/fonts/arcade-classic.ttf");
     if (customFontId == -1) {
         std::cerr << "Error: No se pudo cargar la fuente Arcade Classic" << std::endl;
@@ -32,7 +36,7 @@ LobbyWindow::LobbyWindow(QWidget *parent)
         }
     }
     
-    // 3. Cargar imagen de fondo con Qt
+    // Cargar imagen de fondo con Qt
     backgroundImage.load("assets/img/menu.png");
     if (backgroundImage.isNull()) {
         std::cerr << "Error: No se pudo cargar assets/img/menu.png" << std::endl;
@@ -41,11 +45,11 @@ LobbyWindow::LobbyWindow(QWidget *parent)
         std::cout << "Imagen de fondo cargada correctamente" << std::endl;
     }
     
-    // 4. Inicializar audio con SDL
+    // Inicializar audio con SDL
     initAudio();
     loadMusic("assets/music/Tokyo-Drift.mp3");
     
-    // 5. Crear la fuente para usar en los widgets
+    // Crear la fuente para los cositos
     QFont customFont;
     if (customFontId != -1) {
         QStringList fontFamilies = QFontDatabase::applicationFontFamilies(customFontId);
@@ -54,16 +58,18 @@ LobbyWindow::LobbyWindow(QWidget *parent)
         }
     }
     
-    // 6. Botones
-    connectButton = new QPushButton("Jugar", this);
+  
+    
+    // Botones (diseño original)
+    playButton = new QPushButton("Jugar", this);
     
     if (customFontId != -1) {
         QFont buttonFont = customFont;
         buttonFont.setPointSize(14);
-        connectButton->setFont(buttonFont);
+        playButton->setFont(buttonFont);
     }
     
-    connectButton->setStyleSheet(
+    playButton->setStyleSheet(
         "QPushButton {"
         "   font-size: 14pt; "
         "   padding: 15px 30px; "
@@ -83,7 +89,7 @@ LobbyWindow::LobbyWindow(QWidget *parent)
         "   border: 2px solid #666666; "
         "}"
     );
-    connectButton->setCursor(Qt::PointingHandCursor);
+    playButton->setCursor(Qt::PointingHandCursor);
     
     quitButton = new QPushButton("Salir", this);
     
@@ -110,14 +116,14 @@ LobbyWindow::LobbyWindow(QWidget *parent)
     );
     quitButton->setCursor(Qt::PointingHandCursor);
     
-    // 7. Layout sin layout automático
+    
     setLayout(nullptr);
     
-    connectButton->setGeometry(50, 600, 270, 60);
+    playButton->setGeometry(50, 600, 270, 60);
     quitButton->setGeometry(375, 600, 270, 60);
     
-    // 8. Conexión de señales
-    connect(connectButton, &QPushButton::clicked, this, &LobbyWindow::onConnectClicked);
+    
+    connect(playButton, &QPushButton::clicked, this, &LobbyWindow::onPlayClicked);
     connect(quitButton, &QPushButton::clicked, this, &LobbyWindow::close);
 }
 
@@ -193,20 +199,44 @@ LobbyWindow::~LobbyWindow() {
     cleanupAudio();
     
     // Limpiar ventanas secundarias
+    if (nameInputWindow) delete nameInputWindow;
     if (matchSelectionWindow) delete matchSelectionWindow;
     if (garageWindow) delete garageWindow;
     if (waitingRoomWindow) delete waitingRoomWindow;
 }
 
-void LobbyWindow::onConnectClicked() {
-    connectButton->setEnabled(false);
+void LobbyWindow::onPlayClicked() {
+    playButton->setEnabled(false);
+    
+    std::cout << "Abriendo ingreso de nombre..." << std::endl;
+    
+    // Crear ventana de ingreso de nombre
+    nameInputWindow = new NameInputWindow();
+    
+   
+    connect(nameInputWindow, &NameInputWindow::nameConfirmed,
+            this, &LobbyWindow::onNameConfirmed);
+    
+    // Ocultar lobby y mostrar ingreso de nombre
+    this->hide();
+    nameInputWindow->show();
+}
+
+void LobbyWindow::onNameConfirmed(const QString& name) {
+    playerName = name;
+    std::cout << "Nombre confirmado: " << playerName.toStdString() << std::endl;
+    
+    // Cerrar ventana de nombre
+    if (nameInputWindow) {
+        nameInputWindow->close();
+        delete nameInputWindow;
+        nameInputWindow = nullptr;
+    }
     
     // Fade out de música
     if (backgroundMusic) {
         Mix_FadeOutMusic(1000);
     }
-    
-    std::cout << "Abriendo selección de partidas..." << std::endl;
     
     // Crear ventana de selección de partidas
     matchSelectionWindow = new MatchSelectionWindow();
@@ -219,8 +249,6 @@ void LobbyWindow::onConnectClicked() {
     connect(matchSelectionWindow, &MatchSelectionWindow::backToLobby,
             this, &LobbyWindow::onBackFromMatchSelection);
     
-    // Ocultar lobby y mostrar selección
-    this->hide();
     matchSelectionWindow->show();
 }
 
@@ -238,9 +266,6 @@ void LobbyWindow::onJoinMatch(const QString& matchId) {
 
 void LobbyWindow::onCreateMatch() {
     std::cout << "Creando nueva partida..." << std::endl;
-    
-    // TODO: Aquí pedirías el nombre de la partida al usuario
-    // Por ahora, directamente abrimos el garage
     
     if (matchSelectionWindow) {
         matchSelectionWindow->hide();
@@ -261,6 +286,7 @@ void LobbyWindow::openGarage() {
 }
 
 void LobbyWindow::onCarSelected(int carIndex) {
+    selectedCarIndex = carIndex;
     std::cout << "Auto seleccionado (índice " << carIndex << "), abriendo sala de espera..." << std::endl;
     
     if (garageWindow) {
@@ -269,6 +295,19 @@ void LobbyWindow::onCarSelected(int carIndex) {
     
     // Abrir sala de espera
     waitingRoomWindow = new WaitingRoomWindow();
+    
+    // Configurar información del jugador local
+    const std::vector<QString> carNames = {
+        "Leyenda Urbana", "Brisa", "J-Classic 600", "Cavallo V8", 
+        "Senator", "Nómada", "Stallion GT"
+    };
+    
+    QString carName = "Auto";
+    if (selectedCarIndex >= 0 && selectedCarIndex < static_cast<int>(carNames.size())) {
+        carName = carNames[selectedCarIndex];
+    }
+    
+    waitingRoomWindow->setLocalPlayerInfo(playerName, carName);
     
     connect(waitingRoomWindow, &WaitingRoomWindow::startGameRequested,
             this, &LobbyWindow::onStartGame);
@@ -280,13 +319,26 @@ void LobbyWindow::onCarSelected(int carIndex) {
 
 void LobbyWindow::onStartGame() {
     std::cout << "¡INICIANDO JUEGO!" << std::endl;
+    std::cout << "Jugador: " << playerName.toStdString() 
+              << " | Auto: " << selectedCarIndex << std::endl;
     
-    // Aquí iniciarías el juego real
+    // AQUI VA EL JUEGO REAL
     if (waitingRoomWindow) {
         waitingRoomWindow->close();
     }
     
-    // TODO: Lanzar ventana de juego
+    // TODO: CREAR VENTANA DE SDL CON L JUEGO
+}
+
+void LobbyWindow::onBackFromNameInput() {
+    if (nameInputWindow) {
+        nameInputWindow->close();
+        delete nameInputWindow;
+        nameInputWindow = nullptr;
+    }
+    
+    playButton->setEnabled(true);
+    this->show();
 }
 
 void LobbyWindow::onBackFromMatchSelection() {
@@ -296,10 +348,13 @@ void LobbyWindow::onBackFromMatchSelection() {
         matchSelectionWindow = nullptr;
     }
     
-    connectButton->setEnabled(true);
+    // Volver al lobby principal
+    playButton->setEnabled(true);
+    playerName = ""; // Resetear nombre
     this->show();
     
-    // Reiniciar música
+    // Reiniciar música, considerando si la dejo todo el lobby o solo un rato porque me atormenté
+    // también puedo ver si le pongo un coso que maneje el volumen pero para después
     if (backgroundMusic && audioInitialized) {
         Mix_PlayMusic(backgroundMusic, -1);
     }

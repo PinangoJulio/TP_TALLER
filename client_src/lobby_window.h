@@ -9,6 +9,7 @@
 #include <SDL2/SDL_mixer.h>
 
 // Forward declarations
+class NameInputWindow;
 class MatchSelectionWindow;
 class GarageWindow;
 class WaitingRoomWindow;
@@ -17,6 +18,7 @@ class LobbyWindow : public QWidget {
     Q_OBJECT
 
 public:
+    // Constructor sin parámetros - lobby inicial
     explicit LobbyWindow(QWidget *parent = nullptr);
     ~LobbyWindow();
 
@@ -25,11 +27,13 @@ protected:
     void closeEvent(QCloseEvent* event) override;
 
 private slots:
-    void onConnectClicked();
+    void onPlayClicked();
+    void onNameConfirmed(const QString& playerName);
     void onJoinMatch(const QString& matchId);
     void onCreateMatch();
     void onCarSelected(int carIndex);
     void onStartGame();
+    void onBackFromNameInput();
     void onBackFromMatchSelection();
     void onBackFromGarage();
     void onBackFromWaitingRoom();
@@ -40,9 +44,14 @@ private:
     void cleanupAudio();
     void openGarage();
     
+    // Player info
+    QString playerName;
+    int selectedCarIndex;
+    
     // UI Elements
-    QPushButton* connectButton;
+    QPushButton* playButton;
     QPushButton* quitButton;
+    QLabel* titleLabel;
     QPixmap backgroundImage;
     
     // Audio
@@ -53,6 +62,7 @@ private:
     int customFontId;
     
     // Ventanas secundarias
+    NameInputWindow* nameInputWindow;
     MatchSelectionWindow* matchSelectionWindow;
     GarageWindow* garageWindow;
     WaitingRoomWindow* waitingRoomWindow;

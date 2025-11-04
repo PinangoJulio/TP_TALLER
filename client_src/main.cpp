@@ -9,9 +9,9 @@ int main(int argc, char *argv[]) {
         // Inicializar Qt
         QApplication app(argc, argv);
         
-        // Crear y mostrar lobby
-        LobbyWindow lobby;
-        lobby.show();
+        // Crear y mostrar lobby principal (sin nombre todavía)
+        LobbyWindow* lobby = new LobbyWindow();
+        lobby->show();
         
         // Bucle de eventos Qt
         return app.exec();
