@@ -1,0 +1,134 @@
+🏆 Jerarquía de Prioridades de Implementación
+FASE 1: Lobby Completo (Lo que tienes + lo mínimo necesario)
+Nivel 1.1: Ya tienes (✅)
+
+✅ Crear partida
+✅ Unirse a partida
+✅ Listar partidas
+✅ Sistema de HOST
+✅ Transferencia de HOST
+✅ Auto-destrucción de partidas
+
+Nivel 1.2: Fácil - Selección de Auto (🟢 SIGUIENTE)
+Complejidad: Baja
+Cambios: Mínimos (solo agregar campo en GameRoom)
+cpp// GameRoom - Agregar:
+std::map<std::string, std::string> player_cars;  // username -> tipo_auto
+
+// Protocolo - Agregar:
+MSG_SELECT_CAR = 0x06
+MSG_CAR_SELECTED = 0x15
+MSG_PLAYERS_STATUS = 0x16  // Broadcast: quién eligió qué
+Beneficio: Sin esto NO puedes iniciar una carrera
+
+Nivel 1.3: Fácil - Estados del Lobby (🟢)
+Complejidad: Baja
+Cambios: Ampliar enum GameState
+cppenum class GameState : uint8_t {
+    WAITING_PLAYERS,   // < 2 jugadores
+    SELECTING_CARS,    // >= 2, eligiendo autos
+    READY,             // Todos eligieron, puede iniciar
+    STARTED            // Ya empezó
+};
+Beneficio: Controla mejor el flujo del lobby
+
+Nivel 1.4: Media - Timeouts en Lobby (🟡)
+Complejidad: Media
+Cambios: Agregar timers con std::chrono
+cpp// Timeout si nadie elige auto en 30s → auto por defecto
+// Timeout si lobby inactivo 5min → auto-destruir
+Beneficio: Evita lobbies zombies
+
+FASE 2: Transición Lobby → Juego
+Nivel 2.1: Media - Iniciar Partida (sin múltiples carreras) (🟡 CRÍTICO)
+Complejidad: Media
+Cambios: Transición de lobby a juego
+cpp// Cuando HOST hace "Start":
+1. Validar todos eligieron auto
+2. Serializar datos de partida (jugadores + autos)
+3. Enviar MSG_GAME_STARTED a todos
+4. Cliente cambia de LobbyWindow a GameWindow
+5. Servidor instancia GameLoop (Thread)
+Beneficio: SIN ESTO NO HAY JUEGO
+
+Nivel 2.2: Difícil - Cargar Mapa por Defecto (🟠)
+Complejidad: Alta
+Cambios: Parser de YAML de mapas + integración Box2D
+cpp// Servidor carga 1 mapa hardcodeado al iniciar
+// Crea geometría estática en Box2D
+// Coloca checkpoints según YAML
+Beneficio: Puedes tener una carrera funcional
+
+FASE 3: Juego Funcional Básico
+Nivel 3.1: Alta - GameLoop (🔴 CRÍTICO)
+Complejidad: Muy Alta
+Cambios: Implementar loop del juego con Box2D
+cppclass GameLoop : public Thread {
+    // Actualiza física a 60 FPS
+    // Detecta checkpoints
+    // Detecta colisiones
+    // Broadcast de posiciones
+};
+
+Nivel 3.2: Alta - Renderizado básico en Cliente (🔴)
+Complejidad: Alta
+Cambios: SDL2 + renderizado de autos + minimapa
+
+FASE 4: Características Avanzadas
+Nivel 4.1: Múltiples Carreras (🔴)
+Complejidad: Muy Alta
+Cambios: Estados post-carrera, tabla de posiciones, mejoras de auto
+
+Nivel 4.2: Selección de Mapa por HOST (🔴)
+Complejidad: Muy Alta
+Cambios: UI para elegir mapa, parser dinámico
+
+
+
+
+
+
+tpfinal-need-for-speed/
+├── common_src/           
+│   ├── socket.*          ✅ (TP Sockets - EN USO)
+│   ├── thread.h          ✅ (TP Threads - EN USO)
+│   ├── queue.h           ✅ (TP Threads - EN USO)
+│   ├── resolver.*        ✅ (Soporte sockets)
+│   ├── liberror.*        ✅ (Manejo errores)
+│   ├── resolvererror.*   ✅ (Manejo errores)
+│   ├── config.*          ✅ (Lector YAML)
+│   ├── lobby_protocol.*  ✅ (Protocolo lobby)
+│   └── foo.*             ⚠️  (Test dummy - puedes eliminar)
+│
+├── server_src/
+│   ├── lobby/
+│   │   ├── lobby_manager.*   ✅ (Gestión partidas)
+│   │   ├── game_room.*       ✅ (Lógica sala)
+│   │   ├── lobby_server.*    ✅ (Servidor lobby)
+│   │   └── lobby_main.cpp    ✅ (Test ejecutable)
+│   │
+│   ├── game/             🔜 (FASE 2 - Juego en sí)
+│   │   ├── game_loop.*       (Thread del juego)
+│   │   ├── game_state.*      (Estado del juego)
+│   │   ├── car.*             (Lógica del auto)
+│   │   └── physics/          (Integración Box2D)
+│   │       └── world.*
+│   │
+│   └── main.cpp          ✅ (Main de Box2D - funcionando)
+│
+├── client_src/
+│   ├── lobby_client.*    ✅ (Cliente lobby)
+│   ├── lobby_window.*    ✅ (UI Qt lobby)
+│   ├── lobby_test_client.cpp ✅ (Test ejecutable)
+│   │
+│   └── game/             🔜 (FASE 2 - Renderizado juego)
+│       ├── game_renderer.*
+│       └── game_window.*
+│
+└── tests/
+    ├── lobby_tests.cpp   ✅ (Tests lobby)
+    └── foo.cpp           ⚠️  (Test dummy - puedes eliminar)
+
+
+
+

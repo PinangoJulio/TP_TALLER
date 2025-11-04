@@ -4,7 +4,7 @@
 #include "../common_src/thread.h"
 #include "../common_src/utils.h"
 
-#include "server_protocol.h"
+#include "../game/game_protocol.h"
 
 /*
  * Thread Sender

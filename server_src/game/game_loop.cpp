@@ -1,4 +1,4 @@
-#include "server_game.h"
+#include "game_loop.h"
 
 GameSimulator::GameSimulator(Monitor& monitor_ref, Queue<struct Command>& queue):
         is_running(true), monitor(monitor_ref), cars_with_nitro(0), game_queue(queue) {}

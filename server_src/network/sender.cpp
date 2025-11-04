@@ -1,6 +1,6 @@
-#include "server_sender.h"
+#include "sender.h"
 
-#include "server_protocol.h"
+#include "../game/game_protocol.h"
 
 Sender::Sender(ServerProtocol& protocol, Queue<ServerMsg>& queue):
         protocol(protocol), mesgs_queue(queue), is_alive(true) {}

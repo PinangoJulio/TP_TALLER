@@ -10,8 +10,8 @@
 #include "../common_src/thread.h"
 #include "../common_src/utils.h"
 
-#include "server_car.h"
-#include "server_monitor.h"
+#include "car.h"
+#include "../network/monitor.h"
 
 #define NITRO_DURATION 12
 #define SLEEP 250

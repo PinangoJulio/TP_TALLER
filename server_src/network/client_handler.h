@@ -4,10 +4,10 @@
 #include "../common_src/socket.h"
 
 #include "server_car.h"
-#include "server_monitor.h"
-#include "server_protocol.h"
-#include "server_receiver.h"
-#include "server_sender.h"
+#include "monitor.h"
+#include "../game/game_protocol.h"
+#include "receiver.h"
+#include "sender.h"
 
 /*  Cada ClientHandler maneja la conexion de un cliente
  *  Con su socket, y los threads Receiver y Sender para

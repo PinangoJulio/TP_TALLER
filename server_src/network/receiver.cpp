@@ -1,4 +1,4 @@
-#include "server_receiver.h"
+#include "receiver.h"
 
 Receiver::Receiver(ServerProtocol& protocol_s, const int id, Queue<struct Command>& queue):
         protocol_s(protocol_s), is_alive(true), id(id), game_queue(queue) {}

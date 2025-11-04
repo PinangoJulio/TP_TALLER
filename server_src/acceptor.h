@@ -7,8 +7,8 @@
 #include "../common_src/socket.h"
 #include "../common_src/thread.h"
 
-#include "server_client_handler.h"
-#include "server_monitor.h"
+#include "network/client_handler.h"
+#include "network/monitor.h"
 
 class Acceptor: public Thread {
 private:

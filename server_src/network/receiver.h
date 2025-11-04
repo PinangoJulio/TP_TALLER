@@ -6,8 +6,8 @@
 #include "../common_src/socket.h"
 #include "../common_src/thread.h"
 
-#include "server_monitor.h"
-#include "server_protocol.h"
+#include "monitor.h"
+#include "../game/game_protocol.h"
 
 /* Thread Receiver
  *  Espera mensajes por socket, los deserializa y manda hacia la queue del juego
