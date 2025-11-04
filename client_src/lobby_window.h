@@ -6,23 +6,41 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
+#include <QPixmap>
+#include <SDL2/SDL_mixer.h>
 
-// La clase principal del Lobby hereda de QWidget para ser una ventana/formulario
 class LobbyWindow : public QWidget {
-    Q_OBJECT // Macró obligatorio para usar signals y slots de Qt
+    Q_OBJECT
 
 private:
     QLabel* titleLabel;
     QLabel* statusLabel;
     QPushButton* connectButton;
     QPushButton* quitButton;
+    
+    // Imagen de fondo con Qt
+    QPixmap backgroundImage;
+    
+    // SDL solo para audio
+    Mix_Music* backgroundMusic;
+    bool audioInitialized;
+    
+    // Fuente personalizada por el momento solo uso classic-arcade
+    int customFontId;
+    
+    void initAudio();
+    void cleanupAudio();
+    void loadMusic(const char* musicPath);
+
+protected:
+    void paintEvent(QPaintEvent* event) override;
+    void closeEvent(QCloseEvent* event) override;
 
 public:
     LobbyWindow(QWidget *parent = nullptr);
     ~LobbyWindow() override;
 
 private slots:
-    // Slot que se conectará al botón de Conectar
     void onConnectClicked();
 };
 
