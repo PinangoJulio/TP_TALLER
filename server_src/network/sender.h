@@ -4,12 +4,12 @@
 #include "../../common_src/queue.h"
 #include "../../common_src/socket.h"
 #include "../../common_src/thread.h"
-#include "../../common_src/dtos.h"  // ✅ AGREGAR
+#include "../../common_src/dtos.h" 
 
 
 
 class Sender: public Thread {
-    Socket& socket;  // ✅ CAMBIAR: ServerProtocol → Socket
+    Socket& socket;  
     Queue<ServerMsg>& mesgs_queue;
     std::atomic<bool> is_alive;
 

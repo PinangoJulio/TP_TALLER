@@ -7,7 +7,6 @@ Receiver::Receiver(Socket& socket, const int id, Queue<struct Command>& queue):
 void Receiver::run() {
     try {
         while (is_alive) {
-            // ✅ Leer comando del socket (implementación temporal)
             uint8_t raw_msg;
             int bytes = socket.recvall(&raw_msg, sizeof(raw_msg));
             

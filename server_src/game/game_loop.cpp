@@ -6,9 +6,9 @@ GameSimulator::GameSimulator(Monitor& monitor_ref, Queue<struct Command>& queue)
 void GameSimulator::send_nitro_on() {
     cars_with_nitro++;
     ServerMsg msg;
-    msg.type = static_cast<uint8_t>(ServerMessageType::MSG_SERVER);  // ✅ CORREGIDO
+    msg.type = static_cast<uint8_t>(ServerMessageType::MSG_SERVER);  
     msg.cars_with_nitro = static_cast<uint16_t>(this->cars_with_nitro);
-    msg.nitro_status = static_cast<uint8_t>(ServerMessageType::NITRO_ON);  // ✅ CORREGIDO
+    msg.nitro_status = static_cast<uint8_t>(ServerMessageType::NITRO_ON);  
     std::cout << "A car hit the nitro!" << std::endl;
     monitor.broadcast(msg);
 }
@@ -16,9 +16,9 @@ void GameSimulator::send_nitro_on() {
 void GameSimulator::send_nitro_off() {
     cars_with_nitro--;
     ServerMsg msg;
-    msg.type = static_cast<uint8_t>(ServerMessageType::MSG_SERVER);  // ✅ CORREGIDO
+    msg.type = static_cast<uint8_t>(ServerMessageType::MSG_SERVER);  
     msg.cars_with_nitro = static_cast<uint16_t>(this->cars_with_nitro);
-    msg.nitro_status = static_cast<uint8_t>(ServerMessageType::NITRO_OFF);  // ✅ CORREGIDO
+    msg.nitro_status = static_cast<uint8_t>(ServerMessageType::NITRO_OFF);  
     std::cout << "A car is out of juice." << std::endl;
     monitor.broadcast(msg);
 }
@@ -28,15 +28,15 @@ void GameSimulator::process_commands() {
     while (game_queue.try_pop(cmd)) {
         auto it = std::find_if(cars.begin(), cars.end(),
                                [&](const Car& c) { 
-                                   return c.get_client_id() == cmd.player_id;  // ✅ CORREGIDO: id → player_id
+                                   return c.get_client_id() == cmd.player_id;  
                                });
 
         if (it == cars.end()) {
-            cars.emplace_back(cmd.player_id, NITRO_DURATION);  // ✅ CORREGIDO: id → player_id
+            cars.emplace_back(cmd.player_id, NITRO_DURATION);  
             it = cars.end() - 1;
         }
 
-        if (cmd.action == GameCommand::USE_NITRO) {  // ✅ CORREGIDO: CodeActions::NITRO_ON → GameCommand::USE_NITRO
+        if (cmd.action == GameCommand::USE_NITRO) {  
             if (!it->is_nitro_active()) {
                 it->activate_nitro();
                 send_nitro_on();

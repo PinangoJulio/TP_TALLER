@@ -7,7 +7,7 @@
 
 #include "acceptor.h"
 #include "network/monitor.h"
-#include "game/game_loop.h"  // ✅ AGREGAR ESTA LÍNEA
+#include "game/game_loop.h"  
 
 Server::Server(const std::string& servicename): servicename(servicename) {}
 

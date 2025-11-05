@@ -28,7 +28,7 @@ enum class ServerMessageType : uint8_t {
 // Estructura de comando con ID del jugador
 struct Command {
     GameCommand action;
-    uint16_t player_id;  // ✅ Este es el campo correcto
+    uint16_t player_id; 
 };
 
 // Estado de un auto (para enviar al cliente)

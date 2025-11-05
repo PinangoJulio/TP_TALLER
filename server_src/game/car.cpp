@@ -1,4 +1,4 @@
-#include "car.h"  // ✅ CORREGIR: server_car.h → car.h
+#include "car.h"  
 
 Car::Car(int id, int max_duration):
         client_id(id), nitro_active(false), nitro_ticks(0), nitro_duration(max_duration) {}

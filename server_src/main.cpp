@@ -1,5 +1,5 @@
-#include "../common_src/config.h" // Nuestra clase lectora de YAML
-#include <box2d/box2d.h>                      // Motor físico (v3.x)
+#include "../common_src/config.h" 
+#include <box2d/box2d.h>                      
 #include <iostream>
 #include <stdexcept>
 #include <chrono>

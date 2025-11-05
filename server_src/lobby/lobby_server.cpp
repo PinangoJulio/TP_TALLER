@@ -83,7 +83,6 @@ void LobbyServer::process_client_messages(Socket& client_socket, const std::stri
                     std::cout << "[LobbyServer] Client '" << username 
                               << "' creating game: " << game_name << std::endl;
                     
-                    // ✅ CORREGIDO: Ahora pasamos el username del creador
                     uint16_t game_id = lobby_manager.create_game(game_name, username, max_players);
                     
                     if (game_id == 0) {

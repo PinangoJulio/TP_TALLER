@@ -12,15 +12,15 @@ enum LobbyMessageType : uint8_t {
     MSG_LIST_GAMES = 0x02,
     MSG_CREATE_GAME = 0x03,
     MSG_JOIN_GAME = 0x04,
-    MSG_START_GAME = 0x05,      // NUEVO
-    MSG_LEAVE_GAME = 0x07,      // NUEVO
+    MSG_START_GAME = 0x05,     
+    MSG_LEAVE_GAME = 0x07,    
     
     // Servidor → Cliente
     MSG_WELCOME = 0x10,
     MSG_GAMES_LIST = 0x11,
     MSG_GAME_CREATED = 0x12,
     MSG_GAME_JOINED = 0x13,
-    MSG_GAME_STARTED = 0x14,    // NUEVO
+    MSG_GAME_STARTED = 0x14,   
     
     MSG_ERROR = 0xFF
 };

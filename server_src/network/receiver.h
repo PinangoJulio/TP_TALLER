@@ -4,13 +4,13 @@
 #include "../../common_src/queue.h"
 #include "../../common_src/socket.h"
 #include "../../common_src/thread.h"
-#include "../../common_src/dtos.h"  // ✅ AGREGAR
+#include "../../common_src/dtos.h"  
 
 /* Thread Receiver
  *  Espera mensajes por socket, los deserializa y manda hacia la queue del juego
  */
 class Receiver: public Thread {
-    Socket& socket;  // ✅ CAMBIAR: ServerProtocol → Socket
+    Socket& socket;  
     std::atomic<bool> is_alive;
     const int id;
     Queue<struct Command>& game_queue;
