@@ -3,8 +3,8 @@
 
 #include <string>
 #include <vector>
-#include "../common_src/socket.h"
-#include "../common_src/lobby_protocol.h"
+#include "common_src/socket.h"
+#include "common_src/lobby_protocol.h"
 
 class LobbyClient {
 private:

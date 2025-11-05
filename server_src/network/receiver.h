@@ -2,12 +2,12 @@
 #ifndef SERVER_RECEIVER_H
 #define SERVER_RECEIVER_H
 
-#include "../common_src/queue.h"
-#include "../common_src/socket.h"
-#include "../common_src/thread.h"
+#include "../../common_src/queue.h"
+#include "../../common_src/socket.h"
+#include "../../common_src/thread.h"
 
 #include "monitor.h"
-#include "../game/game_protocol.h"
+#include "common_src/game_protocol.h"
 
 /* Thread Receiver
  *  Espera mensajes por socket, los deserializa y manda hacia la queue del juego

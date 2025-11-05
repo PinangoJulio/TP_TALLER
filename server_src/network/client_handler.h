@@ -1,11 +1,11 @@
 #ifndef SERVER_CLIENT_HANDLER_H
 #define SERVER_CLIENT_HANDLER_H
-#include "../common_src/queue.h"
-#include "../common_src/socket.h"
+#include "../../common_src/queue.h"
+#include "../../common_src/socket.h"
 
-#include "server_car.h"
+#include "../game/car.h"
 #include "monitor.h"
-#include "../game/game_protocol.h"
+#include "common_src/game_protocol.h"
 #include "receiver.h"
 #include "sender.h"
 

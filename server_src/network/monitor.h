@@ -5,8 +5,9 @@
 #include <mutex>
 #include <string>
 
-#include "../common_src/queue.h"
-#include "../common_src/utils.h"
+#include "../../common_src/queue.h"
+#include "../../common_src/dtos.h"
+#include "../../common_src/queue.h"
 
 class Monitor {
 private:

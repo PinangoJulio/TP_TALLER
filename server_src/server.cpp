@@ -3,11 +3,11 @@
 #include <iostream>
 
 #include "../common_src/queue.h"
-#include "../common_src/utils.h"
+#include "../common_src/dtos.h"
 
-#include "server_acceptor.h"
-#include "server_game.h"
-#include "server_monitor.h"
+#include "acceptor.h"
+#include "server.h"
+#include "network/monitor.h"
 
 
 Server::Server(const std::string& servicename): servicename(servicename) {}
