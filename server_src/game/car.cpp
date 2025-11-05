@@ -1,8 +1,7 @@
-#include "server_car.h"
+#include "car.h"  // ✅ CORREGIR: server_car.h → car.h
 
 Car::Car(int id, int max_duration):
         client_id(id), nitro_active(false), nitro_ticks(0), nitro_duration(max_duration) {}
-
 
 bool Car::activate_nitro() {
     if (nitro_active)
@@ -19,7 +18,7 @@ bool Car::simulate_tick() {
     if (nitro_ticks >= nitro_duration) {
         nitro_active = false;
         nitro_ticks = 0;
-        return true;  // nitro expiro
+        return true;  // nitro expiró
     }
     return false;
 }

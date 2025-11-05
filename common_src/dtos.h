@@ -5,11 +5,6 @@
 #include <string>
 
 // ============================================
-// DTOs del Lobby (ya existentes en lobby_protocol.h)
-// ============================================
-// (No duplicar GameInfo, ya está en lobby_protocol.h)
-
-// ============================================
 // DTOs de la Fase de Juego
 // ============================================
 
@@ -23,10 +18,17 @@ enum class GameCommand : uint8_t {
     DISCONNECT = 0xFF
 };
 
+// ✅ AGREGAR: Tipos de mensajes del servidor
+enum class ServerMessageType : uint8_t {
+    MSG_SERVER = 0x01,
+    NITRO_ON = 0x02,
+    NITRO_OFF = 0x03
+};
+
 // Estructura de comando con ID del jugador
 struct Command {
     GameCommand action;
-    uint16_t player_id;
+    uint16_t player_id;  // ✅ Este es el campo correcto
 };
 
 // Estado de un auto (para enviar al cliente)
@@ -40,25 +42,11 @@ struct CarState {
     bool nitro_active;
 } __attribute__((packed));
 
-// Snapshot completo del juego (broadcast a todos los clientes)
-struct GameSnapshot {
-    uint32_t frame_number;
-    uint16_t num_cars;
-    // Seguido de num_cars × CarState
-} __attribute__((packed));
-
-// Evento especial (choques, explosiones, checkpoints)
-enum class GameEventType : uint8_t {
-    CAR_COLLISION = 0x01,
-    CHECKPOINT_CROSSED = 0x02,
-    CAR_EXPLODED = 0x03,
-    RACE_FINISHED = 0x04
-};
-
-struct GameEvent {
-    GameEventType type;
-    uint16_t player_id;
-    uint16_t data;  // Contexto adicional (ej: ID del checkpoint)
+// Estructura de mensaje del servidor
+struct ServerMsg {
+    uint8_t type;
+    uint16_t cars_with_nitro;
+    uint8_t nitro_status;
 } __attribute__((packed));
 
 // ============================================

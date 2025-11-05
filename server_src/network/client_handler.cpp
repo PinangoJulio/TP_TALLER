@@ -1,15 +1,12 @@
 #include "client_handler.h"
-
 #include <utility>
-
 
 ClientHandler::ClientHandler(Socket&& skt, const int id, Queue<struct Command>& queue):
         skt(std::move(skt)),
         client_id(id),
-        protocol_s(this->skt),
         messages_queue(),
-        receiver(this->protocol_s, this->client_id, queue),
-        sender(protocol_s, messages_queue),
+        receiver(this->skt, this->client_id, queue),
+        sender(this->skt, messages_queue),
         game_queue(queue) {}
 
 void ClientHandler::run_threads() {
@@ -27,5 +24,6 @@ void ClientHandler::join_threads() {
     sender.join();
 }
 
-
-bool ClientHandler::is_alive() { return receiver.status() || sender.status(); }
+bool ClientHandler::is_alive() { 
+    return receiver.status() || sender.status(); 
+}

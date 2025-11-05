@@ -1,21 +1,25 @@
 #include "receiver.h"
+#include <iostream>
 
-Receiver::Receiver(ServerProtocol& protocol_s, const int id, Queue<struct Command>& queue):
-        protocol_s(protocol_s), is_alive(true), id(id), game_queue(queue) {}
+Receiver::Receiver(Socket& socket, const int id, Queue<struct Command>& queue):
+        socket(socket), is_alive(true), id(id), game_queue(queue) {}
 
 void Receiver::run() {
-
     try {
         while (is_alive) {
-            uint8_t raw_msg = this->protocol_s.recv_msg();  // bloqueante
-            if (raw_msg == CodeActions::MSG_CLIENT) {
-                Command command;
-                command.action = CodeActions::NITRO_ON;
-                command.id = this->id;
-                game_queue.try_push(command);
-            } else {
+            // ✅ Leer comando del socket (implementación temporal)
+            uint8_t raw_msg;
+            int bytes = socket.recvall(&raw_msg, sizeof(raw_msg));
+            
+            if (bytes == 0) {
                 is_alive = false;
+                break;
             }
+            
+            Command command;
+            command.action = static_cast<GameCommand>(raw_msg);
+            command.player_id = this->id;
+            game_queue.try_push(command);
         }
     } catch (const std::exception& e) {
         if (is_alive) {

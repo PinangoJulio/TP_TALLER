@@ -6,9 +6,8 @@
 #include "../common_src/dtos.h"
 
 #include "acceptor.h"
-#include "server.h"
 #include "network/monitor.h"
-
+#include "game/game_loop.h"  // ✅ AGREGAR ESTA LÍNEA
 
 Server::Server(const std::string& servicename): servicename(servicename) {}
 
@@ -18,8 +17,9 @@ void Server::run() {
     Acceptor acceptor(this->servicename, monitor, game_queue);
 
     acceptor.start();
-    GameSimulator game(monitor, game_queue);
+    GameSimulator game(monitor, game_queue);  // ✅ Ahora sí conoce GameSimulator
     game.start();
+    
     while (std::cin.get() != QUIT) {}
 
     game.stop();
