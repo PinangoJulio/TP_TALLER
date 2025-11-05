@@ -19,7 +19,7 @@ std::map<std::string, std::string> player_cars;  // username -> tipo_auto
 MSG_SELECT_CAR = 0x06
 MSG_CAR_SELECTED = 0x15
 MSG_PLAYERS_STATUS = 0x16  // Broadcast: quién eligió qué
-Beneficio: Sin esto NO puedes iniciar una carrera
+Beneficio: Sin esto NO puedes iniciar una carrera 
 
 Nivel 1.3: Fácil - Estados del Lobby (🟢)
 Complejidad: Baja
