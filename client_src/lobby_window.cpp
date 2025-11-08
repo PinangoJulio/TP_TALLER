@@ -3,6 +3,7 @@
 #include "match_selection_window.h"
 #include "garage_window.h"
 #include "waiting_room_window.h"
+#include "create_match_window.h"
 #include <iostream>
 #include <QPainter>
 #include <QCloseEvent>
@@ -19,7 +20,8 @@ LobbyWindow::LobbyWindow(QWidget *parent)
       nameInputWindow(nullptr),
       matchSelectionWindow(nullptr),
       garageWindow(nullptr),
-      waitingRoomWindow(nullptr) {
+      waitingRoomWindow(nullptr),
+      createMatchWindow(nullptr) {
     
     // Configuración de la Ventana Qt
     setWindowTitle("Need for Speed 2D - Lobby");
@@ -37,7 +39,7 @@ LobbyWindow::LobbyWindow(QWidget *parent)
     }
     
     // Cargar imagen de fondo con Qt
-    backgroundImage.load("assets/img/menu.png");
+    backgroundImage.load("assets/img/menu2.png");
     if (backgroundImage.isNull()) {
         std::cerr << "Error: No se pudo cargar assets/img/menu.png" << std::endl;
     } else {
@@ -203,6 +205,7 @@ LobbyWindow::~LobbyWindow() {
     if (matchSelectionWindow) delete matchSelectionWindow;
     if (garageWindow) delete garageWindow;
     if (waitingRoomWindow) delete waitingRoomWindow;
+    if (createMatchWindow) delete createMatchWindow;
 }
 
 void LobbyWindow::onPlayClicked() {
@@ -229,7 +232,8 @@ void LobbyWindow::onNameConfirmed(const QString& name) {
     // Cerrar ventana de nombre
     if (nameInputWindow) {
         nameInputWindow->close();
-        delete nameInputWindow;
+        nameInputWindow->deleteLater();
+        //delete nameInputWindow;
         nameInputWindow = nullptr;
     }
     
@@ -265,13 +269,61 @@ void LobbyWindow::onJoinMatch(const QString& matchId) {
 }
 
 void LobbyWindow::onCreateMatch() {
-    std::cout << "Creando nueva partida..." << std::endl;
+    std::cout << "Abriendo ventana de creación de partida..." << std::endl;
     
     if (matchSelectionWindow) {
         matchSelectionWindow->hide();
     }
     
+    // Crear ventana de creación de partida
+    createMatchWindow = new CreateMatchWindow();
+    
+    // Conectar señales
+    connect(createMatchWindow, &CreateMatchWindow::matchCreated,
+            this, &LobbyWindow::onMatchCreated);
+    connect(createMatchWindow, &CreateMatchWindow::backRequested,
+            this, &LobbyWindow::onBackFromCreateMatch);
+    
+    createMatchWindow->show();
+}
+
+void LobbyWindow::onMatchCreated(const QString& matchName, int maxPlayers, const std::vector<RaceConfig>& races) {
+    std::cout << "Partida creada: " << matchName.toStdString() 
+              << " | Jugadores: " << maxPlayers 
+              << " | Carreras: " << races.size() << std::endl;
+    
+    // Mostrar detalle de las carreras
+    for (size_t i = 0; i < races.size(); i++) {
+        std::cout << "  Carrera " << (i+1) << ": " 
+                  << races[i].cityName.toStdString() 
+                  << " - " << races[i].trackName.toStdString() << std::endl;
+    }
+    
+    // Cerrar ventana de creación
+    if (createMatchWindow) {
+        createMatchWindow->close();
+        delete createMatchWindow;
+        createMatchWindow = nullptr;
+    }
+    
+    // Aquí irías directamente al garage para seleccionar tu auto
+    // ya que eres el host de la partida que acabas de crear
     openGarage();
+    
+    // TODO: Enviar info de la partida al servidor
+}
+
+void LobbyWindow::onBackFromCreateMatch() {
+    if (createMatchWindow) {
+        createMatchWindow->close();
+        delete createMatchWindow;
+        createMatchWindow = nullptr;
+    }
+    
+    // Volver a la selección de partidas
+    if (matchSelectionWindow) {
+        matchSelectionWindow->show();
+    }
 }
 
 void LobbyWindow::openGarage() {

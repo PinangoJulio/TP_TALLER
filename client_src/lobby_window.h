@@ -7,12 +7,15 @@
 #include <QLineEdit>
 #include <QPixmap>
 #include <SDL2/SDL_mixer.h>
+#include <vector>
+#include "common_types.h"
 
 // Forward declarations
 class NameInputWindow;
 class MatchSelectionWindow;
 class GarageWindow;
 class WaitingRoomWindow;
+class CreateMatchWindow;
 
 class LobbyWindow : public QWidget {
     Q_OBJECT
@@ -37,6 +40,8 @@ private slots:
     void onBackFromMatchSelection();
     void onBackFromGarage();
     void onBackFromWaitingRoom();
+    void onMatchCreated(const QString& matchName, int maxPlayers, const std::vector<RaceConfig>& races);
+    void onBackFromCreateMatch();
 
 private:
     void initAudio();
@@ -66,6 +71,7 @@ private:
     MatchSelectionWindow* matchSelectionWindow;
     GarageWindow* garageWindow;
     WaitingRoomWindow* waitingRoomWindow;
+    CreateMatchWindow* createMatchWindow;
 };
 
 #endif // LOBBY_WINDOW_H
