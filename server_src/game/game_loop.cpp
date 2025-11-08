@@ -1,7 +1,60 @@
 #include "game_loop.h"
 
-GameSimulator::GameSimulator(Monitor& monitor_ref, Queue<struct Command>& queue):
-        is_running(true), monitor(monitor_ref), cars_with_nitro(0), game_queue(queue) {}
+GameSimulator::GameSimulator(Monitor& monitor_ref, Queue<struct Command>& queue, Configuracion& cfg)
+    : is_running(true), 
+      monitor(monitor_ref), 
+      cars_with_nitro(0), 
+      game_queue(queue),
+      config(cfg) {  
+    
+    initialize_physics();  
+}
+
+GameSimulator::~GameSimulator() {
+    if (b2World_IsValid(mundo)) {
+        b2DestroyWorld(mundo);
+    }
+}
+
+void GameSimulator::initialize_physics() {
+    b2WorldDef mundoDef = b2DefaultWorldDef();
+    mundoDef.gravity = {config.obtenerGravedadX(), config.obtenerGravedadY()};
+    mundo = b2CreateWorld(&mundoDef);
+    std::cout << "[GameSimulator] Box2D initialized" << std::endl;
+}
+
+void GameSimulator::update_physics() {
+    float timeStep = config.obtenerTiempoPaso();
+    int subSteps = config.obtenerIteracionesVelocidad() + 
+                   config.obtenerIteracionesPosicion();
+    b2World_Step(mundo, timeStep, subSteps);
+}
+
+void GameSimulator::apply_forces_from_command(const Command& cmd, b2BodyId body) {
+    switch (cmd.action) {
+        case GameCommand::ACCELERATE: {
+            b2Rot rot = b2Body_GetRotation(body);
+            float angle = b2Rot_GetAngle(rot);
+            b2Vec2 fuerza = {std::cos(angle) * 20.0f, std::sin(angle) * 20.0f};
+            b2Body_ApplyForceToCenter(body, fuerza, true);
+            break;
+        }
+        case GameCommand::BRAKE: {
+            b2Vec2 vel = b2Body_GetLinearVelocity(body);
+            b2Vec2 frenadoFuerza = {-vel.x * 10.0f, -vel.y * 10.0f};
+            b2Body_ApplyForceToCenter(body, frenadoFuerza, true);
+            break;
+        }
+        case GameCommand::TURN_LEFT:
+            b2Body_ApplyTorque(body, -8.0f, true);
+            break;
+        case GameCommand::TURN_RIGHT:
+            b2Body_ApplyTorque(body, 8.0f, true);
+            break;
+        default:
+            break;
+    }
+}
 
 void GameSimulator::send_nitro_on() {
     cars_with_nitro++;
@@ -42,6 +95,28 @@ void GameSimulator::process_commands() {
                 send_nitro_on();
             }
         }
+        
+        : Box2D - Crear body si no existe
+        auto body_it = player_bodies.find(cmd.player_id);
+        if (body_it == player_bodies.end()) {
+            b2BodyDef bodyDef = b2DefaultBodyDef();
+            bodyDef.type = b2_dynamicBody;
+            bodyDef.position = {0.0f, 0.0f};
+            bodyDef.linearDamping = 2.0f;
+            
+            b2BodyId body = b2CreateBody(mundo, &bodyDef);
+            
+            b2Polygon box = b2MakeBox(1.0f, 2.0f);
+            b2ShapeDef shapeDef = b2DefaultShapeDef();
+            shapeDef.density = 1.5f;
+            b2CreatePolygonShape(body, &shapeDef, &box);
+            
+            player_bodies[cmd.player_id] = body;
+            std::cout << "[Physics] Player " << cmd.player_id << " body created" << std::endl;
+        }
+        
+        : Aplicar fuerzas de Box2D
+        apply_forces_from_command(cmd, player_bodies[cmd.player_id]);
     }
 }
 
@@ -55,11 +130,12 @@ void GameSimulator::simulate_cars() {
 
 void GameSimulator::run() {
     while (is_running) {
-        // 1. Procesar todos los comandos pendientes y ejecutarlos
         process_commands();
-        // 2. Simular consumición de nitro
+        
+        update_physics();  : Actualizar Box2D
+        
         simulate_cars();
-        // 3. Sleep
+        
         std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP));
     }
 }

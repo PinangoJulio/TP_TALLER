@@ -154,7 +154,6 @@ set_project_warnings(taller_lobby ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 if(TALLER_CLIENT)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-    # ✅ CORREGIDO: No especificar archivos aquí, se hace en client_src/CMakeLists.txt
     add_executable(client)
     add_subdirectory(client_src)
     set_project_warnings(client ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
@@ -180,8 +179,9 @@ if(TALLER_SERVER)
     add_subdirectory(server_src)
     set_project_warnings(server ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 
-    target_include_directories(server PRIVATE ${box2d_SOURCE_DIR})
-    target_link_directories(server PRIVATE ${box2d_SOURCE_DIR})
+    target_include_directories(server PRIVATE 
+        ${box2d_SOURCE_DIR}/include
+    )
 
     target_link_libraries(server PRIVATE 
         taller_common 
@@ -220,6 +220,7 @@ if(TALLER_TESTS)
             ${googletest_SOURCE_DIR}/googletest/include
             ${googletest_SOURCE_DIR}/googlemock/include
             ${CMAKE_SOURCE_DIR}
+            ${box2d_SOURCE_DIR}/include
     )
 
     target_link_libraries(taller_tests
@@ -227,5 +228,6 @@ if(TALLER_TESTS)
             taller_common
             taller_lobby
             GTest::gtest_main
+            box2d
     )
 endif()
