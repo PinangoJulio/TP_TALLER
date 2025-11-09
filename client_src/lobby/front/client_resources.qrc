@@ -1,6 +1,0 @@
-<!DOCTYPE RCC>
-<RCC version="1.0">
-<qresource prefix="/">
-    <file alias="images/lobby.jpg">../gfx/lobby.jpeg</file>
-    </qresource>
-</RCC>

@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include "../client_src/lobby/lobby_client.h" 
+#include "../client_src/lobby/model/lobby_client.h" 
 
 void print_games(const std::vector<GameInfo>& games) {
     std::cout << "\n========== AVAILABLE GAMES ==========" << std::endl;

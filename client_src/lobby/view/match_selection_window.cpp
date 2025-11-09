@@ -21,7 +21,7 @@ MatchSelectionWindow::MatchSelectionWindow(QWidget *parent)
     }
     
     setupUI();
-    loadPlaceholderMatches();
+   // loadPlaceholderMatches();
 }
 
 void MatchSelectionWindow::setupUI() {
@@ -111,8 +111,8 @@ void MatchSelectionWindow::setupUI() {
     );
     refreshButton->setCursor(Qt::PointingHandCursor);
     refreshButton->setGeometry(260, 530, 180, 60);
-    connect(refreshButton, &QPushButton::clicked, this, &MatchSelectionWindow::loadPlaceholderMatches);
-    
+   // connect(refreshButton, &QPushButton::clicked, this, &MatchSelectionWindow::loadPlaceholderMatches);
+    connect(refreshButton, &QPushButton::clicked, this, [this]() {emit refreshRequested();});
     // Botones inferiores
     joinButton = new QPushButton("Unirse", this);
     if (customFontId != -1) {
@@ -190,34 +190,76 @@ void MatchSelectionWindow::setupUI() {
     connect(backButton, &QPushButton::clicked, this, &MatchSelectionWindow::onBackClicked);
 }
 
-void MatchSelectionWindow::loadPlaceholderMatches() {
+
+void MatchSelectionWindow::updateGamesList(const std::vector<GameInfo>& games) {
     matchList->clear();
     selectedMatchId = "";
     joinButton->setEnabled(false);
     
-    // Partidas placeholder
-    QStringList matches = {
-        "🏁 Carrera Rápida | 2/4 jugadores | Circuito Tokyo",
-        "🏁 Gran Premio | 1/6 jugadores | Circuito Las Vegas",
-        "🏁 Duelo de Velocidad | 3/4 jugadores | Circuito Miami",
-        "🏁 Carrera Nocturna | 4/4 jugadores | Circuito Osaka (LLENA)",
-        "🏁 Sprint Challenge | 1/3 jugadores | Circuito Berlin"
-    };
+    std::cout << "[MatchSelectionWindow] Actualizando lista con " 
+              << games.size() << " partidas" << std::endl;
     
-    for (const QString& match : matches) {
-        QListWidgetItem* item = new QListWidgetItem(match);
+    if (games.empty()) {
+        QListWidgetItem* item = new QListWidgetItem("No hay partidas disponibles");
+        item->setFlags(Qt::NoItemFlags); // No seleccionable
+        item->setForeground(QColor(150, 150, 150));
+        matchList->addItem(item);
+        return;
+    }
+    
+    for (const auto& game : games) {
+        // Convertir char[32] a QString
+        QString gameName = QString::fromUtf8(game.game_name).trimmed();
         
-        // Deshabilitar partidas llenas
-        if (match.contains("LLENA")) {
+        QString itemText = QString("🏁 %1 | %2/%3 jugadores")
+            .arg(gameName)
+            .arg(game.current_players)
+            .arg(game.max_players);
+        
+        if (game.is_started) {
+            itemText += " | EN CURSO";
+        }
+        
+        QListWidgetItem* item = new QListWidgetItem(itemText);
+        item->setData(Qt::UserRole, game.game_id); // Guardar ID real
+        
+        // Deshabilitar partidas llenas o ya iniciadas
+        if (game.is_started || game.current_players >= game.max_players) {
             item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
             item->setForeground(QColor(150, 150, 150));
         }
         
         matchList->addItem(item);
     }
-    
-    std::cout << "Partidas actualizadas (placeholder)" << std::endl;
 }
+// void MatchSelectionWindow::loadPlaceholderMatches() {
+//     matchList->clear();
+//     selectedMatchId = "";
+//     joinButton->setEnabled(false);
+    
+//     // Partidas placeholder
+//     QStringList matches = {
+//         "🏁 Carrera Rápida | 2/4 jugadores | Circuito Tokyo",
+//         "🏁 Gran Premio | 1/6 jugadores | Circuito Las Vegas",
+//         "🏁 Duelo de Velocidad | 3/4 jugadores | Circuito Miami",
+//         "🏁 Carrera Nocturna | 4/4 jugadores | Circuito Osaka (LLENA)",
+//         "🏁 Sprint Challenge | 1/3 jugadores | Circuito Berlin"
+//     };
+    
+//     for (const QString& match : matches) {
+//         QListWidgetItem* item = new QListWidgetItem(match);
+        
+//         // Deshabilitar partidas llenas
+//         if (match.contains("LLENA")) {
+//             item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
+//             item->setForeground(QColor(150, 150, 150));
+//         }
+        
+//         matchList->addItem(item);
+//     }
+    
+//     std::cout << "Partidas actualizadas (placeholder)" << std::endl;
+// }
 
 void MatchSelectionWindow::onMatchSelected(QListWidgetItem* item) {
     if (item && !item->text().contains("LLENA")) {

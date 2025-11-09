@@ -1,23 +1,39 @@
 #include <iostream>
 #include <exception>
 #include <QtWidgets/QApplication>
-#include <SDL2/SDL.h>
-#include "lobby/front/lobby_window.h"
+#include <QMessageBox>
+#include "lobby/controller/lobby_controller.h"
 
 int main(int argc, char *argv[]) {
     try {
         // Inicializar Qt
         QApplication app(argc, argv);
         
-        // Crear y mostrar lobby principal (sin nombre todavía)
-        LobbyWindow* lobby = new LobbyWindow();
-        lobby->show();
+        // Configuración del servidor (por ahora hardcodeado)
+        // TODO: Leer de argumentos de línea de comandos
+        QString host = "localhost";
+        QString port = "8080";
+        
+        std::cout << "=== Need for Speed 2D - Cliente ===" << std::endl;
+        std::cout << "Conectando a " << host.toStdString() 
+                  << ":" << port.toStdString() << std::endl;
+        
+        // Crear controlador (se conecta al servidor)
+        LobbyController controller(host, port);
+        
+        // Iniciar el flujo (muestra ventana de nombre)
+        controller.start();
         
         // Bucle de eventos Qt
         return app.exec();
         
     } catch (std::exception& e) {
-        std::cerr << "Fallo fatal del Cliente: " << e.what() << std::endl;
+        std::cerr << "❌ Fallo fatal del Cliente: " << e.what() << std::endl;
+        
+        QMessageBox::critical(nullptr, 
+            "Error Fatal",
+            QString("No se pudo iniciar el cliente:\n%1").arg(e.what()));
+        
         return 1;
     }
 }

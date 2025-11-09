@@ -121,8 +121,8 @@ LobbyWindow::LobbyWindow(QWidget *parent)
     
     setLayout(nullptr);
     
-    playButton->setGeometry(50, 600, 270, 60);
-    quitButton->setGeometry(375, 600, 270, 60);
+    playButton->setGeometry(375, 600, 270, 60);
+    quitButton->setGeometry(50, 600, 270, 60);
     
     
     connect(playButton, &QPushButton::clicked, this, &LobbyWindow::onPlayClicked);
@@ -208,22 +208,28 @@ LobbyWindow::~LobbyWindow() {
     if (createMatchWindow) delete createMatchWindow;
 }
 
+
 void LobbyWindow::onPlayClicked() {
-    playButton->setEnabled(false);
+    std::cout << "[LobbyWindow] Botón Jugar presionado" << std::endl;
+    emit playRequested();  // Solo emitir señal, el controlador hace el resto
+}
+
+// void LobbyWindow::onPlayClicked() {
+//     playButton->setEnabled(false);
     
-    std::cout << "Abriendo ingreso de nombre..." << std::endl;
+//     std::cout << "Abriendo ingreso de nombre..." << std::endl;
     
-    // Crear ventana de ingreso de nombre
-    nameInputWindow = new NameInputWindow();
+//     // Crear ventana de ingreso de nombre
+//     nameInputWindow = new NameInputWindow();
     
    
-    connect(nameInputWindow, &NameInputWindow::nameConfirmed,
-            this, &LobbyWindow::onNameConfirmed);
+//     connect(nameInputWindow, &NameInputWindow::nameConfirmed,
+//             this, &LobbyWindow::onNameConfirmed);
     
-    // Ocultar lobby y mostrar ingreso de nombre
-    this->hide();
-    nameInputWindow->show();
-}
+//     // Ocultar lobby y mostrar ingreso de nombre
+//     this->hide();
+//     nameInputWindow->show();
+// }
 
 void LobbyWindow::onNameConfirmed(const QString& name) {
     playerName = name;

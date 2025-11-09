@@ -8,11 +8,16 @@
 #include <QVBoxLayout>
 #include <QPixmap>
 
+
+#include "common_src/lobby_protocol.h"  // Para GameInfo
+
+
 class MatchSelectionWindow : public QWidget {
     Q_OBJECT
 
 public:
     explicit MatchSelectionWindow(QWidget *parent = nullptr);
+    void updateGamesList(const std::vector<GameInfo>& games);
     ~MatchSelectionWindow();
 
 protected:
@@ -22,6 +27,7 @@ protected:
 signals:
     void joinMatchRequested(const QString& matchId);
     void createMatchRequested();
+    void refreshRequested();
     void backToLobby();
 
 private slots:
@@ -32,7 +38,7 @@ private slots:
 
 private:
     void setupUI();
-    void loadPlaceholderMatches();
+   // void loadPlaceholderMatches();
     
     QPixmap backgroundImage;
     

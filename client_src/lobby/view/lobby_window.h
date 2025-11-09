@@ -29,6 +29,9 @@ protected:
     void paintEvent(QPaintEvent* event) override;
     void closeEvent(QCloseEvent* event) override;
 
+signals:
+    void playRequested();    
+
 private slots:
     void onPlayClicked();
     void onNameConfirmed(const QString& playerName);
