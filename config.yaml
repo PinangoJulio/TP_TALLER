@@ -1,0 +1,68 @@
+# ===============================
+# SERVER CONFIGURATION
+# ===============================
+
+port: "8080"                     # string - port where the server will run
+max_clients: 8                   # int - maximum number of clients that can connect simultaneously
+
+# ===============================
+# GAME SETTINGS
+# ===============================
+
+min_players_per_race: 2          # int - minimum number of players required to start a race
+max_players_per_race: 8          # int - maximum number of players allowed per race
+laps_per_race: 3                 # int - number of laps per race (vueltas)
+races_per_match: 5               # int - number of races that make up one match (ej: 1 Partida --> 5 carreras)
+
+countdown_before_start: 5        # seconds (int) - countdown before the race starts
+max_wait_time_in_lobby: 60       # seconds (int) - max waiting time for players before starting automatically
+respawn_time_after_crash: 3      # seconds (int) - time before a crashed player can respawn
+race_timeout: 300                # seconds (int) - maximum allowed duration for a race
+
+# ===============================
+# VEHICLE SETTINGS
+# ===============================
+
+default_car: "Coupe"             # string - default car for new players
+initial_speed: 0.0               # float - initial speed (km/h)
+max_speed: 320.0                 # float - maximum possible speed (km/h)
+acceleration_rate: 12.0          # float - acceleration factor (m/s²)
+brake_power: 9.0                 # float - braking intensity (m/s²)
+handling_sensitivity: 0.8        # float - turning responsiveness (0.0 to 1.0)
+
+nitro_duration: 5                # seconds (int) - duration of nitro boost
+nitro_cooldown: 10               # seconds (int) - cooldown before nitro can be used again
+nitro_speed_multiplier: 1.5      # float - multiplier for max speed when nitro is active
+
+# ===============================
+# DAMAGE AND COLLISIONS
+# ===============================
+
+collision_damage_min: 10         # int - minimum damage from a collision
+collision_damage_max: 50         # int - maximum damage from a collision
+crash_speed_threshold: 120.0     # float - speed above which a collision causes a crash
+repair_time: 4                   # seconds (int) - time required to repair a crashed car
+
+# ===============================
+# MAPS AND TRACKS
+# ===============================
+
+available_cities:
+  - "Liberty City"
+  - "San Andreas"
+  - "Vice City"
+
+tracks_per_city:
+  Liberty City: 3
+  San Andreas: 2
+  Vice City: 4
+
+default_city: "Liberty City"        # string - default city if none is selected
+
+# ===============================
+# VISUAL AND CAMERA SETTINGS
+# ===============================
+
+camera_fov: 90                   # int - field of view for camera (degrees)
+camera_distance: 6.0             # float - distance from camera to car (meters)
+day_night_cycle: true
