@@ -5,25 +5,24 @@
 #include "../common_src/queue.h"
 #include "../common_src/dtos.h"
 
-#include "acceptor.h"
 #include "network/monitor.h"
-#include "game/game_loop.h"  
+#include "game/game_loop.h"
 
-Server::Server(const std::string& servicename): servicename(servicename) {}
+#define QUIT 'q'
 
-void Server::run() {
-    Monitor monitor;
-    Queue<struct Command> game_queue;
-    Acceptor acceptor(this->servicename, monitor, game_queue);
+Server::Server(const char *servicename): acceptor(servicename){}
 
+void Server::accept_connection() {
     acceptor.start();
-    GameSimulator game(monitor, game_queue);  // ✅ Ahora sí conoce GameSimulator
-    game.start();
-    
+}
+
+void Server::start() {
+
+    accept_connection();
     while (std::cin.get() != QUIT) {}
 
-    game.stop();
-    game.join();
-    acceptor.stop();
-    acceptor.join();
+}
+
+Server::~Server() {
+    acceptor.stop_accepting();
 }

@@ -92,14 +92,14 @@ sudo cp ./server /usr/bin/$TP_NAME-server
 sudo cp ./taller_editor /usr/bin/$TP_NAME-editor
 
 # 3.3 Copiar Archivos de Configuración (YAML)
-sudo cp -r config/* /etc/$TP_NAME/
+#sudo cp -r config/* /etc/$TP_NAME/
 
 # 3.4 Copiar Assets (Imágenes, Sonidos)
 sudo cp -r gfx /var/$TP_NAME/assets/
 sudo cp -r sfx /var/$TP_NAME/assets/ 2>/dev/null || true
 
 # 3.5 Copiar Recorridos/Mapas
-sudo cp -r server_src/maps_availables/* /var/$TP_NAME/recorridos/
+sudo cp -r server_src/city_maps/* /var/$TP_NAME/recorridos/
 
 ## ----------------------------------------------------
 ## [4/4] Finalización
