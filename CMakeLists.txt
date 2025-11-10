@@ -117,7 +117,8 @@ endif()
 
 add_library(taller_common STATIC
         common_src/config.h
-        common_src/config.cpp)
+        common_src/config.cpp
+        common_src/general_paths.h)
 add_subdirectory(common_src)
 include(cmake/CompilerWarnings.cmake)
 set_project_warnings(taller_common ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
@@ -176,7 +177,17 @@ endif()
 # --- SERVIDOR ---
 if(TALLER_SERVER)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
-    add_executable(server)
+    add_executable(server
+            server_src/network/matches_monitor.h
+            server_src/game/player.h
+            server_src/server_protocol.h
+            server_src/game/match.h
+            server_src/network/matches_monitor.cpp
+            server_src/network/client_monitor.h
+            server_src/network/client_monitor.cpp
+            server_src/game/race.h
+            server_src/game/match.cpp
+            server_src/server_protocol.cpp)
     add_subdirectory(server_src)
     set_project_warnings(server ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 

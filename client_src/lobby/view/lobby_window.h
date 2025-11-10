@@ -6,7 +6,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QPixmap>
-#include <SDL2/SDL_mixer.h>
+#include <SDL2pp/Mixer.hh>
 #include <vector>
 #include "common_types.h"
 

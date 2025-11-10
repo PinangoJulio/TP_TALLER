@@ -1,42 +1,20 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#pragma once
-#include <map>
-#include <string>
+
 #include <yaml-cpp/yaml.h>
+#include <stdexcept>
+#include <string>
 
-// Estructura para contener los atributos de un tipo de auto
-struct AtributosAuto {
-    float velocidad_maxima;
-    float aceleracion;
-    int salud_base;
-    float masa;
-    float control;
-};
-
-class Configuracion {
+class Configuration {
 private:
-    float gravedad_x;
-    float gravedad_y;
-    float tiempo_paso_s;
-    int it_velocidad;
-    int it_posicion;
-    std::map<std::string, AtributosAuto> autos;
+    static YAML::Node yaml;
 
 public:
-    // Constructor que lanza excepción si el archivo no se carga.
-    Configuracion(const std::string& ruta_yaml);
+    static void load_path(const char *yaml_path);
 
-    // Métodos para Box2D
-    float obtenerGravedadX() const { return gravedad_x; }
-    float obtenerGravedadY() const { return gravedad_y; }
-    float obtenerTiempoPaso() const { return tiempo_paso_s; }
-    int obtenerIteracionesVelocidad() const { return it_velocidad; }
-    int obtenerIteracionesPosicion() const { return it_posicion; }
-
-    // Métodos para los autos
-    const AtributosAuto& obtenerAtributosAuto(const std::string& tipo) const;
+    // Generic getter for any configuration field
+    template <typename T>
+    static T get(const std::string& field);
 };
-
 #endif //CONFIG_H
