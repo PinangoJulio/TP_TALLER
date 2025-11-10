@@ -24,6 +24,7 @@ class Receiver: public Thread {
     Sender sender;
     LobbyManager& lobby_manager;
 
+    bool handle_client_lobby();
 public:
     explicit Receiver(ServerProtocol& protocol, int id, Queue<GameState>& sender_messages_queue, std::atomic<bool>& is_running, MatchesMonitor& monitor, LobbyManager& lobby_manager);
 
