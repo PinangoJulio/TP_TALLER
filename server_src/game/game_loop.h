@@ -16,7 +16,7 @@
 #define NITRO_DURATION 12
 #define SLEEP 250
 
-class GameSimulator: public Thread {
+class GameLoop: public Thread {
     bool is_running;
     Monitor& monitor;
     std::vector<Car> cars;
@@ -29,13 +29,13 @@ class GameSimulator: public Thread {
     void simulate_cars();
 
 public:
-    explicit GameSimulator(Monitor& monitor_ref, Queue<struct Command>& queue);
+    explicit GameLoop(Monitor& monitor_ref, Queue<struct Command>& queue);
 
     void run() override;
     void stop() override { is_running = false; }
 
-    GameSimulator(const GameSimulator&) = delete;
-    GameSimulator& operator=(const GameSimulator&) = delete;
+    GameLoop(const GameLoop&) = delete;
+    GameLoop& operator=(const GameLoop&) = delete;
 };
 
 #endif  // SERVER_GAME_H

@@ -1,9 +1,9 @@
-#include "game_loop.h"
+/*#include "game_loop.h"
 
-GameSimulator::GameSimulator(Monitor& monitor_ref, Queue<struct Command>& queue):
+GameLoop::GameLoop(Monitor& monitor_ref, Queue<struct Command>& queue):
         is_running(true), monitor(monitor_ref), cars_with_nitro(0), game_queue(queue) {}
 
-void GameSimulator::send_nitro_on() {
+void GameLoop::send_nitro_on() {
     cars_with_nitro++;
     ServerMsg msg;
     msg.type = static_cast<uint8_t>(ServerMessageType::MSG_SERVER);  
@@ -13,7 +13,7 @@ void GameSimulator::send_nitro_on() {
     monitor.broadcast(msg);
 }
 
-void GameSimulator::send_nitro_off() {
+void GameLoop::send_nitro_off() {
     cars_with_nitro--;
     ServerMsg msg;
     msg.type = static_cast<uint8_t>(ServerMessageType::MSG_SERVER);  
@@ -23,7 +23,7 @@ void GameSimulator::send_nitro_off() {
     monitor.broadcast(msg);
 }
 
-void GameSimulator::process_commands() {
+void GameLoop::process_commands() {
     Command cmd;
     while (game_queue.try_pop(cmd)) {
         auto it = std::find_if(cars.begin(), cars.end(),
@@ -45,7 +45,7 @@ void GameSimulator::process_commands() {
     }
 }
 
-void GameSimulator::simulate_cars() {
+void GameLoop::simulate_cars() {
     for (auto& car: cars) {
         if (car.simulate_tick()) {
             send_nitro_off();
@@ -53,7 +53,7 @@ void GameSimulator::simulate_cars() {
     }
 }
 
-void GameSimulator::run() {
+void GameLoop::run() {
     while (is_running) {
         // 1. Procesar todos los comandos pendientes y ejecutarlos
         process_commands();
@@ -62,4 +62,4 @@ void GameSimulator::run() {
         // 3. Sleep
         std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP));
     }
-}
+}*/
