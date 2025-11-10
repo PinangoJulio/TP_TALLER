@@ -1,6 +1,6 @@
 #include "monitor.h"
 
-Monitor::Monitor() {}
+/*Monitor::Monitor() {}
 
 
 void Monitor::add_client_to_queue(Queue<struct ServerMsg>& client_queue) {
@@ -19,3 +19,4 @@ void Monitor::clean_queue() {
     std::unique_lock<std::mutex> lck(mtx);
     message_queue.clear();
 }
+*/
