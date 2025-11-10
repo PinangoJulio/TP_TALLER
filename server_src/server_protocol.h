@@ -18,7 +18,7 @@ public:
     bool handle_client();
 
     // Procesa mensajes del cliente
-    void process_client_messages(const std::string& username);
+    bool process_client_messages(const std::string& username);
 
     // Lee un tipo de mensaje
     uint8_t read_message_type();

@@ -47,10 +47,15 @@ std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::strin
 
 void Receiver::handle_lobby() {
     while (is_running) {
-        bool ok = protocol.handle_client();
-        if (!ok) {
-            std::cout << "[Receiver] Cliente desconectado. Finalizando hilo.\n";
-            is_running = false;
+        try {
+            // Maneja un mensaje completo del cliente
+            bool active = protocol.handle_client();
+            if (!active) {
+                std::cout << "[Receiver] Client disconnected\n";
+                break;
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "[Receiver] Error: " << e.what() << std::endl;
             break;
         }
     }
