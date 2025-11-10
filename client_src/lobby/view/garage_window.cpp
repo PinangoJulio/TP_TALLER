@@ -140,7 +140,7 @@ void GarageWindow::setupUI() {
         "}"
     );
     selectButton->setCursor(Qt::PointingHandCursor);
-    selectButton->setGeometry(50, 590, 180, 60);
+    selectButton->setGeometry(470, 590, 180, 60);
     connect(selectButton, &QPushButton::clicked, this, &GarageWindow::onSelectCar);
     
     backButton = new QPushButton("Volver", this);
@@ -163,7 +163,7 @@ void GarageWindow::setupUI() {
         "}"
     );
     backButton->setCursor(Qt::PointingHandCursor);
-    backButton->setGeometry(470, 590, 180, 60);
+    backButton->setGeometry(50, 590, 180, 60);
     connect(backButton, &QPushButton::clicked, this, &GarageWindow::onBackClicked);
 }
 

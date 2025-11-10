@@ -105,12 +105,12 @@ int main(int argc, char* argv[]) {
                     if (msg_type == MSG_ERROR) {
                         std::string error_msg;
                         client.read_error_details(error_msg);
-                        std::cout << "\n❌ Error: " << error_msg << std::endl;
+                        std::cout << "\n  Error: " << error_msg << std::endl;
                     } else if (msg_type == MSG_GAME_JOINED) {
                         uint16_t joined_id = client.read_uint16();
                         std::cout << "\n✅ Joined game " << joined_id << "!" << std::endl;
                     } else {
-                        std::cout << "\n❌ Unexpected message type: " 
+                        std::cout << "\n  Unexpected message type: " 
                                   << static_cast<int>(msg_type) << std::endl;
                     }
                     break;

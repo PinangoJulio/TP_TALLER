@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
         return app.exec();
         
     } catch (std::exception& e) {
-        std::cerr << "❌ Fallo fatal del Cliente: " << e.what() << std::endl;
+        std::cerr << "  Fallo fatal del Cliente: " << e.what() << std::endl;
         
         QMessageBox::critical(nullptr, 
             "Error Fatal",

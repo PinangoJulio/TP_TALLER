@@ -167,7 +167,7 @@ void WaitingRoomWindow::setupUI() {
     );
     readyButton->setCursor(Qt::PointingHandCursor);
     readyButton->setCheckable(true);
-    readyButton->setGeometry(50, 610, 180, 60);
+    readyButton->setGeometry(470, 610, 180, 60);
     connect(readyButton, &QPushButton::clicked, this, &WaitingRoomWindow::onReadyClicked);
     
     startButton = new QPushButton("Iniciar!", this);
@@ -219,7 +219,7 @@ void WaitingRoomWindow::setupUI() {
         "}"
     );
     backButton->setCursor(Qt::PointingHandCursor);
-    backButton->setGeometry(470, 610, 180, 60);
+    backButton->setGeometry(50, 610, 180, 60);
     connect(backButton, &QPushButton::clicked, this, &WaitingRoomWindow::onBackClicked);
 }
 

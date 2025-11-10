@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     
     // Configuración del servidor (por ahora hardcodeado)
-    // TODO: Leer de argumentos de línea de comandos
+    // Cambiar: Leer de argumentos de línea de comandos
     QString host = "localhost";
     QString port = "8080";
     

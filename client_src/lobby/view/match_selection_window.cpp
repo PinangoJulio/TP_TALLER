@@ -11,17 +11,17 @@ MatchSelectionWindow::MatchSelectionWindow(QWidget *parent)
     setWindowTitle("Need for Speed 2D - Selección de Partida");
     setFixedSize(700, 700);
     
-    // Cargar fuente personalizada
+    
     customFontId = QFontDatabase::addApplicationFont("assets/fonts/arcade-classic.ttf");
     
-    // Cargar imagen de fondo
+  
     backgroundImage.load("assets/img/race.png");
     if (!backgroundImage.isNull()) {
         backgroundImage = backgroundImage.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }
     
     setupUI();
-   // loadPlaceholderMatches();
+
 }
 
 void MatchSelectionWindow::setupUI() {
@@ -111,9 +111,9 @@ void MatchSelectionWindow::setupUI() {
     );
     refreshButton->setCursor(Qt::PointingHandCursor);
     refreshButton->setGeometry(260, 530, 180, 60);
-   // connect(refreshButton, &QPushButton::clicked, this, &MatchSelectionWindow::loadPlaceholderMatches);
+   
     connect(refreshButton, &QPushButton::clicked, this, [this]() {emit refreshRequested();});
-    // Botones inferiores
+
     joinButton = new QPushButton("Unirse", this);
     if (customFontId != -1) {
         QFont btnFont = customFont;
@@ -140,7 +140,7 @@ void MatchSelectionWindow::setupUI() {
     );
     joinButton->setCursor(Qt::PointingHandCursor);
     joinButton->setEnabled(false);
-    joinButton->setGeometry(50, 600, 180, 60);
+    joinButton->setGeometry(470, 600, 180, 60);
     connect(joinButton, &QPushButton::clicked, this, &MatchSelectionWindow::onJoinMatchClicked);
     
     createButton = new QPushButton("Crear Nueva", this);
@@ -186,7 +186,7 @@ void MatchSelectionWindow::setupUI() {
         "}"
     );
     backButton->setCursor(Qt::PointingHandCursor);
-    backButton->setGeometry(470, 600, 180, 60);
+    backButton->setGeometry(50, 600, 180, 60);
     connect(backButton, &QPushButton::clicked, this, &MatchSelectionWindow::onBackClicked);
 }
 
@@ -208,7 +208,7 @@ void MatchSelectionWindow::updateGamesList(const std::vector<GameInfo>& games) {
     }
     
     for (const auto& game : games) {
-        // Convertir char[32] a QString
+       
         QString gameName = QString::fromUtf8(game.game_name).trimmed();
         
         QString itemText = QString("🏁 %1 | %2/%3 jugadores")
@@ -221,7 +221,7 @@ void MatchSelectionWindow::updateGamesList(const std::vector<GameInfo>& games) {
         }
         
         QListWidgetItem* item = new QListWidgetItem(itemText);
-        item->setData(Qt::UserRole, game.game_id); // Guardar ID real
+        item->setData(Qt::UserRole, game.game_id);
         
         // Deshabilitar partidas llenas o ya iniciadas
         if (game.is_started || game.current_players >= game.max_players) {
@@ -232,46 +232,24 @@ void MatchSelectionWindow::updateGamesList(const std::vector<GameInfo>& games) {
         matchList->addItem(item);
     }
 }
-// void MatchSelectionWindow::loadPlaceholderMatches() {
-//     matchList->clear();
-//     selectedMatchId = "";
-//     joinButton->setEnabled(false);
-    
-//     // Partidas placeholder
-//     QStringList matches = {
-//         "🏁 Carrera Rápida | 2/4 jugadores | Circuito Tokyo",
-//         "🏁 Gran Premio | 1/6 jugadores | Circuito Las Vegas",
-//         "🏁 Duelo de Velocidad | 3/4 jugadores | Circuito Miami",
-//         "🏁 Carrera Nocturna | 4/4 jugadores | Circuito Osaka (LLENA)",
-//         "🏁 Sprint Challenge | 1/3 jugadores | Circuito Berlin"
-//     };
-    
-//     for (const QString& match : matches) {
-//         QListWidgetItem* item = new QListWidgetItem(match);
-        
-//         // Deshabilitar partidas llenas
-//         if (match.contains("LLENA")) {
-//             item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
-//             item->setForeground(QColor(150, 150, 150));
-//         }
-        
-//         matchList->addItem(item);
-//     }
-    
-//     std::cout << "Partidas actualizadas (placeholder)" << std::endl;
-// }
 
 void MatchSelectionWindow::onMatchSelected(QListWidgetItem* item) {
-    if (item && !item->text().contains("LLENA")) {
-        selectedMatchId = item->text().split("|").first().trimmed();
+    if (item && !item->text().contains("EN CURSO")) {
+      
+        uint16_t gameId = item->data(Qt::UserRole).toUInt();
+        selectedMatchId = QString::number(gameId);
         joinButton->setEnabled(true);
-        std::cout << "Partida seleccionada: " << selectedMatchId.toStdString() << std::endl;
+        
+        std::cout << "[MatchSelectionWindow] Partida seleccionada ID: " 
+                  << gameId << std::endl;
     }
 }
 
+
 void MatchSelectionWindow::onJoinMatchClicked() {
     if (!selectedMatchId.isEmpty()) {
-        std::cout << "Uniéndose a partida: " << selectedMatchId.toStdString() << std::endl;
+        std::cout << "[MatchSelectionWindow] Emitiendo señal de unirse a: " 
+                  << selectedMatchId.toStdString() << std::endl;
         emit joinMatchRequested(selectedMatchId);
     }
 }
@@ -303,6 +281,10 @@ void MatchSelectionWindow::paintEvent(QPaintEvent* event) {
 
 void MatchSelectionWindow::closeEvent(QCloseEvent* event) {
     QWidget::closeEvent(event);
+}
+
+QListWidgetItem* MatchSelectionWindow::getSelectedItem() const {
+    return matchList->currentItem();
 }
 
 MatchSelectionWindow::~MatchSelectionWindow() {

@@ -155,3 +155,35 @@ void LobbyClient::read_error_details(std::string& error_message) {
     std::cout << "[LobbyClient] Error received (code " << static_cast<int>(error_code) 
               << "): " << error_message << std::endl;
 }
+
+
+uint8_t LobbyClient::read_uint8() {
+    uint8_t value;
+    socket.recvall(&value, sizeof(value));
+    return value;
+}
+
+// ========================================================================================================================================================================
+// Estas son las funciones que necesito nuevas para seguir
+
+// void LobbyClient::leave_game(uint16_t game_id) {
+    
+//     // To do: Falta esto en el servidor
+// }
+
+// void LobbyClient::select_car(uint8_t car_index) {
+    
+//     // To do: Falta esto en el servidor
+// }
+
+// void LobbyClient::set_ready(bool is_ready) {
+    
+//     // To do: Falta esto en el servidor
+// }
+
+// void LobbyClient::start_game(uint16_t game_id) {
+    
+    
+//     // To do: Falta esto en el servidor
+// }
+// // ========================================================================================================================================================================

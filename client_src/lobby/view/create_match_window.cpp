@@ -214,7 +214,7 @@ void CreateMatchWindow::setupStep1UI() {
     );
     nextStepButton->setCursor(Qt::PointingHandCursor);
     nextStepButton->setEnabled(false);
-    nextStepButton->setGeometry(50, 590, 180, 70);
+    nextStepButton->setGeometry(470, 590, 180, 70);
     connect(nextStepButton, &QPushButton::clicked, this, &CreateMatchWindow::onNextToRaceList);
     
     backButtonStep1 = new QPushButton("Volver", step1Widget);
@@ -237,7 +237,7 @@ void CreateMatchWindow::setupStep1UI() {
         "}"
     );
     backButtonStep1->setCursor(Qt::PointingHandCursor);
-    backButtonStep1->setGeometry(470, 590, 180, 70);
+    backButtonStep1->setGeometry(50, 590, 180, 70);
    
 
     connect(backButtonStep1, &QPushButton::clicked, this, &CreateMatchWindow::backRequested);
@@ -347,7 +347,7 @@ void CreateMatchWindow::setupStep2UI() {
     );
     confirmButton->setCursor(Qt::PointingHandCursor);
     confirmButton->setEnabled(false);
-    confirmButton->setGeometry(50, 590, 180, 70);
+    confirmButton->setGeometry(470, 590, 180, 70);
     connect(confirmButton, &QPushButton::clicked, this, &CreateMatchWindow::onConfirmRaceList);
     
     backButtonStep2 = new QPushButton("Volver", step2Widget);
@@ -370,7 +370,7 @@ void CreateMatchWindow::setupStep2UI() {
         "}"
     );
     backButtonStep2->setCursor(Qt::PointingHandCursor);
-    backButtonStep2->setGeometry(470, 590, 180, 70);
+    backButtonStep2->setGeometry(50, 590, 180, 70);
     connect(backButtonStep2, &QPushButton::clicked, this, &CreateMatchWindow::onBackFromRaceList);
     
     stepsStack->addWidget(step2Widget);

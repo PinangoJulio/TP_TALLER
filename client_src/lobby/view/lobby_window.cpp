@@ -211,25 +211,9 @@ LobbyWindow::~LobbyWindow() {
 
 void LobbyWindow::onPlayClicked() {
     std::cout << "[LobbyWindow] Botón Jugar presionado" << std::endl;
-    emit playRequested();  // Solo emitir señal, el controlador hace el resto
+    emit playRequested();  
 }
 
-// void LobbyWindow::onPlayClicked() {
-//     playButton->setEnabled(false);
-    
-//     std::cout << "Abriendo ingreso de nombre..." << std::endl;
-    
-//     // Crear ventana de ingreso de nombre
-//     nameInputWindow = new NameInputWindow();
-    
-   
-//     connect(nameInputWindow, &NameInputWindow::nameConfirmed,
-//             this, &LobbyWindow::onNameConfirmed);
-    
-//     // Ocultar lobby y mostrar ingreso de nombre
-//     this->hide();
-//     nameInputWindow->show();
-// }
 
 void LobbyWindow::onNameConfirmed(const QString& name) {
     playerName = name;
@@ -312,11 +296,11 @@ void LobbyWindow::onMatchCreated(const QString& matchName, int maxPlayers, const
         createMatchWindow = nullptr;
     }
     
-    // Aquí irías directamente al garage para seleccionar tu auto
-    // ya que eres el host de la partida que acabas de crear
+    // Aquí directamente se va al garage para seleccionar el auto
+    // porque el host es el que acaba de crear la partida
     openGarage();
     
-    // TODO: Enviar info de la partida al servidor
+    // to do: Enviar info de la partida al servidor
 }
 
 void LobbyWindow::onBackFromCreateMatch() {
@@ -385,7 +369,7 @@ void LobbyWindow::onStartGame() {
         waitingRoomWindow->close();
     }
     
-    // TODO: CREAR VENTANA DE SDL CON L JUEGO
+    // to do: CREAR VENTANA DE SDL CON L JUEGO
 }
 
 void LobbyWindow::onBackFromNameInput() {
@@ -408,7 +392,7 @@ void LobbyWindow::onBackFromMatchSelection() {
     
     // Volver al lobby principal
     playButton->setEnabled(true);
-    playerName = ""; // Resetear nombre
+    playerName = ""; 
     this->show();
     
     // Reiniciar música, considerando si la dejo todo el lobby o solo un rato porque me atormenté

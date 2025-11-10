@@ -55,6 +55,19 @@ public:
     // Lee un uint16_t del socket (público para uso en tests/manejo de respuestas)
     uint16_t read_uint16();
 
+    // Lee un uint16_t del socket (público para uso en tests/manejo de respuestas)
+    uint8_t read_uint8();
+
+
+//===================================================================================================================
+    // COSAS QUE NECESITO PARA TERMINAR LA INTEGRACIÓN DEL LOBBY
+    // En las vistas siguen siendo place holders
+    // void leave_game(uint16_t game_id);
+    // void select_car(uint8_t car_index);
+    // void set_ready(bool is_ready);
+    // void start_game(uint16_t game_id);
+//===================================================================================================================
+   
     // Getters
     bool is_connected() const { return connected; }
     std::string get_username() const { return username; }

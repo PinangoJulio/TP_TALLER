@@ -1,15 +1,15 @@
 #ifndef MATCH_SELECTION_WINDOW_H
 #define MATCH_SELECTION_WINDOW_H
 
-#include <QWidget>
-#include <QPushButton>
 #include <QLabel>
+#include <QWidget>
+#include <QPixmap>
+#include <QPushButton>
 #include <QListWidget>
 #include <QVBoxLayout>
-#include <QPixmap>
 
 
-#include "common_src/lobby_protocol.h"  // Para GameInfo
+#include "common_src/lobby_protocol.h"  
 
 
 class MatchSelectionWindow : public QWidget {
@@ -18,6 +18,7 @@ class MatchSelectionWindow : public QWidget {
 public:
     explicit MatchSelectionWindow(QWidget *parent = nullptr);
     void updateGamesList(const std::vector<GameInfo>& games);
+    QListWidgetItem* getSelectedItem() const;
     ~MatchSelectionWindow();
 
 protected:
@@ -38,10 +39,7 @@ private slots:
 
 private:
     void setupUI();
-   // void loadPlaceholderMatches();
-    
     QPixmap backgroundImage;
-    
     QLabel* titleLabel;
     QListWidget* matchList;
     QPushButton* joinButton;
