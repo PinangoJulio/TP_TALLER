@@ -5,7 +5,7 @@
 #include <vector>
 #include <cstdint>
 
-enum class GameState : uint8_t {
+enum class GameStatus : uint8_t {
     WAITING,    // Esperando jugadores
     READY,      // 2+ jugadores, puede iniciarse
     STARTED     // Juego en curso
@@ -18,7 +18,7 @@ private:
     std::vector<std::string> players;  // Lista de usernames
     std::string host_username;         // NUEVO: Host de la partida
     uint8_t max_players;
-    GameState state;                   // NUEVO: Estado de la partida
+    GameStatus state;                   // NUEVO: Estado de la partida
 
     // Promover al siguiente jugador como host
     void promote_new_host();
@@ -60,8 +60,8 @@ public:
     std::string get_host() const { return host_username; }
     uint8_t get_current_players() const { return players.size(); }
     uint8_t get_max_players() const { return max_players; }
-    GameState get_state() const { return state; }
-    bool has_started() const { return state == GameState::STARTED; }
+    GameStatus get_state() const { return state; }
+    bool has_started() const { return state == GameStatus::STARTED; }
 
     // No se pueden copiar GameRooms
     GameRoom(const GameRoom&) = delete;
