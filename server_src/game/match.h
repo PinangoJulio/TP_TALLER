@@ -33,7 +33,7 @@ private:
     int cant_max_players;
     std::string race_path;
 
-    Configuracion& config; 
+    Configuration& config; 
 
     // (Aca iría la tabla de posiciones ACUMULADA de la Partida)
 
@@ -42,7 +42,7 @@ public:
             int code,
             int max_players,
             const std::string& map_yaml_path,
-            Configuracion& cfg);
+            Configuration& cfg);
 
     // MÉTODOS DE LOBBY/UNIÓN
     bool can_player_join_match() const;

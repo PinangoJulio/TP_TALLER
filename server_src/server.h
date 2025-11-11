@@ -20,4 +20,4 @@ public:
 
 };
 
-#endif  // SERVER_H
+#endif

@@ -27,9 +27,9 @@ public:
     Race(Queue<ComandMatchDTO>& cmdQueue,
          ClientMonitor& brdcstr,
          const std::string& yaml_mapa,
-         Configuracion& config);
+         Configuration& config);
 
-    void start() { 
+    /*void start() { 
         if (gameLoop) gameLoop->start(); 
     }
     
@@ -41,8 +41,8 @@ public:
         if (gameLoop) gameLoop->join(); 
     }
     
-    bool isRunning() const { 
-       
+    bool isRunning() const {  return gameLoop->isRunning(); }
+       */
     ~Race() = default;
 };
-#endif //RACE_H
+#endif

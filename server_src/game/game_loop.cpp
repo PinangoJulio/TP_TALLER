@@ -1,7 +1,6 @@
 #include "game_loop.h"
 
-// ✅ CAMBIAR: GameSimulator → GameLoop
-GameLoop::GameLoop(Monitor& monitor_ref, Queue<struct Command>& queue, Configuracion& cfg)
+GameLoop::GameLoop(Monitor& monitor_ref, Queue<struct Command>& queue, Configuration& cfg)
     : is_running(true), 
       monitor(monitor_ref), 
       cars_with_nitro(0), 
@@ -144,7 +143,7 @@ void GameLoop::simulate_cars() {
 void GameLoop::run() {
     while (is_running) {
         process_commands();
-        update_physics();  // ✅ TU BOX2D
+        update_physics();
         simulate_cars();
         
         std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP));

@@ -3,7 +3,7 @@
 Race::Race(Queue<ComandMatchDTO>& cmdQueue,
            ClientMonitor& brdcstr,
            const std::string& yaml_mapa,
-           Configuracion& config)
+           Configuration& config)
     : commandQueue(cmdQueue),
       broadcaster(brdcstr),
       map_path(yaml_mapa) {
