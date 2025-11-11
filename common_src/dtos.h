@@ -3,6 +3,45 @@
 
 #include <cstdint>
 #include <string>
+// ============================================
+// Constantes útiles
+// ============================================
+#define QUIT 'q'
+#define MAX_PLAYERS 8
+
+// ============================================
+// DTOs de la Fase del Lobby
+// ============================================
+enum LobbyMessageType : uint8_t {
+    // Cliente → Servidor
+    MSG_USERNAME = 0x01,
+    MSG_LIST_GAMES = 0x02,
+    MSG_CREATE_GAME = 0x03,
+    MSG_JOIN_GAME = 0x04,
+    MSG_START_GAME = 0x05,
+    MSG_LEAVE_GAME = 0x07,
+
+    // Servidor → Cliente
+    MSG_WELCOME = 0x10,
+    MSG_GAMES_LIST = 0x11,
+    MSG_GAME_CREATED = 0x12,
+    MSG_GAME_JOINED = 0x13,
+    MSG_GAME_STARTED = 0x14,
+
+    MSG_ERROR = 0xFF
+};
+
+// Códigos de error
+enum LobbyErrorCode : uint8_t {
+    ERR_GAME_NOT_FOUND = 0x01,
+    ERR_GAME_FULL = 0x02,
+    ERR_INVALID_USERNAME = 0x03,
+    ERR_GAME_ALREADY_STARTED = 0x04,
+    ERR_ALREADY_IN_GAME = 0x05,        // NUEVO
+    ERR_NOT_HOST = 0x06,               // NUEVO
+    ERR_NOT_ENOUGH_PLAYERS = 0x07,     // NUEVO
+    ERR_PLAYER_NOT_IN_GAME = 0x08      // NUEVO
+};
 
 // ============================================
 // DTOs de la Fase de Juego
@@ -42,17 +81,15 @@ struct CarState {
     bool nitro_active;
 } __attribute__((packed));
 
-// Estructura de mensaje del servidor
-struct ServerMsg {
-    uint8_t type;
-    uint16_t cars_with_nitro;
-    uint8_t nitro_status;
-} __attribute__((packed));
+struct ComandMatchDTO {
+    int player_id;
+    GameCommand command;
 
-// ============================================
-// Constantes útiles
-// ============================================
-#define QUIT 'q'
-#define MAX_PLAYERS 8
+    // agregar mas despues
+
+    ComandMatchDTO() : player_id(0), command(GameCommand::DISCONNECT) {}
+};
+
+
 
 #endif // DTOS_H

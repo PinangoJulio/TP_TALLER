@@ -1,26 +1,19 @@
 #include "sender.h"
 #include <iostream>
 
-Sender::Sender(Socket& socket, Queue<ServerMsg>& queue):
-        socket(socket), mesgs_queue(queue), is_alive(true) {}
+Sender::Sender(ServerProtocol& protocol, Queue<GameState>& sender_queue,
+           std::atomic<bool>& alive, int player_id)
+        : protocol(protocol), sender_queue(sender_queue), alive(alive), player_id(player_id) {}
 
 void Sender::run() {
     try {
-        while (is_alive) {
-            ServerMsg msg = mesgs_queue.pop();  // bloqueante
-            socket.sendall(&msg, sizeof(msg));
+        while (alive) {
+            GameState snapshot = sender_queue.pop();
+            //protocol.send_game_state(snapshot);  --> enviar logica
         }
-    } catch (const std::exception& e) {
-        if (is_alive) {
-            std::cerr << "Error while trying to send messages!" << std::endl;
-        }
-        is_alive = false;
+    } catch (...) {
+        alive = false;
     }
 }
 
-void Sender::kill() {
-    is_alive = false;
-    mesgs_queue.close();
-}
-
-bool Sender::status() { return is_alive; }
+Sender::~Sender() {}

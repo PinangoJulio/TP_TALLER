@@ -80,7 +80,7 @@ Game ID to join: 1
 [LobbyClient] Requested to join game: 1
 [LobbyClient] Error received (code 2): Game is full or already started
 
-❌ Error: Game is full or already started
+  Error: Game is full or already started
 
 --- LOBBY MENU ---
 1. List games
@@ -130,7 +130,7 @@ Game ID to join: 2
 [LobbyClient] Requested to join game: 2
 [LobbyClient] Error received (code 2): Game is full or already started
 
-❌ Error: Game is full or already started
+  Error: Game is full or already started
 
 --- LOBBY MENU ---
 1. List games

@@ -1,35 +1,40 @@
 #ifndef SERVER_CLIENT_HANDLER_H
 #define SERVER_CLIENT_HANDLER_H
 
+#include "matches_monitor.h"
 #include "../../common_src/queue.h"
 #include "../../common_src/socket.h"
 #include "../../common_src/dtos.h"
 
 #include "receiver.h"
 #include "sender.h"
+#include "common_src/game_state.h"
+#include "server_src/server_protocol.h"
 
 class ClientHandler {
 private:
     Socket skt;
-    const int client_id;
-    Queue<ServerMsg> messages_queue;
+    int client_id;
+    ServerProtocol protocol;
+    MatchesMonitor& monitor;
+
+    std::atomic<bool> is_alive;
+    Queue<GameState> messages_queue;  // enviadora
+    LobbyManager& lobby_manager;
+
     Receiver receiver;
-    Sender sender;
-    Queue<struct Command>& game_queue;
 
 public:
-    explicit ClientHandler(Socket&& skt, const int id, Queue<struct Command>& queue);
+    explicit ClientHandler(Socket skt, int id, MatchesMonitor& monitor, LobbyManager& lobby_manager);
 
     void run_threads();
-    void join_threads();
-    void stop_threads();
-    bool is_alive();
+    bool is_running();
+    void stop_connection();
 
-    Queue<ServerMsg>& get_message_queue() { return messages_queue; }
+    Queue<GameState>& get_message_queue() { return messages_queue; }
     int get_id() const { return client_id; }
 
-    ClientHandler(const ClientHandler&) = delete;
-    ClientHandler& operator=(const ClientHandler&) = delete;
+    ~ClientHandler();
 };
 
 #endif  // SERVER_CLIENT_HANDLER_H

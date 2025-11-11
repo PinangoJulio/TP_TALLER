@@ -3,7 +3,7 @@
 #include <iostream>
 
 GameRoom::GameRoom(uint16_t id, const std::string& name, const std::string& creator, uint8_t max_players)
-    : game_id(id), game_name(name), host_username(creator), max_players(max_players), state(GameState::WAITING) {
+    : game_id(id), game_name(name), host_username(creator), max_players(max_players), state(GameStatus::WAITING) {
     
     // El creador automáticamente se une como primer jugador y host
     players.push_back(creator);
@@ -12,7 +12,7 @@ GameRoom::GameRoom(uint16_t id, const std::string& name, const std::string& crea
 }
 
 bool GameRoom::add_player(const std::string& username) {
-    if (is_full() || state == GameState::STARTED) {
+    if (is_full() || state == GameStatus::STARTED) {
         return false;
     }
     
@@ -29,8 +29,8 @@ bool GameRoom::add_player(const std::string& username) {
               << static_cast<int>(max_players) << ")" << std::endl;
     
     // Actualizar estado si ahora hay suficientes jugadores
-    if (players.size() >= 2 && state == GameState::WAITING) {
-        state = GameState::READY;
+    if (players.size() >= 2 && state == GameStatus::WAITING) {
+        state = GameStatus::READY;
         std::cout << "[GameRoom " << game_id << "] Game is now READY to start!" << std::endl;
     }
     
@@ -57,7 +57,7 @@ bool GameRoom::remove_player(const std::string& username) {
     
     // Actualizar estado si quedan menos de 2 jugadores
     if (players.size() < 2) {
-        state = GameState::WAITING;
+        state = GameStatus::WAITING;
         std::cout << "[GameRoom " << game_id << "] Not enough players, state changed to WAITING" << std::endl;
     }
     
@@ -88,7 +88,7 @@ bool GameRoom::is_full() const {
 }
 
 bool GameRoom::is_ready() const {
-    return players.size() >= 2 && state != GameState::STARTED;
+    return players.size() >= 2 && state != GameStatus::STARTED;
 }
 
 bool GameRoom::start(const std::string& requester) {
@@ -105,7 +105,7 @@ bool GameRoom::start(const std::string& requester) {
         return false;
     }
     
-    state = GameState::STARTED;
+    state = GameStatus::STARTED;
     std::cout << "[GameRoom " << game_id << "] Game STARTED by host '" 
               << requester << "' with " << players.size() << " players!" << std::endl;
     return true;

@@ -11,8 +11,10 @@ target_sources(server
     lobby/game_room.cpp
     
     # Game
-    game/game_loop.cpp
+    game/game_loop.cpp  
     game/car.cpp
+    game/match.cpp 
+    game/race.cpp       
     
     # Network
     network/client_handler.cpp
@@ -29,23 +31,11 @@ target_sources(server
     lobby/game_room.h
     game/game_loop.h
     game/car.h
+    game/match.h   
+    game/race.h    
+    game/player.h  
     network/client_handler.h
     network/receiver.h
     network/sender.h
     network/monitor.h
-)
-
-# Ejecutable temporal del lobby (para testing)
-add_executable(lobby_server_test
-    lobby/lobby_main.cpp
-)
-
-target_link_libraries(lobby_server_test
-    PRIVATE
-    taller_common
-    taller_lobby
-)
-
-set_target_properties(lobby_server_test PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
 )

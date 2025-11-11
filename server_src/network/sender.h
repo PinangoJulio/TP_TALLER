@@ -1,27 +1,25 @@
-#ifndef SERVER_SENDER_H
-#define SERVER_SENDER_H
+#ifndef SENDER_H
+#define SENDER_H
 
 #include "../../common_src/queue.h"
-#include "../../common_src/socket.h"
+#include "../server_protocol.h"
 #include "../../common_src/thread.h"
-#include "../../common_src/dtos.h" 
+#include "../../common_src/game_state.h"
 
-
-
-class Sender: public Thread {
-    Socket& socket;  
-    Queue<ServerMsg>& mesgs_queue;
-    std::atomic<bool> is_alive;
+class Sender : public Thread {
+private:
+    ServerProtocol& protocol;
+    Queue<GameState>& sender_queue;
+    std::atomic<bool>& alive;
+    int player_id;
 
 public:
-    Sender(Socket& socket, Queue<ServerMsg>& mesg_queue);
+    Sender(ServerProtocol& protocol, Queue<GameState>& sender_queue,
+           std::atomic<bool>& alive, int player_id);
 
-    void run() override;
-    void kill();
-    bool status();
+    void run() override ;
 
-    Sender(const Sender&) = delete;
-    Sender& operator=(const Sender&) = delete;
+    ~Sender();
 };
 
-#endif  // SERVER_SENDER_H
+#endif

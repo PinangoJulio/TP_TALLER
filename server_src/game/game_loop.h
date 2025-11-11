@@ -8,11 +8,11 @@
 #include <vector>
 #include <map>
 
-#include <box2d/box2d.h>
+#include <box2d/box2d.h>  // ✅ TU BOX2D
 
 #include "../../common_src/thread.h"
 #include "../../common_src/dtos.h"
-#include "../../common_src/config.h"
+#include "../../common_src/config.h"  // ✅ TU CONFIG
 
 #include "car.h"
 #include "../network/monitor.h"
@@ -20,36 +20,43 @@
 #define NITRO_DURATION 12
 #define SLEEP 250
 
-class GameSimulator: public Thread {
+// ✅ MANTENER nombre GameLoop (de main) pero con tu contenido Box2D
+class GameLoop: public Thread {
+private:
     bool is_running;
     Monitor& monitor;
     std::vector<Car> cars;
     int cars_with_nitro;
     Queue<struct Command>& game_queue;
     
+    // ✅ TU BOX2D
     b2WorldId mundo;
     Configuracion& config;
     std::map<int, b2BodyId> player_bodies;
     
+    // ✅ TU BOX2D: Métodos de física
+    void initialize_physics();
+    void update_physics();
+    void apply_forces_from_command(const Command& cmd, b2BodyId body);
+    
+    // Métodos existentes
     void send_nitro_on();
     void send_nitro_off();
     void process_commands();
     void simulate_cars();
-    
-    void initialize_physics();
-    void update_physics();
-    void apply_forces_from_command(const Command& cmd, b2BodyId body);
 
 public:
-    explicit GameSimulator(Monitor& monitor_ref, Queue<struct Command>& queue, Configuracion& cfg);
-    
-    ~GameSimulator();
+    // ✅ TU CONSTRUCTOR (con config)
+    explicit GameLoop(Monitor& monitor_ref, Queue<struct Command>& queue, Configuracion& cfg);
 
     void run() override;
     void stop() override { is_running = false; }
+    
+    // ✅ TU DESTRUCTOR
+    ~GameLoop();
 
-    GameSimulator(const GameSimulator&) = delete;
-    GameSimulator& operator=(const GameSimulator&) = delete;
+    GameLoop(const GameLoop&) = delete;
+    GameLoop& operator=(const GameLoop&) = delete;
 };
 
-#endif
+#endif  // SERVER_GAME_H

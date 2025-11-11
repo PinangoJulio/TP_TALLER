@@ -20,4 +20,5 @@ target_sources(taller_common
     config.h
     lobby_protocol.h
     game_protocol.h
+    #common_types.h
 )
