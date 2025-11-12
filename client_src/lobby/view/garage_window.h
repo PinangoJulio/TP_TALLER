@@ -11,6 +11,7 @@
 struct CarInfo {
     QString name;
     QString imagePath;
+    QString type;  // <-- nuevo campo (ej. "sport", "truck", "classic")
     int speed;
     int acceleration;
     int handling;
@@ -28,7 +29,7 @@ protected:
     void paintEvent(QPaintEvent* event) override;
 
 signals:
-    void carSelected(int carIndex);
+    void carSelected(const CarInfo& car);
     void backRequested();
 
 private slots:

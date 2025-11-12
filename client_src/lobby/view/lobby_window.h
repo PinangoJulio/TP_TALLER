@@ -9,6 +9,7 @@
 #include <SDL2pp/Mixer.hh>
 #include <vector>
 #include "common_types.h"
+#include "garage_window.h"
 
 // Forward declarations
 class NameInputWindow;
@@ -37,7 +38,7 @@ private slots:
     void onNameConfirmed(const QString& playerName);
     void onJoinMatch(const QString& matchId);
     void onCreateMatch();
-    void onCarSelected(int carIndex);
+    void onCarSelected(const CarInfo& car);
     void onStartGame();
     void onBackFromNameInput();
     void onBackFromMatchSelection();

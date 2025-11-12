@@ -8,6 +8,7 @@ struct RaceConfig {
     QString cityName;
     int trackIndex;
     QString trackName;
+
 };
 
 #endif // COMMON_TYPES_H

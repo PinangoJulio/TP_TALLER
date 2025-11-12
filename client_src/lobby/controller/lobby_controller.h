@@ -77,7 +77,7 @@ private slots:
     void onBackFromCreateMatch();
     
     //Garage
-    void onCarSelected(int carIndex);
+    void onCarSelected(const CarInfo& car);
     void onBackFromGarage();
     
     //Waiting Room
