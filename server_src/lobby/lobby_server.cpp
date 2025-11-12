@@ -1,5 +1,5 @@
 #include "lobby_server.h"
-#include "../../common_src/lobby_protocol.h"
+#include "../../common_src/lobby_protocol.h"  
 #include <iostream>
 #include <netinet/in.h>
 #include <thread>
@@ -128,19 +128,58 @@ void LobbyServer::process_client_messages(Socket& client_socket, const std::stri
                 }
                 
                 case MSG_LEAVE_GAME: {
+                    uint16_t game_id = read_uint16(client_socket);
+                    
                     std::cout << "[LobbyServer] Client '" << username 
-                              << "' leaving game" << std::endl;
+                              << "' leaving game " << game_id << std::endl;
                     
                     bool success = lobby_manager.leave_game(username);
                     
                     if (success) {
-                        // Enviar confirmación (puedes crear un nuevo mensaje MSG_GAME_LEFT)
                         std::cout << "[LobbyServer] Client '" << username 
-                                  << "' left the game successfully" << std::endl;
+                                  << "' left game successfully" << std::endl;
+                        // Opcional: Enviar confirmación al cliente
+                    } else {
+                        std::cout << "[LobbyServer] Client '" << username 
+                                  << "' was not in a game" << std::endl;
                     }
                     break;
                 }
                 
+                // ✅ AGREGADO: Handler para selección de auto
+                case MSG_SELECT_CAR: {
+                    uint8_t car_index;
+                    client_socket.recvall(&car_index, sizeof(car_index));
+                    
+                    std::cout << "[LobbyServer] Client '" << username 
+                              << "' selecting car: " << static_cast<int>(car_index) << std::endl;
+                    
+                    // Obtener la partida del jugador
+                    uint16_t game_id = lobby_manager.get_player_game(username);
+                    
+                    if (game_id == 0) {
+                        auto response = LobbyProtocol::serialize_error(
+                            ERR_PLAYER_NOT_IN_GAME, "You are not in a game");
+                        send_buffer(client_socket, response);
+                        break;
+                    }
+                    
+                    // Registrar selección
+                    bool success = lobby_manager.set_player_car(game_id, username, car_index);
+                    
+                    if (success) {
+                        std::cout << "[LobbyServer] Car selection registered for '" 
+                                  << username << "'" << std::endl;
+                        // No enviar respuesta (el cliente no espera una)
+                    } else {
+                        auto response = LobbyProtocol::serialize_error(
+                            ERR_INVALID_CAR_INDEX, "Invalid car selection");
+                        send_buffer(client_socket, response);
+                    }
+                    break;
+                }
+                
+                // ✅ AGREGADO: Handler para inicio de juego
                 case MSG_START_GAME: {
                     uint16_t game_id = read_uint16(client_socket);
                     
@@ -152,7 +191,12 @@ void LobbyServer::process_client_messages(Socket& client_socket, const std::stri
                     if (success) {
                         auto response = LobbyProtocol::serialize_game_started(game_id);
                         send_buffer(client_socket, response);
+                        
+                        std::cout << "[LobbyServer] ✅ Game " << game_id << " STARTED by " 
+                                  << username << "!" << std::endl;
+                        
                         // TODO: Aquí irá la transición a la fase de juego
+                        // Por ahora, el servidor simplemente notifica el inicio
                     } else {
                         auto response = LobbyProtocol::serialize_error(
                             ERR_NOT_HOST, "Only the host can start the game");
@@ -171,8 +215,13 @@ void LobbyServer::process_client_messages(Socket& client_socket, const std::stri
         std::cout << "[LobbyServer] Client '" << username 
                   << "' disconnected: " << e.what() << std::endl;
         
-        // Limpiar: remover al jugador de su partida
-        lobby_manager.leave_game(username);
+        // ✅ MEJORADO: Limpiar siempre al desconectar
+        if (lobby_manager.is_player_in_game(username)) {
+            uint16_t game_id = lobby_manager.get_player_game(username);
+            std::cout << "[LobbyServer] Cleaning up player '" << username 
+                      << "' from game " << game_id << std::endl;
+            lobby_manager.leave_game(username);
+        }
     }
 }
 

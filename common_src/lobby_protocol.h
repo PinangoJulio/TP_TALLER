@@ -7,8 +7,6 @@
 
 #include "dtos.h"
 
-// Tipos de mensajes del Lobb
-
 // Estructura para información de una partida
 struct GameInfo {
     uint16_t game_id;
@@ -31,6 +29,11 @@ namespace LobbyProtocol {
     std::vector<uint8_t> serialize_game_joined(uint16_t game_id);
     std::vector<uint8_t> serialize_error(LobbyErrorCode error_code, const std::string& message);
     std::vector<uint8_t> serialize_game_started(uint16_t game_id);
+    
+    // ✅ AGREGADO: Nuevas funciones de serialización
+    std::vector<uint8_t> serialize_select_car(uint8_t car_index);
+    std::vector<uint8_t> serialize_start_game(uint16_t game_id);
+    std::vector<uint8_t> serialize_leave_game(uint16_t game_id);
 }
 
 #endif // LOBBY_PROTOCOL_H

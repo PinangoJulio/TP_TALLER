@@ -8,6 +8,7 @@
 #include <QPixmap>
 #include <QTimer>
 #include <vector>
+#include <QMessageBox> 
 
 struct PlayerInfo {
     QString name;

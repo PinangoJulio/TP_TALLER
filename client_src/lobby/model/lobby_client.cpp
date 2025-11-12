@@ -156,34 +156,29 @@ void LobbyClient::read_error_details(std::string& error_message) {
               << "): " << error_message << std::endl;
 }
 
-
 uint8_t LobbyClient::read_uint8() {
     uint8_t value;
     socket.recvall(&value, sizeof(value));
     return value;
 }
 
-// ========================================================================================================================================================================
-// Estas son las funciones que necesito nuevas para seguir
 
-// void LobbyClient::leave_game(uint16_t game_id) {
-    
-//     // To do: Falta esto en el servidor
-// }
+void LobbyClient::select_car(uint8_t car_index) {
+    auto buffer = LobbyProtocol::serialize_select_car(car_index);
+    socket.sendall(buffer.data(), buffer.size());
+    std::cout << "[LobbyClient] Selected car: " << static_cast<int>(car_index) << std::endl;
+}
 
-// void LobbyClient::select_car(uint8_t car_index) {
-    
-//     // To do: Falta esto en el servidor
-// }
 
-// void LobbyClient::set_ready(bool is_ready) {
-    
-//     // To do: Falta esto en el servidor
-// }
+void LobbyClient::leave_game(uint16_t game_id) {
+    auto buffer = LobbyProtocol::serialize_leave_game(game_id);
+    socket.sendall(buffer.data(), buffer.size());
+    std::cout << "[LobbyClient] Left game: " << game_id << std::endl;
+}
 
-// void LobbyClient::start_game(uint16_t game_id) {
-    
-    
-//     // To do: Falta esto en el servidor
-// }
-// // ========================================================================================================================================================================
+
+void LobbyClient::start_game(uint16_t game_id) {
+    auto buffer = LobbyProtocol::serialize_start_game(game_id);
+    socket.sendall(buffer.data(), buffer.size());
+    std::cout << "[LobbyClient] Start game request: " << game_id << std::endl;
+}

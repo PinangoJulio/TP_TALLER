@@ -19,6 +19,7 @@ enum LobbyMessageType : uint8_t {
     MSG_CREATE_GAME = 0x03,
     MSG_JOIN_GAME = 0x04,
     MSG_START_GAME = 0x05,
+    MSG_SELECT_CAR = 0x06,       // ✅ AGREGADO
     MSG_LEAVE_GAME = 0x07,
 
     // Servidor → Cliente
@@ -37,10 +38,11 @@ enum LobbyErrorCode : uint8_t {
     ERR_GAME_FULL = 0x02,
     ERR_INVALID_USERNAME = 0x03,
     ERR_GAME_ALREADY_STARTED = 0x04,
-    ERR_ALREADY_IN_GAME = 0x05,        // NUEVO
-    ERR_NOT_HOST = 0x06,               // NUEVO
-    ERR_NOT_ENOUGH_PLAYERS = 0x07,     // NUEVO
-    ERR_PLAYER_NOT_IN_GAME = 0x08      // NUEVO
+    ERR_ALREADY_IN_GAME = 0x05,
+    ERR_NOT_HOST = 0x06,
+    ERR_NOT_ENOUGH_PLAYERS = 0x07,
+    ERR_PLAYER_NOT_IN_GAME = 0x08,
+    ERR_INVALID_CAR_INDEX = 0x09      // ✅ AGREGADO
 };
 
 // ============================================
@@ -89,7 +91,5 @@ struct ComandMatchDTO {
 
     ComandMatchDTO() : player_id(0), command(GameCommand::DISCONNECT) {}
 };
-
-
 
 #endif // DTOS_H

@@ -115,4 +115,25 @@ std::vector<uint8_t> serialize_game_started(uint16_t game_id) {
     return buffer;
 }
 
+std::vector<uint8_t> serialize_select_car(uint8_t car_index) {
+    std::vector<uint8_t> buffer;
+    buffer.push_back(MSG_SELECT_CAR);
+    buffer.push_back(car_index);
+    return buffer;
+}
+
+std::vector<uint8_t> serialize_start_game(uint16_t game_id) {
+    std::vector<uint8_t> buffer;
+    buffer.push_back(MSG_START_GAME);
+    push_uint16(buffer, game_id);
+    return buffer;
+}
+
+std::vector<uint8_t> serialize_leave_game(uint16_t game_id) {
+    std::vector<uint8_t> buffer;
+    buffer.push_back(MSG_LEAVE_GAME);
+    push_uint16(buffer, game_id);
+    return buffer;
+}
+
 } // namespace LobbyProtocol

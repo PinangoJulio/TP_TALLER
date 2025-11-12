@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <map>          // ✅ AGREGAR ESTA LÍNEA
 #include <cstdint>
 
 enum class GameStatus : uint8_t {
@@ -15,10 +16,13 @@ class GameRoom {
 private:
     uint16_t game_id;
     std::string game_name;
-    std::vector<std::string> players;  // Lista de usernames
-    std::string host_username;         // NUEVO: Host de la partida
+    std::vector<std::string> players;  
+    std::string host_username;         
     uint8_t max_players;
-    GameStatus state;                   // NUEVO: Estado de la partida
+    GameStatus state;
+    
+    // ✅ AGREGAR ESTA LÍNEA:
+    std::map<std::string, uint8_t> player_cars;  // username → car_index
 
     // Promover al siguiente jugador como host
     void promote_new_host();
@@ -50,6 +54,11 @@ public:
 
     // Expulsar a un jugador (solo el host puede hacerlo)
     bool kick_player(const std::string& host, const std::string& target);
+
+    // ✅ AGREGAR ESTAS 3 LÍNEAS:
+    bool set_player_car(const std::string& username, uint8_t car_index);
+    uint8_t get_player_car(const std::string& username) const;
+    bool all_players_selected_car() const;
 
     // Obtener lista de jugadores
     const std::vector<std::string>& get_players() const { return players; }

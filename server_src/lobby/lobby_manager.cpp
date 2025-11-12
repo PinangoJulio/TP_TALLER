@@ -186,3 +186,28 @@ bool LobbyManager::is_game_ready(uint16_t game_id) {
     
     return it->second->is_ready();
 }
+
+// ✅ AGREGADO: Implementación de gestión de autos
+
+bool LobbyManager::set_player_car(uint16_t game_id, const std::string& username, uint8_t car_index) {
+    std::lock_guard<std::mutex> lock(mtx);
+    
+    auto it = games.find(game_id);
+    if (it == games.end()) {
+        std::cout << "[LobbyManager] Game " << game_id << " not found" << std::endl;
+        return false;
+    }
+    
+    return it->second->set_player_car(username, car_index);
+}
+
+uint8_t LobbyManager::get_player_car(uint16_t game_id, const std::string& username) const {
+    std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(mtx));
+    
+    auto it = games.find(game_id);
+    if (it == games.end()) {
+        return 255;  // Sin selección
+    }
+    
+    return it->second->get_player_car(username);
+}

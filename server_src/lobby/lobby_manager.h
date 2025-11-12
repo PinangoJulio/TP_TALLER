@@ -13,7 +13,7 @@
 class LobbyManager {
 private:
     std::map<uint16_t, std::unique_ptr<GameRoom>> games;
-    std::map<std::string, uint16_t> player_to_game;  // NUEVO: Tracking de jugadores
+    std::map<std::string, uint16_t> player_to_game;
     uint16_t next_game_id;
     std::mutex mtx;
 
@@ -49,6 +49,10 @@ public:
 
     // Verificar si una partida está lista para comenzar
     bool is_game_ready(uint16_t game_id);
+
+    // ✅ AGREGADO: Gestión de autos
+    bool set_player_car(uint16_t game_id, const std::string& username, uint8_t car_index);
+    uint8_t get_player_car(uint16_t game_id, const std::string& username) const;
 
     // No se puede copiar el LobbyManager
     LobbyManager(const LobbyManager&) = delete;

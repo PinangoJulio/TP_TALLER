@@ -124,3 +124,54 @@ bool GameRoom::kick_player(const std::string& host, const std::string& target) {
     
     return remove_player(target);
 }
+
+bool GameRoom::set_player_car(const std::string& username, uint8_t car_index) {
+    // Verificar que el jugador esté en la partida
+    if (!has_player(username)) {
+        std::cout << "[GameRoom " << game_id << "] Player '" << username 
+                  << "' is not in this game!" << std::endl;
+        return false;
+    }
+    
+    // Validar índice de auto (0-6 según el listado)
+    if (car_index > 6) {
+        std::cout << "[GameRoom " << game_id << "] Invalid car index: " 
+                  << static_cast<int>(car_index) << std::endl;
+        return false;
+    }
+    
+    // Nombres de los autos (para logging)
+    const std::vector<std::string> car_names = {
+        "Leyenda Urbana",  // 0: El Escarabajo
+        "Brisa",           // 1: El Convertible
+        "J-Classic 600",   // 2: El Clásico
+        "Cavallo V8",      // 3: El Deportivo
+        "Senator",         // 4: El Sedán
+        "Nómada",          // 5: La Pickup
+        "Stallion GT"      // 6: El Muscle Car
+    };
+    
+    // Registrar selección
+    player_cars[username] = car_index;
+    
+    std::cout << "[GameRoom " << game_id << "] Player '" << username 
+              << "' selected car: " << car_names[car_index] 
+              << " (index " << static_cast<int>(car_index) << ")" << std::endl;
+    
+    return true;
+}
+
+uint8_t GameRoom::get_player_car(const std::string& username) const {
+    auto it = player_cars.find(username);
+    return (it != player_cars.end()) ? it->second : 255;  // 255 = sin selección
+}
+
+bool GameRoom::all_players_selected_car() const {
+    // Verificar que todos los jugadores hayan seleccionado un auto
+    for (const auto& player : players) {
+        if (player_cars.find(player) == player_cars.end()) {
+            return false;
+        }
+    }
+    return true;
+}

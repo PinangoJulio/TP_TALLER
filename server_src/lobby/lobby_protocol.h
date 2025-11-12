@@ -5,29 +5,7 @@
 #include <string>
 #include <vector>
 
-// Tipos de mensajes del Lobby
-enum LobbyMessageType : uint8_t {
-    // Cliente → Servidor
-    MSG_USERNAME = 0x01,
-    MSG_LIST_GAMES = 0x02,
-    MSG_CREATE_GAME = 0x03,
-    MSG_JOIN_GAME = 0x04,
-    
-    // Servidor → Cliente
-    MSG_WELCOME = 0x10,
-    MSG_GAMES_LIST = 0x11,
-    MSG_GAME_CREATED = 0x12,
-    MSG_GAME_JOINED = 0x13,
-    MSG_ERROR = 0xFF
-};
-
-// Códigos de error
-enum LobbyErrorCode : uint8_t {
-    ERR_GAME_NOT_FOUND = 0x01,
-    ERR_GAME_FULL = 0x02,
-    ERR_INVALID_USERNAME = 0x03,
-    ERR_GAME_ALREADY_STARTED = 0x04
-};
+#include "../../common_src/dtos.h"  // ✅ Usar los enums de common
 
 // Estructura para información de una partida
 struct GameInfo {
@@ -49,6 +27,12 @@ namespace LobbyProtocol {
     std::vector<uint8_t> serialize_game_created(uint16_t game_id);
     std::vector<uint8_t> serialize_game_joined(uint16_t game_id);
     std::vector<uint8_t> serialize_error(LobbyErrorCode error_code, const std::string& message);
+    std::vector<uint8_t> serialize_game_started(uint16_t game_id);
+    
+    // ✅ AGREGADO: Funciones faltantes
+    std::vector<uint8_t> serialize_select_car(uint8_t car_index);
+    std::vector<uint8_t> serialize_start_game(uint16_t game_id);
+    std::vector<uint8_t> serialize_leave_game(uint16_t game_id);
 }
 
 #endif // LOBBY_PROTOCOL_H
