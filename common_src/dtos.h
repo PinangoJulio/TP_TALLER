@@ -20,6 +20,7 @@ enum LobbyMessageType : uint8_t {
     MSG_JOIN_GAME = 0x04,
     MSG_START_GAME = 0x05,
     MSG_LEAVE_GAME = 0x07,
+    MSG_CAR_CHOSEN = 0x08,
 
     // Servidor → Cliente
     MSG_WELCOME = 0x10,
@@ -27,6 +28,7 @@ enum LobbyMessageType : uint8_t {
     MSG_GAME_CREATED = 0x12,
     MSG_GAME_JOINED = 0x13,
     MSG_GAME_STARTED = 0x14,
+    MSG_CITY_MAPS  = 0x15,
 
     MSG_ERROR = 0xFF
 };
@@ -56,6 +58,8 @@ enum class GameCommand : uint8_t {
     USE_NITRO = 0x05,
     DISCONNECT = 0xFF
 };
+
+
 
 // ✅ AGREGAR: Tipos de mensajes del servidor
 enum class ServerMessageType : uint8_t {

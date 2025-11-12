@@ -3,142 +3,137 @@
 
 #include <vector>
 #include <string>
-#include <cstddef>
+#include <cstdint>
 #include <iostream>
-#include "../server_src/game/player.h"
 
-// Represents the complete state of the game at a given moment,
-// which the server sends to the clients.
+#include "server_src/game/player.h"
 
-class Track;
-class Race;
+// No incluimos el Player real para evitar dependencias circulares.
+// Si prefieres, puedes incluir "../server_src/game/player.h" en la unidad .cpp
+ // forward declaration: se usa en constructor que recibe Player*
 
-
-enum MatchStatus {
-    WAITING_FOR_PLAYERS,
-    IN_PROGRESS,
-    FINISHED
+// Estados generales de la partida (lobby/match)
+enum class MatchStatus : int {
+    WAITING_FOR_PLAYERS = 0,
+    IN_PROGRESS = 1,
+    FINISHED = 2
 };
 
-struct CarInfo {
-    int player_id;            // Player ID that owns the car
-    std::string name;         // Player name
-    std::string selected_car; // Player's chosen car model
-    std::string city;         // City / track origin or chosen city
-    float pos_x;              // Car X position
-    float pos_y;              // Car Y position
-    float angle;              // Car direction (angle)
-    float speed;              // Current speed
-    int completed_laps;       // Number of completed laps
-    bool is_drifting;         // Whether the car is drifting
-    bool is_colliding;        // Whether the car recently collided
-    bool race_finished;       // Whether the player has finished the race
-    bool disconnected;        // Whether the player has disconnected
-
-    CarInfo()
-        : player_id(0),
-          selected_car(),
-          city(),
-          pos_x(0),
-          pos_y(0),
-          angle(0),
-          speed(0),
-          completed_laps(0),
-          is_drifting(false),
-          is_colliding(false),
-          race_finished(false),
-          disconnected(false) {}
+// Config de una sola carrera (elección host: ciudad + sector/mapa)
+struct RaceConfig {
+    std::string city;   // Ej: "Vice City"
+    std::string map;    // Ej: "Centro" o "Puentes"
 };
 
-// Checkpoint or intermediate goal of the track
+// Config general de la partida (lo que se define en el lobby)
+struct PlayerInfo {
+    int32_t player_id = 0;           // id del jugador dentro de la partida (generado por server)
+    std::string username;            // nombre del jugador
+    std::string car_name;            // modelo elegido, p.ej. "Coupe"
+    std::string car_type;            // p.ej. "Deportivo", "Camioneta" (opcional)
+};
+
+struct MatchConfig {
+    std::string name;                      // nombre de la partida
+    std::uint8_t max_players = 8;          // cupo máximo
+    std::vector<RaceConfig> races;         // lista de carreras elegidas por el host (pueden repetirse)
+    std::vector<PlayerInfo> players_cfg;   // lista de jugadores unidos con su elección de auto (lobby)
+};
+
+// ======= Estructuras para el snapshot (GameState) que se transmite a los clientes =======
+
+// Información por cada jugador en el snapshot de carrera (estado dinámico)
+struct InfoPlayer {
+    int32_t player_id = 0;
+    std::string username;
+    std::string car_name;
+    std::string car_type;
+
+    // Posición/estado de la carrera
+    float pos_x = 0.0f;
+    float pos_y = 0.0f;
+    float angle = 0.0f;
+    float speed = 0.0f;
+
+    int32_t completed_laps = 0;
+
+    // Flags de estado
+    bool is_drifting = false;
+    bool is_colliding = false;
+    bool race_finished = false;
+    bool disconnected = false;
+};
+
+// Checkpoint / meta
 struct CheckpointInfo {
-    int id;
-    float pos_x;
-    float pos_y;
-    bool reached;
+    int32_t id = 0;
+    float pos_x = 0.0f;
+    float pos_y = 0.0f;
+    bool reached = false;
 };
 
-// Track (map) data
+// Datos del track
 struct TrackInfo {
     std::string name;
-    int total_laps;
-    float total_length;
+    int32_t total_laps = 0;
+    float total_length = 0.0f;
 };
 
-// General race status
+// Estado global de la carrera
 struct RaceInfo {
-    MatchStatus status;
-    int remaining_time_seconds;
-    int players_finished;
-    int total_players;
+    MatchStatus status = MatchStatus::WAITING_FOR_PLAYERS;
+    int32_t remaining_time_seconds = 0;
+    int32_t players_finished = 0;
+    int32_t total_players = 0;
     std::string winner_name;
 };
 
-// This is the general "snapshot" of the game
+// Snapshot completo que se envía a los clientes
 struct GameState {
-    std::vector<CarInfo> cars;               // All cars in the race
-    std::vector<CheckpointInfo> checkpoints; // Active checkpoints
-    TrackInfo track_info;                    // Track data
-    RaceInfo race_info;                      // General race info
+    std::vector<InfoPlayer> players;        // todos los jugadores (cars) en la carrera
+    std::vector<CheckpointInfo> checkpoints;
+    TrackInfo track_info;
+    RaceInfo race_info;
 
     GameState() = default;
 
-    // Constructor that generates the snapshot from the server state
-    // // --- Estado global de la partida (Match) ---
-    GameState(std::vector<Player*>& current_players)/*
-             const std::vector<Checkpoint>& current_checkpoints,
-             const Track& track,
-             const Race& race)*/
-    {
-        // Convert Player -> CarInfo
-        for (const auto& player_ptr : current_players) {
-            CarInfo info;
-            info.player_id = player_ptr->getId();
-            info.name = player_ptr->getName();
-            info.selected_car = player_ptr->getSelectedCar();
-            info.city = player_ptr->getCity();
-            info.pos_x = player_ptr->getX();
-            info.pos_y = player_ptr->getY();
-            info.angle = player_ptr->getAngle();
-            info.speed = player_ptr->getSpeed();
-            info.completed_laps = player_ptr->getCompletedLaps();
-            info.is_drifting = player_ptr->isDrifting();
-            info.is_colliding = player_ptr->isColliding();
-            info.race_finished = player_ptr->isFinished();
-            info.disconnected = player_ptr->isDisconnected();
+    // Constructor helper: crear snapshot desde objetos Player* del servidor.
+    // Se asume que la clase Player (server) provee métodos con estos nombres:
+    //   getId(), getName(), getSelectedCar(), getCarType(), getCity(),
+    //   getX(), getY(), getAngle(), getSpeed(), getCompletedLaps(),
+    //   isDrifting(), isColliding(), isFinished(), isDisconnected()
+    //
+    // Si tus métodos tienen otros nombres, cambia las llamadas en la implementación .cpp
+    GameState(const std::vector<Player*>& current_players) {
+        for (const auto& pptr : current_players) {
+            if (!pptr) continue;
+            InfoPlayer ip;
+            // Estos métodos son suposiciones; adapta si tus getters se llaman distinto.
+            ip.player_id = pptr->getId();
+            ip.username = pptr->getName();
+            ip.car_name = pptr->getSelectedCar();
+            ip.car_type = pptr->getCarType();
+            ip.pos_x = pptr->getX();
+            ip.pos_y = pptr->getY();
+            ip.angle = pptr->getAngle();
+            ip.speed = pptr->getSpeed();
+            ip.completed_laps = pptr->getCompletedLaps();
+            ip.is_drifting = pptr->isDrifting();
+            ip.is_colliding = pptr->isColliding();
+            ip.race_finished = pptr->isFinished();
+            ip.disconnected = pptr->isDisconnected();
 
-            cars.push_back(info);
+            players.push_back(std::move(ip));
         }
 
-        // Convert checkpoints
-        /*for (const auto& chk : current_checkpoints) {
-            CheckpointInfo info;
-            info.id = chk.getId();
-            info.pos_x = chk.getX();
-            info.pos_y = chk.getY();
-            info.reached = chk.isReached();
-            checkpoints.push_back(info);
-        }*/
-
-        // Track data
-       /* track_info.name = track.getName();
-        track_info.total_laps = track.getTotalLaps();
-        track_info.total_length = track.getLength();
-
-        // General race data
-        race_info.status = race.getStatus();
-        race_info.remaining_time_seconds = race.getRemainingTime();
-        race_info.players_finished = race.getPlayersFinished();
-        race_info.total_players = race.getTotalPlayers();
-        race_info.winner_name = race.getWinner();*/
+        // Nota: checkpoints / track_info / race_info deben llenarse desde la Race/Match.
+        // Aquí sólo inicializamos players. Completar estos campos desde la lógica del Race.
     }
 
-
-    // Find a car by player ID
-    CarInfo* getCarByPlayer(int id) {
-        for (auto& c : cars) {
-            if (c.player_id == id)
-                return &c;
+    // Buscar jugador en snapshot por id
+    InfoPlayer* getPlayerById(int32_t id) {
+        for (auto& p : players) {
+            if (p.player_id == id) return &p;
         }
         return nullptr;
     }

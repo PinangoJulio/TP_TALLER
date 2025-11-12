@@ -1,4 +1,4 @@
-#include <iostream>
+/*#include <iostream>
 #include <string>
 #include "../client_src/lobby/model/lobby_client.h" 
 
@@ -75,6 +75,7 @@ int main(int argc, char* argv[]) {
                 case 2: { // Create game
                     std::string game_name;
                     int max_players;
+                    int max_races;
                     
                     std::cout << "Game name: ";
                     std::getline(std::cin, game_name);
@@ -82,8 +83,13 @@ int main(int argc, char* argv[]) {
                     std::cout << "Max players (2-8): ";
                     std::cin >> max_players;
                     std::cin.ignore();
+
+                    std::cout << "Max races (2-8): ";
+                    std::cin >> max_races;
+                    std::cin.ignore();
+
                     
-                    client.create_game(game_name, max_players);
+                    client.create_game(game_name, max_players, max_races);
                     uint16_t game_id = client.receive_game_created();
                     
                     std::cout << "\n✅ Game created! ID: " << game_id << std::endl;
@@ -133,4 +139,4 @@ int main(int argc, char* argv[]) {
         std::cerr << "[ERROR] " << e.what() << std::endl;
         return 1;
     }
-}
+}*/

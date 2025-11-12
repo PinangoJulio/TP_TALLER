@@ -36,16 +36,3 @@ target_sources(server
 )
 
 # Ejecutable temporal del lobby (para testing)
-add_executable(lobby_server_test
-    lobby/lobby_main.cpp
-)
-
-target_link_libraries(lobby_server_test
-    PRIVATE
-    taller_common
-    taller_lobby
-)
-
-set_target_properties(lobby_server_test PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
-)

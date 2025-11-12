@@ -171,6 +171,9 @@ if(TALLER_CLIENT)
             SDL2_mixer
             Qt6::Widgets
             Qt6::Multimedia
+            Qt6::Core
+            Qt6::Network
+
     )
 endif()
 
@@ -187,7 +190,8 @@ if(TALLER_SERVER)
             server_src/network/client_monitor.cpp
             server_src/game/race.h
             server_src/game/match.cpp
-            server_src/server_protocol.cpp)
+            server_src/server_protocol.cpp
+            server_src/game/game_loop.cpp)
     add_subdirectory(server_src)
     set_project_warnings(server ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 
@@ -213,7 +217,9 @@ if(TALLER_EDITOR)
             taller_common
             SDL2pp::SDL2pp
             Qt6::Widgets
-            Qt6::Multimedia)
+            Qt6::Multimedia
+            Qt6::Network
+            Qt6::Core)
     target_include_directories(taller_editor PRIVATE ${libSDL2pp_SOURCE_DIR})
 endif()
 
@@ -222,21 +228,47 @@ endif()
 # =======================================================
 
 if(TALLER_TESTS)
-    add_executable(taller_tests)
+    add_executable(taller_tests
+            tests/socket_mock.h)
     add_subdirectory(tests)
     set_project_warnings(taller_tests ${TALLER_MAKE_WARNINGS_AS_ERRORS} TRUE)
 
+    # CORRECCIÓN CRÍTICA: Añadir TODAS las implementaciones de la lógica.
+    target_sources(taller_tests
+            PRIVATE
+            # Implementaciones de Monitor y Partida (que contienen los constructores y destructores)
+            server_src/network/matches_monitor.cpp
+            server_src/network/client_monitor.cpp
+            server_src/game/match.cpp
+            server_src/game/game_loop.cpp
+            server_src/server_protocol.cpp
+            server_src/lobby/lobby_manager.cpp
+            server_src/lobby/game_room.cpp
+            client_src/lobby/model/lobby_client.cpp
+
+    )
+
+    # Añadir las rutas de los headers de GoogleTest/Mock
     target_include_directories(taller_tests
             PRIVATE
             ${googletest_SOURCE_DIR}/googletest/include
             ${googletest_SOURCE_DIR}/googlemock/include
-            ${CMAKE_SOURCE_DIR}
+            ${CMAKE_SOURCE_DIR}/server_src/
+            ${CMAKE_SOURCE_DIR}/server_src/game/
+            ${CMAKE_SOURCE_DIR}/server_src/network/
+            ${CMAKE_SOURCE_DIR}/server_src/lobby/
+
     )
 
+    # Link the dependencies
     target_link_libraries(taller_tests
             PRIVATE
             taller_common
             taller_lobby
             GTest::gtest_main
+            Qt6::Widgets
+            Qt6::Multimedia
+            Qt6::Network
+            Qt6::Core
     )
 endif()
