@@ -32,7 +32,7 @@ public:
     // Envía un buffer
     void send_buffer(const std::vector<uint8_t>& buffer);
 
-    uint8_t  get_max_amount_of_players();
+    uint8_t  get_uint8_t();
 };
 
 #endif //SERVER_PROTOCOL_H
