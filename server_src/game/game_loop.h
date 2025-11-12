@@ -1,5 +1,5 @@
-#ifndef SERVER_GAME_H
-#define SERVER_GAME_H
+#ifndef GAME_LOOP_H
+#define GAME_LOOP_H
 
 #include <algorithm>
 #include <chrono>
@@ -11,31 +11,44 @@
 #include "../../common_src/dtos.h"  
 
 #include "car.h"
+#include "player.h"
 #include "../network/monitor.h"
+#include "server_src/network/client_monitor.h"
 
 #define NITRO_DURATION 12
 #define SLEEP 250
 
-class GameLoop: public Thread {
-    bool is_running;
-    Monitor& monitor;
-    std::vector<Car> cars;
-    int cars_with_nitro;
-    Queue<struct Command>& game_queue;
+/*
+ * GameLoop:
+ * Recibe Comandos de jugadores (acelerar, frenar, girar, etc)
+ * Actualiza la fisica de los autos
+ * Detectar colisiones (contra paredes, otros autos, obstaculos YAML)
+ * Actualizar estado de juego (vueltas, checkpoints, tiempos)
+ * Enviar el estado actualizado a los clientes
+ */
 
-    void send_nitro_on();
-    void send_nitro_off();
-    void process_commands();
-    void simulate_cars();
+class GameLoop : public Thread {
+    bool is_running;
+
+    Queue<ComandMatchDTO>& comandos;
+    ClientMonitor& queues_players;
+    std::vector<Player*> players;
+    std::string yaml_path;
+
+    //Mapa mapa;  // construido desde YAML
+
+
+    void procesar_comandos();
+    void actualizar_fisica();
+    void detectar_colisiones();
+    void actualizar_estado_carrera();
+    void enviar_estado_a_jugadores();
 
 public:
-    explicit GameLoop(Monitor& monitor_ref, Queue<struct Command>& queue);
+    GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues, std::string& yaml_path);
 
     void run() override;
-    void stop() override { is_running = false; }
-
-    GameLoop(const GameLoop&) = delete;
-    GameLoop& operator=(const GameLoop&) = delete;
+    ~GameLoop() override;
 };
 
-#endif  // SERVER_GAME_H
+#endif //GAME_LOOP_H
