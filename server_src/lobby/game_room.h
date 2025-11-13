@@ -6,13 +6,14 @@
 #include <map>
 #include <cstdint>
 
-enum class GameState : uint8_t {
+enum class RoomState : uint8_t {
     WAITING,    // Esperando jugadores
     READY,      // 2+ jugadores, puede iniciarse
     STARTED     // Juego en curso
 };
 
-struct PlayerInfo {
+
+struct LobbyPlayerInfo {
     bool is_host;
     bool is_ready;
     uint8_t car_index;
@@ -22,9 +23,11 @@ class GameRoom {
 private:
     uint16_t game_id;
     std::string game_name;
-    std::map<std::string, PlayerInfo> players;  // username -> PlayerInfo
+    // Uso del tipo renombrado
+    std::map<std::string, LobbyPlayerInfo> players;  // username -> LobbyPlayerInfo
     uint8_t max_players;
-    GameState state;
+    // Uso del tipo renombrado
+    RoomState state;
 
 public:
     // Constructor
@@ -61,7 +64,8 @@ public:
     std::string get_game_name() const;
     uint8_t get_player_count() const;
     uint8_t get_max_players() const;
-    const std::map<std::string, PlayerInfo>& get_players() const;
+    // Uso del tipo renombrado
+    const std::map<std::string, LobbyPlayerInfo>& get_players() const;
 
     // No se pueden copiar GameRooms
     GameRoom(const GameRoom&) = delete;

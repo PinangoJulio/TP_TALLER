@@ -5,9 +5,9 @@ GameRoom::GameRoom(uint16_t id, const std::string& name, const std::string& host
     : game_id(id), 
       game_name(name), 
       max_players(max_players), 
-      state(GameState::WAITING) {
+      state(RoomState::WAITING) { // Corregido: GameState a RoomState
     
-    PlayerInfo host_info;
+    LobbyPlayerInfo host_info; // Corregido: PlayerInfo a LobbyPlayerInfo
     host_info.is_host = true;
     host_info.is_ready = false;
     host_info.car_index = 0;
@@ -23,7 +23,7 @@ bool GameRoom::add_player(const std::string& username) {
         return false;
     }
     
-    if (state == GameState::STARTED) {
+    if (state == RoomState::STARTED) { // Corregido: GameState a RoomState
         return false;
     }
     
@@ -32,7 +32,7 @@ bool GameRoom::add_player(const std::string& username) {
         return false;
     }
     
-    PlayerInfo info;
+    LobbyPlayerInfo info; // Corregido: PlayerInfo a LobbyPlayerInfo
     info.is_host = false;
     info.is_ready = false;
     info.car_index = 0;
@@ -42,8 +42,8 @@ bool GameRoom::add_player(const std::string& username) {
     std::cout << "[GameRoom " << game_id << "] Player '" << username << "' joined (" 
               << players.size() << "/" << static_cast<int>(max_players) << ")" << std::endl;
     
-    if (players.size() >= 2 && state == GameState::WAITING) {
-        state = GameState::READY;
+    if (players.size() >= 2 && state == RoomState::WAITING) { // Corregido: GameState a RoomState
+        state = RoomState::READY; // Corregido: GameState a RoomState
         std::cout << "[GameRoom " << game_id << "] Enough players, state changed to READY" << std::endl;
     }
     
@@ -74,8 +74,8 @@ void GameRoom::remove_player(const std::string& username) {
     }
     
     // Cambiar estado si quedan menos de 2 jugadores
-    if (players.size() < 2 && state == GameState::READY) {
-        state = GameState::WAITING;
+    if (players.size() < 2 && state == RoomState::READY) { // Corregido: GameState a RoomState
+        state = RoomState::WAITING; // Corregido: GameState a RoomState
         std::cout << "[GameRoom " << game_id << "] Not enough players, state changed to WAITING" << std::endl;
     }
 }
@@ -93,19 +93,19 @@ bool GameRoom::is_host(const std::string& username) const {
 }
 
 bool GameRoom::is_ready() const {
-    return state == GameState::READY && players.size() >= 2;
+    return state == RoomState::READY && players.size() >= 2; // Corregido: GameState a RoomState
 }
 
 bool GameRoom::is_started() const {
-    return state == GameState::STARTED;
+    return state == RoomState::STARTED; // Corregido: GameState a RoomState
 }
 
 void GameRoom::start() {
-    if (state != GameState::READY) {
+    if (state != RoomState::READY) { // Corregido: GameState a RoomState
         return;
     }
     
-    state = GameState::STARTED;
+    state = RoomState::STARTED; // Corregido: GameState a RoomState
     std::cout << "[GameRoom " << game_id << "] Game started!" << std::endl;
 }
 
@@ -154,6 +154,6 @@ uint8_t GameRoom::get_max_players() const {
     return max_players;
 }
 
-const std::map<std::string, PlayerInfo>& GameRoom::get_players() const {
+const std::map<std::string, LobbyPlayerInfo>& GameRoom::get_players() const {
     return players;
 }
