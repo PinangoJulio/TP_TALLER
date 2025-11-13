@@ -21,6 +21,13 @@ std::vector<uint8_t> serialize_username(const std::string& username) {
     return buffer;
 }
 
+std::vector<uint8_t> serialize_leave_game(uint16_t game_id) {
+    std::vector<uint8_t> buffer;
+    buffer.push_back(MSG_LEAVE_GAME);
+    push_uint16(buffer, game_id);
+    return buffer;
+}
+
 std::vector<uint8_t> serialize_string(const std::string& str) {
     std::vector<uint8_t> buffer;
     LobbyProtocol::push_uint16(buffer, str.size());
@@ -175,11 +182,5 @@ std::vector<uint8_t> serialize_start_game(uint16_t game_id) {
     return buffer;
 }
 
-std::vector<uint8_t> serialize_leave_game(uint16_t game_id) {
-    std::vector<uint8_t> buffer;
-    buffer.push_back(MSG_LEAVE_GAME);
-    push_uint16(buffer, game_id);
-    return buffer;
-}
 
 } // namespace LobbyProtocol

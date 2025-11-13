@@ -28,7 +28,6 @@ public:
     void set_player_car(int player_id, const std::string& car_name, const std::string& car_type);
     void delete_player_from_match(int player_id, int match_id);
     void clear_all_matches();
-    bool add_races_to_match(int match_id, const std::vector<RaceConfig>& races);
 
     void start_match(int match_id); // inicia la lógica del juego
 };

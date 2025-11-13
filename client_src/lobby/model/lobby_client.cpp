@@ -229,7 +229,11 @@ void LobbyClient::start_game(uint16_t game_id) {
     std::cout << "[LobbyClient] Start game request sent for ID: " << game_id << std::endl;
 }
 
-
+void LobbyClient::leave_game(uint16_t game_id) {
+    auto buffer = LobbyProtocol::serialize_leave_game(game_id);
+    socket.sendall(buffer.data(), buffer.size());
+    std::cout << "[LobbyClient] Leave game request sent for ID: " << game_id << std::endl;
+}
 // ========================================================================================================================================================================
 // Estas son las funciones que necesito nuevas para seguir
 
