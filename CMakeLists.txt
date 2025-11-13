@@ -229,7 +229,7 @@ endif()
 
 if(TALLER_TESTS)
     add_executable(taller_tests
-            tests/socket_mock.h)
+            )
     add_subdirectory(tests)
     set_project_warnings(taller_tests ${TALLER_MAKE_WARNINGS_AS_ERRORS} TRUE)
 
