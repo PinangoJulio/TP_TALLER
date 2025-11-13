@@ -7,13 +7,13 @@
 // Verifica que el archivo YAML se lea sin errores
 TEST(ConfigTest, LoadConfiguration) {
     ASSERT_NO_THROW({
-        Configuracion config("config/configuracion.yaml");
+        Configuracion config("config.yaml");
     });
 }
 
 // Verifica que los valores del YAML coincidan con lo esperado
 TEST(ConfigTest, ConfigurationValues) {
-    Configuracion config("config/configuracion.yaml");
+    Configuracion config("config.yaml");
     
     EXPECT_FLOAT_EQ(config.obtenerGravedadX(), 0.0f);
     EXPECT_FLOAT_EQ(config.obtenerGravedadY(), 0.0f);
@@ -26,7 +26,7 @@ TEST(ConfigTest, ConfigurationValues) {
 
 // Verifica que el auto se cargue correctamente del YAML
 TEST(ConfigTest, CarAttributes) {
-    Configuracion config("config/configuracion.yaml");
+    Configuracion config("config.yaml");
     
     const AtributosAuto& deportivo = config.obtenerAtributosAuto("DEPORTIVO");
     
@@ -39,7 +39,7 @@ TEST(ConfigTest, CarAttributes) {
 
 // Verifica que de error si el auto no existe
 TEST(ConfigTest, InvalidCarType) {
-    Configuracion config("config/configuracion.yaml");
+    Configuracion config("config.yaml");
     
     EXPECT_THROW(
         config.obtenerAtributosAuto("AUTO_IMAGINARIO"),
@@ -49,7 +49,7 @@ TEST(ConfigTest, InvalidCarType) {
 
 // Verifica que el mundo de Box2D se cree sin errores
 TEST(PhysicsTest, Box2DWorldCreation) {
-    Configuracion config("config/configuracion.yaml");
+    Configuracion config("config.yaml");
     
     b2WorldDef mundoDef = b2DefaultWorldDef();
     mundoDef.gravity = {config.obtenerGravedadX(), config.obtenerGravedadY()};
@@ -61,7 +61,7 @@ TEST(PhysicsTest, Box2DWorldCreation) {
 
 // Verifica que se pueda crear un cuerpo de Box2D
 TEST(PhysicsTest, CreateDynamicBody) {
-    Configuracion config("config/configuracion.yaml");
+    Configuracion config("config.yaml");
     
     b2WorldDef mundoDef = b2DefaultWorldDef();
     mundoDef.gravity = {0.0f, 0.0f};
@@ -84,7 +84,7 @@ TEST(PhysicsTest, CreateDynamicBody) {
 
 // Verifica que aplicar una fuerza cambie la velocidad del cuerpo
 TEST(PhysicsTest, ApplyForceMovesBody) {
-    Configuracion config("config/configuracion.yaml");
+    Configuracion config("config.yaml");
     
     b2WorldDef mundoDef = b2DefaultWorldDef();
     mundoDef.gravity = {0.0f, 0.0f};
@@ -113,7 +113,7 @@ TEST(PhysicsTest, ApplyForceMovesBody) {
 
 // Verifica que el constructor no lance excepciones
 TEST(GameLoopTest, GameLoopConstruction) {
-    Configuracion config("config/configuracion.yaml");
+    Configuracion config("config.yaml");
     Monitor monitor;
     Queue<struct Command> game_queue;
     
@@ -124,7 +124,7 @@ TEST(GameLoopTest, GameLoopConstruction) {
 
 // Verifica que se puedan crear múltiples cuerpos sin problemas
 TEST(PhysicsTest, MultipleBodiesCreation) {
-    Configuracion config("config/configuracion.yaml");
+    Configuracion config("config.yaml");
     
     b2WorldDef mundoDef = b2DefaultWorldDef();
     mundoDef.gravity = {0.0f, 0.0f};
@@ -148,7 +148,7 @@ TEST(PhysicsTest, MultipleBodiesCreation) {
 
 // Test integración: GameLoop procesa comandos correctamente
 TEST(GameLoopTest, ProcessCommands) {
-    Configuracion config("config/configuracion.yaml");
+    Configuracion config("config.yaml");
     Monitor monitor;
     Queue<struct Command> game_queue;
     
