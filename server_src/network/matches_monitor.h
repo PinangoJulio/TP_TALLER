@@ -18,6 +18,7 @@ public:
     std::vector<std::string> list_available_matches();
     bool join_match(int match_id, std::string& player_name, int player_id, Queue<GameState>& sender_message_queue);
     void clear_all_matches();
+    bool add_races_to_match(int match_id, const std::vector<RaceConfig>& races);
 
 
 };

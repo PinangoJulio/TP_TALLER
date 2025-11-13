@@ -182,3 +182,25 @@ void Receiver::kill() { is_running = false; }
 bool Receiver::status() { return is_running; }
 
 Receiver::~Receiver() {}
+
+case MSG_CREATE_GAME: {
+    std::string game_name = protocol.read_string();
+    uint8_t max_players = protocol.get_uint8_t();
+    uint8_t num_races = protocol.get_uint8_t();  // ✅ Leer cantidad
+    
+    // ✅ AGREGAR: Leer las carreras
+    std::vector<RaceConfig> races;
+    for (int i = 0; i < num_races; ++i) {
+        std::string city = protocol.read_string();
+        std::string map = protocol.read_string();
+        races.push_back({city, map});
+    }
+    
+    int game_id = monitor.create_match(max_players, game_name, id, sender_messages_queue);
+    
+    // ✅ AGREGAR: Configurar las carreras
+    monitor.add_races_to_match(game_id, races);
+    
+    protocol.send_buffer(LobbyProtocol::serialize_game_created(game_id));
+    break;
+}

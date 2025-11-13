@@ -27,6 +27,11 @@ namespace GameProtocol {
     std::vector<uint8_t> serialize_event(const GameEvent& event);
     std::vector<uint8_t> serialize_race_start();
     std::vector<uint8_t> serialize_race_end(const std::vector<uint16_t>& rankings);
+    std::vector<uint8_t> serialize_city_maps(
+        const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::string>>>>& maps);
+    
+    std::vector<uint8_t> serialize_car_chosen(const std::string& car_name, const std::string& car_type);
+
 }
 
 #endif // GAME_PROTOCOL_H
