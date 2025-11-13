@@ -4,45 +4,31 @@
 #include <memory>
 #include <string>
 
-#include "game_loop.h" 
 #include "../../common_src/queue.h"
 #include "../network/client_monitor.h"
-#include "../../common_src/config.h"  
+#include "../../common_src/dtos.h"
+
+// Forward declaration (no incluir game_loop.h para evitar dependencias circulares)
+class GameLoop;
 
 class Race {
 private:
-    // Instancia directa del GameLoop (que es el hilo)
-    std::unique_ptr<GameLoop> gameLoop;
-
-    // Referencias a los recursos (para crear el GameLoop)
     Queue<ComandMatchDTO>& commandQueue;
     ClientMonitor& broadcaster;
+    std::unique_ptr<GameLoop> gameLoop;
     std::string map_path;
+    std::atomic<bool> running;
 
 public:
     Race(Queue<ComandMatchDTO>& cmdQueue,
          ClientMonitor& brdcstr,
          const std::string& yaml_mapa);
 
-    Race(Queue<ComandMatchDTO>& cmdQueue,
-         ClientMonitor& brdcstr,
-         const std::string& yaml_mapa,
-         Configuration& config);
-
-    /*void start() { 
-        if (gameLoop) gameLoop->start(); 
-    }
+    void start();
+    void stop();
+    void join();
+    bool isRunning() const;
     
-    void stop() { 
-        if (gameLoop) gameLoop->stop(); 
-    }
-    
-    void join() { 
-        if (gameLoop) gameLoop->join(); 
-    }
-    
-    bool isRunning() const {  return gameLoop->isRunning(); }
-       */
-    ~Race() = default;
+    ~Race();
 };
 #endif

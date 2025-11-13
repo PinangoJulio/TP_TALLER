@@ -66,3 +66,39 @@ default_city: "Liberty City"        # string - default city if none is selected
 camera_fov: 90                   # int - field of view for camera (degrees)
 camera_distance: 6.0             # float - distance from camera to car (meters)
 day_night_cycle: true
+# ===============================
+# BOX2D PHYSICS SETTINGS
+# ===============================
+fisica:
+  gravedad:
+    x: 0.0
+    y: 0.0
+  tiempo_paso: 0.016666  # 60 FPS
+  iteraciones_velocidad: 8
+  iteraciones_posicion: 3
+
+# ===============================
+# CAR TYPES (BOX2D)
+# ===============================
+autos:
+  - tipo: "DEPORTIVO"
+    velocidad_maxima: 15.0
+    aceleracion: 1.0
+    salud_base: 100
+    masa: 1.5
+    control: 8.0
+  
+  - tipo: "CAMION"
+    velocidad_maxima: 8.0
+    aceleracion: 0.5
+    salud_base: 200
+    masa: 3.0
+    control: 4.0
+  
+  - tipo: "MOTO"
+    velocidad_maxima: 18.0
+    aceleracion: 1.5
+    salud_base: 60
+    masa: 0.8
+    control: 10.0
+

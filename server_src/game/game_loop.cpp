@@ -1,6 +1,6 @@
 #include "game_loop.h"
 
-GameLoop::GameLoop(Monitor& monitor_ref, Queue<struct Command>& queue, Configuration& cfg)
+GameLoop::GameLoop(Monitor& monitor_ref, Queue<struct Command>& queue, Configuracion& cfg)
     : is_running(true), 
       monitor(monitor_ref), 
       cars_with_nitro(0), 
@@ -20,7 +20,9 @@ void GameLoop::initialize_physics() {
     b2WorldDef mundoDef = b2DefaultWorldDef();
     mundoDef.gravity = {config.obtenerGravedadX(), config.obtenerGravedadY()};
     mundo = b2CreateWorld(&mundoDef);
-    std::cout << "[GameLoop] Box2D initialized" << std::endl;
+    std::cout << "[GameLoop] Box2D initialized with gravity (" 
+              << config.obtenerGravedadX() << ", " 
+              << config.obtenerGravedadY() << ")" << std::endl;
 }
 
 void GameLoop::update_physics() {
@@ -36,7 +38,6 @@ void GameLoop::apply_forces_from_command(const Command& cmd, b2BodyId body) {
             b2Rot rot = b2Body_GetRotation(body);
             float angle = b2Rot_GetAngle(rot);
             
-            // Verificar nitro
             float accel_multiplier = 1.0f;
             auto car_it = std::find_if(cars.begin(), cars.end(),
                 [&](const Car& c) { return c.get_client_id() == cmd.player_id; });
@@ -71,22 +72,26 @@ void GameLoop::apply_forces_from_command(const Command& cmd, b2BodyId body) {
 
 void GameLoop::send_nitro_on() {
     cars_with_nitro++;
-    ServerMsg msg;
-    msg.type = static_cast<uint8_t>(ServerMessageType::MSG_SERVER);
-    msg.cars_with_nitro = static_cast<uint16_t>(this->cars_with_nitro);
-    msg.nitro_status = static_cast<uint8_t>(ServerMessageType::NITRO_ON);
-    std::cout << "A car hit the nitro!" << std::endl;
-    monitor.broadcast(msg);
+    std::cout << "[GameLoop] A car hit the nitro! (Total: " << cars_with_nitro << ")" << std::endl;
+    
+    // TODO: Descomentar cuando Monitor::broadcast esté completo
+    // ServerMsg msg;
+    // msg.type = static_cast<uint8_t>(ServerMessageType::MSG_SERVER);
+    // msg.cars_with_nitro = static_cast<uint16_t>(this->cars_with_nitro);
+    // msg.nitro_status = static_cast<uint8_t>(ServerMessageType::NITRO_ON);
+    // monitor.broadcast(msg);
 }
 
 void GameLoop::send_nitro_off() {
     cars_with_nitro--;
-    ServerMsg msg;
-    msg.type = static_cast<uint8_t>(ServerMessageType::MSG_SERVER);
-    msg.cars_with_nitro = static_cast<uint16_t>(this->cars_with_nitro);
-    msg.nitro_status = static_cast<uint8_t>(ServerMessageType::NITRO_OFF);
-    std::cout << "A car is out of juice." << std::endl;
-    monitor.broadcast(msg);
+    std::cout << "[GameLoop] A car is out of juice. (Total: " << cars_with_nitro << ")" << std::endl;
+    
+    // TODO: Descomentar cuando Monitor::broadcast esté completo
+    // ServerMsg msg;
+    // msg.type = static_cast<uint8_t>(ServerMessageType::MSG_SERVER);
+    // msg.cars_with_nitro = static_cast<uint16_t>(this->cars_with_nitro);
+    // msg.nitro_status = static_cast<uint8_t>(ServerMessageType::NITRO_OFF);
+    // monitor.broadcast(msg);
 }
 
 void GameLoop::process_commands() {
@@ -109,7 +114,6 @@ void GameLoop::process_commands() {
             }
         }
         
-        // Crear body si no existe
         auto body_it = player_bodies.find(cmd.player_id);
         if (body_it == player_bodies.end()) {
             b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -141,6 +145,7 @@ void GameLoop::simulate_cars() {
 }
 
 void GameLoop::run() {
+    std::cout << "[GameLoop] Starting game loop..." << std::endl;
     while (is_running) {
         process_commands();
         update_physics();
@@ -148,4 +153,5 @@ void GameLoop::run() {
         
         std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP));
     }
+    std::cout << "[GameLoop] Game loop stopped." << std::endl;
 }

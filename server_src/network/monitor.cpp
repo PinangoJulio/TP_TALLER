@@ -1,8 +1,10 @@
 #include "monitor.h"
 
-/*Monitor::Monitor() {}
+// Constructor - implementación vacía pero necesaria para el linker
+Monitor::Monitor() {}
 
-
+// Métodos comentados en tu código original - los dejo comentados por ahora
+/*
 void Monitor::add_client_to_queue(Queue<struct ServerMsg>& client_queue) {
     std::unique_lock<std::mutex> lck(mtx);
     message_queue.push_back(&client_queue);

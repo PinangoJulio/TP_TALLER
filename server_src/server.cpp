@@ -1,37 +1,27 @@
 #include "server.h"
-
 #include <iostream>
-
-#include "../common_src/queue.h"
-#include "../common_src/dtos.h"
-
-#include "network/monitor.h"
-#include "game/game_loop.h"
 
 #define QUIT 'q'
 
-Server::Server(const char *servicename): acceptor(servicename){}
-
-<<<<<<< HEAD
-void Server::run() {
-    Configuracion config("config/configuracion.yaml");
-    Monitor monitor;
-    Queue<struct Command> game_queue;
-    Acceptor acceptor(this->servicename, monitor, game_queue);
-}
+Server::Server(const char* servicename) 
+    : acceptor(servicename) {}
 
 void Server::accept_connection() {
     acceptor.start();
-    GameSimulator game(monitor, game_queue, config); 
-    game.start();
-    
 }
 
 void Server::start() {
-
+    std::cout << "\n========================================" << std::endl;
+    std::cout << "    NEED FOR SPEED 2D - SERVER" << std::endl;
+    std::cout << "========================================" << std::endl;
+    std::cout << "Presiona 'q' + Enter para salir." << std::endl;
+    std::cout << "========================================\n" << std::endl;
+    
     accept_connection();
+    
     while (std::cin.get() != QUIT) {}
-
+    
+    std::cout << "\nApagando servidor..." << std::endl;
 }
 
 Server::~Server() {

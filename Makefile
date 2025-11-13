@@ -8,7 +8,6 @@ INSTALLER = install.sh
 # =======================================================
 
 # Target principal de compilación para desarrollo.
-# Usa 'debug' para compilar rápidamente sin instalar.
 debug:
 	@echo "--- 1. Asegurando permisos sobre $(BUILD_DIR)/ ---"
 	@if [ -d "$(BUILD_DIR)" ]; then sudo chown -R $(USER):$(USER) $(BUILD_DIR); fi
@@ -21,7 +20,7 @@ debug:
 # Ejecuta el servidor (después de compilar)
 server: debug
 	@echo "--- Iniciando Servidor ---"
-	@./server config/configuracion.yaml
+	@./server config.yaml
 
 # Ejecuta el cliente (después de compilar)
 client: debug
@@ -45,15 +44,9 @@ clean:
 # Target de Instalación (make install)
 # =======================================================
 
-# El target 'install' ejecuta el script de instalación del sistema.
-# Depende de 'debug' para asegurar que el proyecto esté compilado.
 install: debug
 	@echo "--- 4. Preparando el instalador ---"
-	# 1. Asegurarse de que el script instalador sea ejecutable
 	@sudo chmod +x $(INSTALLER)
-	# 2. Ejecutar el script con privilegios de root para la instalación final.
 	@echo "--- 5. Ejecutando instalación final del sistema (requiere sudo) ---"
 	@sudo bash ./$(INSTALLER)
 	@echo "--- Instalación Completa ---"
-
-

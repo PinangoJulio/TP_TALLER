@@ -29,21 +29,20 @@ private:
     Queue<struct Command>& game_queue;
     
     b2WorldId mundo;
-    Configuration& config;
+    Configuracion& config;  // Usar Configuracion (con Box2D)
     std::map<int, b2BodyId> player_bodies;
     
     void initialize_physics();
     void update_physics();
     void apply_forces_from_command(const Command& cmd, b2BodyId body);
     
-    // Métodos existentes
     void send_nitro_on();
     void send_nitro_off();
     void process_commands();
     void simulate_cars();
 
 public:
-    explicit GameLoop(Monitor& monitor_ref, Queue<struct Command>& queue, Configuration& cfg);
+    explicit GameLoop(Monitor& monitor_ref, Queue<struct Command>& queue, Configuracion& cfg);
 
     void run() override;
     void stop() override { is_running = false; }

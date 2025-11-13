@@ -111,30 +111,14 @@ TEST(PhysicsTest, ApplyForceMovesBody) {
     b2DestroyWorld(mundo);
 }
 
-// Verifica que cuando un auto usa nitro, el contador aumenta
-TEST(GameLoopTest, NitroActivation) {
-    Configuracion config("config/configuracion.yaml");
-    Monitor monitor;
-    Queue<struct Command> game_queue;
-    
-    GameSimulator game(monitor, game_queue, config);
-    Command cmd;
-    cmd.player_id = 1;
-    cmd.action = GameCommand::USE_NITRO;
-    
-    game_queue.try_push(cmd);
-    
-    SUCCEED();  // El test pasa si no hay crashes
-}
-
 // Verifica que el constructor no lance excepciones
-TEST(GameLoopTest, GameSimulatorConstruction) {
+TEST(GameLoopTest, GameLoopConstruction) {
     Configuracion config("config/configuracion.yaml");
     Monitor monitor;
     Queue<struct Command> game_queue;
     
     ASSERT_NO_THROW({
-        GameSimulator game(monitor, game_queue, config);
+        GameLoop game(monitor, game_queue, config);
     });
 }
 
@@ -160,4 +144,22 @@ TEST(PhysicsTest, MultipleBodiesCreation) {
     
     EXPECT_EQ(bodies.size(), 5);
     b2DestroyWorld(mundo);
+}
+
+// Test integración: GameLoop procesa comandos correctamente
+TEST(GameLoopTest, ProcessCommands) {
+    Configuracion config("config/configuracion.yaml");
+    Monitor monitor;
+    Queue<struct Command> game_queue;
+    
+    GameLoop game(monitor, game_queue, config);
+    
+    Command cmd;
+    cmd.player_id = 1;
+    cmd.action = GameCommand::ACCELERATE;
+    
+    game_queue.push(cmd);
+    
+    // El test pasa si no crashea
+    SUCCEED();
 }

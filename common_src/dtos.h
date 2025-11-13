@@ -3,15 +3,10 @@
 
 #include <cstdint>
 #include <string>
-// ============================================
-// Constantes útiles
-// ============================================
+
 #define QUIT 'q'
 #define MAX_PLAYERS 8
 
-// ============================================
-// DTOs de la Fase del Lobby
-// ============================================
 enum LobbyMessageType : uint8_t {
     // Cliente → Servidor
     MSG_USERNAME = 0x01,
@@ -37,10 +32,10 @@ enum LobbyErrorCode : uint8_t {
     ERR_GAME_FULL = 0x02,
     ERR_INVALID_USERNAME = 0x03,
     ERR_GAME_ALREADY_STARTED = 0x04,
-    ERR_ALREADY_IN_GAME = 0x05,        // NUEVO
-    ERR_NOT_HOST = 0x06,               // NUEVO
-    ERR_NOT_ENOUGH_PLAYERS = 0x07,     // NUEVO
-    ERR_PLAYER_NOT_IN_GAME = 0x08      // NUEVO
+    ERR_ALREADY_IN_GAME = 0x05,
+    ERR_NOT_HOST = 0x06,
+    ERR_NOT_ENOUGH_PLAYERS = 0x07,
+    ERR_PLAYER_NOT_IN_GAME = 0x08
 };
 
 // ============================================
@@ -57,7 +52,7 @@ enum class GameCommand : uint8_t {
     DISCONNECT = 0xFF
 };
 
-// ✅ AGREGAR: Tipos de mensajes del servidor
+// AGREGAR: Tipos de mensajes del servidor
 enum class ServerMessageType : uint8_t {
     MSG_SERVER = 0x01,
     NITRO_ON = 0x02,
@@ -68,6 +63,12 @@ enum class ServerMessageType : uint8_t {
 struct Command {
     GameCommand action;
     uint16_t player_id; 
+};
+
+struct ServerMsg {
+    uint8_t type;
+    uint16_t cars_with_nitro;
+    uint8_t nitro_status;
 };
 
 // Estado de un auto (para enviar al cliente)
@@ -90,6 +91,4 @@ struct ComandMatchDTO {
     ComandMatchDTO() : player_id(0), command(GameCommand::DISCONNECT) {}
 };
 
-
-
-#endif // DTOS_H
+#endif
