@@ -191,15 +191,18 @@ void LobbyController::cleanupAndReturnToLobby() {
     }
 }
 
+
+
 void LobbyController::onMatchCreated(const QString& matchName, int maxPlayers, const std::vector<RaceConfig>& races) {
     std::cout << "[Controller] Usuario confirmó creación de partida:" << std::endl;
     std::cout << "  Nombre: " << matchName.toStdString() << std::endl;
     std::cout << "  Jugadores máximos: " << maxPlayers << std::endl;
     std::cout << "  Número de carreras: " << races.size() << std::endl;
     
-    // Convertimos RaceConfig -> pair<string, string>
+    // ✅ Convertir RaceConfig (Qt) -> pair<string, string> (C++)
     std::vector<std::pair<std::string, std::string>> race_pairs;
     race_pairs.reserve(races.size());
+    
     for (const auto& race : races) {
         std::cout << "  Carrera: "
                   << race.cityName.toStdString()
@@ -209,8 +212,12 @@ void LobbyController::onMatchCreated(const QString& matchName, int maxPlayers, c
     }
 
     try {
-        // Enviar petición al servidor para crear la partida
-        lobbyClient->create_game(matchName.toStdString(), static_cast<uint8_t>(maxPlayers));
+        // ✅ Enviar con los 3 parámetros (nombre, max_players, carreras)
+        lobbyClient->create_game(
+            matchName.toStdString(), 
+            static_cast<uint8_t>(maxPlayers), 
+            race_pairs  // ← Este es el tercer parámetro que faltaba
+        );
         
         // Recibir confirmación con el game_id
         currentGameId = lobbyClient->receive_game_created();
@@ -226,11 +233,11 @@ void LobbyController::onMatchCreated(const QString& matchName, int maxPlayers, c
         // Abrir garage
         std::cout << "[Controller] Abriendo garage..." << std::endl;
         openGarage();
+        
     } catch (const std::exception& e) {
         handleNetworkError(e);
     }
 }
-
 
 void LobbyController::onBackFromCreateMatch() {
     std::cout << "[Controller] Usuario canceló creación de partida" << std::endl;
@@ -380,24 +387,31 @@ void LobbyController::openGarage() {
     garageWindow->show();
 }
 
-void LobbyController::onCarSelected(int carIndex) {
-    std::cout << "[Controller] Auto seleccionado: índice " << carIndex << std::endl;
-    
-    selectedCarIndex = carIndex;
-    
-    // No enviar al servidor todavía, falta la implementación del lado del server
-   // lobbyClient->select_car(static_cast<uint8_t>(carIndex));
-    
-    // Cerrar ventana de garage
-    if (garageWindow) {
-        garageWindow->close();
-        garageWindow->deleteLater();
-        garageWindow = nullptr;
+void LobbyController::onCarSelected(const CarInfo& car) {
+    std::cout << "[Controller] Auto seleccionado: "
+              << car.name.toStdString() << std::endl;
+
+    std::string car_name = car.name.toStdString();
+    std::string car_type = car.type.toStdString();
+
+    try {
+        lobbyClient->select_car(car_name, car_type);
+
+        std::string car_confirmed = lobbyClient->receive_car_confirmation();
+        std::cout << "[Controller] CAR confirmed: " << car_confirmed << std::endl;
+
+        if (garageWindow) {
+            garageWindow->close();
+            garageWindow->deleteLater();
+            garageWindow = nullptr;
+        }
+
+        std::cout << "[Controller] Abriendo sala de espera..." << std::endl;
+        openWaitingRoom();
+        
+    } catch (const std::exception& e) {
+        handleNetworkError(e);
     }
-    
-    // Abrir sala de espera
-    std::cout << "[Controller] Abriendo sala de espera..." << std::endl;
-    openWaitingRoom();
 }
 
 void LobbyController::onBackFromGarage() {

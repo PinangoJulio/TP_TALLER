@@ -61,9 +61,6 @@ public:
     // Lee detalles de error (asume que MSG_ERROR ya fue leído)
     void read_error_details(std::string& error_message);
 
-    void start_game(uint16_t game_id);
-
-    // ✅ DESCOMENTADO: Funciones del lobby completo
     void leave_game(uint16_t game_id);
     void select_car(uint8_t car_index);
     void start_game(uint16_t game_id);
