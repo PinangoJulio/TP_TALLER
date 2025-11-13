@@ -21,6 +21,14 @@ std::vector<uint8_t> serialize_username(const std::string& username) {
     return buffer;
 }
 
+std::vector<uint8_t> serialize_string(const std::string& str) {
+    std::vector<uint8_t> buffer;
+    LobbyProtocol::push_uint16(buffer, str.size());
+    buffer.insert(buffer.end(), str.begin(), str.end());
+    return buffer;
+}
+
+
 // Serializar petición de lista de juegos
 std::vector<uint8_t> serialize_list_games() {
     std::vector<uint8_t> buffer;
@@ -29,7 +37,7 @@ std::vector<uint8_t> serialize_list_games() {
 }
 
 // Serializar petición de crear juego
-std::vector<uint8_t> serialize_create_game(const std::string& game_name, uint8_t max_players) {
+std::vector<uint8_t> serialize_create_game(const std::string& game_name, uint8_t max_players, uint8_t num_races) {
     std::vector<uint8_t> buffer;
     buffer.push_back(MSG_CREATE_GAME);
     push_uint16(buffer, game_name.length());
@@ -37,6 +45,7 @@ std::vector<uint8_t> serialize_create_game(const std::string& game_name, uint8_t
         buffer.push_back(static_cast<uint8_t>(c));
     }
     buffer.push_back(max_players);
+    buffer.push_back(num_races);
     return buffer;
 }
 
@@ -108,10 +117,47 @@ std::vector<uint8_t> serialize_error(LobbyErrorCode error_code, const std::strin
     return buffer;
 }
 
+
+
+    /*[MSG_CITY_MAPS][num_ciudades] [len_ciudad][nombre_ciudad] [num_carreras] [len_yaml][nombre_yaml] [len_png][nombre_png]*/
+    std::vector<uint8_t> serialize_city_maps(const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::string>>>>& maps) {
+    std::vector<uint8_t> buffer;
+    buffer.push_back(MSG_CITY_MAPS);
+
+    LobbyProtocol::push_uint16(buffer, maps.size()); // número de ciudades
+
+    for (const auto& [city_name, tracks] : maps) {
+        LobbyProtocol::push_uint16(buffer, city_name.size());
+        buffer.insert(buffer.end(), city_name.begin(), city_name.end());
+
+        LobbyProtocol::push_uint16(buffer, tracks.size());
+        for (const auto& [yaml_file, png_file] : tracks) {
+            LobbyProtocol::push_uint16(buffer, yaml_file.size());
+            buffer.insert(buffer.end(), yaml_file.begin(), yaml_file.end());
+
+            LobbyProtocol::push_uint16(buffer, png_file.size());
+            buffer.insert(buffer.end(), png_file.begin(), png_file.end());
+        }
+    }
+
+    return buffer;
+}
+
+    /**[MSG_CAR_CHOSEN][len_nombre][nombre][len_tipo][tipo]**/
+std::vector<uint8_t> serialize_car_chosen(const std::string& car_name, const std::string& car_type) {
+    std::vector<uint8_t> buffer;
+    buffer.push_back(MSG_CAR_CHOSEN);
+    LobbyProtocol::push_uint16(buffer, car_name.size());
+    buffer.insert(buffer.end(), car_name.begin(), car_name.end());
+    LobbyProtocol::push_uint16(buffer, car_type.size());
+    buffer.insert(buffer.end(), car_type.begin(), car_type.end());
+    return buffer;
+}
+
 std::vector<uint8_t> serialize_game_started(uint16_t game_id) {
     std::vector<uint8_t> buffer;
-    buffer.push_back(MSG_GAME_STARTED);
-    push_uint16(buffer, game_id);
+    buffer.push_back(MSG_START_GAME);
+    LobbyProtocol::push_uint16(buffer, game_id);
     return buffer;
 }
 

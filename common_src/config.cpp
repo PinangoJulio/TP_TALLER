@@ -1,4 +1,5 @@
 #include "config.h"
+#include <sstream>
 
 YAML::Node Configuration::yaml;
 
@@ -7,22 +8,29 @@ void Configuration::load_path(const char *yaml_path) {
     yaml = YAML::LoadFile(yaml_path);
 }
 
-// Explicit template instantiations (required when using templates in .cpp files)
-template std::string Configuration::get<std::string>(const std::string& field);
-
-template int Configuration::get<int>(const std::string& field);
-
-template float Configuration::get<float>(const std::string& field);
-
-template bool Configuration::get<bool>(const std::string& field);
-
-
 // Generic template method to get any field from the YAML
 template <typename T>
 T Configuration::get(const std::string& field) {
     try {
-        return yaml[field].as<T>();
-    } catch (...) {
-        throw std::runtime_error(field + " not found in configuration file.");
+        YAML::Node node = yaml;
+        std::stringstream ss(field);
+        std::string key;
+
+        while (std::getline(ss, key, '.')) {
+            if (!node[key]) {
+                throw std::runtime_error("Field not found: " + field);
+            }
+            node = node[key];
+        }
+
+        return node.as<T>();
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Error reading field '" + field + "': " + e.what());
     }
 }
+
+// ✅ Ahora sí, recién acá las instanciaciones explícitas
+template std::string Configuration::get<std::string>(const std::string& field);
+template int Configuration::get<int>(const std::string& field);
+template float Configuration::get<float>(const std::string& field);
+template bool Configuration::get<bool>(const std::string& field);

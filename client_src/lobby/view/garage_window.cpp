@@ -3,6 +3,8 @@
 #include <QPainter>
 #include <QFontDatabase>
 
+#include "common_src/config.h"
+
 GarageWindow::GarageWindow(QWidget *parent)
     : QWidget(parent), currentCarIndex(0), customFontId(-1) {
     
@@ -25,15 +27,27 @@ GarageWindow::GarageWindow(QWidget *parent)
 
 void GarageWindow::loadCars() {
     // autos
+    const char *path_config = "config.yaml";
+    Configuration::load_path(path_config);
+
     cars = {
-        {"Leyenda Urbana", "assets/img/autos/escarabajo.png", 40, 60, 80, 40},
-        {"Brisa", "assets/img/autos/convertible.png", 60, 60, 60, 40},
-        {"J-Classic 600", "assets/img/autos/carro-verde.png", 20, 60, 100, 40},
-        {"Cavallo V8", "assets/img/autos/carro-rojo.png", 100, 80, 40, 40},
-        {"Senator", "assets/img/autos/carro-azul.png", 60, 40, 20, 100},
-        {"Nómada", "assets/img/autos/pickup.png", 40, 40, 40, 80},
-        {"Stallion GT", "assets/img/autos/carro-rojo-2.png", 60, 80, 20, 60}
+        {"Leyenda Urbana", "assets/img/autos/escarabajo.png", "classic", 70, 60, 65, 80},
+        {"Brisa", "assets/img/autos/convertible.png", "sport", 90, 85, 70, 60},
+        {"J-Classic 600", "assets/img/autos/carro-verde.png", "classic", 70, 60, 65, 80},
+        {"Cavallo V8", "assets/img/autos/carro-rojo.png", "sport", 90, 85, 70, 60},
+        {"Senator", "assets/img/autos/carro-azul.png", "classic", 70, 60, 65, 80},
+        {"Nómada", "assets/img/autos/pickup.png", "truck", 60, 50, 55, 90},
+        {"Stallion GT", "assets/img/autos/carro-rojo-2.png", "sport", 90, 85, 70, 60}
     };
+
+    // Cargar stats desde el YAML
+    /*for (auto &car : cars) {
+        std::string typeKey = car.type.toStdString();
+        car.speed = Configuration::get<int>("car_types." + typeKey + ".speed");
+        car.acceleration = Configuration::get<int>("car_types." + typeKey + ".acceleration");
+        car.handling = Configuration::get<int>("car_types." + typeKey + ".handling");
+        car.durability = Configuration::get<int>("car_types." + typeKey + ".durability");
+    }*/
 }
 
 void GarageWindow::setupUI() {
@@ -286,8 +300,11 @@ void GarageWindow::onNextCar() {
 }
 
 void GarageWindow::onSelectCar() {
-    std::cout << "Auto seleccionado: " << cars[currentCarIndex].name.toStdString() << std::endl;
-    emit carSelected(static_cast<int>(currentCarIndex));
+    std::cout << "Auto seleccionado: "
+                  << cars[currentCarIndex].name.toStdString()
+                  << " (" << cars[currentCarIndex].type.toStdString() << ")"
+                  << std::endl;
+    emit carSelected(cars[currentCarIndex]);
 }
 
 void GarageWindow::onBackClicked() {

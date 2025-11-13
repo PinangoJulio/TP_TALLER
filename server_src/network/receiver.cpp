@@ -14,6 +14,13 @@ Receiver::Receiver(ServerProtocol& protocol, int id, Queue<GameState>& sender_me
 
 // ------------------------------------------------------
 // Devuelve vector de (ciudad, [(yaml, png)])
+/**ejemplo
+* [
+  ("ViceCity", [("centro.yaml", "centro.png"), ("puentes.yaml", "puentes.png")]),
+  ("SanAndreas", [("playa.yaml", "playa.png")]),
+  ("LibertyCity", [("downtown.yaml", "downtown.png")])
+]
+ */
 // ------------------------------------------------------
 std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::string>>>> Receiver::get_city_maps() {
     namespace fs = std::filesystem;
@@ -57,8 +64,7 @@ void Receiver::handle_lobby() {
         std::cout << "[Lobby] Player connected: " << username << std::endl;
 
         auto welcome_msg = "Welcome to Need for Speed 2D, " + username + "!";
-        auto welcome_buffer = LobbyProtocol::serialize_welcome(welcome_msg);
-        protocol.send_buffer(welcome_buffer);
+        protocol.send_buffer(LobbyProtocol::serialize_welcome(welcome_msg));
 
         // --- Paso 2: bucle principal del lobby ---
         bool in_lobby = true;
@@ -68,7 +74,7 @@ void Receiver::handle_lobby() {
             switch (msg_type) {
                 // ------------------------------------------------------------
                 case MSG_LIST_GAMES: {
-                    auto games = lobby_manager.get_games_list();
+                    auto games = monitor.list_available_matches();
                     auto response = LobbyProtocol::serialize_games_list(games);
                     protocol.send_buffer(response);
                     break;
@@ -76,73 +82,63 @@ void Receiver::handle_lobby() {
                 // ------------------------------------------------------------
                 case MSG_CREATE_GAME: {
                     std::string game_name = protocol.read_string();
-                    uint8_t max_players = protocol.get_max_amount_of_players();
+                    uint8_t max_players = protocol.get_uint8_t();
+                    uint8_t num_races = protocol.get_uint8_t();
 
-                    uint16_t game_id = lobby_manager.create_game(game_name, username, max_players);
+                    int game_id = monitor.create_match(max_players, game_name, id, sender_messages_queue);
                     if (game_id == 0) {
-                        auto response = LobbyProtocol::serialize_error(
-                            ERR_ALREADY_IN_GAME, "You are already in a game");
-                        protocol.send_buffer(response);
-                    } else {
-                        auto response = LobbyProtocol::serialize_game_created(game_id);
-                        protocol.send_buffer(response);
-                        std::cout << "[Lobby] Game created: " << game_name << " (" << game_id << ")\n";
+                        protocol.send_buffer(LobbyProtocol::serialize_error(ERR_ALREADY_IN_GAME, "Error creating match"));
                     }
+                    // Enviar mapas disponibles
+                    //auto maps = get_city_maps();
+                    //protocol.send_buffer(LobbyProtocol::serialize_city_maps(maps));
+
+                    // Recibir selección de carreras
+                    std::vector<RaceConfig> races;
+                    for (int i = 0; i < num_races; ++i) {
+                        std::string city = protocol.read_string();
+                        std::string map = protocol.read_string();
+                        races.push_back({city, map});
+                    }
+
+                    monitor.add_races_to_match(game_id, races);
+
+                    protocol.send_buffer(LobbyProtocol::serialize_game_created(game_id));
+                    std::cout << "[Lobby] Game created (" << game_id << ") by " << username << "\n";
                     break;
                 }
                 // ------------------------------------------------------------
-                /*case MSG_LIST_CITY_MAPS: {
-                    auto city_maps = get_city_maps();
-                    auto response = LobbyProtocol::serialize_city_maps(city_maps);
-                    protocol.send_buffer(response);
-                    break;
-                }*/
-                // ------------------------------------------------------------
                 case MSG_JOIN_GAME: {
-                    uint16_t game_id = protocol.read_uint16();
-                    bool success = lobby_manager.join_game(game_id, username);
+                    int game_id = static_cast<int>(protocol.read_uint16());
+                    bool success = monitor.join_match(game_id, username, id, sender_messages_queue);
 
                     if (success) {
-                        auto response = LobbyProtocol::serialize_game_joined(game_id);
-                        protocol.send_buffer(response);
-                        std::cout << "[Lobby] " << username << " joined game " << game_id << std::endl;
+                        protocol.send_buffer(LobbyProtocol::serialize_game_joined(static_cast<uint16_t>(game_id)));
+                        std::cout << "[Lobby] " << username << " joined match " << game_id << std::endl;
                     } else {
-                        std::string error_msg;
-                        LobbyErrorCode error_code;
-
-                        if (lobby_manager.is_player_in_game(username)) {
-                            error_code = ERR_ALREADY_IN_GAME;
-                            error_msg = "You are already in a game";
-                        } else {
-                            error_code = ERR_GAME_FULL;
-                            error_msg = "Game is full or already started";
-                        }
-
-                        auto response = LobbyProtocol::serialize_error(error_code, error_msg);
-                        protocol.send_buffer(response);
+                        protocol.send_buffer(LobbyProtocol::serialize_error(ERR_GAME_FULL, "Game is full or started"));
                     }
+                    break;
+                }
+                case MSG_CAR_CHOSEN: {
+                    std::string car_name = protocol.read_string();
+                    std::string car_type = protocol.read_string();
+                    monitor.set_player_car(id, car_name, car_type);
+                    protocol.send_buffer(LobbyProtocol::serialize_car_chosen(car_name, car_type));
                     break;
                 }
 
                 // ------------------------------------------------------------
                 case MSG_START_GAME: {
-                    uint16_t game_id = protocol.read_uint16();
-                    bool success = lobby_manager.start_game(game_id, username);
+                    int game_id = static_cast<int>(protocol.read_uint16());
 
-                    if (success) {
-                        auto response = LobbyProtocol::serialize_game_started(game_id);
-                        protocol.send_buffer(response);
-                        std::cout << "[Lobby] Game " << game_id << " started by " << username << "\n";
+                    // El host inicia la carrera
+                    std::cout << "[Lobby] Game " << match_id << " starting...\n";
+                    auto match_list = monitor.list_available_matches();
+                    protocol.send_buffer(LobbyProtocol::serialize_game_started(static_cast<uint16_t>(game_id)));
 
-                        // 🔹 Transición al modo juego
-                        in_lobby = false;
-                        // acá podrías guardar el match_id si querés
-                        match_id = game_id;
-                    } else {
-                        auto response = LobbyProtocol::serialize_error(
-                            ERR_NOT_HOST, "Only the host can start the game");
-                        protocol.send_buffer(response);
-                    }
+                    in_lobby = false;
+                    this->match_id = game_id;
                     break;
                 }
                 default:
@@ -153,7 +149,6 @@ void Receiver::handle_lobby() {
 
         if (!in_lobby) {
             std::cout << "[Lobby] Player " << username << " entering match " << match_id << std::endl;
-            // podés iniciar handle_match_messages() o solo marcar transición
         }
 
     } catch (const std::exception& e) {

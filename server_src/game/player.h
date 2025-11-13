@@ -9,6 +9,7 @@ private:
     int id;
     std::string name;
     std::string selectedCar;
+    std::string car_type;
     std::string city;
 
     float x;
@@ -43,6 +44,9 @@ public:
     // --- Basic Getters and Setters ---
     const std::string& getSelectedCar() const { return selectedCar; }
     void setSelectedCar(const std::string& car) { selectedCar = car; }
+
+    const std::string& getCarType() const { return selectedCar; }
+    void getCarType(const std::string& car) { selectedCar = car; }
 
     const std::string& getCity() const { return city; }
     void setCity(const std::string& newCity) { city = newCity; }

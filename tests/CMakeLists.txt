@@ -3,7 +3,7 @@ target_sources(taller_tests
     # .cpp files
     protocol_tests.cpp
     lobby_tests.cpp
-    
+
     PUBLIC
     # .h files
 )
@@ -12,4 +12,6 @@ target_sources(taller_tests
 target_include_directories(taller_tests
     PRIVATE
     ${CMAKE_SOURCE_DIR}/server_src/lobby
+        ${CMAKE_SOURCE_DIR}/client_src/lobby/model
+
 )

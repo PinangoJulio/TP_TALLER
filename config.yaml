@@ -12,7 +12,7 @@ max_clients: 8                   # int - maximum number of clients that can conn
 min_players_per_race: 2          # int - minimum number of players required to start a race
 max_players_per_race: 8          # int - maximum number of players allowed per race
 laps_per_race: 3                 # int - number of laps per race (vueltas)
-races_per_match: 5               # int - number of races that make up one match (ej: 1 Partida --> 5 carreras)
+max_races_per_match: 5               # int - number of races that make up one match (ej: 1 Partida --> 5 carreras)
 
 countdown_before_start: 5        # seconds (int) - countdown before the race starts
 max_wait_time_in_lobby: 60       # seconds (int) - max waiting time for players before starting automatically
@@ -33,6 +33,27 @@ handling_sensitivity: 0.8        # float - turning responsiveness (0.0 to 1.0)
 nitro_duration: 5                # seconds (int) - duration of nitro boost
 nitro_cooldown: 10               # seconds (int) - cooldown before nitro can be used again
 nitro_speed_multiplier: 1.5      # float - multiplier for max speed when nitro is active
+
+
+car_types:
+  classic:
+    speed: 70
+    acceleration: 60
+    handling: 65
+    durability: 80
+
+  sport:
+    speed: 90
+    acceleration: 85
+    handling: 70
+    durability: 60
+
+  truck:
+    speed: 60
+    acceleration: 50
+    handling: 55
+    durability: 90
+
 
 # ===============================
 # DAMAGE AND COLLISIONS
