@@ -3,39 +3,38 @@
 
 #include <string>
 #include <vector>
-#include <map>          // ✅ AGREGAR ESTA LÍNEA
+#include <map>
 #include <cstdint>
 
-enum class GameStatus : uint8_t {
+enum class GameState : uint8_t {
     WAITING,    // Esperando jugadores
     READY,      // 2+ jugadores, puede iniciarse
     STARTED     // Juego en curso
+};
+
+struct PlayerInfo {
+    bool is_host;
+    bool is_ready;
+    uint8_t car_index;
 };
 
 class GameRoom {
 private:
     uint16_t game_id;
     std::string game_name;
-    std::vector<std::string> players;  
-    std::string host_username;         
+    std::map<std::string, PlayerInfo> players;  // username -> PlayerInfo
     uint8_t max_players;
-    GameStatus state;
-    
-    // ✅ AGREGAR ESTA LÍNEA:
-    std::map<std::string, uint8_t> player_cars;  // username → car_index
-
-    // Promover al siguiente jugador como host
-    void promote_new_host();
+    GameState state;
 
 public:
     // Constructor
-    GameRoom(uint16_t id, const std::string& name, const std::string& creator, uint8_t max_players = 8);
+    GameRoom(uint16_t id, const std::string& name, const std::string& host, uint8_t max_players);
 
     // Agregar un jugador a la partida
     bool add_player(const std::string& username);
 
     // Remover un jugador de la partida
-    bool remove_player(const std::string& username);
+    void remove_player(const std::string& username);
 
     // Verificar si un jugador es el host
     bool is_host(const std::string& username) const;
@@ -43,34 +42,26 @@ public:
     // Verificar si un jugador está en la partida
     bool has_player(const std::string& username) const;
 
-    // Verificar si la partida está llena
-    bool is_full() const;
-
     // Verificar si la partida está lista para comenzar (2+ jugadores)
     bool is_ready() const;
 
-    // Iniciar la partida (solo el host puede hacerlo)
-    bool start(const std::string& requester);
+    // Verificar si la partida ya inició
+    bool is_started() const;
 
-    // Expulsar a un jugador (solo el host puede hacerlo)
-    bool kick_player(const std::string& host, const std::string& target);
+    // Iniciar la partida
+    void start();
 
-    // ✅ AGREGAR ESTAS 3 LÍNEAS:
+    // Selección de auto
     bool set_player_car(const std::string& username, uint8_t car_index);
     uint8_t get_player_car(const std::string& username) const;
     bool all_players_selected_car() const;
 
-    // Obtener lista de jugadores
-    const std::vector<std::string>& get_players() const { return players; }
-
     // Getters
-    uint16_t get_id() const { return game_id; }
-    std::string get_name() const { return game_name; }
-    std::string get_host() const { return host_username; }
-    uint8_t get_current_players() const { return players.size(); }
-    uint8_t get_max_players() const { return max_players; }
-    GameStatus get_state() const { return state; }
-    bool has_started() const { return state == GameStatus::STARTED; }
+    uint16_t get_game_id() const;
+    std::string get_game_name() const;
+    uint8_t get_player_count() const;
+    uint8_t get_max_players() const;
+    const std::map<std::string, PlayerInfo>& get_players() const;
 
     // No se pueden copiar GameRooms
     GameRoom(const GameRoom&) = delete;

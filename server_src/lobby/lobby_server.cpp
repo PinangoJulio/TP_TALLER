@@ -1,77 +1,53 @@
 #include "lobby_server.h"
-#include "../../common_src/lobby_protocol.h"  
 #include <iostream>
 #include <netinet/in.h>
-#include <thread>
 
-LobbyServer::LobbyServer(const std::string& port)
-    : acceptor_socket(port.c_str()), running(false) {
+LobbyServer::LobbyServer(const std::string& port) 
+    : acceptor_socket(port.c_str()), running(true) {
     std::cout << "[LobbyServer] Server started on port " << port << std::endl;
 }
 
-uint8_t LobbyServer::read_message_type(Socket& socket) {
-    uint8_t type;
-    int bytes = socket.recvall(&type, sizeof(type));
-    if (bytes == 0) {
-        throw std::runtime_error("Connection closed");
+void LobbyServer::run() {
+    std::cout << "[LobbyServer] Waiting for connections..." << std::endl;
+    
+    while (running) {
+        try {
+            Socket client_socket = acceptor_socket.accept();
+            std::cout << "[LobbyServer] New connection accepted" << std::endl;
+            
+            std::thread client_thread(&LobbyServer::handle_client, this, std::move(client_socket));
+            client_thread.detach();
+            
+        } catch (const std::exception& e) {
+            if (running) {
+                std::cerr << "[LobbyServer] Error accepting connection: " << e.what() << std::endl;
+            }
+        }
     }
-    return type;
 }
 
-std::string LobbyServer::read_string(Socket& socket) {
-    std::cout << "[LobbyServer] DEBUG: read_string() - Reading length..." << std::endl;
+void LobbyServer::handle_client(Socket client_socket) {
+    std::cout << "[LobbyServer] DEBUG: Starting to handle new client" << std::endl;
     
-    uint16_t len_net;
-    int bytes_read = socket.recvall(&len_net, sizeof(len_net));
-    std::cout << "[LobbyServer] DEBUG: read_string() - Bytes read: " 
-              << bytes_read << std::endl;
+    std::string username;
     
-    if (bytes_read == 0) {
-        throw std::runtime_error("Connection closed while reading string length");
-    }
-    
-    // CRÍTICO: Convertir de network byte order a host byte order
-    uint16_t len = ntohs(len_net);
-    
-    std::cout << "[LobbyServer] DEBUG: read_string() - String length (after ntohs): " 
-              << len << std::endl;
-    
-    // Validación de sanidad
-    if (len == 0 || len > 1024) {
-        throw std::runtime_error("Invalid string length: " + std::to_string(len));
-    }
-    
-    std::vector<char> buffer(len);
-    socket.recvall(buffer.data(), len);
-    
-    std::cout << "[LobbyServer] DEBUG: read_string() - String received: " 
-              << std::string(buffer.begin(), buffer.end()) << std::endl;
-    
-    return std::string(buffer.begin(), buffer.end());
-}
-
-uint16_t LobbyServer::read_uint16(Socket& socket) {
-    uint16_t value_net;
-    socket.recvall(&value_net, sizeof(value_net));
-    return ntohs(value_net);
-}
-
-void LobbyServer::send_buffer(Socket& socket, const std::vector<uint8_t>& buffer) {
-    socket.sendall(buffer.data(), buffer.size());
-}
-
-void LobbyServer::process_client_messages(Socket& client_socket, const std::string& username) {
     try {
-        while (running) {
+        username = receive_username(client_socket);
+        std::cout << "[LobbyServer] Client connected: " << username << std::endl;
+        
+        send_welcome(client_socket, username);
+        
+        bool client_connected = true;
+        while (client_connected) {
+            std::cout << "[LobbyServer] DEBUG: Waiting to read message type..." << std::endl;
             uint8_t msg_type = read_message_type(client_socket);
+            std::cout << "[LobbyServer] DEBUG: Received message type: " 
+                      << static_cast<int>(msg_type) << std::endl;
             
             switch (msg_type) {
                 case MSG_LIST_GAMES: {
                     std::cout << "[LobbyServer] Client '" << username << "' requested games list" << std::endl;
-                    
-                    auto games = lobby_manager.get_games_list();
-                    auto response = LobbyProtocol::serialize_games_list(games);
-                    send_buffer(client_socket, response);
+                    send_games_list(client_socket);
                     break;
                 }
                 
@@ -80,19 +56,14 @@ void LobbyServer::process_client_messages(Socket& client_socket, const std::stri
                     uint8_t max_players;
                     client_socket.recvall(&max_players, sizeof(max_players));
                     
-                    std::cout << "[LobbyServer] Client '" << username 
-                              << "' creating game: " << game_name << std::endl;
+                    std::cout << "[LobbyServer] Client '" << username << "' creating game: " << game_name << std::endl;
                     
                     uint16_t game_id = lobby_manager.create_game(game_name, username, max_players);
                     
                     if (game_id == 0) {
-                        // El jugador ya está en una partida
-                        auto response = LobbyProtocol::serialize_error(
-                            ERR_ALREADY_IN_GAME, "You are already in a game");
-                        send_buffer(client_socket, response);
+                        send_error(client_socket, ERR_ALREADY_IN_GAME, "You are already in a game");
                     } else {
-                        auto response = LobbyProtocol::serialize_game_created(game_id);
-                        send_buffer(client_socket, response);
+                        send_game_created(client_socket, game_id);
                     }
                     break;
                 }
@@ -100,29 +71,12 @@ void LobbyServer::process_client_messages(Socket& client_socket, const std::stri
                 case MSG_JOIN_GAME: {
                     uint16_t game_id = read_uint16(client_socket);
                     
-                    std::cout << "[LobbyServer] Client '" << username 
-                              << "' joining game: " << game_id << std::endl;
+                    std::cout << "[LobbyServer] Client '" << username << "' joining game: " << game_id << std::endl;
                     
-                    bool success = lobby_manager.join_game(game_id, username);
-                    
-                    if (success) {
-                        auto response = LobbyProtocol::serialize_game_joined(game_id);
-                        send_buffer(client_socket, response);
+                    if (!lobby_manager.join_game(game_id, username)) {
+                        send_error(client_socket, ERR_GAME_FULL, "Game is full or already started");
                     } else {
-                        // Determinar el motivo del error
-                        std::string error_msg;
-                        LobbyErrorCode error_code;
-                        
-                        if (lobby_manager.is_player_in_game(username)) {
-                            error_code = ERR_ALREADY_IN_GAME;
-                            error_msg = "You are already in a game";
-                        } else {
-                            error_code = ERR_GAME_FULL;
-                            error_msg = "Game is full or already started";
-                        }
-                        
-                        auto response = LobbyProtocol::serialize_error(error_code, error_msg);
-                        send_buffer(client_socket, response);
+                        send_game_joined(client_socket, game_id);
                     }
                     break;
                 }
@@ -130,159 +84,156 @@ void LobbyServer::process_client_messages(Socket& client_socket, const std::stri
                 case MSG_LEAVE_GAME: {
                     uint16_t game_id = read_uint16(client_socket);
                     
-                    std::cout << "[LobbyServer] Client '" << username 
-                              << "' leaving game " << game_id << std::endl;
+                    std::cout << "[LobbyServer] Client '" << username << "' requested to leave game: " << game_id << std::endl;
                     
-                    bool success = lobby_manager.leave_game(username);
-                    
-                    if (success) {
-                        std::cout << "[LobbyServer] Client '" << username 
-                                  << "' left game successfully" << std::endl;
-                        // Opcional: Enviar confirmación al cliente
-                    } else {
-                        std::cout << "[LobbyServer] Client '" << username 
-                                  << "' was not in a game" << std::endl;
-                    }
-                    break;
-                }
-                
-                // ✅ AGREGADO: Handler para selección de auto
-                case MSG_SELECT_CAR: {
-                    uint8_t car_index;
-                    client_socket.recvall(&car_index, sizeof(car_index));
-                    
-                    std::cout << "[LobbyServer] Client '" << username 
-                              << "' selecting car: " << static_cast<int>(car_index) << std::endl;
-                    
-                    // Obtener la partida del jugador
-                    uint16_t game_id = lobby_manager.get_player_game(username);
-                    
-                    if (game_id == 0) {
-                        auto response = LobbyProtocol::serialize_error(
-                            ERR_PLAYER_NOT_IN_GAME, "You are not in a game");
-                        send_buffer(client_socket, response);
+                    if (!lobby_manager.is_player_in_game(username)) {
+                        send_error(client_socket, ERR_PLAYER_NOT_IN_GAME, "You are not in any game");
                         break;
                     }
                     
-                    // Registrar selección
-                    bool success = lobby_manager.set_player_car(game_id, username, car_index);
-                    
-                    if (success) {
-                        std::cout << "[LobbyServer] Car selection registered for '" 
-                                  << username << "'" << std::endl;
-                        // No enviar respuesta (el cliente no espera una)
-                    } else {
-                        auto response = LobbyProtocol::serialize_error(
-                            ERR_INVALID_CAR_INDEX, "Invalid car selection");
-                        send_buffer(client_socket, response);
+                    if (lobby_manager.get_player_game(username) != game_id) {
+                        send_error(client_socket, ERR_PLAYER_NOT_IN_GAME, "You are not in that game");
+                        break;
                     }
-                    break;
-                }
-                
-                // ✅ AGREGADO: Handler para inicio de juego
-                case MSG_START_GAME: {
-                    uint16_t game_id = read_uint16(client_socket);
                     
-                    std::cout << "[LobbyServer] Client '" << username 
-                              << "' trying to start game " << game_id << std::endl;
+                    lobby_manager.leave_game(username);
+                    std::cout << "[LobbyServer] Client '" << username << "' left game " << game_id << std::endl;
                     
-                    bool success = lobby_manager.start_game(game_id, username);
-                    
-                    if (success) {
-                        auto response = LobbyProtocol::serialize_game_started(game_id);
-                        send_buffer(client_socket, response);
-                        
-                        std::cout << "[LobbyServer] ✅ Game " << game_id << " STARTED by " 
-                                  << username << "!" << std::endl;
-                        
-                        // TODO: Aquí irá la transición a la fase de juego
-                        // Por ahora, el servidor simplemente notifica el inicio
-                    } else {
-                        auto response = LobbyProtocol::serialize_error(
-                            ERR_NOT_HOST, "Only the host can start the game");
-                        send_buffer(client_socket, response);
-                    }
                     break;
                 }
                 
                 default:
-                    std::cout << "[LobbyServer] Unknown message type: " 
-                              << static_cast<int>(msg_type) << std::endl;
+                    std::cerr << "[LobbyServer] Unknown message type: " << static_cast<int>(msg_type) << std::endl;
+                    client_connected = false;
                     break;
             }
         }
-    } catch (const std::exception& e) {
-        std::cout << "[LobbyServer] Client '" << username 
-                  << "' disconnected: " << e.what() << std::endl;
         
-        // ✅ MEJORADO: Limpiar siempre al desconectar
-        if (lobby_manager.is_player_in_game(username)) {
+    } catch (const std::exception& e) {
+        std::string error_msg = e.what();
+        if (error_msg.find("Connection closed") != std::string::npos || 
+            error_msg.find("EOF") != std::string::npos) {
+            std::cout << "[LobbyServer] Client '" << username << "' disconnected: Connection closed" << std::endl;
+        } else {
+            std::cerr << "[LobbyServer] Error handling client '" << username << "': " << e.what() << std::endl;
+        }
+    }
+    
+    // 🔥 CORREGIDO: Cleanup cuando el cliente se desconecta
+    try {
+        if (!username.empty() && lobby_manager.is_player_in_game(username)) {
             uint16_t game_id = lobby_manager.get_player_game(username);
-            std::cout << "[LobbyServer] Cleaning up player '" << username 
-                      << "' from game " << game_id << std::endl;
+            std::cout << "[LobbyServer] Cleaning up player '" << username << "' from game " << game_id << std::endl;
             lobby_manager.leave_game(username);
         }
-    }
-}
-
-void LobbyServer::handle_client(Socket client_socket) {
-    try {
-        std::cout << "[LobbyServer] DEBUG: Starting to handle new client" << std::endl;
-        
-        // Leer tipo de mensaje
-        std::cout << "[LobbyServer] DEBUG: Waiting to read message type..." << std::endl;
-        uint8_t msg_type = read_message_type(client_socket);
-        std::cout << "[LobbyServer] DEBUG: Received message type: " 
-                  << static_cast<int>(msg_type) << std::endl;
-        
-        if (msg_type != MSG_USERNAME) {
-            std::cout << "[LobbyServer] Expected USERNAME message, got: " 
-                      << static_cast<int>(msg_type) << std::endl;
-            return;
-        }
-        
-        // Leer username
-        std::cout << "[LobbyServer] DEBUG: Reading username string..." << std::endl;
-        std::string username = read_string(client_socket);
-        std::cout << "[LobbyServer] Client connected: " << username << std::endl;
-        
-        // Enviar bienvenida
-        std::cout << "[LobbyServer] DEBUG: Sending welcome message..." << std::endl;
-        std::string welcome_msg = "Welcome to Need for Speed 2D, " + username + "!";
-        auto welcome_buffer = LobbyProtocol::serialize_welcome(welcome_msg);
-        send_buffer(client_socket, welcome_buffer);
-        std::cout << "[LobbyServer] DEBUG: Welcome sent!" << std::endl;
-        
-        // Procesar mensajes del cliente
-        process_client_messages(client_socket, username);
-        
     } catch (const std::exception& e) {
-        std::cout << "[LobbyServer] Error handling client: " << e.what() << std::endl;
+        std::cerr << "[LobbyServer] Error during cleanup for '" << username << "': " << e.what() << std::endl;
     }
 }
 
-void LobbyServer::run() {
-    running = true;
-    std::cout << "[LobbyServer] Waiting for connections..." << std::endl;
+std::string LobbyServer::receive_username(Socket& client_socket) {
+    uint8_t msg_type = read_message_type(client_socket);
     
-    while (running) {
-        try {
-            Socket client_socket = acceptor_socket.accept();
-            std::cout << "[LobbyServer] New connection accepted" << std::endl;
-            
-            // Manejar cada cliente en un thread separado
-            std::thread client_thread(&LobbyServer::handle_client, this, std::move(client_socket));
-            client_thread.detach();
-            
-        } catch (const std::exception& e) {
-            if (running) {
-                std::cout << "[LobbyServer] Error accepting connection: " << e.what() << std::endl;
-            }
-        }
+    if (msg_type != MSG_USERNAME) {
+        throw std::runtime_error("Expected USERNAME message");
     }
+    
+    std::cout << "[LobbyServer] DEBUG: Reading username string..." << std::endl;
+    return read_string(client_socket);
+}
+
+void LobbyServer::send_welcome(Socket& client_socket, const std::string& username) {
+    std::cout << "[LobbyServer] DEBUG: Sending welcome message..." << std::endl;
+    std::string message = "Welcome to Need for Speed 2D, " + username + "!";
+    auto buffer = LobbyProtocol::serialize_welcome(message);
+    client_socket.sendall(buffer.data(), buffer.size());
+    std::cout << "[LobbyServer] DEBUG: Welcome sent!" << std::endl;
+}
+
+void LobbyServer::send_games_list(Socket& client_socket) {
+    std::vector<GameInfo> games;
+    
+    for (const auto& pair : lobby_manager.get_all_games()) {
+        // 🔥 CORREGIDO: Usar -> para desreferenciar el unique_ptr
+        const GameRoom& room = *pair.second;
+        
+        GameInfo info;
+        info.game_id = room.get_game_id();
+        
+        std::string name = room.get_game_name();
+        size_t copy_len = std::min(name.length(), sizeof(info.game_name) - 1);
+        std::memcpy(info.game_name, name.c_str(), copy_len);
+        info.game_name[copy_len] = '\0';
+        
+        info.current_players = room.get_player_count();
+        info.max_players = room.get_max_players();
+        info.is_started = room.is_started();
+        
+        games.push_back(info);
+    }
+    
+    auto buffer = LobbyProtocol::serialize_games_list(games);
+    client_socket.sendall(buffer.data(), buffer.size());
+}
+
+void LobbyServer::send_game_created(Socket& client_socket, uint16_t game_id) {
+    auto buffer = LobbyProtocol::serialize_game_created(game_id);
+    client_socket.sendall(buffer.data(), buffer.size());
+}
+
+void LobbyServer::send_game_joined(Socket& client_socket, uint16_t game_id) {
+    auto buffer = LobbyProtocol::serialize_game_joined(game_id);
+    client_socket.sendall(buffer.data(), buffer.size());
+}
+
+void LobbyServer::send_error(Socket& client_socket, LobbyErrorCode error_code, const std::string& message) {
+    auto buffer = LobbyProtocol::serialize_error(error_code, message);
+    client_socket.sendall(buffer.data(), buffer.size());
+}
+
+uint8_t LobbyServer::read_message_type(Socket& client_socket) {
+    uint8_t type;
+    int bytes = client_socket.recvall(&type, sizeof(type));
+    if (bytes == 0) {
+        throw std::runtime_error("Connection closed by client");
+    }
+    return type;
+}
+
+std::string LobbyServer::read_string(Socket& client_socket) {
+    std::cout << "[LobbyServer] DEBUG: read_string() - Reading length..." << std::endl;
+    
+    uint16_t len_net;
+    int bytes = client_socket.recvall(&len_net, sizeof(len_net));
+    
+    std::cout << "[LobbyServer] DEBUG: read_string() - Bytes read: " << bytes << std::endl;
+    
+    if (bytes == 0) {
+        throw std::runtime_error("Connection closed while reading string length");
+    }
+    
+    uint16_t len = ntohs(len_net);
+    std::cout << "[LobbyServer] DEBUG: read_string() - String length (after ntohs): " << len << std::endl;
+    
+    std::vector<char> buffer(len);
+    client_socket.recvall(buffer.data(), len);
+    
+    std::string result(buffer.begin(), buffer.end());
+    std::cout << "[LobbyServer] DEBUG: read_string() - String received: " << result << std::endl;
+    
+    return result;
+}
+
+uint16_t LobbyServer::read_uint16(Socket& client_socket) {
+    uint16_t value_net;
+    client_socket.recvall(&value_net, sizeof(value_net));
+    return ntohs(value_net);
 }
 
 void LobbyServer::stop() {
     running = false;
-    std::cout << "[LobbyServer] Server stopped" << std::endl;
+}
+
+LobbyServer::~LobbyServer() {
+    stop();
 }

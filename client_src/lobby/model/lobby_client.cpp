@@ -38,7 +38,6 @@ void LobbyClient::send_username(const std::string& username) {
     this->username = username;
     auto buffer = LobbyProtocol::serialize_username(username);
     
-    // DEBUG: Imprimir el buffer
     std::cout << "[LobbyClient] DEBUG: Username: '" << username 
               << "' (length: " << username.length() << ")" << std::endl;
     std::cout << "[LobbyClient] DEBUG: Buffer size: " << buffer.size() << " bytes" << std::endl;
@@ -48,7 +47,6 @@ void LobbyClient::send_username(const std::string& username) {
     }
     std::cout << std::endl;
     
-    // Decodificar manualmente para verificar
     if (buffer.size() >= 3) {
         uint16_t len_sent = (buffer[1] << 8) | buffer[2];
         std::cout << "[LobbyClient] DEBUG: Length encoded in buffer: " << len_sent << std::endl;
@@ -145,11 +143,9 @@ uint8_t LobbyClient::peek_message_type() {
 }
 
 void LobbyClient::read_error_details(std::string& error_message) {
-    // Leer código de error
     uint8_t error_code;
     socket.recvall(&error_code, sizeof(error_code));
     
-    // Leer mensaje de error
     error_message = read_string();
     
     std::cout << "[LobbyClient] Error received (code " << static_cast<int>(error_code) 
@@ -162,20 +158,17 @@ uint8_t LobbyClient::read_uint8() {
     return value;
 }
 
-
 void LobbyClient::select_car(uint8_t car_index) {
     auto buffer = LobbyProtocol::serialize_select_car(car_index);
     socket.sendall(buffer.data(), buffer.size());
     std::cout << "[LobbyClient] Selected car: " << static_cast<int>(car_index) << std::endl;
 }
 
-
 void LobbyClient::leave_game(uint16_t game_id) {
     auto buffer = LobbyProtocol::serialize_leave_game(game_id);
     socket.sendall(buffer.data(), buffer.size());
     std::cout << "[LobbyClient] Left game: " << game_id << std::endl;
 }
-
 
 void LobbyClient::start_game(uint16_t game_id) {
     auto buffer = LobbyProtocol::serialize_start_game(game_id);

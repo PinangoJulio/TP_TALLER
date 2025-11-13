@@ -1,177 +1,159 @@
 #include "game_room.h"
-#include <algorithm>
 #include <iostream>
 
-GameRoom::GameRoom(uint16_t id, const std::string& name, const std::string& creator, uint8_t max_players)
-    : game_id(id), game_name(name), host_username(creator), max_players(max_players), state(GameStatus::WAITING) {
+GameRoom::GameRoom(uint16_t id, const std::string& name, const std::string& host, uint8_t max_players)
+    : game_id(id), 
+      game_name(name), 
+      max_players(max_players), 
+      state(GameState::WAITING) {
     
-    // El creador automáticamente se une como primer jugador y host
-    players.push_back(creator);
-    std::cout << "[GameRoom " << game_id << "] Created by '" << creator 
-              << "' (HOST) (1/" << static_cast<int>(max_players) << ")" << std::endl;
+    PlayerInfo host_info;
+    host_info.is_host = true;
+    host_info.is_ready = false;
+    host_info.car_index = 0;
+    
+    players[host] = host_info;
+    
+    std::cout << "[GameRoom " << game_id << "] Created by '" << host << "' (HOST) (" 
+              << players.size() << "/" << static_cast<int>(max_players) << ")" << std::endl;
 }
 
 bool GameRoom::add_player(const std::string& username) {
-    if (is_full() || state == GameStatus::STARTED) {
+    if (players.size() >= max_players) {
         return false;
     }
     
-    // Verificar si el jugador ya está en la partida
-    if (has_player(username)) {
-        std::cout << "[GameRoom " << game_id << "] Player '" << username 
-                  << "' is already in the game!" << std::endl;
-        return true;  // No es un error, simplemente ya está
+    if (state == GameState::STARTED) {
+        return false;
     }
     
-    players.push_back(username);
-    std::cout << "[GameRoom " << game_id << "] Player '" << username 
-              << "' joined (" << players.size() << "/" 
-              << static_cast<int>(max_players) << ")" << std::endl;
+    if (players.find(username) != players.end()) {
+        std::cout << "[GameRoom " << game_id << "] Player '" << username << "' is already in the game!" << std::endl;
+        return false;
+    }
     
-    // Actualizar estado si ahora hay suficientes jugadores
-    if (players.size() >= 2 && state == GameStatus::WAITING) {
-        state = GameStatus::READY;
-        std::cout << "[GameRoom " << game_id << "] Game is now READY to start!" << std::endl;
+    PlayerInfo info;
+    info.is_host = false;
+    info.is_ready = false;
+    info.car_index = 0;
+    
+    players[username] = info;
+    
+    std::cout << "[GameRoom " << game_id << "] Player '" << username << "' joined (" 
+              << players.size() << "/" << static_cast<int>(max_players) << ")" << std::endl;
+    
+    if (players.size() >= 2 && state == GameState::WAITING) {
+        state = GameState::READY;
+        std::cout << "[GameRoom " << game_id << "] Enough players, state changed to READY" << std::endl;
     }
     
     return true;
 }
 
-bool GameRoom::remove_player(const std::string& username) {
-    auto it = std::find(players.begin(), players.end(), username);
+void GameRoom::remove_player(const std::string& username) {
+    auto it = players.find(username);
     if (it == players.end()) {
-        return false;  // Jugador no encontrado
-    }
-    
-    bool was_host = (username == host_username);
-    
-    players.erase(it);
-    std::cout << "[GameRoom " << game_id << "] Player '" << username 
-              << "' left (" << players.size() << "/" 
-              << static_cast<int>(max_players) << ")" << std::endl;
-    
-    // Si era el host, promover a otro
-    if (was_host && !players.empty()) {
-        promote_new_host();
-    }
-    
-    // Actualizar estado si quedan menos de 2 jugadores
-    if (players.size() < 2) {
-        state = GameStatus::WAITING;
-        std::cout << "[GameRoom " << game_id << "] Not enough players, state changed to WAITING" << std::endl;
-    }
-    
-    return true;
-}
-
-void GameRoom::promote_new_host() {
-    if (players.empty()) {
-        host_username.clear();
         return;
     }
     
-    host_username = players[0];  // El primer jugador se convierte en host
-    std::cout << "[GameRoom " << game_id << "] '" << host_username 
-              << "' is now the HOST" << std::endl;
-}
-
-bool GameRoom::is_host(const std::string& username) const {
-    return username == host_username;
+    std::cout << "[GameRoom " << game_id << "] Player '" << username << "' left ";
+    
+    // Si era el host, transferir a otro jugador
+    if (it->second.is_host && players.size() > 1) {
+        players.erase(it);
+        
+        // Asignar nuevo host (el primero disponible)
+        auto new_host = players.begin();
+        new_host->second.is_host = true;
+        
+        std::cout << "(" << players.size() << "/" << static_cast<int>(max_players) << ") "
+                  << "[NEW HOST: '" << new_host->first << "']" << std::endl;
+    } else {
+        players.erase(it);
+        std::cout << "(" << players.size() << "/" << static_cast<int>(max_players) << ")" << std::endl;
+    }
+    
+    // Cambiar estado si quedan menos de 2 jugadores
+    if (players.size() < 2 && state == GameState::READY) {
+        state = GameState::WAITING;
+        std::cout << "[GameRoom " << game_id << "] Not enough players, state changed to WAITING" << std::endl;
+    }
 }
 
 bool GameRoom::has_player(const std::string& username) const {
-    return std::find(players.begin(), players.end(), username) != players.end();
+    return players.find(username) != players.end();
 }
 
-bool GameRoom::is_full() const {
-    return players.size() >= max_players;
+bool GameRoom::is_host(const std::string& username) const {
+    auto it = players.find(username);
+    if (it == players.end()) {
+        return false;
+    }
+    return it->second.is_host;
 }
 
 bool GameRoom::is_ready() const {
-    return players.size() >= 2 && state != GameStatus::STARTED;
+    return state == GameState::READY && players.size() >= 2;
 }
 
-bool GameRoom::start(const std::string& requester) {
-    // Solo el host puede iniciar la partida
-    if (!is_host(requester)) {
-        std::cout << "[GameRoom " << game_id << "] '" << requester 
-                  << "' tried to start game but is not the host!" << std::endl;
-        return false;
-    }
-    
-    // Verificar que haya suficientes jugadores
-    if (!is_ready()) {
-        std::cout << "[GameRoom " << game_id << "] Cannot start: not enough players!" << std::endl;
-        return false;
-    }
-    
-    state = GameStatus::STARTED;
-    std::cout << "[GameRoom " << game_id << "] Game STARTED by host '" 
-              << requester << "' with " << players.size() << " players!" << std::endl;
-    return true;
+bool GameRoom::is_started() const {
+    return state == GameState::STARTED;
 }
 
-bool GameRoom::kick_player(const std::string& host, const std::string& target) {
-    // Solo el host puede expulsar
-    if (!is_host(host)) {
-        return false;
+void GameRoom::start() {
+    if (state != GameState::READY) {
+        return;
     }
     
-    // No puede expulsarse a sí mismo
-    if (host == target) {
-        return false;
-    }
-    
-    return remove_player(target);
+    state = GameState::STARTED;
+    std::cout << "[GameRoom " << game_id << "] Game started!" << std::endl;
 }
 
 bool GameRoom::set_player_car(const std::string& username, uint8_t car_index) {
-    // Verificar que el jugador esté en la partida
-    if (!has_player(username)) {
-        std::cout << "[GameRoom " << game_id << "] Player '" << username 
-                  << "' is not in this game!" << std::endl;
+    auto it = players.find(username);
+    if (it == players.end()) {
         return false;
     }
     
-    // Validar índice de auto (0-6 según el listado)
-    if (car_index > 6) {
-        std::cout << "[GameRoom " << game_id << "] Invalid car index: " 
-                  << static_cast<int>(car_index) << std::endl;
-        return false;
-    }
-    
-    // Nombres de los autos (para logging)
-    const std::vector<std::string> car_names = {
-        "Leyenda Urbana",  // 0: El Escarabajo
-        "Brisa",           // 1: El Convertible
-        "J-Classic 600",   // 2: El Clásico
-        "Cavallo V8",      // 3: El Deportivo
-        "Senator",         // 4: El Sedán
-        "Nómada",          // 5: La Pickup
-        "Stallion GT"      // 6: El Muscle Car
-    };
-    
-    // Registrar selección
-    player_cars[username] = car_index;
-    
+    it->second.car_index = car_index;
     std::cout << "[GameRoom " << game_id << "] Player '" << username 
-              << "' selected car: " << car_names[car_index] 
-              << " (index " << static_cast<int>(car_index) << ")" << std::endl;
-    
+              << "' selected car " << static_cast<int>(car_index) << std::endl;
     return true;
 }
 
 uint8_t GameRoom::get_player_car(const std::string& username) const {
-    auto it = player_cars.find(username);
-    return (it != player_cars.end()) ? it->second : 255;  // 255 = sin selección
+    auto it = players.find(username);
+    if (it == players.end()) {
+        return 0;
+    }
+    return it->second.car_index;
 }
 
 bool GameRoom::all_players_selected_car() const {
-    // Verificar que todos los jugadores hayan seleccionado un auto
-    for (const auto& player : players) {
-        if (player_cars.find(player) == player_cars.end()) {
+    for (const auto& pair : players) {
+        if (pair.second.car_index == 0) {
             return false;
         }
     }
     return true;
+}
+
+uint16_t GameRoom::get_game_id() const {
+    return game_id;
+}
+
+std::string GameRoom::get_game_name() const {
+    return game_name;
+}
+
+uint8_t GameRoom::get_player_count() const {
+    return players.size();
+}
+
+uint8_t GameRoom::get_max_players() const {
+    return max_players;
+}
+
+const std::map<std::string, PlayerInfo>& GameRoom::get_players() const {
+    return players;
 }
