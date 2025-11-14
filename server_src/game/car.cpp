@@ -1,10 +1,20 @@
-#include "car.h"  
+#include "car.h"
+#include <cmath>
+#include <iostream>
 
-Car::Car(int id, int max_duration):
-        client_id(id), nitro_active(false), nitro_ticks(0), nitro_duration(max_duration) {}
+Car::Car(int id, int max_duration, int initial_health)
+    : client_id(id), 
+      nitro_active(false), 
+      nitro_ticks(0), 
+      nitro_duration(max_duration),
+      health(initial_health),
+      speed(0.0f),
+      is_destroyed(false) {
+    body = b2_nullBodyId;  // Se asignará cuando se cree el cuerpo
+}
 
 bool Car::activate_nitro() {
-    if (nitro_active)
+    if (nitro_active || !is_alive())
         return false;
     nitro_active = true;
     nitro_ticks = 0;
@@ -13,12 +23,70 @@ bool Car::activate_nitro() {
 
 bool Car::simulate_tick() {
     if (!nitro_active)
-        return false;  // nitro no activo
+        return false;
     nitro_ticks++;
     if (nitro_ticks >= nitro_duration) {
         nitro_active = false;
         nitro_ticks = 0;
-        return true;  // nitro expiró
+        return true;
     }
     return false;
+}
+
+void Car::apply_collision_damage(float impact_force) {
+    if (is_destroyed) return;
+    
+    // Calcular daño basado en la fuerza del impacto
+    // Fuerza > 50 = colisión severa
+    // Fuerza < 20 = colisión leve
+    int damage = 0;
+    
+    if (impact_force > 50.0f) {
+        damage = 30;  // Colisión frontal severa
+        std::cout << "[Car " << client_id << "] SEVERE collision! Force: " 
+                  << impact_force << ", Damage: " << damage << std::endl;
+    } else if (impact_force > 20.0f) {
+        damage = 15;  // Colisión moderada
+        std::cout << "[Car " << client_id << "] Medium collision! Force: " 
+                  << impact_force << ", Damage: " << damage << std::endl;
+    } else {
+        damage = 5;   // Colisión leve (lateral)
+        std::cout << "[Car " << client_id << "] Light collision. Force: " 
+                  << impact_force << ", Damage: " << damage << std::endl;
+    }
+    
+    health -= damage;
+    if (health < 0) health = 0;
+    
+    // Reducir velocidad proporcionalmente al daño
+    float speed_reduction = damage * 0.02f;  // 2% por punto de daño
+    if (B2_IS_NON_NULL(body)) {
+        b2Vec2 vel = b2Body_GetLinearVelocity(body);
+        float current_speed = std::sqrt(vel.x * vel.x + vel.y * vel.y);
+        float new_speed = current_speed * (1.0f - speed_reduction);
+        
+        if (current_speed > 0.01f) {
+            float factor = new_speed / current_speed;
+            b2Body_SetLinearVelocity(body, {vel.x * factor, vel.y * factor});
+        }
+    }
+    
+    // Si la salud llega a 0, destruir el auto
+    if (health <= 0) {
+        destroy();
+    }
+}
+
+void Car::destroy() {
+    is_destroyed = true;
+    health = 0;
+    nitro_active = false;
+    
+    // Detener el cuerpo completamente
+    if (B2_IS_NON_NULL(body)) {
+        b2Body_SetLinearVelocity(body, {0.0f, 0.0f});
+        b2Body_SetAngularVelocity(body, 0.0f);
+    }
+    
+    std::cout << "[Car " << client_id << "] DESTROYED! 💥" << std::endl;
 }

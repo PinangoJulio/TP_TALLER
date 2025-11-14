@@ -12,9 +12,11 @@
 
 #include "../../common_src/thread.h"
 #include "../../common_src/dtos.h"
-#include "../../common_src/config.h" 
+#include "../../common_src/config.h"
 
 #include "car.h"
+#include "collision_handler.h"
+#include "obstacle.h"  // NUEVO
 #include "../network/monitor.h"
 
 #define NITRO_DURATION 12
@@ -29,10 +31,15 @@ private:
     Queue<struct Command>& game_queue;
     
     b2WorldId mundo;
-    Configuracion& config;  // Usar Configuracion (con Box2D)
+    Configuracion& config;
     std::map<int, b2BodyId> player_bodies;
+    std::map<int, int> player_user_data;
+    
+    CollisionHandler collision_handler;
+    ObstacleManager obstacle_manager;  // NUEVO
     
     void initialize_physics();
+    void create_test_obstacles();  // NUEVO: Crear obstáculos de prueba
     void update_physics();
     void apply_forces_from_command(const Command& cmd, b2BodyId body);
     

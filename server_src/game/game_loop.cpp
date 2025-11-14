@@ -5,7 +5,8 @@ GameLoop::GameLoop(Monitor& monitor_ref, Queue<struct Command>& queue, Configura
       monitor(monitor_ref), 
       cars_with_nitro(0), 
       game_queue(queue),
-      config(cfg) {
+      config(cfg),
+      obstacle_manager(b2_nullWorldId) {  // Se asignará después
     
     initialize_physics();
 }
@@ -20,9 +21,37 @@ void GameLoop::initialize_physics() {
     b2WorldDef mundoDef = b2DefaultWorldDef();
     mundoDef.gravity = {config.obtenerGravedadX(), config.obtenerGravedadY()};
     mundo = b2CreateWorld(&mundoDef);
+    
+    // NUEVO: Asignar el mundo al ObstacleManager
+    obstacle_manager = ObstacleManager(mundo);
+    
+    // NUEVO: Conectar el collision handler con el obstacle manager
+    collision_handler.set_obstacle_manager(&obstacle_manager);
+    
+    // NUEVO: Crear obstáculos de prueba
+    create_test_obstacles();
+    
     std::cout << "[GameLoop] Box2D initialized with gravity (" 
               << config.obtenerGravedadX() << ", " 
               << config.obtenerGravedadY() << ")" << std::endl;
+}
+
+void GameLoop::create_test_obstacles() {
+    // Crear paredes de borde (como límites de la pista)
+    obstacle_manager.create_wall(-50.0f, 0.0f, 2.0f, 100.0f);  // Pared izquierda
+    obstacle_manager.create_wall(50.0f, 0.0f, 2.0f, 100.0f);   // Pared derecha
+    obstacle_manager.create_wall(0.0f, -50.0f, 100.0f, 2.0f);  // Pared inferior
+    obstacle_manager.create_wall(0.0f, 50.0f, 100.0f, 2.0f);   // Pared superior
+    
+    // Crear algunos edificios en el mapa
+    obstacle_manager.create_building(20.0f, 20.0f, 8.0f, 8.0f);
+    obstacle_manager.create_building(-20.0f, 20.0f, 8.0f, 8.0f);
+    obstacle_manager.create_building(20.0f, -20.0f, 8.0f, 8.0f);
+    
+    // Crear barreras en el medio
+    obstacle_manager.create_barrier(0.0f, 0.0f, 15.0f);
+    
+    std::cout << "[GameLoop] Test obstacles created" << std::endl;
 }
 
 void GameLoop::update_physics() {
@@ -103,7 +132,7 @@ void GameLoop::process_commands() {
                                });
 
         if (it == cars.end()) {
-            cars.emplace_back(cmd.player_id, NITRO_DURATION);
+            cars.emplace_back(cmd.player_id, NITRO_DURATION, 100);  // 100 HP inicial
             it = cars.end() - 1;
         }
 
@@ -123,16 +152,28 @@ void GameLoop::process_commands() {
             
             b2BodyId body = b2CreateBody(mundo, &bodyDef);
             
+            // NUEVO: Asignar userData para identificar el cuerpo en colisiones
+            player_user_data[cmd.player_id] = cmd.player_id;
+            b2Body_SetUserData(body, &player_user_data[cmd.player_id]);
+            
             b2Polygon box = b2MakeBox(1.0f, 2.0f);
             b2ShapeDef shapeDef = b2DefaultShapeDef();
             shapeDef.density = 1.5f;
             b2CreatePolygonShape(body, &shapeDef, &box);
             
             player_bodies[cmd.player_id] = body;
+            it->body = body;  // NUEVO: Guardar referencia al cuerpo
+            
+            // NUEVO: Registrar el auto en el collision handler
+            collision_handler.register_car(cmd.player_id, &(*it));
+            
             std::cout << "[GameLoop] Player " << cmd.player_id << " body created" << std::endl;
         }
         
-        apply_forces_from_command(cmd, player_bodies[cmd.player_id]);
+        // Solo aplicar fuerzas si el auto está vivo
+        if (it->is_alive()) {
+            apply_forces_from_command(cmd, player_bodies[cmd.player_id]);
+        }
     }
 }
 
@@ -148,10 +189,20 @@ void GameLoop::run() {
     std::cout << "[GameLoop] Starting game loop..." << std::endl;
     while (is_running) {
         process_commands();
+        
+        // Actualizar física
         update_physics();
+        
+        // Obtener y procesar eventos de contacto
+        b2ContactEvents events = b2World_GetContactEvents(mundo);
+        collision_handler.process_contact_event(events);
+        collision_handler.apply_pending_collisions();
+        collision_handler.clear_collisions();
+        
         simulate_cars();
         
         std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP));
     }
     std::cout << "[GameLoop] Game loop stopped." << std::endl;
 }
+
