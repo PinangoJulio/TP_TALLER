@@ -2,20 +2,17 @@
 
 #include <cstring>
 
-
 int MatchesMonitor::create_match(int max_players, const std::string &host_name, int player_id, Queue<GameState> &sender_message_queue) {
     std::lock_guard<std::mutex> lock(mtx);
 
     int match_id = ++id_matches;
 
-    // El path inicial del mapa se puede dejar vacío, se agrega luego con add_races_to_match()
     std::unique_ptr<Match> match = std::make_unique<Match>(
         host_name,
         match_id,
         max_players
     );
 
-    // Agregamos el host como primer jugador
     match->add_player(player_id, host_name, sender_message_queue);
     matches.emplace(match_id, std::move(match));
 
@@ -24,8 +21,6 @@ int MatchesMonitor::create_match(int max_players, const std::string &host_name, 
 
     return match_id;
 }
-
-
 
 bool MatchesMonitor::add_races_to_match(int match_id, const std::vector<RaceConfig>& races) {
     std::lock_guard<std::mutex> lock(mtx);
@@ -90,9 +85,20 @@ void MatchesMonitor::set_player_car(int player_id, const std::string& car_name, 
 
 void MatchesMonitor::delete_player_from_match(int player_id, int match_id) {
     std::lock_guard<std::mutex> lock(mtx);
+    
     auto it = matches.find(match_id);
-    if (it != matches.end()) {
-        it->second->remove_player(player_id);
+    if (it == matches.end()) {
+        std::cerr << "[MatchesMonitor] Match " << match_id << " no encontrado\n";
+        return;
+    }
+    
+    it->second->remove_player(player_id);
+    
+    // 🔥 AGREGADO: Si la partida quedó vacía, eliminarla
+    if (it->second->is_empty()) {
+        std::cout << "[MatchesMonitor] Match " << match_id 
+                  << " está vacío, eliminándolo...\n";
+        matches.erase(it);
     }
 }
 

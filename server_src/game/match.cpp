@@ -15,11 +15,10 @@ bool Match::can_player_join_match() const {
     return static_cast<int>(players.size()) < max_players;
 }
 
-
 bool Match::add_player(int id, std::string nombre, Queue<GameState> &queue_enviadora) {
     if (!can_player_join_match()) return false;
     auto player = std::make_unique<Player>(id, nombre);
-    players_queues.add_client_queue(queue_enviadora, id); // para enviar updates
+    players_queues.add_client_queue(queue_enviadora, id);
     players.push_back(std::move(player));
 
     std::cout << "[Match] Jugador agregado: " << nombre << " (id=" << id << ")\n";
@@ -35,19 +34,25 @@ bool Match::remove_player(int id_jugador) {
     players.erase(it, players.end());
     players_queues.delete_client_queue(id_jugador);
 
-    std::cout << "[Match] Jugador eliminado: id=" << id_jugador << "\n";
+    std::cout << "[Match] Jugador eliminado: id=" << id_jugador 
+              << " (Jugadores restantes: " << players.size() << ")" << std::endl;
+    
+    // 🔥 AGREGADO: Retornar true si la partida quedó vacía
     return true;
 }
 
-void Match::set_car(int player_id, const std::string& car_name, const std::string& car_type) {
+// 🔥 NUEVO: Método para verificar si la partida está vacía
+bool Match::is_empty() const {
+    return players.empty();
+}
 
+void Match::set_car(int player_id, const std::string& car_name, const std::string& car_type) {
     for (auto& player : players) {
         if (player->getId() == player_id) {
             player->setSelectedCar(car_name);
-            player->getCarType(car_type); // ojo, parece mal nombrado (debería ser setCarType)
+            player->getCarType(car_type);
             std::cout << "[Match] Jugador " << player->getName()
                       << " eligió auto " << car_name << " tipo " << car_type << "\n";
-            // habria que agregar campo Car al Player y cargarle toda la info inicial (speed, accel, etc)
             break;
         }
     }
@@ -57,7 +62,6 @@ void Match::add_race(const std::string& yaml_path, const std::string& city_name)
     races.push_back(std::make_unique<Race>(command_queue, players_queues, city_name, yaml_path));
     std::cout << "[Match] Carrera agregada: " << city_name << " -> " << yaml_path << "\n";
 }
-
 
 void Match::start_next_race() {
     if (races.empty()) {
@@ -82,7 +86,6 @@ Match::~Match() {
     is_active = false;
     races.clear();
 }
-
 
 
 

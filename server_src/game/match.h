@@ -10,7 +10,7 @@
 #include "../../common_src/queue.h"
 #include "../../common_src/dtos.h"
 #include "../../common_src/game_state.h"
-#include "../network/client_monitor.h" // El Broadcaster
+#include "../network/client_monitor.h"
 #include "race.h"
 
 class Race;
@@ -20,19 +20,16 @@ private:
     std::string host_name;
     int match_code;
     std::atomic<bool> is_active;
-    std::vector<std::unique_ptr<Race>> races;  // Lista de carreras de la partida
+    std::vector<std::unique_ptr<Race>> races;
     int current_race_index;
 
     ClientMonitor players_queues;
     Queue<ComandMatchDTO> command_queue;
     int max_players;
     std::vector<std::unique_ptr<Player>> players;
-    // (Aca iría la tabla de posiciones ACUMULADA de la Partida) ?
 
 public:
-    Match(std::string host_name,
-            int code,
-            int max_players);
+    Match(std::string host_name, int code, int max_players);
 
     // ---- LOBBY ----
     bool can_player_join_match() const;
@@ -50,6 +47,7 @@ public:
     int getMatchCode() const { return match_code; }
     int get_player_count() const { return players.size(); }
     int get_max_players() const { return max_players; }
+    bool is_empty() const;  
 
     Queue<ComandMatchDTO>& getComandQueue() { return command_queue; }
 
