@@ -11,7 +11,7 @@
 #include <SDL2/SDL.h>
 
 LobbyWindow::LobbyWindow(QWidget *parent) 
-    : QWidget(parent), 
+    : BaseLobby(parent), 
       playerName(""),
       selectedCarIndex(0),
       backgroundMusic(nullptr),
@@ -37,7 +37,6 @@ LobbyWindow::LobbyWindow(QWidget *parent)
             std::cout << "Fuente cargada: " << fontFamilies.at(0).toStdString() << std::endl;
         }
     }
-    
     // Cargar imagen de fondo con Qt
     backgroundImage.load("assets/img/menu2.png");
     if (backgroundImage.isNull()) {
@@ -124,6 +123,7 @@ LobbyWindow::LobbyWindow(QWidget *parent)
     playButton->setGeometry(375, 600, 270, 60);
     quitButton->setGeometry(50, 600, 270, 60);
     
+    setupMusicControl();
     
     connect(playButton, &QPushButton::clicked, this, &LobbyWindow::onPlayClicked);
     connect(quitButton, &QPushButton::clicked, this, &LobbyWindow::close);

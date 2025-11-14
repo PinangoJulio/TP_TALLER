@@ -3,26 +3,30 @@
 #include <QPainter>
 #include <QFontDatabase>
 #include <QRegularExpression>
+// 1. QUITAR: #include <SDL2/SDL_mixer.h>
 
 NameInputWindow::NameInputWindow(QWidget *parent)
-    : QWidget(parent), customFontId(-1), playerName("") {
+    // 2. Llamar al constructor de  BaseLobby
+    :  BaseLobby(parent), playerName("") {
     
     setWindowTitle("Need for Speed 2D - Ingrese su Nombre");
     setFixedSize(700, 700);
     
-    
+    // 3. Carga la fuente en el miembro heredado 'customFontId'
     customFontId = QFontDatabase::addApplicationFont("assets/fonts/arcade-classic.ttf");
     if (customFontId == -1) {
         std::cerr << "Error: No se pudo cargar la fuente Arcade Classic" << std::endl;
     }
     
-  
     backgroundImage.load("assets/img/nombre.png");
     if (!backgroundImage.isNull()) {
         backgroundImage = backgroundImage.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }
     
     setupUI();
+}
+
+NameInputWindow::~NameInputWindow() {
 }
 
 void NameInputWindow::setupUI() {
@@ -34,6 +38,9 @@ void NameInputWindow::setupUI() {
         }
     }
     
+    
+    setupMusicControl(); 
+
     // Título
     titleLabel = new QLabel("Bienvenido", this);
     if (customFontId != -1) {
@@ -212,7 +219,4 @@ void NameInputWindow::paintEvent(QPaintEvent* event) {
     }
     
     QWidget::paintEvent(event);
-}
-
-NameInputWindow::~NameInputWindow() {
 }

@@ -6,7 +6,7 @@
 #include <QScrollBar>
 
 MatchSelectionWindow::MatchSelectionWindow(QWidget *parent)
-    : QWidget(parent), customFontId(-1), selectedMatchId("") {
+    : BaseLobby(parent), customFontId(-1), selectedMatchId("") {
     
     setWindowTitle("Need for Speed 2D - Selección de Partida");
     setFixedSize(700, 700);
@@ -188,6 +188,8 @@ void MatchSelectionWindow::setupUI() {
     backButton->setCursor(Qt::PointingHandCursor);
     backButton->setGeometry(50, 600, 180, 60);
     connect(backButton, &QPushButton::clicked, this, &MatchSelectionWindow::onBackClicked);
+    setupMusicControl(); 
+
 }
 
 

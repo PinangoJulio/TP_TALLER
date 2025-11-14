@@ -5,6 +5,7 @@ target_sources(client
     lobby/model/lobby_client.cpp  
 
     # view
+    lobby/view/base_lobby.cpp
     lobby/view/lobby_window.cpp
     lobby/view/name_input_window.cpp
     lobby/view/match_selection_window.cpp
@@ -21,6 +22,7 @@ target_sources(client
 
     #view
     lobby/view/lobby_window.h
+    lobby/view/base_lobby.h
     lobby/view/common_types.h
     lobby/view/name_input_window.h
     lobby/view/match_selection_window.h
