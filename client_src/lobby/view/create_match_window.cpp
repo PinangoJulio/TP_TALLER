@@ -188,6 +188,11 @@ void CreateMatchWindow::setupStep1UI() {
     numRacesSpinBox->setMaximum(5);
     numRacesSpinBox->setValue(3);
     numRacesSpinBox->setGeometry(100, 465, 500, 50);
+
+   
+    maxPlayersSpinBox->setButtonSymbols(QAbstractSpinBox::NoButtons);
+    numRacesSpinBox->setButtonSymbols(QAbstractSpinBox::NoButtons);
+   
  
     nextStepButton = new QPushButton("Customizar", step1Widget);
     if (customFontId != -1) {

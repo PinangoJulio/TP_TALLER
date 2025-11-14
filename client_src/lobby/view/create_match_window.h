@@ -11,7 +11,8 @@
 #include <QPixmap>
 #include <vector>
 #include "common_types.h"
-
+#include <QComboBox>          // <--- 1. AGREGAR ESTE INCLUDE
+#include <SDL2/SDL_mixer.h>
 struct CityInfo {
     QString name;
     QString imagePath;
