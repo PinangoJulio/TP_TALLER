@@ -192,7 +192,6 @@ void LobbyController::cleanupAndReturnToLobby() {
 }
 
 
-
 void LobbyController::onMatchCreated(const QString& matchName, int maxPlayers, const std::vector<RaceConfig>& races) {
     std::cout << "[Controller] Usuario confirmó creación de partida:" << std::endl;
     std::cout << "  Nombre: " << matchName.toStdString() << std::endl;
@@ -421,12 +420,14 @@ void LobbyController::onBackFromGarage() {
         garageWindow->close();
         garageWindow->deleteLater();
         garageWindow = nullptr;
-    }
-    
-    // 🔥 AGREGADO: Abandonar la partida en el servidor
+
     try {
+        std::cout << "[Controller] Enviando leave_game para partida " << currentGameId << std::endl;
         lobbyClient->leave_game(currentGameId);
-        std::cout << "[Controller] Abandonó la partida " << currentGameId << std::endl;
+
+        auto games = lobbyClient->receive_games_list();
+        std::cout << "[Controller] Leave confirmado. Juegos disponibles: " << games.size() << std::endl;
+        
     } catch (const std::exception& e) {
         std::cerr << "[Controller] Error al abandonar partida: " << e.what() << std::endl;
     }
@@ -440,7 +441,7 @@ void LobbyController::onBackFromGarage() {
         refreshGamesList();
     }
 }
-
+}
 void LobbyController::openWaitingRoom() {
     std::cout << "[Controller] Abriendo sala de espera..." << std::endl;
     
@@ -485,11 +486,14 @@ void LobbyController::onBackFromWaitingRoom() {
         waitingRoomWindow->deleteLater();
         waitingRoomWindow = nullptr;
     }
-    
-    // 🔥 AGREGADO: Abandonar la partida en el servidor
+
     try {
+        std::cout << "[Controller] Enviando leave_game para partida " << currentGameId << std::endl;
         lobbyClient->leave_game(currentGameId);
-        std::cout << "[Controller] Abandonó la partida " << currentGameId << std::endl;
+        
+        auto games = lobbyClient->receive_games_list();
+        std::cout << "[Controller] Leave confirmado. Juegos disponibles: " << games.size() << std::endl;
+        
     } catch (const std::exception& e) {
         std::cerr << "[Controller] Error al abandonar partida: " << e.what() << std::endl;
     }

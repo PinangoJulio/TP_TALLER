@@ -151,7 +151,7 @@ std::vector<uint8_t> serialize_error(LobbyErrorCode error_code, const std::strin
 }
 
     /**[MSG_CAR_CHOSEN][len_nombre][nombre][len_tipo][tipo]**/
-std::vector<uint8_t> serialize_car_chosen(const std::string& car_name, const std::string& car_type) {
+/*std::vector<uint8_t> serialize_car_chosen(const std::string& car_name, const std::string& car_type) {
     std::vector<uint8_t> buffer;
     buffer.push_back(MSG_CAR_CHOSEN);
     LobbyProtocol::push_uint16(buffer, car_name.size());
@@ -160,7 +160,7 @@ std::vector<uint8_t> serialize_car_chosen(const std::string& car_name, const std
     buffer.insert(buffer.end(), car_type.begin(), car_type.end());
     return buffer;
 }
-
+*/
 std::vector<uint8_t> serialize_game_started(uint16_t game_id) {
     std::vector<uint8_t> buffer;
     buffer.push_back(MSG_START_GAME);
@@ -168,10 +168,23 @@ std::vector<uint8_t> serialize_game_started(uint16_t game_id) {
     return buffer;
 }
 
-std::vector<uint8_t> serialize_select_car(uint8_t car_index) {
+std::vector<uint8_t> serialize_car_selected_ack(const std::string& car_name, const std::string& car_type) {
     std::vector<uint8_t> buffer;
-    buffer.push_back(MSG_SELECT_CAR);
-    buffer.push_back(car_index);
+    buffer.push_back(MSG_CAR_SELECTED_ACK);
+    push_uint16(buffer, car_name.size());
+    buffer.insert(buffer.end(), car_name.begin(), car_name.end());
+    push_uint16(buffer, car_type.size());
+    buffer.insert(buffer.end(), car_type.begin(), car_type.end());
+    return buffer;
+}
+
+std::vector<uint8_t> serialize_select_car(const std::string& car_name, const std::string& car_type) {
+    std::vector<uint8_t> buffer;
+    buffer.push_back(MSG_SELECT_CAR);  // 
+    push_uint16(buffer, car_name.size());
+    buffer.insert(buffer.end(), car_name.begin(), car_name.end());
+    push_uint16(buffer, car_type.size());
+    buffer.insert(buffer.end(), car_type.begin(), car_type.end());
     return buffer;
 }
 
@@ -181,6 +194,7 @@ std::vector<uint8_t> serialize_start_game(uint16_t game_id) {
     push_uint16(buffer, game_id);
     return buffer;
 }
+
 
 
 } // namespace LobbyProtocol

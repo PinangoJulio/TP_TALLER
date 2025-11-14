@@ -161,7 +161,7 @@ TEST(ServerClientProtocolTest, JoinGameSerializationAndReception) {
     client_thread.join();
     server_thread.join();
 }
-
+/*
 TEST(ServerClientProtocolTest, CarChosenSerializationAndReception) {
     std::string car_name = "Ferrari";
     std::string car_type = "Sport";
@@ -194,3 +194,4 @@ TEST(ServerClientProtocolTest, CarChosenSerializationAndReception) {
     client_thread.join();
     server_thread.join();
 }
+    */

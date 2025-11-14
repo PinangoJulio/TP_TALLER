@@ -30,9 +30,12 @@ namespace LobbyProtocol {
     std::vector<uint8_t> serialize_game_joined(uint16_t game_id);
     std::vector<uint8_t> serialize_error(LobbyErrorCode error_code, const std::string& message);
     std::vector<uint8_t> serialize_city_maps(const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::string>>>>& maps);
-    std::vector<uint8_t> serialize_car_chosen(const std::string& car_name, const std::string& car_type);
     std::vector<uint8_t> serialize_game_started(uint16_t game_id);
     std::vector<uint8_t> serialize_leave_game(uint16_t game_id);
+    std::vector<uint8_t> serialize_car_selected_ack(const std::string& car_name, const std::string& car_type);
+    std::vector<uint8_t> serialize_select_car(const std::string& car_name, const std::string& car_type);
+
+  
 
 }
 

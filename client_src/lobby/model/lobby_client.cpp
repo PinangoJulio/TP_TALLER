@@ -208,19 +208,21 @@ void LobbyClient::send_selected_races(const std::vector<std::pair<std::string, s
 }
 
 void LobbyClient::select_car(const std::string& car_name, const std::string& car_type) {
-    auto buffer = LobbyProtocol::serialize_car_chosen(car_name, car_type);
+    auto buffer = LobbyProtocol::serialize_select_car(car_name, car_type);  
     socket.sendall(buffer.data(), buffer.size());
     std::cout << "[LobbyClient] Selected car: " << car_name << " (" << car_type << ")\n";
 }
 
 std::string LobbyClient::receive_car_confirmation() {
     uint8_t type = read_message_type();
-    if (type != MSG_CAR_CHOSEN) {
-        throw std::runtime_error("Expected CAR_CHOSEN_ACK");
+    if (type != MSG_CAR_SELECTED_ACK) {  
+        throw std::runtime_error("Expected CAR_SELECTED_ACK");
     }
-    std::string confirmed = read_string();
-    std::cout << "[LobbyClient] Server confirmed car: " << confirmed << std::endl;
-    return confirmed;
+    std::string car_name = read_string();
+    std::string car_type = read_string();
+    
+    std::cout << "[LobbyClient] Server confirmed car: " << car_name << " (" << car_type << ")" << std::endl;
+    return car_name;
 }
 
 void LobbyClient::start_game(uint16_t game_id) {
