@@ -15,6 +15,9 @@ target_sources(client
 
     # controller
     lobby/controller/lobby_controller.cpp
+
+    #game
+    game/collision_manager.cpp
     
     PUBLIC
     # .h files
@@ -32,6 +35,10 @@ target_sources(client
     
     # controller
     lobby/controller/lobby_controller.h
+
+    #game
+    game/collision_manager.h
+    
 )
 
 add_executable(lobby_client_test
