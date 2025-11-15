@@ -1,12 +1,13 @@
+#include <map>
+#include <iostream>
+#include <SDL2pp/Rect.hh>
 #include <SDL2pp/SDL2pp.hh>
 #include <SDL2pp/Window.hh>
+#include <SDL2/SDL_image.h>
 #include <SDL2pp/Renderer.hh>
 #include <SDL2pp/Texture.hh>
-#include <SDL2pp/Rect.hh>
-#include <SDL2/SDL_image.h>
+
 #include "client_src/game/collision_manager.h"
-#include <iostream>
-#include <map>
 
 // Tamaño de nuestra ventana
 const int SCREEN_WIDTH = 700;
