@@ -495,14 +495,6 @@ void WaitingRoomWindow::paintEvent(QPaintEvent* event) {
     QWidget::paintEvent(event);
 }
 
-void WaitingRoomWindow::updatePaginationButtons() {
-    int totalPages = (max_players + 3) / 4; 
-    
-    prevPageButton->setEnabled(currentPage > 0);
-    nextPageButton->setEnabled(currentPage < totalPages - 1);
-    
-    pageLabel->setText(QString("%1 / %2").arg(currentPage + 1).arg(totalPages));
-}
 
 void WaitingRoomWindow::onPreviousPage() {
     if (currentPage > 0) {
@@ -554,6 +546,11 @@ void WaitingRoomWindow::onBackClicked() {
     
     std::cout << "[WaitingRoom] Usuario confirmó salir de la sala" << std::endl;
     emit backRequested();
+}
+
+void WaitingRoomWindow::updateReadyAnimation() {
+    animationFrame++;
+    updatePlayerDisplay();
 }
 
 WaitingRoomWindow::~WaitingRoomWindow() {

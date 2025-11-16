@@ -198,7 +198,7 @@ void Receiver::handle_lobby() {
                     }
                     
                     // Obtener la sala y cambiar estado
-                    auto games = lobby_manager.get_all_games();
+                    auto& games = lobby_manager.get_all_games();
                     auto it = games.find(current_game_id);
                     if (it == games.end()) {
                         protocol.send_buffer(LobbyProtocol::serialize_error(
@@ -223,7 +223,7 @@ void Receiver::handle_lobby() {
                     std::cout << "[Receiver] " << username << " starting game " << game_id << "\n";
                     
                     // 🔥 VALIDAR: Es el host?
-                    auto games = lobby_manager.get_all_games();
+                    auto& games = lobby_manager.get_all_games();
                     auto it = games.find(game_id);
                     if (it == games.end()) {
                         protocol.send_buffer(LobbyProtocol::serialize_error(

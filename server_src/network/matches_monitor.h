@@ -19,6 +19,17 @@ private:
     std::map<int, std::unique_ptr<Match>> matches;
 
 public:
+public:
+// **NUEVO: Constructor por defecto explícitamente pedido (FIX)**
+MatchesMonitor() = default; 
+
+// Constructor de movimiento
+MatchesMonitor(MatchesMonitor&& other) = default;
+MatchesMonitor& operator=(MatchesMonitor&& other) = default;
+
+// Eliminación de copia
+MatchesMonitor(const MatchesMonitor& other) = delete;
+MatchesMonitor& operator=(const MatchesMonitor& other) = delete;
     int create_match(int max_players, const std::string& host_name, int player_id, Queue<GameState>& sender_message_queue);
     bool add_races_to_match(int match_id, const std::vector<RaceConfig>& race_paths);
     std::vector<GameInfo> list_available_matches();

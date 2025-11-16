@@ -10,6 +10,7 @@
 #include <vector>
 #include "common_types.h"
 #include "garage_window.h"
+#include <cstdint>
 
 // Forward declarations
 class NameInputWindow;
@@ -25,6 +26,7 @@ public:
     // Constructor sin parámetros - lobby inicial
     explicit LobbyWindow(QWidget *parent = nullptr);
     ~LobbyWindow();
+    uint8_t _max_players;
 
 protected:
     void paintEvent(QPaintEvent* event) override;

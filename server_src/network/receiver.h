@@ -26,6 +26,17 @@ class Receiver: public Thread {
 
     bool handle_client_lobby();
 public:
+    // Declaración del constructor. Si toma un MatchesMonitor,
+    // debe ser por referencia o puntero, no por valor.
+    // Receiver(MatchesMonitor& monitor); 
+    
+    // FIX PRINCIPAL: Eliminar constructor de copia y operador de asignación de copia.
+    Receiver(const Receiver& other) = delete;
+    Receiver& operator=(const Receiver& other) = delete;
+
+    // Permitir el movimiento (sana práctica para hilos)
+    Receiver(Receiver&& other) = default;
+
     explicit Receiver(ServerProtocol& protocol, int id, Queue<GameState>& sender_messages_queue, std::atomic<bool>& is_running, MatchesMonitor& monitor, LobbyManager& lobby_manager);
 
     void run() override;

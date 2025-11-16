@@ -499,7 +499,7 @@ void LobbyController::openWaitingRoom() {
             });
     
     connect(lobbyClient.get(), &LobbyClient::carSelectedNotification,
-            this, [this](QString username, QString carName, QString carType) {
+            this, [this](QString username, QString carName) {
                 std::cout << "[Controller] Notification: Player " << username.toStdString() 
                           << " selected " << carName.toStdString() << std::endl;
                 if (waitingRoomWindow) {

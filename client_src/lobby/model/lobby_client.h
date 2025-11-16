@@ -73,6 +73,11 @@ public:
     LobbyClient(const LobbyClient&) = delete;
     LobbyClient& operator=(const LobbyClient&) = delete;
 
+    std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::string>>>> 
+    receive_city_maps(); 
+
+    void send_selected_races(const std::vector<std::pair<std::string, std::string>>& races);
+
 signals:
     //  Señales para notificar cambios en la sala
     void playerJoinedNotification(QString username);

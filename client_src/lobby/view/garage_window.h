@@ -7,6 +7,7 @@
 #include <QPixmap>
 #include <QPainter>
 #include <vector>
+#include <cstdint>
 
 struct CarInfo {
     QString name;

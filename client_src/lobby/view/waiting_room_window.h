@@ -77,7 +77,6 @@ private:
     std::vector<PlayerCardWidgets> playerCardWidgets;
     bool localPlayerReady;
     int currentPage;
-    uint8_t max_players;  // ✅ NUEVO: límite de jugadores
     
     QLabel* titleLabel;
     QLabel* statusLabel;
@@ -94,6 +93,7 @@ private:
     int animationFrame;
     
     int customFontId;
+    uint8_t max_players;  // ✅ NUEVO: límite de jugadores
 };
 
 #endif // WAITING_ROOM_WINDOW_H
