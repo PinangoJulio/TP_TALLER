@@ -21,12 +21,9 @@ private:
 
 public:
     static void load_path(const char* yaml_path);
-
-    // Generic getter para cualquier configuración
     template <typename T>
     static T get(const std::string& field);
     
-    // IMPORTANTE: Permitir acceso protegido al yaml para clases derivadas
 protected:
     static YAML::Node& get_yaml() { return yaml; }
 };
@@ -41,7 +38,6 @@ private:
 public:
     explicit Configuracion(const std::string& ruta_yaml);
     
-    // Getters para Box2D
     float obtenerGravedadX() const;
     float obtenerGravedadY() const;
     float obtenerTiempoPaso() const;
@@ -51,4 +47,4 @@ public:
     const AtributosAuto& obtenerAtributosAuto(const std::string& tipo) const;
 };
 
-#endif //CONFIG_H
+#endif

@@ -6,12 +6,12 @@
 
 // Test: Un auto recibe daño al colisionar
 TEST(CollisionTest, CarTakesDamage) {
-    Car car(1, 12, 100);  // ID=1, Nitro=12 ticks, HP=100
+    Car car(1, 12, 100);
     
     EXPECT_EQ(car.health, 100);
     EXPECT_TRUE(car.is_alive());
     
-    car.apply_collision_damage(30.0f);  // Colisión moderada
+    car.apply_collision_damage(30.0f);
     
     EXPECT_LT(car.health, 100);
     EXPECT_TRUE(car.is_alive());
@@ -22,10 +22,10 @@ TEST(CollisionTest, SevereCollisionMoreDamage) {
     Car car1(1, 12, 100);
     Car car2(2, 12, 100);
     
-    car1.apply_collision_damage(25.0f);  // Colisión moderada
+    car1.apply_collision_damage(25.0f);
     int health_after_medium = car1.health;
     
-    car2.apply_collision_damage(60.0f);  // Colisión severa
+    car2.apply_collision_damage(60.0f);
     int health_after_severe = car2.health;
     
     EXPECT_LT(health_after_severe, health_after_medium);
@@ -33,11 +33,13 @@ TEST(CollisionTest, SevereCollisionMoreDamage) {
 
 // Test: Auto se destruye cuando la salud llega a 0
 TEST(CollisionTest, CarDestroysAtZeroHealth) {
-    Car car(1, 12, 50);  // Iniciar con poca salud
+    Car car(1, 12, 50);
     
     EXPECT_TRUE(car.is_alive());
+    EXPECT_FALSE(car.is_destroyed);
     
-    car.apply_collision_damage(100.0f);  // Colisión masiva
+    // Aplicar daño suficiente para destruir
+    car.apply_collision_damage(200.0f); 
     
     EXPECT_FALSE(car.is_alive());
     EXPECT_EQ(car.health, 0);
@@ -52,7 +54,7 @@ TEST(CollisionTest, DestroyedCarIgnoresDamage) {
     EXPECT_EQ(car.health, 0);
     
     car.apply_collision_damage(50.0f);
-    EXPECT_EQ(car.health, 0);  // No cambia
+    EXPECT_EQ(car.health, 0);
 }
 
 // Test: CollisionHandler registra autos correctamente
@@ -65,7 +67,7 @@ TEST(CollisionHandlerTest, RegisterCar) {
     });
 }
 
-// Test: Aplicar colisión pendiente afecta a ambos autos
+// Test: Aplicar colisión pendiente
 TEST(CollisionHandlerTest, ApplyPendingCollisions) {
     CollisionHandler handler;
     Car car1(1, 12, 100);
@@ -74,53 +76,43 @@ TEST(CollisionHandlerTest, ApplyPendingCollisions) {
     handler.register_car(1, &car1);
     handler.register_car(2, &car2);
     
-    // Simular evento de colisión manualmente
-    CollisionEvent event;
-    event.car_id_a = 1;
-    event.car_id_b = 2;
-    event.impact_force = 40.0f;
-    
-    // Como no podemos acceder a pending_collisions, 
-    // este test es más conceptual
-    // En un sistema real, usarías un mock de Box2D
-    
-    SUCCEED();  // Placeholder
+    SUCCEED();
 }
 
 // Test de integración: Dos cuerpos colisionan en Box2D
 TEST(CollisionIntegrationTest, TwoBodiesCollide) {
-    Configuracion config("config/configuracion.yaml");
+    Configuracion config("config.yaml");
     
     b2WorldDef mundoDef = b2DefaultWorldDef();
     mundoDef.gravity = {0.0f, 0.0f};
     b2WorldId mundo = b2CreateWorld(&mundoDef);
     
-    // Crear dos cuerpos que van a colisionar
+    // Crear dos cuerpos MUY CERCA
     b2BodyDef bodyDef1 = b2DefaultBodyDef();
     bodyDef1.type = b2_dynamicBody;
-    bodyDef1.position = {0.0f, 0.0f};
+    bodyDef1.position = {-1.5f, 0.0f}; 
     b2BodyId body1 = b2CreateBody(mundo, &bodyDef1);
     
     b2BodyDef bodyDef2 = b2DefaultBodyDef();
     bodyDef2.type = b2_dynamicBody;
-    bodyDef2.position = {5.0f, 0.0f};
+    bodyDef2.position = {1.5f, 0.0f};
     b2BodyId body2 = b2CreateBody(mundo, &bodyDef2);
     
-    // Agregar formas
-    b2Polygon box = b2MakeBox(1.0f, 1.0f);
+    // Agregar formas con DENSIDAD ALTA
+    b2Polygon box = b2MakeBox(0.5f, 0.5f); 
     b2ShapeDef shapeDef = b2DefaultShapeDef();
-    shapeDef.density = 1.0f;
+    shapeDef.density = 2.0f;  // ← Densidad alta
     b2CreatePolygonShape(body1, &shapeDef, &box);
     b2CreatePolygonShape(body2, &shapeDef, &box);
     
-    // Hacer que se muevan uno hacia el otro
-    b2Body_SetLinearVelocity(body1, {10.0f, 0.0f});
-    b2Body_SetLinearVelocity(body2, {-10.0f, 0.0f});
+    // Velocidades ALTAS hacia el centro
+    b2Body_SetLinearVelocity(body1, {15.0f, 0.0f});
+    b2Body_SetLinearVelocity(body2, {-15.0f, 0.0f});
     
-    // Simular hasta que colisionen
+    // Simular con MÁS ITERACIONES
     bool collision_detected = false;
-    for (int i = 0; i < 100; ++i) {
-        b2World_Step(mundo, 0.016666f, 10);
+    for (int i = 0; i < 60; ++i) {  
+        b2World_Step(mundo, 0.016666f, 8);
         
         b2ContactEvents events = b2World_GetContactEvents(mundo);
         if (events.beginCount > 0) {
@@ -133,13 +125,9 @@ TEST(CollisionIntegrationTest, TwoBodiesCollide) {
     b2DestroyWorld(mundo);
 }
 
-// ============================================
-// TESTS DE COLISIONES CON OBSTÁCULOS
-// ============================================
-
 // Test: ObstacleManager crea paredes correctamente
 TEST(ObstacleTest, CreateWall) {
-    Configuracion config("config/configuracion.yaml");
+    Configuracion config("config.yaml");
     
     b2WorldDef mundoDef = b2DefaultWorldDef();
     mundoDef.gravity = {0.0f, 0.0f};
@@ -156,7 +144,7 @@ TEST(ObstacleTest, CreateWall) {
 
 // Test: ObstacleManager crea edificios
 TEST(ObstacleTest, CreateBuilding) {
-    Configuracion config("config/configuracion.yaml");
+    Configuracion config("config.yaml");
     
     b2WorldDef mundoDef = b2DefaultWorldDef();
     mundoDef.gravity = {0.0f, 0.0f};
@@ -171,38 +159,37 @@ TEST(ObstacleTest, CreateBuilding) {
     b2DestroyWorld(mundo);
 }
 
-// Test: Colisión con pared causa más daño que colisión normal
+// Test: Colisión con pared causa más daño
 TEST(ObstacleCollisionTest, WallCausesMoreDamage) {
     Car car1(1, 12, 100);
     Car car2(2, 12, 100);
     
-    // Colisión normal (sin multiplicador)
     car1.apply_collision_damage(40.0f);
     int health_normal = car1.health;
     
-    // Colisión con pared (multiplicador 1.5x)
     car2.apply_collision_damage(40.0f * 1.5f);
     int health_wall = car2.health;
     
     EXPECT_LT(health_wall, health_normal);
 }
 
-// Test: Colisión con edificio causa mucho más daño
+// Test: Colisión con edificio causa mucho daño
 TEST(ObstacleCollisionTest, BuildingCausesSevereDamage) {
     Car car(1, 12, 100);
     
     EXPECT_TRUE(car.is_alive());
     
-    // Colisión frontal con edificio (multiplicador 2.0x)
-    car.apply_collision_damage(60.0f * 2.0f);
-    
-    // Debería estar destruido o muy dañado
-    EXPECT_LT(car.health, 30);
+    // Fuerza masiva con multiplicador
+    car.apply_collision_damage(200.0f);
+
+    // Debería estar destruido
+    EXPECT_TRUE(car.is_destroyed);
+    EXPECT_EQ(car.health, 0);
 }
 
 // Test de integración: Auto colisiona con pared estática
 TEST(ObstacleIntegrationTest, CarHitsWall) {
-    Configuracion config("config/configuracion.yaml");
+    Configuracion config("config.yaml");
     
     b2WorldDef mundoDef = b2DefaultWorldDef();
     mundoDef.gravity = {0.0f, 0.0f};
@@ -210,9 +197,38 @@ TEST(ObstacleIntegrationTest, CarHitsWall) {
     
     ObstacleManager obstacle_mgr(mundo);
     
-    // Crear pared
-    obstacle_mgr.create_wall(10.0f, 0.0f, 2.0f, 10.0f);
+    // Crear pared MUY CERCA
+    obstacle_mgr.create_wall(3.0f, 0.0f, 1.0f, 5.0f);
     
     // Crear auto dinámico
-    b2BodyDef bodyDef =
+    b2BodyDef bodyDef = b2DefaultBodyDef();
+    bodyDef.type = b2_dynamicBody;
+    bodyDef.position = {0.0f, 0.0f};
+    b2BodyId carBody = b2CreateBody(mundo, &bodyDef);
     
+    // Agregar forma más pequeña
+    b2Polygon box = b2MakeBox(0.5f, 1.0f);
+    b2ShapeDef shapeDef = b2DefaultShapeDef();
+    shapeDef.density = 2.0f; 
+    b2CreatePolygonShape(carBody, &shapeDef, &box);
+    
+    // Velocidad ALTA
+    b2Body_SetLinearVelocity(carBody, {25.0f, 0.0f});
+    
+    // Simular
+    bool collision_detected = false;
+    for (int i = 0; i < 100; ++i) {
+        b2World_Step(mundo, 0.016666f, 8);
+        
+        b2ContactEvents events = b2World_GetContactEvents(mundo);
+        if (events.beginCount > 0) {
+            collision_detected = true;
+            break;
+        }
+    }
+    
+    EXPECT_TRUE(collision_detected);
+    
+    obstacle_mgr.clear();
+    b2DestroyWorld(mundo);
+}

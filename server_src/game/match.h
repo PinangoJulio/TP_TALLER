@@ -26,7 +26,6 @@ private:
     int cant_max_players;
     std::string race_path;
     
-    // IMPORTANTE: Debe ir al final para que el orden de inicialización coincida
     std::unique_ptr<Race> active_races;
 
 public:
@@ -35,16 +34,13 @@ public:
           int max_players,
           const std::string& map_yaml_path);
 
-    // Métodos de lobby
     bool can_player_join_match() const;
     bool add_player(int id, std::string nombre, Queue<GameState>& queue_enviadora);
     bool remove_player(int id_jugador);
 
-    // Métodos de control de carrera
     void startNextRace(const std::string& mapa_yaml_path);
     bool isRunning() const;
 
-    // Getters
     std::string get_host_name() const { return host_name; }
     int getMatchCode() const { return match_code; }
     Queue<ComandMatchDTO>& getComandQueue() { return queue_comandos; }
@@ -52,4 +48,4 @@ public:
     ~Match();
 };
 
-#endif //MATCH_H
+#endif

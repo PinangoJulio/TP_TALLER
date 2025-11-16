@@ -10,6 +10,7 @@ target_sources(taller_tests
     ${CMAKE_SOURCE_DIR}/server_src/game/car.cpp
     ${CMAKE_SOURCE_DIR}/server_src/network/monitor.cpp
     ${CMAKE_SOURCE_DIR}/server_src/game/collision_handler.cpp
+    ${CMAKE_SOURCE_DIR}/server_src/game/obstacle.cpp 
     
     PUBLIC
     # .h files

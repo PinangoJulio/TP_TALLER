@@ -36,10 +36,10 @@ private:
     std::map<int, int> player_user_data;
     
     CollisionHandler collision_handler;
-    ObstacleManager obstacle_manager;  // NUEVO
+    ObstacleManager obstacle_manager;
     
     void initialize_physics();
-    void create_test_obstacles();  // NUEVO: Crear obstáculos de prueba
+    void create_test_obstacles(); 
     void update_physics();
     void apply_forces_from_command(const Command& cmd, b2BodyId body);
     

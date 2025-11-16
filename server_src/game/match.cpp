@@ -1,5 +1,5 @@
 #include "match.h"
-#include "race.h"  // ← IMPORTANTE: Incluir race.h, no solo forward declaration
+#include "race.h"
 #include <iostream>
 
 Match::Match(std::string host_name, int code, int max_players, 
@@ -11,7 +11,7 @@ Match::Match(std::string host_name, int code, int max_players,
       cant_actual_players(0),
       cant_max_players(max_players),
       race_path(map_yaml_path),
-      active_races(nullptr) {  // Ahora está en el orden correcto
+      active_races(nullptr) {
     
     std::cout << "[Match] Match " << code << " created by " << host_name << std::endl;
 }
@@ -57,7 +57,7 @@ bool Match::isRunning() const {
 
 Match::~Match() {
     is_active = false;
-    if (active_races) {  // ← Usar plural
+    if (active_races) { 
         active_races->stop();
         active_races->join();
     }

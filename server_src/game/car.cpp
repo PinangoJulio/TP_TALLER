@@ -10,7 +10,7 @@ Car::Car(int id, int max_duration, int initial_health)
       health(initial_health),
       speed(0.0f),
       is_destroyed(false) {
-    body = b2_nullBodyId;  // Se asignará cuando se cree el cuerpo
+    body = b2_nullBodyId;
 }
 
 bool Car::activate_nitro() {
@@ -37,20 +37,18 @@ void Car::apply_collision_damage(float impact_force) {
     if (is_destroyed) return;
     
     // Calcular daño basado en la fuerza del impacto
-    // Fuerza > 50 = colisión severa
-    // Fuerza < 20 = colisión leve
     int damage = 0;
     
     if (impact_force > 50.0f) {
-        damage = 30;  // Colisión frontal severa
+        damage = 30;
         std::cout << "[Car " << client_id << "] SEVERE collision! Force: " 
                   << impact_force << ", Damage: " << damage << std::endl;
     } else if (impact_force > 20.0f) {
-        damage = 15;  // Colisión moderada
+        damage = 15;
         std::cout << "[Car " << client_id << "] Medium collision! Force: " 
                   << impact_force << ", Damage: " << damage << std::endl;
     } else {
-        damage = 5;   // Colisión leve (lateral)
+        damage = 5;
         std::cout << "[Car " << client_id << "] Light collision. Force: " 
                   << impact_force << ", Damage: " << damage << std::endl;
     }
@@ -59,7 +57,7 @@ void Car::apply_collision_damage(float impact_force) {
     if (health < 0) health = 0;
     
     // Reducir velocidad proporcionalmente al daño
-    float speed_reduction = damage * 0.02f;  // 2% por punto de daño
+    float speed_reduction = damage * 0.02f;
     if (B2_IS_NON_NULL(body)) {
         b2Vec2 vel = b2Body_GetLinearVelocity(body);
         float current_speed = std::sqrt(vel.x * vel.x + vel.y * vel.y);
@@ -72,12 +70,14 @@ void Car::apply_collision_damage(float impact_force) {
     }
     
     // Si la salud llega a 0, destruir el auto
-    if (health <= 0) {
+    if (health <= 0 && !is_destroyed) { 
         destroy();
     }
 }
 
 void Car::destroy() {
+    if (is_destroyed) return;
+    
     is_destroyed = true;
     health = 0;
     nitro_active = false;

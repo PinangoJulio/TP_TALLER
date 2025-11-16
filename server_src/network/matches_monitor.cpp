@@ -8,7 +8,6 @@ int MatchesMonitor::create_match(std::string data_yaml_path,
     std::lock_guard<std::mutex> lock(mtx);
     id_matches++;
     
-    // Crear Match SIN pasar Configuration
     matches[id_matches] = std::make_unique<Match>(
         host_name, 
         id_matches, 
@@ -16,7 +15,6 @@ int MatchesMonitor::create_match(std::string data_yaml_path,
         data_yaml_path
     );
     
-    // El host se une automáticamente
     matches[id_matches]->add_player(0, host_name, sender_message_queue);
     
     std::cout << "[MatchesMonitor] Match " << id_matches << " created by " << host_name << std::endl;

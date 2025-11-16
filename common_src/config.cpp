@@ -7,7 +7,6 @@ void Configuration::load_path(const char* yaml_path) {
     yaml = YAML::LoadFile(yaml_path);
 }
 
-// Explicit template instantiations
 template std::string Configuration::get<std::string>(const std::string& field);
 template int Configuration::get<int>(const std::string& field);
 template float Configuration::get<float>(const std::string& field);
@@ -29,7 +28,7 @@ Configuracion::Configuracion(const std::string& ruta_yaml) {
 }
 
 void Configuracion::cargarAtributosAutos() {
-    YAML::Node& yaml = get_yaml();  // Usar método protegido
+    YAML::Node& yaml = get_yaml();
     
     if (!yaml["autos"]) {
         throw std::runtime_error("No 'autos' section found in YAML");

@@ -6,12 +6,14 @@ GameLoop::GameLoop(Monitor& monitor_ref, Queue<struct Command>& queue, Configura
       cars_with_nitro(0), 
       game_queue(queue),
       config(cfg),
-      obstacle_manager(b2_nullWorldId) {  // Se asignará después
+      obstacle_manager(b2_nullWorldId) {  
     
     initialize_physics();
 }
 
 GameLoop::~GameLoop() {
+    obstacle_manager.clear();
+    
     if (b2World_IsValid(mundo)) {
         b2DestroyWorld(mundo);
     }
@@ -22,13 +24,10 @@ void GameLoop::initialize_physics() {
     mundoDef.gravity = {config.obtenerGravedadX(), config.obtenerGravedadY()};
     mundo = b2CreateWorld(&mundoDef);
     
-    // NUEVO: Asignar el mundo al ObstacleManager
     obstacle_manager = ObstacleManager(mundo);
     
-    // NUEVO: Conectar el collision handler con el obstacle manager
     collision_handler.set_obstacle_manager(&obstacle_manager);
     
-    // NUEVO: Crear obstáculos de prueba
     create_test_obstacles();
     
     std::cout << "[GameLoop] Box2D initialized with gravity (" 
@@ -132,7 +131,7 @@ void GameLoop::process_commands() {
                                });
 
         if (it == cars.end()) {
-            cars.emplace_back(cmd.player_id, NITRO_DURATION, 100);  // 100 HP inicial
+            cars.emplace_back(cmd.player_id, NITRO_DURATION, 100); 
             it = cars.end() - 1;
         }
 
@@ -152,7 +151,6 @@ void GameLoop::process_commands() {
             
             b2BodyId body = b2CreateBody(mundo, &bodyDef);
             
-            // NUEVO: Asignar userData para identificar el cuerpo en colisiones
             player_user_data[cmd.player_id] = cmd.player_id;
             b2Body_SetUserData(body, &player_user_data[cmd.player_id]);
             
@@ -162,15 +160,13 @@ void GameLoop::process_commands() {
             b2CreatePolygonShape(body, &shapeDef, &box);
             
             player_bodies[cmd.player_id] = body;
-            it->body = body;  // NUEVO: Guardar referencia al cuerpo
+            it->body = body;
             
-            // NUEVO: Registrar el auto en el collision handler
             collision_handler.register_car(cmd.player_id, &(*it));
             
             std::cout << "[GameLoop] Player " << cmd.player_id << " body created" << std::endl;
         }
         
-        // Solo aplicar fuerzas si el auto está vivo
         if (it->is_alive()) {
             apply_forces_from_command(cmd, player_bodies[cmd.player_id]);
         }
@@ -190,10 +186,8 @@ void GameLoop::run() {
     while (is_running) {
         process_commands();
         
-        // Actualizar física
         update_physics();
         
-        // Obtener y procesar eventos de contacto
         b2ContactEvents events = b2World_GetContactEvents(mundo);
         collision_handler.process_contact_event(events);
         collision_handler.apply_pending_collisions();

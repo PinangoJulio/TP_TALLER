@@ -61,7 +61,7 @@ void CollisionHandler::process_contact_event(b2ContactEvents events) {
                 
                 CollisionEvent collision;
                 collision.car_id_a = player_id;
-                collision.car_id_b = -1;  // -1 indica obstáculo
+                collision.car_id_b = -1;
                 collision.impact_force = impact_force;
                 collision.is_with_obstacle = true;
                 collision.damage_multiplier = damage_mult;

@@ -1,5 +1,5 @@
 #include "race.h"
-#include "game_loop.h"  // ← IMPORTANTE: Incluir para poder usar GameLoop
+#include "game_loop.h"
 #include <iostream>
 
 Race::Race(Queue<ComandMatchDTO>& cmdQueue,

@@ -45,4 +45,4 @@ public:
     ~ObstacleManager();
 };
 
-#endif // OBSTACLE_H
+#endif

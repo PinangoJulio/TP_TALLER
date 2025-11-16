@@ -15,7 +15,8 @@ target_sources(server
     game/car.cpp
     game/match.cpp 
     game/race.cpp
-    game/collision_handler.cpp       
+    game/collision_handler.cpp 
+    game/obstacle.cpp       
     
     # Network
     network/client_handler.cpp
@@ -35,7 +36,8 @@ target_sources(server
     game/match.h   
     game/race.h    
     game/player.h
-    game/collision_handler.h  
+    game/collision_handler.h
+    game/obstacle.h   
     network/client_handler.h
     network/receiver.h
     network/sender.h

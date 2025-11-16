@@ -36,4 +36,4 @@ public:
     ~MatchesMonitor() = default;
 };
 
-#endif //MATCHES_MONITOR_H
+#endif
