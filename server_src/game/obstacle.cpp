@@ -1,4 +1,3 @@
-// server_src/game/obstacle.cpp
 #include "obstacle.h"
 #include <iostream>
 

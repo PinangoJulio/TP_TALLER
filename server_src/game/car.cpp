@@ -36,19 +36,17 @@ bool Car::simulate_tick() {
 void Car::apply_collision_damage(float impact_force) {
     if (is_destroyed) return;
     
-    // Calcular daño basado en la fuerza del impacto
-    int damage = 0;
+    // 🔹 NUEVO: Daño proporcional a la fuerza del impacto
+    int damage = static_cast<int>(impact_force * 0.5f); // 50% de la fuerza = daño
     
+    // Clasificar severidad para logging
     if (impact_force > 50.0f) {
-        damage = 30;
         std::cout << "[Car " << client_id << "] SEVERE collision! Force: " 
                   << impact_force << ", Damage: " << damage << std::endl;
     } else if (impact_force > 20.0f) {
-        damage = 15;
         std::cout << "[Car " << client_id << "] Medium collision! Force: " 
                   << impact_force << ", Damage: " << damage << std::endl;
     } else {
-        damage = 5;
         std::cout << "[Car " << client_id << "] Light collision. Force: " 
                   << impact_force << ", Damage: " << damage << std::endl;
     }

@@ -13,7 +13,7 @@ struct CollisionEvent {
     int car_id_b;
     float impact_force;
     bool is_with_obstacle;
-    float damage_multiplier
+    float damage_multiplier;  // ← AGREGADO punto y coma
 };
 
 class CollisionHandler {
