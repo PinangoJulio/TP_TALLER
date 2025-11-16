@@ -3,21 +3,19 @@
 #include <QPainter>
 #include <QFontDatabase>
 
-WaitingRoomWindow::WaitingRoomWindow(QWidget *parent)
+WaitingRoomWindow::WaitingRoomWindow(uint8_t maxPlayers, QWidget *parent)
     : QWidget(parent), 
       localPlayerReady(false), 
       currentPage(0), 
       animationFrame(0), 
-      customFontId(-1) {
-    
-    
+      customFontId(-1),
+      max_players(maxPlayers)  
+{
     setWindowTitle("Need for Speed 2D - Sala de Espera");
     setFixedSize(700, 700);
     
-    // Cargar fuente
     customFontId = QFontDatabase::addApplicationFont("assets/fonts/arcade-classic.ttf");
     
-    // Cargar fondo
     backgroundImage.load("assets/img/waiting.jpeg");
     if (!backgroundImage.isNull()) {
         backgroundImage = backgroundImage.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
@@ -25,23 +23,20 @@ WaitingRoomWindow::WaitingRoomWindow(QWidget *parent)
     
     setupUI();
     
-    // Timer para animación
     animationTimer = new QTimer(this);
     connect(animationTimer, &QTimer::timeout, this, &WaitingRoomWindow::updateReadyAnimation);
-    animationTimer->start(500); 
-
-
-    // hasta 8 jugadores
-    addPlayer("Jugador 1 (Tu)", "Senator", true);
-    addPlayer("Jugador 2", "Brisa", false);
-    addPlayer("Esperando...", "", false);
-    addPlayer("Esperando...", "", false);
-    addPlayer("Esperando...", "", false);
-    addPlayer("Esperando...", "", false);
-    addPlayer("Esperando...", "", false);
-    addPlayer("Esperando...", "", false);
+    animationTimer->start(500);
+    
+    // ✅ NUEVO: Inicializar slots vacíos según max_players
+    for (int i = 0; i < max_players; i++) {
+        addPlayer("Esperando...", "", false);
+    }
     
     updatePaginationButtons();
+}
+
+int WaitingRoomWindow::getCardsPerPage() const {
+    return 4;  // Mantener 4 por ahora (puedes hacerlo dinámico)
 }
 
 void WaitingRoomWindow::setupUI() {
@@ -232,34 +227,27 @@ void WaitingRoomWindow::createPlayerCards() {
         }
     }
     
-    // Crear 4 tarjetas de jugador
     for (int i = 0; i < 4; i++) {
         PlayerCardWidgets card;
-        
         int cardY = 180 + i * 90;
         
-        // Contenedor de la tarjeta
         card.container = new QWidget(this);
         card.container->setGeometry(70, cardY, 560, 80);
         
-        // Círculo de estado
         card.statusCircle = new QWidget(card.container);
         card.statusCircle->setGeometry(12, 32, 16, 16);
         card.statusCircle->setStyleSheet("background-color: rgb(100, 100, 100); border-radius: 8px;");
         
-        // Nombre del jugador
         card.nameLabel = new QLabel("", card.container);
         card.nameLabel->setFont(customFont);
         card.nameLabel->setStyleSheet("color: white; background-color: transparent;");
         card.nameLabel->setGeometry(50, 20, 300, 20);
         
-        // Auto
         card.carLabel = new QLabel("", card.container);
         card.carLabel->setFont(customFont);
         card.carLabel->setStyleSheet("color: rgb(255, 215, 0); background-color: transparent;");
         card.carLabel->setGeometry(50, 45, 300, 20);
         
-        // Estado
         card.statusLabel = new QLabel("", card.container);
         card.statusLabel->setFont(customFont);
         card.statusLabel->setStyleSheet("color: rgb(255, 255, 0); background-color: transparent; font-weight: bold;");
@@ -267,6 +255,118 @@ void WaitingRoomWindow::createPlayerCards() {
         card.statusLabel->setAlignment(Qt::AlignRight);
         
         playerCardWidgets.push_back(card);
+    }
+}
+
+void WaitingRoomWindow::addPlayerByName(const QString& name) {
+    // Buscar primer slot "Esperando..."
+    for (size_t i = 0; i < players.size(); i++) {
+        if (players[i].name == "Esperando...") {
+            players[i].name = name;
+            players[i].carName = "Esperando...";
+            players[i].isReady = false;
+            players[i].isLocal = false;
+            
+            player_name_to_index[name] = i;
+            
+            std::cout << "[WaitingRoom] Player '" << name.toStdString() 
+                      << "' added at slot " << i << std::endl;
+            
+            updatePlayerDisplay();
+            updateStartButtonState();
+            return;
+        }
+    }
+    
+    std::cerr << "[WaitingRoom] No empty slots for player " << name.toStdString() << std::endl;
+}
+
+void WaitingRoomWindow::removePlayerByName(const QString& name) {
+    auto it = player_name_to_index.find(name);
+    if (it == player_name_to_index.end()) {
+        std::cerr << "[WaitingRoom] Player " << name.toStdString() << " not found" << std::endl;
+        return;
+    }
+    
+    int index = it->second;
+    players[index].name = "Esperando...";
+    players[index].carName = "";
+    players[index].isReady = false;
+    player_name_to_index.erase(it);
+    
+    std::cout << "[WaitingRoom] Player '" << name.toStdString() 
+              << "' removed from slot " << index << std::endl;
+    
+    updatePlayerDisplay();
+    updateStartButtonState();
+}
+
+// 🔥 NUEVO: Cambiar ready state por nombre
+void WaitingRoomWindow::setPlayerReadyByName(const QString& name, bool ready) {
+    auto it = player_name_to_index.find(name);
+    if (it == player_name_to_index.end()) {
+        std::cerr << "[WaitingRoom] Player " << name.toStdString() << " not found" << std::endl;
+        return;
+    }
+    
+    int index = it->second;
+    players[index].isReady = ready;
+    
+    std::cout << "[WaitingRoom] Player '" << name.toStdString() 
+              << "' is now " << (ready ? "READY" : "NOT READY") << std::endl;
+    
+    updatePlayerDisplay();
+    updateStartButtonState();
+}
+
+// 🔥 NUEVO: Cambiar auto por nombre
+void WaitingRoomWindow::setPlayerCarByName(const QString& name, const QString& car) {
+    auto it = player_name_to_index.find(name);
+    if (it == player_name_to_index.end()) {
+        std::cerr << "[WaitingRoom] Player " << name.toStdString() << " not found" << std::endl;
+        return;
+    }
+    
+    int index = it->second;
+    players[index].carName = car;
+    
+    std::cout << "[WaitingRoom] Player '" << name.toStdString() 
+              << "' selected car: " << car.toStdString() << std::endl;
+    
+    updatePlayerDisplay();
+}
+
+// 🔥 NUEVO: Actualizar botón START según estado
+void WaitingRoomWindow::updateStartButtonState() {
+    // Contar jugadores activos
+    int activePlayers = 0;
+    bool allReady = true;
+    
+    for (const auto& p : players) {
+        if (p.name != "Esperando...") {
+            activePlayers++;
+            if (!p.isReady) {
+                allReady = false;
+            }
+        }
+    }
+    
+    // Habilitar START si:
+    // 1. Hay al menos 2 jugadores
+    // 2. Todos están listos
+    bool canStart = (activePlayers >= 2) && allReady;
+    
+    startButton->setEnabled(canStart);
+    
+    if (canStart) {
+        statusLabel->setText("Todos listos! El host puede iniciar");
+        statusLabel->setStyleSheet("color: #00FF00; background-color: rgba(0, 0, 0, 150); padding: 10px; border-radius: 5px;");
+    } else if (activePlayers < 2) {
+        statusLabel->setText("Esperando mas jugadores...");
+        statusLabel->setStyleSheet("color: #FFD700; background-color: rgba(0, 0, 0, 150); padding: 10px; border-radius: 5px;");
+    } else {
+        statusLabel->setText("Esperando que todos esten listos...");
+        statusLabel->setStyleSheet("color: #FFD700; background-color: rgba(0, 0, 0, 150); padding: 10px; border-radius: 5px;");
     }
 }
 
@@ -395,9 +495,13 @@ void WaitingRoomWindow::paintEvent(QPaintEvent* event) {
     QWidget::paintEvent(event);
 }
 
-void WaitingRoomWindow::updateReadyAnimation() {
-    animationFrame++;
-    updatePlayerDisplay();
+void WaitingRoomWindow::updatePaginationButtons() {
+    int totalPages = (max_players + 3) / 4; 
+    
+    prevPageButton->setEnabled(currentPage > 0);
+    nextPageButton->setEnabled(currentPage < totalPages - 1);
+    
+    pageLabel->setText(QString("%1 / %2").arg(currentPage + 1).arg(totalPages));
 }
 
 void WaitingRoomWindow::onPreviousPage() {

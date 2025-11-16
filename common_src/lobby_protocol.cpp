@@ -6,8 +6,55 @@ namespace LobbyProtocol {
 
 // Helper: Agregar uint16_t en big-endian
 static void push_uint16(std::vector<uint8_t>& buffer, uint16_t value) {
-    buffer.push_back((value >> 8) & 0xFF);  // Byte alto
-    buffer.push_back(value & 0xFF);         // Byte bajo
+    buffer.push_back((value >> 8) & 0xFF);
+    buffer.push_back(value & 0xFF);         
+}
+
+static void push_string(std::vector<uint8_t>& buffer, const std::string& str) {
+    push_uint16(buffer, str.size());
+    buffer.insert(buffer.end(), str.begin(), str.end());
+}
+
+std::vector<uint8_t> serialize_player_joined_notification(const std::string& username) {
+    std::vector<uint8_t> buffer;
+    buffer.push_back(MSG_PLAYER_JOINED_NOTIFICATION);
+    push_string(buffer, username);
+    return buffer;
+}
+
+std::vector<uint8_t> serialize_player_left_notification(const std::string& username) {
+    std::vector<uint8_t> buffer;
+    buffer.push_back(MSG_PLAYER_LEFT_NOTIFICATION);
+    push_string(buffer, username);
+    return buffer;
+}
+
+std::vector<uint8_t> serialize_player_ready_notification(const std::string& username, bool is_ready) {
+    std::vector<uint8_t> buffer;
+    buffer.push_back(MSG_PLAYER_READY_NOTIFICATION);
+    push_string(buffer, username);
+    buffer.push_back(is_ready ? 1 : 0);
+    return buffer;
+}
+
+std::vector<uint8_t> serialize_car_selected_notification(
+    const std::string& username, 
+    const std::string& car_name, 
+    const std::string& car_type) 
+{
+    std::vector<uint8_t> buffer;
+    buffer.push_back(MSG_CAR_SELECTED_NOTIFICATION);
+    push_string(buffer, username);
+    push_string(buffer, car_name);
+    push_string(buffer, car_type);
+    return buffer;
+}
+
+std::vector<uint8_t> serialize_player_ready(bool is_ready) {
+    std::vector<uint8_t> buffer;
+    buffer.push_back(MSG_PLAYER_READY);
+    buffer.push_back(is_ready ? 1 : 0);
+    return buffer;
 }
 
 // Serializar username

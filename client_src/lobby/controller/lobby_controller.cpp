@@ -390,12 +390,8 @@ void LobbyController::onCarSelected(const CarInfo& car) {
     std::cout << "[Controller] Auto seleccionado: "
               << car.name.toStdString() << std::endl;
 
-    std::string car_name = car.name.toStdString();
-    std::string car_type = car.type.toStdString();
-
     try {
-        lobbyClient->select_car(car_name, car_type);
-
+        lobbyClient->select_car(car.name.toStdString(), car.type.toStdString());
         std::string car_confirmed = lobbyClient->receive_car_confirmation();
         std::cout << "[Controller] CAR confirmed: " << car_confirmed << std::endl;
 
@@ -407,11 +403,13 @@ void LobbyController::onCarSelected(const CarInfo& car) {
 
         std::cout << "[Controller] Abriendo sala de espera..." << std::endl;
         openWaitingRoom();
+        lobbyClient->start_listening();
         
     } catch (const std::exception& e) {
         handleNetworkError(e);
     }
 }
+
 
 void LobbyController::onBackFromGarage() {
     std::cout << "[Controller] Usuario volvió desde garage" << std::endl;
@@ -442,11 +440,17 @@ void LobbyController::onBackFromGarage() {
     }
 }
 }
+
 void LobbyController::openWaitingRoom() {
     std::cout << "[Controller] Abriendo sala de espera..." << std::endl;
     
-    waitingRoomWindow = new WaitingRoomWindow();
+    //  Obtener max_players de la partida actual
+    // (Asume que tienes esta info guardada, si no, harcodea 8 por ahora)
+    uint8_t maxPlayers = 8;  // TODO: Obtener del servidor
     
+    waitingRoomWindow = new WaitingRoomWindow(maxPlayers);
+    
+    // Configurar jugador local
     const std::vector<QString> carNames = {
         "Leyenda Urbana", "Brisa", "J-Classic 600", "Cavallo V8", 
         "Senator", "Nómada", "Stallion GT"
@@ -459,12 +463,64 @@ void LobbyController::openWaitingRoom() {
     
     waitingRoomWindow->setLocalPlayerInfo(playerName, carName);
     
+    // Conectar botones
     connect(waitingRoomWindow, &WaitingRoomWindow::readyToggled,
             this, &LobbyController::onPlayerReadyToggled);
     connect(waitingRoomWindow, &WaitingRoomWindow::startGameRequested,
             this, &LobbyController::onStartGameRequested);
     connect(waitingRoomWindow, &WaitingRoomWindow::backRequested,
             this, &LobbyController::onBackFromWaitingRoom);
+
+    connect(lobbyClient.get(), &LobbyClient::playerJoinedNotification,
+            this, [this](QString username) {
+                std::cout << "[Controller] Notification: Player joined: " 
+                          << username.toStdString() << std::endl;
+                if (waitingRoomWindow) {
+                    waitingRoomWindow->addPlayerByName(username);
+                }
+            });
+    
+    connect(lobbyClient.get(), &LobbyClient::playerLeftNotification,
+            this, [this](QString username) {
+                std::cout << "[Controller] Notification: Player left: " 
+                          << username.toStdString() << std::endl;
+                if (waitingRoomWindow) {
+                    waitingRoomWindow->removePlayerByName(username);
+                }
+            });
+    
+    connect(lobbyClient.get(), &LobbyClient::playerReadyNotification,
+            this, [this](QString username, bool isReady) {
+                std::cout << "[Controller] Notification: Player " << username.toStdString() 
+                          << " ready: " << isReady << std::endl;
+                if (waitingRoomWindow) {
+                    waitingRoomWindow->setPlayerReadyByName(username, isReady);
+                }
+            });
+    
+    connect(lobbyClient.get(), &LobbyClient::carSelectedNotification,
+            this, [this](QString username, QString carName, QString carType) {
+                std::cout << "[Controller] Notification: Player " << username.toStdString() 
+                          << " selected " << carName.toStdString() << std::endl;
+                if (waitingRoomWindow) {
+                    waitingRoomWindow->setPlayerCarByName(username, carName);
+                }
+            });
+    
+    connect(lobbyClient.get(), &LobbyClient::gameStartedNotification,
+            this, [this]() {
+                std::cout << "[Controller] Notification: Game starting!" << std::endl;
+                // TODO: Transición a SDL
+                if (waitingRoomWindow) {
+                    waitingRoomWindow->close();
+                }
+            });
+    
+    connect(lobbyClient.get(), &LobbyClient::errorOccurred,
+            this, [this](QString errorMsg) {
+                std::cerr << "[Controller] Error: " << errorMsg.toStdString() << std::endl;
+                QMessageBox::critical(waitingRoomWindow, "Error", errorMsg);
+            });
     
     waitingRoomWindow->show();
 }
@@ -472,14 +528,29 @@ void LobbyController::openWaitingRoom() {
 void LobbyController::onPlayerReadyToggled(bool isReady) {
     std::cout << "[Controller] Jugador marcado como: " 
               << (isReady ? "LISTO" : "NO LISTO") << std::endl;
+    
+    try {
+        lobbyClient->set_ready(isReady);
+    } catch (const std::exception& e) {
+        handleNetworkError(e);
+    }
 }
 
 void LobbyController::onStartGameRequested() {
     std::cout << "[Controller] Solicitando inicio de partida..." << std::endl;
+    
+    try {
+        lobbyClient->start_game(currentGameId);
+    } catch (const std::exception& e) {
+        handleNetworkError(e);
+    }
 }
 
 void LobbyController::onBackFromWaitingRoom() {
     std::cout << "[Controller] Usuario salió de la sala de espera" << std::endl;
+    
+    // Detener thread receptor
+    lobbyClient->stop_listening();
     
     if (waitingRoomWindow) {
         waitingRoomWindow->close();
@@ -498,7 +569,6 @@ void LobbyController::onBackFromWaitingRoom() {
         std::cerr << "[Controller] Error al abandonar partida: " << e.what() << std::endl;
     }
     
-    // Resetear estado local
     currentGameId = 0;
     selectedCarIndex = -1;
     

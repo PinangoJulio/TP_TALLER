@@ -19,9 +19,9 @@ enum LobbyMessageType : uint8_t {
     MSG_CREATE_GAME = 0x03,
     MSG_JOIN_GAME = 0x04,
     MSG_START_GAME = 0x05,
-    MSG_SELECT_CAR = 0x06,       // ← DEBE SER 0x06
+    MSG_SELECT_CAR = 0x06,
     MSG_LEAVE_GAME = 0x07,
-    MSG_PLAYER_READY = 0x08,
+    MSG_PLAYER_READY = 0x08,  // ✅ NUEVO: Cliente marca ready
 
     // Servidor → Cliente
     MSG_WELCOME = 0x10,
@@ -30,11 +30,17 @@ enum LobbyMessageType : uint8_t {
     MSG_GAME_JOINED = 0x13,
     MSG_GAME_STARTED = 0x14,
     MSG_CITY_MAPS = 0x15,
-    MSG_CAR_SELECTED_ACK = 0x16, 
+    MSG_CAR_SELECTED_ACK = 0x16,
+    
+    // NOTIFICACIONES PUSH (Servidor → Todos en la sala)
+    MSG_PLAYER_JOINED_NOTIFICATION = 0x20,   
+    MSG_PLAYER_LEFT_NOTIFICATION = 0x21,     
+    MSG_PLAYER_READY_NOTIFICATION = 0x22,   
+    MSG_CAR_SELECTED_NOTIFICATION = 0x23,    
+    MSG_ROOM_STATE_UPDATE = 0x24,           
 
     MSG_ERROR = 0xFF
 };
-
 // Códigos de error
 enum LobbyErrorCode : uint8_t {
     ERR_GAME_NOT_FOUND = 0x01,
@@ -45,8 +51,17 @@ enum LobbyErrorCode : uint8_t {
     ERR_NOT_HOST = 0x06,
     ERR_NOT_ENOUGH_PLAYERS = 0x07,
     ERR_PLAYER_NOT_IN_GAME = 0x08,
-    ERR_INVALID_CAR_INDEX = 0x09      // ✅ AGREGADO
+    ERR_INVALID_CAR_INDEX = 0x09,
+    ERR_PLAYERS_NOT_READY = 0x0A  
 };
+
+struct PlayerRoomState {
+    char username[32];
+    char car_name[32];
+    char car_type[16];
+    uint8_t is_ready;   // 1 = listo, 0 = no listo
+    uint8_t is_host;    // 1 = host, 0 = jugador normal
+} __attribute__((packed));
 
 // ============================================
 // DTOs de la Fase de Juego

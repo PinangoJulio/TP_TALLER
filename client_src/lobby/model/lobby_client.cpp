@@ -236,6 +236,123 @@ void LobbyClient::leave_game(uint16_t game_id) {
     socket.sendall(buffer.data(), buffer.size());
     std::cout << "[LobbyClient] Leave game request sent for ID: " << game_id << std::endl;
 }
+
+
+void LobbyClient::start_listening() {
+    if (listening.load()) {
+        std::cout << "[LobbyClient] Already listening" << std::endl;
+        return;
+    }
+    
+    listening.store(true);
+    notification_thread = std::thread(&LobbyClient::notification_listener, this);
+    std::cout << "[LobbyClient] Notification listener started" << std::endl;
+}
+
+void LobbyClient::stop_listening() {
+    if (!listening.load()) return;
+    
+    listening.store(false);
+    if (notification_thread.joinable()) {
+        notification_thread.join();
+    }
+    std::cout << "[LobbyClient] Notification listener stopped" << std::endl;
+}
+
+void LobbyClient::notification_listener() {
+    std::cout << "[LobbyClient] Notification listener running..." << std::endl;
+    
+    try {
+        while (listening.load() && connected) {
+            uint8_t msg_type = read_message_type();
+            
+            std::cout << "[LobbyClient] Received notification type: " 
+                      << static_cast<int>(msg_type) << std::endl;
+            
+            switch (msg_type) {
+                case MSG_PLAYER_JOINED_NOTIFICATION: {
+                    std::string username = read_string();
+                    std::cout << "[LobbyClient] Player joined: " << username << std::endl;
+                    emit playerJoinedNotification(QString::fromStdString(username));
+                    break;
+                }
+                
+                case MSG_PLAYER_LEFT_NOTIFICATION: {
+                    std::string username = read_string();
+                    std::cout << "[LobbyClient] Player left: " << username << std::endl;
+                    emit playerLeftNotification(QString::fromStdString(username));
+                    break;
+                }
+                
+                case MSG_PLAYER_READY_NOTIFICATION: {
+                    std::string username = read_string();
+                    uint8_t is_ready = read_uint8();
+                    std::cout << "[LobbyClient] Player " << username 
+                              << " is now " << (is_ready ? "READY" : "NOT READY") << std::endl;
+                    emit playerReadyNotification(
+                        QString::fromStdString(username), 
+                        is_ready != 0
+                    );
+                    break;
+                }
+                
+                case MSG_CAR_SELECTED_NOTIFICATION: {
+                    std::string username = read_string();
+                    std::string car_name = read_string();
+                    std::string car_type = read_string();
+                    std::cout << "[LobbyClient] Player " << username 
+                              << " selected " << car_name << std::endl;
+                    emit carSelectedNotification(
+                        QString::fromStdString(username),
+                        QString::fromStdString(car_name),
+                        QString::fromStdString(car_type)
+                    );
+                    break;
+                }
+                
+                case MSG_GAME_STARTED: {
+                    std::cout << "[LobbyClient] Game is starting!" << std::endl;
+                    emit gameStartedNotification();
+                    break;
+                }
+                
+                case MSG_ERROR: {
+                    uint8_t error_code = read_uint8();
+                    std::string error_msg = read_string();
+                    std::cerr << "[LobbyClient] Error " << static_cast<int>(error_code) 
+                              << ": " << error_msg << std::endl;
+                    emit errorOccurred(QString::fromStdString(error_msg));
+                    break;
+                }
+                
+                default:
+                    std::cerr << "[LobbyClient] Unknown notification type: " 
+                              << static_cast<int>(msg_type) << std::endl;
+                    listening.store(false);  // Detener ante mensaje desconocido
+                    break;
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "[LobbyClient] Notification listener error: " << e.what() << std::endl;
+        connected = false;
+        emit errorOccurred(QString::fromStdString(e.what()));
+    }
+    
+    std::cout << "[LobbyClient] Notification listener exited" << std::endl;
+}
+
+void LobbyClient::set_ready(bool is_ready) {
+    auto buffer = LobbyProtocol::serialize_player_ready(is_ready);
+    socket.sendall(buffer.data(), buffer.size());
+    std::cout << "[LobbyClient] Set ready: " << (is_ready ? "YES" : "NO") << std::endl;
+}
+
+// Destructor actualizado
+LobbyClient::~LobbyClient() {
+    stop_listening();
+}
+
+
 // ========================================================================================================================================================================
 // Estas son las funciones que necesito nuevas para seguir
 

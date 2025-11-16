@@ -8,7 +8,8 @@
 #include <QPixmap>
 #include <QTimer>
 #include <vector>
-#include <QMessageBox> 
+#include <map>  // ✅ NUEVO
+#include <QMessageBox>
 
 struct PlayerInfo {
     QString name;
@@ -29,12 +30,22 @@ class WaitingRoomWindow : public QWidget {
     Q_OBJECT
 
 public:
-    explicit WaitingRoomWindow(QWidget *parent = nullptr);
+    explicit WaitingRoomWindow(uint8_t maxPlayers, QWidget *parent = nullptr);  // ✅ NUEVO: recibe maxPlayers
     ~WaitingRoomWindow();
     
+    // 🔥 NUEVOS: Métodos para actualizar en vivo
+    void addPlayerByName(const QString& name);
+    void removePlayerByName(const QString& name);
+    void setPlayerReadyByName(const QString& name, bool ready);
+    void setPlayerCarByName(const QString& name, const QString& car);
+    
+    // Métodos existentes (compatible con código anterior)
     void addPlayer(const QString& name, const QString& car, bool isLocal = false);
     void setPlayerReady(int playerIndex, bool ready);
     void setLocalPlayerInfo(const QString& name, const QString& car);
+    
+    // 🔥 NUEVO: Habilitar/deshabilitar botón start según estado
+    void updateStartButtonState();
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -57,13 +68,16 @@ private:
     void updatePlayerDisplay();
     void createPlayerCards();
     void updatePaginationButtons();
+    int getCardsPerPage() const;  // ✅ NUEVO: calcula tarjetas por página
     
     QPixmap backgroundImage;
     
     std::vector<PlayerInfo> players;
+    std::map<QString, int> player_name_to_index;  // ✅ NUEVO: búsqueda rápida por nombre
     std::vector<PlayerCardWidgets> playerCardWidgets;
     bool localPlayerReady;
     int currentPage;
+    uint8_t max_players;  // ✅ NUEVO: límite de jugadores
     
     QLabel* titleLabel;
     QLabel* statusLabel;

@@ -76,26 +76,27 @@ void Receiver::handle_lobby() {
                     std::string game_name = protocol.read_string();
                     uint8_t max_players = protocol.get_uint8_t();
                     uint8_t num_races = protocol.get_uint8_t();
-
+                
                     std::cout << "[Receiver] " << username << " creating game: " << game_name 
                               << " (max: " << (int)max_players << ", races: " << (int)num_races << ")\n";
-
-                    // 🔥 VALIDAR: No puede crear si ya está en una partida
+                
                     if (current_game_id != -1) {
                         std::cout << "[Receiver] ERROR: " << username << " is already in game " << current_game_id << "\n";
                         protocol.send_buffer(LobbyProtocol::serialize_error(ERR_ALREADY_IN_GAME, "You are already in a game"));
                         break;
                     }
-
-                    int game_id = monitor.create_match(max_players, game_name, id, sender_messages_queue);
+                
+                    int game_id = lobby_manager.create_game(game_name, username, max_players);
                     if (game_id == 0) {
                         protocol.send_buffer(LobbyProtocol::serialize_error(ERR_ALREADY_IN_GAME, "Error creating match"));
                         break;
                     }
-
-                    // 🔥 GUARDAR: Ahora está en esta partida
+                
                     current_game_id = game_id;
-
+                    
+                    // 🔥 REGISTRAR SOCKET DEL HOST
+                    lobby_manager.register_player_socket(game_id, username, protocol.get_socket());
+                
                     // Recibir selección de carreras
                     std::vector<RaceConfig> races;
                     for (int i = 0; i < num_races; ++i) {
@@ -104,8 +105,11 @@ void Receiver::handle_lobby() {
                         races.push_back({city, map});
                         std::cout << "[Receiver]   Race " << (i+1) << ": " << city << " - " << map << "\n";
                     }
-
-                    monitor.add_races_to_match(game_id, races);
+                
+                    // Aquí asumo que monitor tiene un método para agregar carreras
+                    // Si no, necesitas adaptarlo según tu implementación
+                    // monitor.add_races_to_match(game_id, races);
+                    
                     protocol.send_buffer(LobbyProtocol::serialize_game_created(game_id));
                     std::cout << "[Receiver] Game created with ID: " << game_id << "\n";
                     break;
@@ -115,17 +119,21 @@ void Receiver::handle_lobby() {
                     int game_id = static_cast<int>(protocol.read_uint16());
                     std::cout << "[Receiver] " << username << " joining game " << game_id << "\n";
                     
-                    // 🔥 VALIDAR: No puede unirse si ya está en una partida
+                    // Validar que no esté en otra partida
                     if (current_game_id != -1) {
                         std::cout << "[Receiver] ERROR: " << username << " is already in game " << current_game_id << "\n";
                         protocol.send_buffer(LobbyProtocol::serialize_error(ERR_ALREADY_IN_GAME, "You are already in a game"));
                         break;
                     }
-
-                    bool success = monitor.join_match(game_id, username, id, sender_messages_queue);
-
+                
+                    bool success = lobby_manager.join_game(game_id, username);
+                
                     if (success) {
-                        current_game_id = game_id;  // 🔥 GUARDAR
+                        current_game_id = game_id;
+                        
+                        // 🔥 REGISTRAR SOCKET PARA BROADCAST
+                        lobby_manager.register_player_socket(game_id, username, protocol.get_socket());
+                        
                         protocol.send_buffer(LobbyProtocol::serialize_game_joined(static_cast<uint16_t>(game_id)));
                         std::cout << "[Receiver] " << username << " joined match " << game_id << std::endl;
                     } else {
@@ -143,18 +151,17 @@ void Receiver::handle_lobby() {
                     
                     monitor.set_player_car(id, car_name, car_type);
                     
-                    // 🔥 ENVIAR CONFIRMACIÓN AL CLIENTE
+                    // ENVIAR CONFIRMACIÓN AL CLIENTE
                     protocol.send_buffer(LobbyProtocol::serialize_car_selected_ack(car_name, car_type));
                     break;
                 }
                 // ------------------------------------------------------------
-                // 🔥 CORREGIDO: Handler completo para MSG_LEAVE_GAME
+                // CORREGIDO: Handler completo para MSG_LEAVE_GAME
                 case MSG_LEAVE_GAME: {
                     int game_id = static_cast<int>(protocol.read_uint16());
                     
                     std::cout << "[Receiver] " << username << " leaving game " << game_id << "\n";
                     
-                    // 🔥 VALIDAR: ¿Está realmente en esa partida?
                     if (current_game_id != game_id) {
                         std::cout << "[Receiver] ERROR: " << username << " is not in game " << game_id 
                                   << " (current: " << current_game_id << ")\n";
@@ -162,14 +169,14 @@ void Receiver::handle_lobby() {
                         break;
                     }
                     
-                    // Eliminar del monitor
-                    monitor.delete_player_from_match(id, game_id);
+                    // Desregistrar socket
+                    lobby_manager.unregister_player_socket(game_id, username);
                     
-                    // 🔥 RESETEAR: Ya no está en ninguna partida
+                    // Eliminar del manager
+                    lobby_manager.leave_game(username);
+                    
                     current_game_id = -1;
                     
-                    // 🔥 ENVIAR CONFIRMACIÓN (puedes usar GAMES_LIST vacía o un ACK custom)
-                    // Opción 1: Enviar lista vacía (el cliente espera esto)
                     std::vector<GameInfo> empty_list;
                     protocol.send_buffer(LobbyProtocol::serialize_games_list(empty_list));
                     
@@ -177,17 +184,79 @@ void Receiver::handle_lobby() {
                     break;
                 }
                 // ------------------------------------------------------------
+                case MSG_PLAYER_READY: {
+                    uint8_t is_ready = protocol.get_uint8_t();
+                    
+                    std::cout << "[Receiver] " << username << " set ready: " 
+                              << (is_ready ? "YES" : "NO") << "\n";
+                    
+                    // 🔥 VALIDAR: ¿Está en una partida?
+                    if (current_game_id == -1) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_PLAYER_NOT_IN_GAME, "You are not in any game"));
+                        break;
+                    }
+                    
+                    // Obtener la sala y cambiar estado
+                    auto games = lobby_manager.get_all_games();
+                    auto it = games.find(current_game_id);
+                    if (it == games.end()) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_GAME_NOT_FOUND, "Game not found"));
+                        break;
+                    }
+                    
+                    GameRoom* room = it->second.get();
+                    
+                    // Cambiar estado ready (esto hará broadcast automático)
+                    if (!room->set_player_ready(username, is_ready != 0)) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_INVALID_CAR_INDEX, "You must select a car before being ready"));
+                    }
+                    
+                    break;
+                }
+                
                 case MSG_START_GAME: {
                     int game_id = static_cast<int>(protocol.read_uint16());
-
+                
                     std::cout << "[Receiver] " << username << " starting game " << game_id << "\n";
                     
-                    // 🔥 TODO: Validar que sea el host y que todos estén listos
-                    protocol.send_buffer(LobbyProtocol::serialize_game_started(static_cast<uint16_t>(game_id)));
-
+                    // 🔥 VALIDAR: Es el host?
+                    auto games = lobby_manager.get_all_games();
+                    auto it = games.find(game_id);
+                    if (it == games.end()) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_GAME_NOT_FOUND, "Game not found"));
+                        break;
+                    }
+                    
+                    GameRoom* room = it->second.get();
+                    
+                    if (!room->is_host(username)) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_NOT_HOST, "Only the host can start the game"));
+                        break;
+                    }
+                    
+                    if (!room->all_players_ready()) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_PLAYERS_NOT_READY, "Not all players are ready"));
+                        break;
+                    }
+                    
+                    // Iniciar la partida
+                    room->start();
+                    
+                    // Broadcast MSG_GAME_STARTED a todos
+                    auto buffer = LobbyProtocol::serialize_game_started(static_cast<uint16_t>(game_id));
+                    if (room->get_broadcast_callback()) {
+                        room->get_broadcast_callback()(buffer);
+                    }
+                    
                     in_lobby = false;
                     this->match_id = game_id;
-                    current_game_id = -1;  // 🔥 Ya no está en lobby
+                    current_game_id = -1;
                     
                     // Iniciar el juego
                     monitor.start_match(game_id);
