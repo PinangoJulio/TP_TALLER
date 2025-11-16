@@ -117,13 +117,16 @@ bool GameRoom::all_players_ready() const {
 
 bool GameRoom::set_player_car(const std::string& username, const std::string& car_name, const std::string& car_type) {
     auto it = players.find(username);
-    if (it == players.end()) return false;
+    if (it == players.end()) {
+        std::cerr << "[GameRoom] ❌ Player '" << username << "' NOT FOUND in game " << game_id << std::endl;
+        return false;
+    }
     
     it->second.car_name = car_name;
     it->second.car_type = car_type;
     
-    std::cout << "[GameRoom " << game_id << "] Player '" << username 
-              << "' selected " << car_name << " (" << car_type << ")" << std::endl;
+    std::cout << "[GameRoom] ✅ Player '" << username << "' car saved: " 
+              << car_name << " (" << car_type << ")" << std::endl;
     
     // 🔥 BROADCAST: Notificar selección de auto
     if (broadcast_callback) {

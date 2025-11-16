@@ -444,24 +444,25 @@ void LobbyController::onBackFromGarage() {
 void LobbyController::openWaitingRoom() {
     std::cout << "[Controller] Abriendo sala de espera..." << std::endl;
     
-    //  Obtener max_players de la partida actual
-    // (Asume que tienes esta info guardada, si no, harcodea 8 por ahora)
     uint8_t maxPlayers = 8;  // TODO: Obtener del servidor
     
     waitingRoomWindow = new WaitingRoomWindow(maxPlayers);
     
-    // Configurar jugador local
+    // 🔥 DEFINIR carNames PRIMERO
     const std::vector<QString> carNames = {
         "Leyenda Urbana", "Brisa", "J-Classic 600", "Cavallo V8", 
         "Senator", "Nómada", "Stallion GT"
     };
     
+    // 🔥 AGREGAR AL JUGADOR LOCAL
+    waitingRoomWindow->addPlayerByName(playerName);
+    
+    // 🔥 CONFIGURAR SU AUTO (ahora carNames ya existe)
     QString carName = "Auto Desconocido";
     if (selectedCarIndex >= 0 && selectedCarIndex < static_cast<int>(carNames.size())) {
         carName = carNames[selectedCarIndex];
     }
-    
-    waitingRoomWindow->setLocalPlayerInfo(playerName, carName);
+    waitingRoomWindow->setPlayerCarByName(playerName, carName);
     
     // Conectar botones
     connect(waitingRoomWindow, &WaitingRoomWindow::readyToggled,
@@ -562,18 +563,25 @@ void LobbyController::onBackFromWaitingRoom() {
         std::cout << "[Controller] Enviando leave_game para partida " << currentGameId << std::endl;
         lobbyClient->leave_game(currentGameId);
         
+        // 🔥 RECIBIR LA LISTA DE JUEGOS ACTUALIZADA
         auto games = lobbyClient->receive_games_list();
         std::cout << "[Controller] Leave confirmado. Juegos disponibles: " << games.size() << std::endl;
         
+        // 🔥 ACTUALIZAR LA UI DE MATCH SELECTION
+        if (matchSelectionWindow) {
+            matchSelectionWindow->updateGamesList(games);
+            matchSelectionWindow->show();  // ✅ MOSTRAR LA VENTANA
+        }
+        
     } catch (const std::exception& e) {
         std::cerr << "[Controller] Error al abandonar partida: " << e.what() << std::endl;
+        
+        // 🔥 SI FALLÓ, LIMPIAR Y VOLVER AL LOBBY
+        cleanupAndReturnToLobby();
+        return;
     }
     
+    // Resetear estado local
     currentGameId = 0;
     selectedCarIndex = -1;
-    
-    if (matchSelectionWindow) {
-        matchSelectionWindow->show();
-        refreshGamesList();
-    }
 }

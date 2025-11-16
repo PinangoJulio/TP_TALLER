@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <iostream>
 #include <sys/socket.h>
+#include <cstring>
 
 #define RUTA_MAPS "server_src/city_maps/"
 
@@ -66,7 +67,29 @@ void Receiver::handle_lobby() {
                 // ------------------------------------------------------------
                 case MSG_LIST_GAMES: {
                     std::cout << "[Receiver] " << username << " requested games list\n";
-                    auto games = monitor.list_available_matches();
+                    
+                    // 🔥 CAMBIO: Usar lobby_manager en lugar de monitor
+                    std::vector<GameInfo> games;
+                    
+                    for (const auto& [game_id, room] : lobby_manager.get_all_games()) {
+                        GameInfo info{};
+                        info.game_id = game_id;
+                        
+                        // Copiar nombre del juego
+                        std::string name = room->get_game_name();
+                        size_t copy_len = std::min(name.length(), sizeof(info.game_name) - 1);
+                        std::memcpy(info.game_name, name.c_str(), copy_len);
+                        info.game_name[copy_len] = '\0';
+                        
+                        info.current_players = room->get_player_count();
+                        info.max_players = room->get_max_players();
+                        info.is_started = room->is_started();
+                        
+                        games.push_back(info);
+                    }
+                    
+                    std::cout << "[Receiver] Sending " << games.size() << " games to " << username << "\n";
+                    
                     auto response = LobbyProtocol::serialize_games_list(games);
                     protocol.send_buffer(response);
                     break;
@@ -149,19 +172,42 @@ void Receiver::handle_lobby() {
                     std::cout << "[Receiver] " << username << " selected car: " 
                               << car_name << " (" << car_type << ")\n";
                     
-                    monitor.set_player_car(id, car_name, car_type);
+                    if (current_game_id == -1) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_PLAYER_NOT_IN_GAME, "You are not in any game"));
+                        break;
+                    }
                     
-                    // ENVIAR CONFIRMACIÓN AL CLIENTE
+                    auto& games = lobby_manager.get_all_games();
+                    auto it = games.find(current_game_id);
+                    if (it == games.end()) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_GAME_NOT_FOUND, "Game not found"));
+                        break;
+                    }
+                    
+                    GameRoom* room = it->second.get();
+                    
+                    // 🔥 PASO 1: Enviar ACK PRIMERO (antes del broadcast)
                     protocol.send_buffer(LobbyProtocol::serialize_car_selected_ack(car_name, car_type));
+                    
+                    // 🔥 PASO 2: Guardar (esto hará broadcast automáticamente)
+                    if (!room->set_player_car(username, car_name, car_type)) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_INVALID_CAR_INDEX, "Failed to select car"));
+                        break;
+                    }
+                    
+                    std::cout << "[Receiver] Car ACK sent and broadcast triggered for " << username << std::endl;
                     break;
                 }
                 // ------------------------------------------------------------
-                // CORREGIDO: Handler completo para MSG_LEAVE_GAME
                 case MSG_LEAVE_GAME: {
                     int game_id = static_cast<int>(protocol.read_uint16());
                     
                     std::cout << "[Receiver] " << username << " leaving game " << game_id << "\n";
                     
+                    // Validar que esté en esa partida
                     if (current_game_id != game_id) {
                         std::cout << "[Receiver] ERROR: " << username << " is not in game " << game_id 
                                   << " (current: " << current_game_id << ")\n";
@@ -177,10 +223,28 @@ void Receiver::handle_lobby() {
                     
                     current_game_id = -1;
                     
-                    std::vector<GameInfo> empty_list;
-                    protocol.send_buffer(LobbyProtocol::serialize_games_list(empty_list));
+                    // 🔥 ENVIAR LISTA DE PARTIDAS (para que el cliente actualice su UI)
+                    std::vector<GameInfo> games;
+                    for (const auto& [gid, room] : lobby_manager.get_all_games()) {
+                        GameInfo info{};
+                        info.game_id = gid;
+                        
+                        std::string name = room->get_game_name();
+                        size_t copy_len = std::min(name.length(), sizeof(info.game_name) - 1);
+                        std::memcpy(info.game_name, name.c_str(), copy_len);
+                        info.game_name[copy_len] = '\0';
+                        
+                        info.current_players = room->get_player_count();
+                        info.max_players = room->get_max_players();
+                        info.is_started = room->is_started();
+                        
+                        games.push_back(info);
+                    }
                     
-                    std::cout << "[Receiver] " << username << " successfully left game " << game_id << "\n";
+                    protocol.send_buffer(LobbyProtocol::serialize_games_list(games));
+                    
+                    std::cout << "[Receiver] " << username << " successfully left game " << game_id 
+                              << ", sent " << games.size() << " available games\n";
                     break;
                 }
                 // ------------------------------------------------------------

@@ -1,25 +1,28 @@
 #include "acceptor.h"
-
 #include <string>
 #include <utility>
-
 #include <sys/socket.h>
 
-Acceptor::Acceptor(const char *servicename):
-        socket(servicename),
-        client_counter(0),
-        clients_connected(),
-        is_running(true),
-        lobby_manager(){
+Acceptor::Acceptor(const char *servicename, LobbyManager& manager)
+    : socket(servicename),        // 1º ✅
+      lobby_manager(manager),     // 2º ✅ (ahora coincide con el .h)
+      client_counter(0),          // 3º ✅
+      clients_connected(),        // 4º ✅ (opcional, se inicializa solo)
+      is_running(true) {          // 5º ✅
     std::cout << "[Acceptor] Socket created on port " << servicename << std::endl;
 }
 
 void Acceptor::manage_clients_connections(MatchesMonitor& monitor) {
     Socket client_socket = socket.accept();
-    ClientHandler* new_client = new ClientHandler(std::move(client_socket), ++client_counter, monitor, lobby_manager);
-    new_client->run_threads();
+    ClientHandler* new_client = new ClientHandler(
+        std::move(client_socket), 
+        ++client_counter, 
+        monitor, 
+        lobby_manager
+    );
     
-    // 🔥 LOGS MEJORADOS
+    new_client->run_threads();  // ✅ INICIAR THREADS
+    
     std::cout << "==================================================" << std::endl;
     std::cout << "[Acceptor] New connection accepted" << std::endl;
     std::cout << "           Client ID: " << client_counter << std::endl;
@@ -28,7 +31,6 @@ void Acceptor::manage_clients_connections(MatchesMonitor& monitor) {
     
     clients_connected.push_back(new_client);
 }
-
 // iteramos por la lista de clientes y eliminamos aquellas que ya esten desconectados
 void Acceptor::clear_disconnected_clients() {
     size_t before = clients_connected.size();

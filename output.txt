@@ -1,3 +1,5 @@
+Terminal 1: Server
+
 julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL/TP_TALLER$ ./server config.yaml
 [Acceptor] Socket created on port 8080
 ==================================================
@@ -13,33 +15,29 @@ Press 'q' + Enter to stop
            Client ID: 1
            Total clients: 1
 ==================================================
-[Receiver] Player connected: julio
-[Receiver] julio requested games list
-[Receiver] julio requested games list
-[Receiver] julio creating game: sala1 (max: 2, races: 3)
-[GameRoom 1] Created by 'julio' (HOST)
-[LobbyManager] Game 'sala1' created with ID 1 by 'julio'
-[LobbyManager] Registered socket for player 'julio' in game 1
+[Receiver] Player connected: julio1
+[Receiver] julio1 requested games list
+[Receiver] julio1 creating game: sala 1 (max: 2, races: 3)
+[GameRoom 1] Created by 'julio1' (HOST)
+[LobbyManager] Game 'sala 1' created with ID 1 by 'julio1'
+[LobbyManager] Registered socket for player 'julio1' in game 1
 [Receiver]   Race 1: Liberty City - Circuito Centro
-[Receiver]   Race 2: Liberty City - Circuito Centro
+[Receiver]   Race 2: San Andreas - Desierto
 [Receiver]   Race 3: Vice City - Playa
 [Receiver] Game created with ID: 1
-[Receiver] julio selected car: J-Classic 600 (classic)
-[Receiver] julio set ready: YES
-[GameRoom 1] Player 'julio' cannot be ready without selecting a car
-[Receiver] julio set ready: NO
-[GameRoom 1] Player 'julio' is now NOT READY
+[Receiver] julio1 selected car: Leyenda Urbana (classic)
+[GameRoom] ✅ Player 'julio1' car saved: Leyenda Urbana (classic)
 [LobbyManager] Broadcasting to 1 players in game 1
-[LobbyManager] ✅ Sent to julio
-[Receiver] julio set ready: YES
-[GameRoom 1] Player 'julio' cannot be ready without selecting a car
-[Receiver] julio set ready: NO
-[GameRoom 1] Player 'julio' is now NOT READY
+[LobbyManager] ✅ Sent to julio1
+[Receiver] julio1 selected car: Leyenda Urbana (classic)
+[GameRoom] ✅ Player 'julio1' car saved: Leyenda Urbana (classic)
 [LobbyManager] Broadcasting to 1 players in game 1
-[LobbyManager] ✅ Sent to julio
+[LobbyManager] ✅ Sent to julio1
+[Receiver] julio1 selected car: J-Classic 600 (classic)
+[GameRoom] ✅ Player 'julio1' car saved: J-Classic 600 (classic)
+[LobbyManager] Broadcasting to 1 players in game 1
+[LobbyManager] ✅ Sent to julio1
 [Receiver] Lobby error: Connection closed
-^C
-
 
 
 
@@ -63,27 +61,21 @@ QWidget::setLayout: Cannot set layout to 0
 [LobbyClient] Connected to server localhost:8080
 [Controller] Conectado exitosamente
 [Controller] Mostrando ventana de ingreso de nombre
-Nombre de jugador confirmado: julio
-[Controller] Usuario confirmó nombre: julio
-[LobbyClient] DEBUG: Username: 'julio' (length: 5)
-[LobbyClient] DEBUG: Buffer size: 8 bytes
-[LobbyClient] DEBUG: Buffer content: 01 00 05 6A 75 6C 69 6F 
-[LobbyClient] DEBUG: Length encoded in buffer: 5
-[LobbyClient] Sent username: julio
+Nombre de jugador confirmado: julio1
+[Controller] Usuario confirmó nombre: julio1
+[LobbyClient] DEBUG: Username: 'julio1' (length: 6)
+[LobbyClient] DEBUG: Buffer size: 9 bytes
+[LobbyClient] DEBUG: Buffer content: 01 00 06 6A 75 6C 69 6F 31 
+[LobbyClient] DEBUG: Length encoded in buffer: 6
+[LobbyClient] Sent username: julio1
 [Controller] Nombre enviado al servidor
 [Controller] Esperando mensaje de bienvenida...
 [LobbyClient] DEBUG: Waiting for welcome message...
 [LobbyClient] DEBUG: Received type: 16
 [LobbyClient] DEBUG: Reading welcome string...
-[LobbyClient] Received welcome: Welcome to Need for Speed 2D, julio!
-[Controller] Bienvenida recibida: Welcome to Need for Speed 2D, julio!
+[LobbyClient] Received welcome: Welcome to Need for Speed 2D, julio1!
+[Controller] Bienvenida recibida: Welcome to Need for Speed 2D, julio1!
 [Controller] Abriendo ventana de selección de partidas
-[Controller] Solicitando lista de partidas al servidor...
-[LobbyClient] Requested games list
-[LobbyClient] Received 0 games
-[Controller] Recibidas 0 partidas
-[MatchSelectionWindow] Actualizando lista con 0 partidas
-[Controller] Usuario solicitó actualizar lista
 [Controller] Solicitando lista de partidas al servidor...
 [LobbyClient] Requested games list
 [LobbyClient] Received 0 games
@@ -92,63 +84,37 @@ Nombre de jugador confirmado: julio
 Creando nueva partida...
 [Controller] Usuario quiere crear nueva partida
 Carrera 1 configurada: Liberty City - Circuito Centro
-Carrera 2 configurada: Liberty City - Circuito Centro
+Carrera 2 configurada: San Andreas - Desierto
 Carrera 3 configurada: Vice City - Playa
 Confirmando creación de partida:
-  Nombre: sala1
+  Nombre: sala 1
   Jugadores: 2
   Carreras: 3
   Carrera 1: Liberty City - Circuito Centro
-  Carrera 2: Liberty City - Circuito Centro
+  Carrera 2: San Andreas - Desierto
   Carrera 3: Vice City - Playa
 [Controller] Usuario confirmó creación de partida:
-  Nombre: sala1
+  Nombre: sala 1
   Jugadores máximos: 2
   Número de carreras: 3
   Carrera: Liberty City - Circuito Centro
-  Carrera: Liberty City - Circuito Centro
+  Carrera: San Andreas - Desierto
   Carrera: Vice City - Playa
-[LobbyClient] Requested to create game: sala1 (max players: 2, races: 3)
+[LobbyClient] Requested to create game: sala 1 (max players: 2, races: 3)
 [LobbyClient] Game created with ID: 1
 [Controller] Partida creada con ID: 1
 [Controller] Abriendo garage...
 [Controller] Abriendo ventana de garage...
+Auto seleccionado: Leyenda Urbana (classic)
+[Controller] Auto seleccionado: Leyenda Urbana
+[LobbyClient] Selected car: Leyenda Urbana (classic)
+[Controller]  Error: Expected CAR_SELECTED_ACK
+Auto seleccionado: Leyenda Urbana (classic)
+[Controller] Auto seleccionado: Leyenda Urbana
+[LobbyClient] Selected car: Leyenda Urbana (classic)
+[Controller]  Error: Expected CAR_SELECTED_ACK
 Auto seleccionado: J-Classic 600 (classic)
 [Controller] Auto seleccionado: J-Classic 600
 [LobbyClient] Selected car: J-Classic 600 (classic)
-[LobbyClient] Server confirmed car: J-Classic 600 (classic)
-[Controller] CAR confirmed: J-Classic 600
-[Controller] Abriendo sala de espera...
-[Controller] Abriendo sala de espera...
-[LobbyClient] Notification listener started
-[LobbyClient] Notification listener running...
-[Controller] Jugador marcado como: LISTO
-[LobbyClient] Set ready: YES
-Estado listo: SI
-[LobbyClient] Received notification type: 255
-[LobbyClient] Error 9: You must select a car before being ready
-[Controller] Error: You must select a car before being ready
-[Controller] Jugador marcado como: NO LISTO
-[LobbyClient] Set ready: NO
-Estado listo: NO
-[LobbyClient] Received notification type: 34
-[LobbyClient] Player julio is now NOT READY
-[Controller] Notification: Player julio ready: 0
-[WaitingRoom] Player julio not found
-[Controller] Jugador marcado como: LISTO
-[LobbyClient] Set ready: YES
-Estado listo: SI
-[LobbyClient] Received notification type: 255
-[LobbyClient] Error 9: You must select a car before being ready
-[Controller] Error: You must select a car before being ready
-[Controller] Jugador marcado como: NO LISTO
-[LobbyClient] Set ready: NO
-Estado listo: NO
-[LobbyClient] Received notification type: 34
-[LobbyClient] Player julio is now NOT READY
-[Controller] Notification: Player julio ready: 0
-[WaitingRoom] Player julio not found
-[WaitingRoom] Usuario confirmó salir de la sala
-[Controller] Usuario salió de la sala de espera
-Terminado (killed)
-
+[Controller]  Error: Expected CAR_SELECTED_ACK
+[Controller] Destructor llamado

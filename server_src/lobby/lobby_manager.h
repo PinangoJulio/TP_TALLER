@@ -8,7 +8,7 @@
 #include <functional>
 #include <vector>
 #include "game_room.h"
-#include "../../common_src/socket.h"  // ✅ NUEVO
+#include "../../common_src/socket.h"
 
 class LobbyManager {
 private:
@@ -16,13 +16,11 @@ private:
     std::map<std::string, uint16_t> player_to_game;
     uint16_t next_game_id;
     
-    // 🔥 NUEVO: Mantener punteros a sockets de jugadores por sala
     std::map<uint16_t, std::map<std::string, Socket*>> player_sockets;
 
 public:
     LobbyManager();
     
-    // Métodos existentes
     uint16_t create_game(const std::string& game_name, const std::string& host, uint8_t max_players);
     bool join_game(uint16_t game_id, const std::string& username);
     bool leave_game(const std::string& username);
@@ -32,9 +30,9 @@ public:
     uint16_t get_player_game(const std::string& username) const;
     bool is_game_ready(uint16_t game_id) const;
     
+    // ✅ RETORNAR POR REFERENCIA CONSTANTE
     const std::map<uint16_t, std::unique_ptr<GameRoom>>& get_all_games() const;
     
-    // 🔥 NUEVOS: Gestión de sockets y broadcast
     void register_player_socket(uint16_t game_id, const std::string& username, Socket& socket);
     void unregister_player_socket(uint16_t game_id, const std::string& username);
     void broadcast_to_game(uint16_t game_id, const std::vector<uint8_t>& buffer);
