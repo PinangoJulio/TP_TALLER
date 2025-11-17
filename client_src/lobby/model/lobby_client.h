@@ -28,6 +28,7 @@ private:
     uint16_t read_uint16();
     uint8_t read_uint8();
     void send_string(const std::string& str);
+    void receive_room_snapshot();
 
     void notification_listener();
 
