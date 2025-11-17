@@ -19,7 +19,7 @@ private:
     MatchesMonitor& monitor;
 
     std::atomic<bool> is_alive;
-    Queue<GameState> messages_queue;  // enviadora
+    Queue<GameState> messages_queue;
     LobbyManager& lobby_manager;
 
     Receiver receiver;
@@ -37,4 +37,4 @@ public:
     ~ClientHandler();
 };
 
-#endif  // SERVER_CLIENT_HANDLER_H
+#endif 
