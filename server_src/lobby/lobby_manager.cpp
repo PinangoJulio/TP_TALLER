@@ -27,8 +27,15 @@ uint16_t LobbyManager::create_game(const std::string& game_name, const std::stri
 }
 
 bool LobbyManager::join_game(uint16_t game_id, const std::string& username) {
+    // 🔥 DEBUG: Verificar estado antes de validar
+    std::cout << "[LobbyManager] join_game() called: username=" << username 
+              << ", game_id=" << game_id << std::endl;
+    std::cout << "[LobbyManager] is_player_in_game(" << username << ")? " 
+              << (is_player_in_game(username) ? "YES" : "NO") << std::endl;
+    
     if (is_player_in_game(username)) {
-        std::cout << "[LobbyManager] Player '" << username << "' is already in a game!" << std::endl;
+        std::cout << "[LobbyManager] Player '" << username << "' is already in game " 
+                  << player_to_game[username] << std::endl;
         return false;
     }
     
@@ -56,19 +63,17 @@ bool LobbyManager::leave_game(const std::string& username) {
     uint16_t game_id = it->second;
     player_to_game.erase(it);
     
-    // Desregistrar socket
+    // 🔥 DESREGISTRAR SOCKET **ANTES** DE ELIMINAR DE LA SALA
     unregister_player_socket(game_id, username);
     
     auto game_it = games.find(game_id);
     if (game_it != games.end()) {
         game_it->second->remove_player(username);
         
-        if (game_it->second->get_player_count() < 2) {
-            std::cout << "[LobbyManager] Game " << game_id << " has less than 2 players, deleting..." << std::endl;
-            
-            // Limpiar todos los sockets de esta sala
+        // Si quedan menos de 2 jugadores, eliminar la partida
+        if (game_it->second->get_player_count() == 0) {  // 🔥 CAMBIO: == 0 en vez de < 2
+            std::cout << "[LobbyManager] Game " << game_id << " is empty, deleting..." << std::endl;
             player_sockets.erase(game_id);
-            
             games.erase(game_it);
         }
     }

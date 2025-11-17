@@ -259,14 +259,16 @@ void LobbyClient::stop_listening() {
     
     listening.store(false);
     
-    // 🔥 CERRAR SOCKET PARA DESPERTAR AL THREAD (si está bloqueado en recv)
-    try {
-        socket.shutdown(2);  // SHUT_RDWR - despierta cualquier recv() bloqueado
-    } catch (...) {
-        // Ignorar errores (el socket puede estar ya cerrado)
-    }
+    // 🔥 NO CERRAR EL SOCKET AQUÍ (todavía necesitamos enviar leave_game)
+    // El socket se cerrará cuando se destruya el LobbyClient
     
     if (notification_thread.joinable()) {
+        // 🔥 Despertar el thread para que termine
+        try {
+            // Enviar un mensaje dummy o simplemente esperar el timeout
+            // (el thread se despertará cuando detecte listening == false)
+        } catch (...) {}
+        
         notification_thread.join();
         std::cout << "[LobbyClient] Notification listener joined" << std::endl;
     }

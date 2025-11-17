@@ -43,6 +43,7 @@ std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::strin
 
 
 void Receiver::handle_lobby() {
+    int current_game_id = -1;
     try {
         uint8_t msg_type_user = protocol.read_message_type();
         if (msg_type_user != MSG_USERNAME) {
@@ -250,22 +251,37 @@ void Receiver::handle_lobby() {
                     
                     GameRoom* room = it->second.get();
                     
-                    // 🔥 PASO 1: Enviar ACK PRIMERO (antes del broadcast)
-                    protocol.send_buffer(LobbyProtocol::serialize_car_selected_ack(car_name, car_type));
+                    // 🔥 PASO 1: Desactivar callback de broadcast temporalmente
+                    auto original_callback = room->get_broadcast_callback();
+                    room->set_broadcast_callback(nullptr);
                     
-                    // 🔥 PASO 2: Guardar (esto hará broadcast automáticamente)
+                    // 🔥 PASO 2: Guardar el auto (SIN broadcast)
                     if (!room->set_player_car(username, car_name, car_type)) {
+                        room->set_broadcast_callback(original_callback);
                         protocol.send_buffer(LobbyProtocol::serialize_error(
                             ERR_INVALID_CAR_INDEX, "Failed to select car"));
                         break;
                     }
                     
-                    std::cout << "[Receiver] Car ACK sent and broadcast triggered for " << username << std::endl;
+                    // 🔥 PASO 3: Restaurar callback
+                    room->set_broadcast_callback(original_callback);
+                    
+                    // 🔥 PASO 4: Enviar ACK al cliente que seleccionó (PRIMERO)
+                    protocol.send_buffer(LobbyProtocol::serialize_car_selected_ack(car_name, car_type));
+                    std::cout << "[Receiver] ✅ ACK sent to " << username << std::endl;
+                    
+                    // 🔥 PASO 5: AHORA SÍ hacer broadcast a TODOS (incluyendo al que seleccionó)
+                    if (original_callback) {
+                        auto notif = LobbyProtocol::serialize_car_selected_notification(username, car_name, car_type);
+                        original_callback(notif);
+                        std::cout << "[Receiver] ✅ Broadcast triggered" << std::endl;
+                    }
+                    
                     break;
                 }
                 // ------------------------------------------------------------
                 case MSG_LEAVE_GAME: {
-                    int game_id = static_cast<int>(protocol.read_uint16());
+                    uint16_t game_id = protocol.read_uint16();
                     
                     std::cout << "[Receiver] " << username << " leaving game " << game_id << "\n";
                     
@@ -277,15 +293,13 @@ void Receiver::handle_lobby() {
                         break;
                     }
                     
-                    // Desregistrar socket
-                    lobby_manager.unregister_player_socket(game_id, username);
-                    
-                    // Eliminar del manager
-                    lobby_manager.leave_game(username);
-                    
+                    // 🔥 LIMPIAR ESTADO LOCAL **PRIMERO**
                     current_game_id = -1;
                     
-                    // 🔥 ENVIAR LISTA DE PARTIDAS (para que el cliente actualice su UI)
+                    // Desregistrar socket y eliminar del manager
+                    lobby_manager.leave_game(username);
+                    
+                    // Enviar lista de partidas actualizada
                     std::vector<GameInfo> games;
                     for (const auto& [gid, room] : lobby_manager.get_all_games()) {
                         GameInfo info{};
@@ -406,7 +420,28 @@ void Receiver::handle_lobby() {
         }
 
     } catch (const std::exception& e) {
-        std::cerr << "[Receiver] Lobby error: " << e.what() << std::endl;
+        std::string error_msg = e.what();
+        
+        // 🔥 DISTINGUIR ENTRE DESCONEXIÓN NORMAL Y ERROR
+        if (error_msg.find("Connection closed") != std::string::npos) {
+            std::cout << "[Receiver] Player " << username << " disconnected" << std::endl;
+        } else {
+            std::cerr << "[Receiver] Lobby error: " << error_msg << std::endl;
+        }
+        
+        // 🔥 LIMPIEZA: Eliminar jugador de su partida si estaba en una
+        if (!username.empty() && current_game_id != -1) {
+            std::cout << "[Receiver] Cleaning up " << username 
+                      << " from game " << current_game_id << " (disconnect)" << std::endl;
+            
+            try {
+                lobby_manager.leave_game(username);
+                std::cout << "[Receiver] ✅ " << username << " cleaned up successfully" << std::endl;
+            } catch (const std::exception& cleanup_error) {
+                std::cerr << "[Receiver] ❌ Failed to cleanup: " << cleanup_error.what() << std::endl;
+            }
+        }
+        
         is_running = false;
     }
 }
