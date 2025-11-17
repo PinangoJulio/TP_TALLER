@@ -166,43 +166,47 @@ void Receiver::handle_lobby() {
                     // 🔥 2. REGISTRAR SOCKET **ANTES** DE JOIN
                     lobby_manager.register_player_socket(game_id, username, protocol.get_socket());
                     
-                    // 🔥 3. TEMPORALMENTE DESACTIVAR EL CALLBACK DE BROADCAST
+                    // 🔥 3. CAPTURAR SNAPSHOT **ANTES** DE AGREGAR AL JUGADOR
+                    std::map<std::string, LobbyPlayerInfo> existing_players = room->get_players();
+                    
+                    // 🔥 4. TEMPORALMENTE DESACTIVAR EL CALLBACK DE BROADCAST
                     auto original_callback = room->get_broadcast_callback();
                     room->set_broadcast_callback(nullptr);
                     
-                    // 🔥 4. HACER JOIN (sin que dispare broadcast todavía)
+                    // 🔥 5. HACER JOIN (sin que dispare broadcast todavía)
                     bool success = lobby_manager.join_game(game_id, username);
                 
                     if (success) {
                         current_game_id = game_id;
                         
-                        // 🔥 5. ENVIAR CONFIRMACIÓN AL NUEVO JUGADOR **PRIMERO**
+                        // 🔥 6. ENVIAR CONFIRMACIÓN AL NUEVO JUGADOR **PRIMERO**
                         protocol.send_buffer(LobbyProtocol::serialize_game_joined(static_cast<uint16_t>(game_id)));
                         std::cout << "[Receiver] " << username << " joined match " << game_id << std::endl;
                         
-                        // 🔥 6. RESTAURAR CALLBACK Y HACER BROADCAST MANUAL
+                        // 🔥 7. RESTAURAR CALLBACK
                         room->set_broadcast_callback(original_callback);
                         
-                        // Broadcast a los DEMÁS jugadores (no al que acaba de unirse)
+                        // 🔥 8. BROADCAST A LOS DEMÁS (que ya estaban)
                         auto joined_notif = LobbyProtocol::serialize_player_joined_notification(username);
                         if (original_callback) {
                             original_callback(joined_notif);
                         }
                         
-                        // 🔥 7. AHORA SÍ, ENVIAR SNAPSHOT AL NUEVO JUGADOR
-                        const auto& existing_players = room->get_players();
-                        
+                        // 🔥 9. AHORA SÍ, ENVIAR SNAPSHOT AL NUEVO JUGADOR
                         std::cout << "[Receiver] Sending room snapshot to " << username 
-                                  << " (" << existing_players.size() << " players)" << std::endl;
+                                  << " (" << existing_players.size() << " existing players)" << std::endl;
                         
                         for (const auto& [player_name, player_info] : existing_players) {
+                            // 🔥 IMPORTANTE: NO incluir al jugador que acaba de unirse
                             if (player_name == username) continue;
                             
+                            // Notificar que este jugador existe
                             auto joined_notif = LobbyProtocol::serialize_player_joined_notification(player_name);
                             protocol.send_buffer(joined_notif);
                             
                             std::cout << "[Receiver]   → Player exists: " << player_name << std::endl;
                             
+                            // Si tiene auto seleccionado, notificarlo
                             if (!player_info.car_name.empty()) {
                                 auto car_notif = LobbyProtocol::serialize_car_selected_notification(
                                     player_name, 
@@ -214,6 +218,7 @@ void Receiver::handle_lobby() {
                                 std::cout << "[Receiver]   → Car: " << player_info.car_name << std::endl;
                             }
                             
+                            // Si está ready, notificarlo
                             if (player_info.is_ready) {
                                 auto ready_notif = LobbyProtocol::serialize_player_ready_notification(
                                     player_name, 
@@ -287,14 +292,40 @@ void Receiver::handle_lobby() {
                         break;
                     }
                     
-                    // 🔥 LIMPIAR ESTADO LOCAL **PRIMERO**
+                    // Limpiar estado local **PRIMERO**
                     current_game_id = -1;
                     
                     // Desregistrar socket y eliminar del manager
                     lobby_manager.leave_game(username);
                     
-                    // 🔥 NO ENVIAR NADA - El cliente pedirá la lista cuando quiera
+                    // 🔥 NUEVO: ENVIAR LISTA DE PARTIDAS DESPUÉS DE SALIR
+                    // Esto despierta al listener y le da algo útil (la lista actualizada)
                     std::cout << "[Receiver] " << username << " successfully left game " << game_id << std::endl;
+                    
+                    // Enviar lista de partidas automáticamente
+                    std::vector<GameInfo> games;
+                    
+                    for (const auto& [game_id, room] : lobby_manager.get_all_games()) {
+                        GameInfo info{};
+                        info.game_id = game_id;
+                        
+                        std::string name = room->get_game_name();
+                        size_t copy_len = std::min(name.length(), sizeof(info.game_name) - 1);
+                        std::memcpy(info.game_name, name.c_str(), copy_len);
+                        info.game_name[copy_len] = '\0';
+                        
+                        info.current_players = room->get_player_count();
+                        info.max_players = room->get_max_players();
+                        info.is_started = room->is_started();
+                        
+                        games.push_back(info);
+                    }
+                    
+                    auto buffer = LobbyProtocol::serialize_games_list(games);
+                    protocol.send_buffer(buffer);
+                    
+                    std::cout << "[Receiver] Sent updated games list to " << username 
+                              << " (" << games.size() << " games)" << std::endl;
                     
                     break;
                 }
@@ -331,7 +362,7 @@ void Receiver::handle_lobby() {
                     
                     break;
                 }
-                
+                // ------------------------------------------------------------                
                 case MSG_START_GAME: {
                     int game_id = static_cast<int>(protocol.read_uint16());
                 
@@ -348,12 +379,17 @@ void Receiver::handle_lobby() {
                     
                     GameRoom* room = it->second.get();
                     
-                    if (!room->is_host(username)) {
+                    // 🔥 ELIMINADO: Validación de is_host()
+                    // if (!room->is_host(username)) { ... }
+                    
+                    // 🔥 NUEVO: Solo validar que el jugador esté en la partida
+                    if (!room->has_player(username)) {
                         protocol.send_buffer(LobbyProtocol::serialize_error(
-                            ERR_NOT_HOST, "Only the host can start the game"));
+                            ERR_PLAYER_NOT_IN_GAME, "You are not in this game"));
                         break;
                     }
                     
+                    // Validar que todos estén listos
                     if (!room->all_players_ready()) {
                         protocol.send_buffer(LobbyProtocol::serialize_error(
                             ERR_PLAYERS_NOT_READY, "Not all players are ready"));
@@ -370,15 +406,6 @@ void Receiver::handle_lobby() {
                     }
                     
                     std::cout << "[Receiver] Game " << game_id << " started successfully!" << std::endl;
-                    
-                    // 🔥 NO CAMBIAR in_lobby TODAVÍA (el juego aún no está implementado)
-                    // in_lobby = false;  // ← COMENTAR ESTO
-                    // this->match_id = game_id;
-                    // current_game_id = -1;
-                    // monitor.start_match(game_id);
-                    
-                    // 🔥 POR AHORA, MANTENER EN LOBBY PARA QUE PUEDAN SALIR
-                    std::cout << "[Receiver] WARNING: Game logic not implemented, staying in lobby" << std::endl;
                     
                     break;
                 }

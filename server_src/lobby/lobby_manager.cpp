@@ -3,31 +3,30 @@
 
 LobbyManager::LobbyManager() : next_game_id(1) {}
 
-uint16_t LobbyManager::create_game(const std::string& game_name, const std::string& host, uint8_t max_players) {
-    if (is_player_in_game(host)) {
-        std::cout << "[LobbyManager] Player '" << host << "' is already in a game!" << std::endl;
+uint16_t LobbyManager::create_game(const std::string& game_name, const std::string& creator, uint8_t max_players) {
+    if (is_player_in_game(creator)) {
+        std::cout << "[LobbyManager] Player '" << creator << "' is already in a game!" << std::endl;
         return 0;
     }
     
     uint16_t game_id = next_game_id++;
     
-    auto room = std::make_unique<GameRoom>(game_id, game_name, host, max_players);
+    auto room = std::make_unique<GameRoom>(game_id, game_name, creator, max_players);
     
-    // 🔥 Registrar callback de broadcast en la sala
+    // Registrar callback de broadcast en la sala
     room->set_broadcast_callback([this, game_id](const std::vector<uint8_t>& buffer) {
         this->broadcast_to_game(game_id, buffer);
     });
     
     games[game_id] = std::move(room);
-    player_to_game[host] = game_id;
+    player_to_game[creator] = game_id;
     
-    std::cout << "[LobbyManager] Game '" << game_name << "' created with ID " << game_id << " by '" << host << "'" << std::endl;
+    std::cout << "[LobbyManager] Game '" << game_name << "' created with ID " << game_id << " by '" << creator << "'" << std::endl;
     
     return game_id;
 }
 
 bool LobbyManager::join_game(uint16_t game_id, const std::string& username) {
-    // 🔥 DEBUG: Verificar estado antes de validar
     std::cout << "[LobbyManager] join_game() called: username=" << username 
               << ", game_id=" << game_id << std::endl;
     std::cout << "[LobbyManager] is_player_in_game(" << username << ")? " 
@@ -63,15 +62,15 @@ bool LobbyManager::leave_game(const std::string& username) {
     uint16_t game_id = it->second;
     player_to_game.erase(it);
     
-    // 🔥 DESREGISTRAR SOCKET **ANTES** DE ELIMINAR DE LA SALA
+    // Desregistrar socket **ANTES** de eliminar de la sala
     unregister_player_socket(game_id, username);
     
     auto game_it = games.find(game_id);
     if (game_it != games.end()) {
         game_it->second->remove_player(username);
         
-        // Si quedan menos de 2 jugadores, eliminar la partida
-        if (game_it->second->get_player_count() == 0) {  // 🔥 CAMBIO: == 0 en vez de < 2
+        // Si la partida quedó vacía, eliminarla
+        if (game_it->second->get_player_count() == 0) {
             std::cout << "[LobbyManager] Game " << game_id << " is empty, deleting..." << std::endl;
             player_sockets.erase(game_id);
             games.erase(game_it);
@@ -81,14 +80,23 @@ bool LobbyManager::leave_game(const std::string& username) {
     return true;
 }
 
+// 🔥 CORRECCIÓN CRÍTICA: Eliminar validación de is_host
 bool LobbyManager::start_game(uint16_t game_id, const std::string& username) {
     auto it = games.find(game_id);
     if (it == games.end()) {
+        std::cout << "[LobbyManager] Game " << game_id << " not found" << std::endl;
         return false;
     }
     
-    if (!it->second->is_host(username)) {
-        std::cout << "[LobbyManager] Player '" << username << "' is not the host of game " << game_id << std::endl;
+    // 🔥 ELIMINADO: Validación de is_host()
+    // if (!it->second->is_host(username)) {
+    //     std::cout << "[LobbyManager] Player '" << username << "' is not the host of game " << game_id << std::endl;
+    //     return false;
+    // }
+    
+    // 🔥 NUEVO: Solo verificar que el jugador esté en la partida
+    if (!it->second->has_player(username)) {
+        std::cout << "[LobbyManager] Player '" << username << "' is not in game " << game_id << std::endl;
         return false;
     }
     
@@ -98,6 +106,8 @@ bool LobbyManager::start_game(uint16_t game_id, const std::string& username) {
     }
     
     it->second->start();
+    std::cout << "[LobbyManager] Game " << game_id << " started by '" << username << "'" << std::endl;
+    
     return true;
 }
 
@@ -126,7 +136,7 @@ const std::map<uint16_t, std::unique_ptr<GameRoom>>& LobbyManager::get_all_games
 }
 
 // ===============================================
-// 🔥 MÉTODOS DE BROADCAST
+// MÉTODOS DE BROADCAST
 // ===============================================
 
 void LobbyManager::register_player_socket(uint16_t game_id, const std::string& username, Socket& socket) {

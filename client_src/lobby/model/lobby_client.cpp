@@ -257,18 +257,16 @@ void LobbyClient::stop_listening() {
     
     std::cout << "[LobbyClient] Stopping notification listener..." << std::endl;
     
+    // 🔥 PASO 1: Marcar como detenido
     listening.store(false);
     
-    // 🔥 NO CERRAR EL SOCKET AQUÍ (todavía necesitamos enviar leave_game)
-    // El socket se cerrará cuando se destruya el LobbyClient
+    // 🔥 PASO 2: NO CERRAR EL SOCKET - Solo esperar a que el thread termine
+    // El thread se desbloqueará cuando reciba el próximo mensaje (o timeout)
     
+    // 🔥 PASO 3: Esperar a que el thread termine (con timeout)
     if (notification_thread.joinable()) {
-        // 🔥 Despertar el thread para que termine
-        try {
-            // Enviar un mensaje dummy o simplemente esperar el timeout
-            // (el thread se despertará cuando detecte listening == false)
-        } catch (...) {}
-        
+        // Enviar un mensaje dummy para despertar el thread si está bloqueado
+        // (esto lo hace el servidor cuando enviamos leave_game o el próximo mensaje)
         notification_thread.join();
         std::cout << "[LobbyClient] Notification listener joined" << std::endl;
     }
@@ -281,7 +279,26 @@ void LobbyClient::notification_listener() {
     
     try {
         while (listening.load() && connected) {
-            uint8_t msg_type = read_message_type();
+            uint8_t msg_type;
+            
+            try {
+                msg_type = read_message_type();
+            } catch (const std::exception& e) {
+                // Si listening == false, es una salida esperada
+                if (!listening.load()) {
+                    std::cout << "[LobbyClient] Listener stopped gracefully" << std::endl;
+                    break;
+                }
+                // Si no, es un error real
+                throw;
+            }
+            
+            // 🔥 NUEVO: Si recibimos MSG_GAMES_LIST y estamos deteniendo, salir
+            if (!listening.load()) {
+                std::cout << "[LobbyClient] Listener stopped, ignoring message type " 
+                          << static_cast<int>(msg_type) << std::endl;
+                break;
+            }
             
             std::cout << "[LobbyClient] Received notification type: " 
                       << static_cast<int>(msg_type) << std::endl;
@@ -327,11 +344,37 @@ void LobbyClient::notification_listener() {
                     break;
                 }
                 
-                // 🔥 NUEVO: Manejar MSG_START_GAME (0x05)
                 case MSG_START_GAME: {
                     std::cout << "[LobbyClient] Game is starting!" << std::endl;
                     emit gameStartedNotification();
                     break;
+                }
+                
+                // 🔥 NUEVO: Ignorar MSG_GAMES_LIST (viene del leave_game)
+                case MSG_GAMES_LIST: {
+                    std::cout << "[LobbyClient] Received MSG_GAMES_LIST in listener (consuming and exiting)" << std::endl;
+                    // Leer y descartar el mensaje COMPLETAMENTE para no corromper el stream
+                    uint16_t count = read_uint16();
+                    std::cout << "[LobbyClient] Games list has " << count << " games (discarding)" << std::endl;
+                    
+                    for (uint16_t i = 0; i < count; i++) {
+                        // Saltar cada GameInfo (estructura completa: 2 + 32 + 1 + 1 + 1 = 37 bytes)
+                        uint16_t gid = read_uint16();  // 2 bytes: game_id
+                        char name[32];
+                        socket.recvall(name, sizeof(name));  // 32 bytes: game_name
+                        uint8_t curr, max, started;
+                        socket.recvall(&curr, sizeof(curr));  // 1 byte: current_players
+                        socket.recvall(&max, sizeof(max));    // 1 byte: max_players
+                        socket.recvall(&started, sizeof(started));  // 1 byte: is_started
+                        
+                        std::cout << "[LobbyClient]   Skipped game " << gid << std::endl;
+                    }
+                    
+                    std::cout << "[LobbyClient] MSG_GAMES_LIST fully consumed, exiting listener" << std::endl;
+                    
+                    // Salir del listener INMEDIATAMENTE
+                    listening.store(false);
+                    return;  // 🔥 SALIR DEL THREAD AHORA
                 }
                 
                 case MSG_ERROR: {
@@ -346,14 +389,15 @@ void LobbyClient::notification_listener() {
                 default:
                     std::cerr << "[LobbyClient] Unknown notification type: " 
                               << static_cast<int>(msg_type) << std::endl;
-                    // 🔥 NO DETENER EL LISTENER, solo ignorar el mensaje
+                    // NO detener el listener por un mensaje desconocido
                     break;
             }
         }
     } catch (const std::exception& e) {
-        std::cerr << "[LobbyClient] Notification listener error: " << e.what() << std::endl;
+        if (listening.load()) {
+            std::cerr << "[LobbyClient] Notification listener error: " << e.what() << std::endl;
+        }
         connected = false;
-        emit errorOccurred(QString::fromStdString(e.what()));
     }
     
     std::cout << "[LobbyClient] Notification listener exited" << std::endl;
