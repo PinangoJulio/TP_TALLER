@@ -259,11 +259,13 @@ void WaitingRoomWindow::createPlayerCards() {
 }
 
 void WaitingRoomWindow::addPlayerByName(const QString& name) {
-    // Buscar primer slot "Esperando..."
+    std::cout << "[WaitingRoom] Adding player: " << name.toStdString() << std::endl;
+    
+    // 🔥 OPCIÓN 1: Buscar primer slot con "Esperando..."
     for (size_t i = 0; i < players.size(); i++) {
         if (players[i].name == "Esperando...") {
             players[i].name = name;
-            players[i].carName = "Esperando...";
+            players[i].carName = "Sin seleccionar";  // 🔥 Cambiar texto
             players[i].isReady = false;
             players[i].isLocal = false;
             

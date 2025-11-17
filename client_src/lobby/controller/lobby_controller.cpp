@@ -327,6 +327,9 @@ void LobbyController::onJoinMatchRequested(const QString& matchId) {
         std::cout << "[Controller] Unido exitosamente a partida ID: " 
                   << currentGameId << std::endl;
         
+        // 🔥 NUEVO: Registrar socket en el servidor para recibir broadcasts
+        // (el servidor ya hace esto automáticamente en Receiver::handle_lobby cuando procesa MSG_JOIN_GAME)
+        
         if (matchSelectionWindow) {
             matchSelectionWindow->hide();
         }
@@ -401,9 +404,12 @@ void LobbyController::onCarSelected(const CarInfo& car) {
             garageWindow = nullptr;
         }
 
+        // 🔥 INICIAR LISTENER **ANTES** DE ABRIR WAITING ROOM
+        std::cout << "[Controller] Iniciando listener de notificaciones..." << std::endl;
+        lobbyClient->start_listening();
+        
         std::cout << "[Controller] Abriendo sala de espera..." << std::endl;
         openWaitingRoom();
-        lobbyClient->start_listening();
         
     } catch (const std::exception& e) {
         handleNetworkError(e);
@@ -550,38 +556,64 @@ void LobbyController::onStartGameRequested() {
 void LobbyController::onBackFromWaitingRoom() {
     std::cout << "[Controller] Usuario salió de la sala de espera" << std::endl;
     
-    // Detener thread receptor
-    lobbyClient->stop_listening();
-    
+    // 🔥 1. Cerrar ventana PRIMERO
     if (waitingRoomWindow) {
         waitingRoomWindow->close();
         waitingRoomWindow->deleteLater();
         waitingRoomWindow = nullptr;
     }
+    
+    // 🔥 2. Detener thread receptor
+    if (lobbyClient) {
+        lobbyClient->stop_listening();
+    }
 
-    try {
-        std::cout << "[Controller] Enviando leave_game para partida " << currentGameId << std::endl;
-        lobbyClient->leave_game(currentGameId);
-        
-        // 🔥 RECIBIR LA LISTA DE JUEGOS ACTUALIZADA
-        auto games = lobbyClient->receive_games_list();
-        std::cout << "[Controller] Leave confirmado. Juegos disponibles: " << games.size() << std::endl;
-        
-        // 🔥 ACTUALIZAR LA UI DE MATCH SELECTION
-        if (matchSelectionWindow) {
-            matchSelectionWindow->updateGamesList(games);
-            matchSelectionWindow->show();  // ✅ MOSTRAR LA VENTANA
+    // 🔥 3. Enviar leave_game (sin esperar respuesta)
+    if (lobbyClient && currentGameId > 0) {
+        try {
+            std::cout << "[Controller] Enviando leave_game para partida " << currentGameId << std::endl;
+            lobbyClient->leave_game(currentGameId);
+            
+            // 🔥 NO ESPERAR RESPUESTA - Volver inmediatamente
+            std::cout << "[Controller] Leave game enviado, volviendo al match selection..." << std::endl;
+            
+        } catch (const std::exception& e) {
+            std::cerr << "[Controller] Error al enviar leave_game: " << e.what() << std::endl;
         }
+    }
+    
+    // 🔥 4. Resetear estado local
+    currentGameId = 0;
+    selectedCarIndex = -1;
+    
+    // 🔥 5. Recrear conexión (el socket quedó cerrado por stop_listening)
+    try {
+        std::cout << "[Controller] Recreando conexión al servidor..." << std::endl;
+        
+        lobbyClient.reset();
+        connectToServer();
+        lobbyClient->send_username(playerName.toStdString());
+        lobbyClient->receive_welcome();
+        
+        std::cout << "[Controller] Reconexión exitosa" << std::endl;
         
     } catch (const std::exception& e) {
-        std::cerr << "[Controller] Error al abandonar partida: " << e.what() << std::endl;
+        std::cerr << "[Controller] Error al reconectar: " << e.what() << std::endl;
         
-        // 🔥 SI FALLÓ, LIMPIAR Y VOLVER AL LOBBY
+        QMessageBox::warning(nullptr, 
+            "Error de conexión",
+            "No se pudo reconectar al servidor.\n"
+            "Volviendo al lobby principal...");
+        
         cleanupAndReturnToLobby();
         return;
     }
     
-    // Resetear estado local
-    currentGameId = 0;
-    selectedCarIndex = -1;
+    // 🔥 6. Volver al match selection
+    if (matchSelectionWindow) {
+        matchSelectionWindow->show();
+        refreshGamesList();
+    } else {
+        openMatchSelection();
+    }
 }

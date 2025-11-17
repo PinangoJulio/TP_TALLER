@@ -10,34 +10,27 @@
 #include "common_src/game_state.h"
 #include "server_src/server_protocol.h"
 
-/* Thread Receiver
- *  Espera mensajes por socket, los deserializa y manda hacia la queue del juego
- */
 class Receiver: public Thread {
     ServerProtocol& protocol;
     int id;
     int match_id;
+    std::string username;  
     Queue<GameState>& sender_messages_queue;
     std::atomic<bool>& is_running;
     MatchesMonitor& monitor;
-    Queue<struct Command>* commands_queue = nullptr;  // recibidora del game_queue
+    Queue<struct Command>* commands_queue = nullptr;
     Sender sender;
     LobbyManager& lobby_manager;
 
     bool handle_client_lobby();
 public:
-    // Declaración del constructor. Si toma un MatchesMonitor,
-    // debe ser por referencia o puntero, no por valor.
-    // Receiver(MatchesMonitor& monitor); 
-    
-    // FIX PRINCIPAL: Eliminar constructor de copia y operador de asignación de copia.
     Receiver(const Receiver& other) = delete;
     Receiver& operator=(const Receiver& other) = delete;
 
-    // Permitir el movimiento (sana práctica para hilos)
     Receiver(Receiver&& other) = default;
 
-    explicit Receiver(ServerProtocol& protocol, int id, Queue<GameState>& sender_messages_queue, std::atomic<bool>& is_running, MatchesMonitor& monitor, LobbyManager& lobby_manager);
+    explicit Receiver(ServerProtocol& protocol, int id, Queue<GameState>& sender_messages_queue, 
+                      std::atomic<bool>& is_running, MatchesMonitor& monitor, LobbyManager& lobby_manager);
 
     void run() override;
     void kill();

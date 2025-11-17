@@ -250,12 +250,27 @@ void LobbyClient::start_listening() {
 }
 
 void LobbyClient::stop_listening() {
-    if (!listening.load()) return;
+    if (!listening.load()) {
+        std::cout << "[LobbyClient] Listener already stopped" << std::endl;
+        return;
+    }
+    
+    std::cout << "[LobbyClient] Stopping notification listener..." << std::endl;
     
     listening.store(false);
+    
+    // 🔥 CERRAR SOCKET PARA DESPERTAR AL THREAD (si está bloqueado en recv)
+    try {
+        socket.shutdown(2);  // SHUT_RDWR - despierta cualquier recv() bloqueado
+    } catch (...) {
+        // Ignorar errores (el socket puede estar ya cerrado)
+    }
+    
     if (notification_thread.joinable()) {
         notification_thread.join();
+        std::cout << "[LobbyClient] Notification listener joined" << std::endl;
     }
+    
     std::cout << "[LobbyClient] Notification listener stopped" << std::endl;
 }
 
@@ -310,7 +325,8 @@ void LobbyClient::notification_listener() {
                     break;
                 }
                 
-                case MSG_GAME_STARTED: {
+                // 🔥 NUEVO: Manejar MSG_START_GAME (0x05)
+                case MSG_START_GAME: {
                     std::cout << "[LobbyClient] Game is starting!" << std::endl;
                     emit gameStartedNotification();
                     break;
@@ -328,7 +344,7 @@ void LobbyClient::notification_listener() {
                 default:
                     std::cerr << "[LobbyClient] Unknown notification type: " 
                               << static_cast<int>(msg_type) << std::endl;
-                    listening.store(false);  // Detener ante mensaje desconocido
+                    // 🔥 NO DETENER EL LISTENER, solo ignorar el mensaje
                     break;
             }
         }
