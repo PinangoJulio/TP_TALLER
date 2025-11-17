@@ -229,9 +229,6 @@ void LobbyController::onMatchCreated(const QString& matchName, int maxPlayers, c
         std::cout << "[Controller] Conectando señales de notificaciones..." << std::endl;
         connectNotificationSignals();
         
-        std::cout << "[Controller] Iniciando listener de notificaciones..." << std::endl;
-        lobbyClient->start_listening();
-        
         std::cout << "[Controller] Abriendo garage..." << std::endl;
         openGarage();
         
@@ -333,9 +330,6 @@ void LobbyController::onJoinMatchRequested(const QString& matchId) {
         std::cout << "[Controller] Conectando señales de notificaciones..." << std::endl;
         connectNotificationSignals();
         
-        std::cout << "[Controller] Iniciando listener de notificaciones..." << std::endl;
-        lobbyClient->start_listening();
-        
         if (matchSelectionWindow) {
             matchSelectionWindow->hide();
         }
@@ -396,8 +390,7 @@ void LobbyController::openGarage() {
 }
 
 void LobbyController::onCarSelected(const CarInfo& car) {
-    std::cout << "[Controller] Auto seleccionado: "
-              << car.name.toStdString() << std::endl;
+    std::cout << "[Controller] Auto seleccionado: " << car.name.toStdString() << std::endl;
 
     try {
         std::cout << "[Controller] DEBUG: Enviando selección de auto..." << std::endl;
@@ -413,8 +406,12 @@ void LobbyController::onCarSelected(const CarInfo& car) {
             garageWindow = nullptr;
         }
         
-        // 🔥 ELIMINADO: Conectar señales e iniciar listener
-        // (ya se hizo en onJoinMatchRequested() o en onMatchCreated())
+        // 🔥 AHORA SÍ: Conectar señales e iniciar listener
+        std::cout << "[Controller] Conectando señales de notificaciones..." << std::endl;
+        connectNotificationSignals();
+        
+        std::cout << "[Controller] Iniciando listener de notificaciones..." << std::endl;
+        lobbyClient->start_listening();
         
         std::cout << "[Controller] Abriendo sala de espera..." << std::endl;
         openWaitingRoom();

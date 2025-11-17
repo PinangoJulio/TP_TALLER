@@ -69,7 +69,6 @@ void GameRoom::remove_player(const std::string& username) {
     }
 }
 
-// ✅ SIN CAMBIOS (resto de los métodos)
 bool GameRoom::set_player_ready(const std::string& username, bool ready) {
     auto it = players.find(username);
     if (it == players.end()) return false;
@@ -85,10 +84,11 @@ bool GameRoom::set_player_ready(const std::string& username, bool ready) {
     std::cout << "[GameRoom " << game_id << "] Player '" << username 
               << "' is now " << (ready ? "READY" : "NOT READY") << std::endl;
     
-    if (broadcast_callback) {
-        auto buffer = LobbyProtocol::serialize_player_ready_notification(username, ready);
-        broadcast_callback(buffer);
-    }
+    // 🔥 ELIMINADO: El broadcast lo hace el Receiver manualmente
+    // if (broadcast_callback) {
+    //     auto buffer = LobbyProtocol::serialize_player_ready_notification(username, ready);
+    //     broadcast_callback(buffer);
+    // }
     
     return true;
 }

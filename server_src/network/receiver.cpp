@@ -267,15 +267,15 @@ void Receiver::handle_lobby() {
                         break;
                     }
                     
-                    // 🔥 PASO 2: Enviar ACK al cliente que seleccionó (PRIMERO)
+                    // 🔥 PASO 2: Enviar ACK al cliente
                     protocol.send_buffer(LobbyProtocol::serialize_car_selected_ack(car_name, car_type));
                     std::cout << "[Receiver] ✅ ACK sent to " << username << std::endl;
-                    
-                    // 🔥 PASO 3: AHORA SÍ hacer broadcast a TODOS
+    
+                    // 🔥 PASO 3: Broadcast a TODOS EXCEPTO al que seleccionó
                     auto notif = LobbyProtocol::serialize_car_selected_notification(username, car_name, car_type);
-                    lobby_manager.broadcast_to_game(current_game_id, notif);
-                    std::cout << "[Receiver] ✅ Broadcast triggered" << std::endl;
-                    
+                    lobby_manager.broadcast_to_game(current_game_id, notif, username);  // 🔥 EXCLUIR username
+                    std::cout << "[Receiver] ✅ Broadcast triggered (excluding " << username << ")" << std::endl;
+    
                     break;
                 }
                 // ------------------------------------------------------------
@@ -353,13 +353,18 @@ void Receiver::handle_lobby() {
                     }
                     
                     GameRoom* room = it->second.get();
-                    
-                    // Cambiar estado ready (esto hará broadcast automático)
+    
+                    // Cambiar estado (esto NO debe hacer broadcast automático)
                     if (!room->set_player_ready(username, is_ready != 0)) {
                         protocol.send_buffer(LobbyProtocol::serialize_error(
                             ERR_INVALID_CAR_INDEX, "You must select a car before being ready"));
+                        break;
                     }
-                    
+    
+                    // 🔥 Broadcast manual EXCLUYENDO al emisor
+                    auto notif = LobbyProtocol::serialize_player_ready_notification(username, is_ready != 0);
+                    lobby_manager.broadcast_to_game(current_game_id, notif, username);
+    
                     break;
                 }
                 // ------------------------------------------------------------                

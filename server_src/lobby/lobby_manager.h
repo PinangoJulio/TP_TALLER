@@ -35,7 +35,7 @@ public:
     
     void register_player_socket(uint16_t game_id, const std::string& username, Socket& socket);
     void unregister_player_socket(uint16_t game_id, const std::string& username);
-    void broadcast_to_game(uint16_t game_id, const std::vector<uint8_t>& buffer);
+    void broadcast_to_game(uint16_t game_id, const std::vector<uint8_t>& buffer, const std::string& exclude_username = "");
 };
 
 #endif // LOBBY_MANAGER_H

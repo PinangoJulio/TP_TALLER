@@ -160,18 +160,23 @@ void LobbyManager::unregister_player_socket(uint16_t game_id, const std::string&
     }
 }
 
-void LobbyManager::broadcast_to_game(uint16_t game_id, const std::vector<uint8_t>& buffer) {
+void LobbyManager::broadcast_to_game(uint16_t game_id, const std::vector<uint8_t>& buffer, const std::string& exclude_username) {
     auto it = player_sockets.find(game_id);
     if (it == player_sockets.end()) {
-        std::cout << "[LobbyManager] No sockets registered for game " << game_id 
-                  << " (may not have joined yet)" << std::endl;
+        std::cout << "[LobbyManager] No sockets registered for game " << game_id << std::endl;
         return;
     }
     
-    std::cout << "[LobbyManager] Broadcasting to " << it->second.size() 
-              << " players in game " << game_id << std::endl;
+    std::cout << "[LobbyManager] Broadcasting to game " << game_id 
+              << " (excluding: " << (exclude_username.empty() ? "none" : exclude_username) << ")" << std::endl;
     
     for (auto& [username, socket_ptr] : it->second) {
+        // 🔥 SKIP el jugador que envió el mensaje original
+        if (username == exclude_username) {
+            std::cout << "[LobbyManager] ⏭️  Skipping " << username << " (sender)" << std::endl;
+            continue;
+        }
+        
         try {
             if (!socket_ptr) {
                 std::cerr << "[LobbyManager] ❌ Null socket for " << username << std::endl;
@@ -179,7 +184,6 @@ void LobbyManager::broadcast_to_game(uint16_t game_id, const std::vector<uint8_t
             }
             
             socket_ptr->sendall(buffer.data(), buffer.size());
-            
             std::cout << "[LobbyManager] ✅ Sent to " << username << std::endl;
             
         } catch (const std::exception& e) {

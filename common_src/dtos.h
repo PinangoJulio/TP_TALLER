@@ -38,7 +38,8 @@ enum LobbyMessageType : uint8_t {
     MSG_PLAYER_LEFT_NOTIFICATION = 0x21,     
     MSG_PLAYER_READY_NOTIFICATION = 0x22,   
     MSG_CAR_SELECTED_NOTIFICATION = 0x23,    
-    MSG_ROOM_STATE_UPDATE = 0x24,           
+    MSG_ROOM_STATE_UPDATE = 0x24,
+    MSG_ROOM_SNAPSHOT = 0x25,           
 
     MSG_ERROR = 0xFF
 };

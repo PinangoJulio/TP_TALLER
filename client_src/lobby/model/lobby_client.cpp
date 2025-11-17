@@ -148,7 +148,44 @@ uint16_t LobbyClient::receive_game_joined() {
     
     uint16_t game_id = read_uint16();
     std::cout << "[LobbyClient] Joined game: " << game_id << std::endl;
+    
+    // 🔥 NUEVO: Recibir snapshot automáticamente
+    receive_room_snapshot();
+    
     return game_id;
+}
+
+void LobbyClient::receive_room_snapshot() {
+    uint8_t type = read_message_type();
+    if (type != MSG_ROOM_SNAPSHOT) {
+        throw std::runtime_error("Expected ROOM_SNAPSHOT message");
+    }
+    
+    uint16_t player_count = read_uint16();
+    
+    for (int i = 0; i < player_count; i++) {
+        std::string player_name = read_string();
+        std::string car_name = read_string();
+        std::string car_type = read_string();
+        uint8_t is_ready = read_uint8();
+        
+        // Emitir señales para actualizar la UI
+        emit playerJoinedNotification(QString::fromStdString(player_name));
+        
+        if (!car_name.empty()) {
+            emit carSelectedNotification(
+                QString::fromStdString(player_name),
+                QString::fromStdString(car_name),
+                QString::fromStdString(car_type)
+            );
+        }
+        
+        if (is_ready) {
+            emit playerReadyNotification(QString::fromStdString(player_name), true);
+        }
+    }
+    
+    std::cout << "[LobbyClient] Room snapshot received (" << player_count << " players)" << std::endl;
 }
 
 uint8_t LobbyClient::peek_message_type() {
