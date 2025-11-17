@@ -14,91 +14,89 @@ Press 'q' + Enter to stop
            Client ID: 1
            Total clients: 1
 ==================================================
-[Receiver] Player connected: julio
-[Receiver] julio requested games list
-[Receiver] Sending 0 games to julio
-[Receiver] julio creating game: sala1 (max: 2, races: 3)
-[GameRoom 1] Created by 'julio'
-[LobbyManager] Game 'sala1' created with ID 1 by 'julio'
-[LobbyManager] Registered socket for player 'julio' in game 1
+[Receiver] Player connected: julio1
+[Receiver] julio1 requested games list
+[Receiver] Sending 0 games to julio1
+[Receiver] julio1 creating game: sala1 (max: 2, races: 3)
+[GameRoom 1] Created by 'julio1'
+[LobbyManager] Game 'sala1' created with ID 1 by 'julio1'
+[LobbyManager] Registered socket for player 'julio1' in game 1
 [Receiver]   Race 1: Liberty City - Circuito Centro
 [Receiver]   Race 2: San Andreas - Desierto
 [Receiver]   Race 3: Vice City - Playa
 [Receiver] Game created with ID: 1
-[Receiver] julio selected car: Leyenda Urbana (classic)
-[GameRoom] ✅ Player 'julio' car saved: Leyenda Urbana (classic)
-[Receiver] ✅ ACK sent to julio
-[LobbyManager] Broadcasting to 1 players in game 1
-[LobbyManager] ✅ Sent to julio
-[Receiver] ✅ Broadcast triggered
-[Receiver] julio leaving game 1
-[LobbyManager] Unregistered socket for player 'julio' in game 1
-[GameRoom 1] Player 'julio' left
-[LobbyManager] No sockets registered for game 1 (may not have joined yet)
-[LobbyManager] Game 1 is empty, deleting...
-[Receiver] julio successfully left game 1
-[Receiver] julio requested games list
-[Receiver] Sending 0 games to julio
-[Receiver] Player julio disconnected
+[Receiver] julio1 selected car: Stallion GT (sport)
+[GameRoom] ✅ Player 'julio1' car saved: Stallion GT (sport)
+[Receiver] ✅ ACK sent to julio1
+[LobbyManager] Broadcasting to game 1 (excluding: julio1)
+[LobbyManager] ⏭️  Skipping julio1 (sender)
+[Receiver] ✅ Broadcast triggered (excluding julio1)
 ==================================================
 [Acceptor] New connection accepted
            Client ID: 2
            Total clients: 2
 ==================================================
-[Acceptor] Client 1 disconnected and cleaned up
-[Acceptor] Active clients: 1
-[Receiver] Player connected: julio
-[Receiver] julio requested games list
-[Receiver] Sending 0 games to julio
-[Receiver] julio creating game: sala1 (max: 2, races: 3)
-[GameRoom 2] Created by 'julio'
-[LobbyManager] Game 'sala1' created with ID 2 by 'julio'
-[LobbyManager] Registered socket for player 'julio' in game 2
-[Receiver]   Race 1: Liberty City - Circuito Centro
-[Receiver]   Race 2: San Andreas - Desierto
-[Receiver]   Race 3: Vice City - Playa
-[Receiver] Game created with ID: 2
-[Receiver] julio selected car: Leyenda Urbana (classic)
-[GameRoom] ✅ Player 'julio' car saved: Leyenda Urbana (classic)
-[Receiver] ✅ ACK sent to julio
-[LobbyManager] Broadcasting to 1 players in game 2
-[LobbyManager] ✅ Sent to julio
-[Receiver] ✅ Broadcast triggered
-[Receiver] julio set ready: YES
-[GameRoom 2] Player 'julio' is now READY
-[LobbyManager] Broadcasting to 1 players in game 2
-[LobbyManager] ✅ Sent to julio
-[Receiver] julio set ready: NO
-[GameRoom 2] Player 'julio' is now NOT READY
-[LobbyManager] Broadcasting to 1 players in game 2
-[LobbyManager] ✅ Sent to julio
-==================================================
-[Acceptor] New connection accepted
-           Client ID: 3
-           Total clients: 2
-==================================================
 [Receiver] Player connected: julio2
 [Receiver] julio2 requested games list
 [Receiver] Sending 1 games to julio2
-[Receiver] julio2 joining game 2
-[LobbyManager] Registered socket for player 'julio2' in game 2
-[LobbyManager] join_game() called: username=julio2, game_id=2
+[Receiver] julio2 joining game 1
+[LobbyManager] Registered socket for player 'julio2' in game 1
+[LobbyManager] join_game() called: username=julio2, game_id=1
 [LobbyManager] is_player_in_game(julio2)? NO
-[GameRoom 2] Player 'julio2' joined (2/2)
-[Receiver] julio2 joined match 2
-[LobbyManager] Broadcasting to 2 players in game 2
-[LobbyManager] ✅ Sent to julio
-[LobbyManager] ✅ Sent to julio2
+[GameRoom 1] Player 'julio2' joined (2/2)
+[Receiver] julio2 joined match 1
 [Receiver] Sending room snapshot to julio2 (1 existing players)
-[Receiver]   → Player exists: julio
-[Receiver]   → Car: Leyenda Urbana
-[Receiver] julio2 selected car: Stallion GT (sport)
-[GameRoom] ✅ Player 'julio2' car saved: Stallion GT (sport)
+[Receiver]   → Player exists: julio1
+[Receiver]   → Car: Stallion GT
+[Receiver] Snapshot sent to julio2
+[LobbyManager] Broadcasting to game 1 (excluding: julio2)
+[LobbyManager] ✅ Sent to julio1
+[LobbyManager] ⏭️  Skipping julio2 (sender)
+[Receiver] Broadcasted join notification (excluding julio2)
+[Receiver] julio2 selected car: Nómada (truck)
+[GameRoom] ✅ Player 'julio2' car saved: Nómada (truck)
 [Receiver] ✅ ACK sent to julio2
-[LobbyManager] Broadcasting to 2 players in game 2
-[LobbyManager] ✅ Sent to julio
+[LobbyManager] Broadcasting to game 1 (excluding: julio2)
+[LobbyManager] ✅ Sent to julio1
+[LobbyManager] ⏭️  Skipping julio2 (sender)
+[Receiver] ✅ Broadcast triggered (excluding julio2)
+[Receiver] julio2 set ready: YES
+[GameRoom 1] Player 'julio2' is now READY
+[LobbyManager] Broadcasting to game 1 (excluding: julio2)
+[LobbyManager] ✅ Sent to julio1
+[LobbyManager] ⏭️  Skipping julio2 (sender)
+[Receiver] julio2 set ready: NO
+[GameRoom 1] Player 'julio2' is now NOT READY
+[LobbyManager] Broadcasting to game 1 (excluding: julio2)
+[LobbyManager] ✅ Sent to julio1
+[LobbyManager] ⏭️  Skipping julio2 (sender)
+[Receiver] julio1 set ready: YES
+[GameRoom 1] Player 'julio1' is now READY
+[LobbyManager] Broadcasting to game 1 (excluding: julio1)
+[LobbyManager] ⏭️  Skipping julio1 (sender)
 [LobbyManager] ✅ Sent to julio2
-[Receiver] ✅ Broadcast triggered
+[Receiver] julio1 set ready: NO
+[GameRoom 1] Player 'julio1' is now NOT READY
+[LobbyManager] Broadcasting to game 1 (excluding: julio1)
+[LobbyManager] ⏭️  Skipping julio1 (sender)
+[LobbyManager] ✅ Sent to julio2
+[Receiver] julio2 set ready: YES
+[GameRoom 1] Player 'julio2' is now READY
+[LobbyManager] Broadcasting to game 1 (excluding: julio2)
+[LobbyManager] ✅ Sent to julio1
+[LobbyManager] ⏭️  Skipping julio2 (sender)
+[Receiver] julio2 set ready: NO
+[GameRoom 1] Player 'julio2' is now NOT READY
+[LobbyManager] Broadcasting to game 1 (excluding: julio2)
+[LobbyManager] ✅ Sent to julio1
+[LobbyManager] ⏭️  Skipping julio2 (sender)
+
+
+
+
+
+
+
 
 
 
@@ -108,7 +106,6 @@ Press 'q' + Enter to stop
 
 
 Terminal 2: Cliente 1:
-julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL/TP_TALLER$ ./client
 === Need for Speed 2D - Cliente ===
 Conectando a localhost:8080
 [Controller] Controlador creado (sin conectar al servidor todavía)
@@ -125,20 +122,20 @@ QWidget::setLayout: Cannot set layout to 0
 [LobbyClient] Connected to server localhost:8080
 [Controller] Conectado exitosamente
 [Controller] Mostrando ventana de ingreso de nombre
-Nombre de jugador confirmado: julio
-[Controller] Usuario confirmó nombre: julio
-[LobbyClient] DEBUG: Username: 'julio' (length: 5)
-[LobbyClient] DEBUG: Buffer size: 8 bytes
-[LobbyClient] DEBUG: Buffer content: 01 00 05 6A 75 6C 69 6F 
-[LobbyClient] DEBUG: Length encoded in buffer: 5
-[LobbyClient] Sent username: julio
+Nombre de jugador confirmado: julio1
+[Controller] Usuario confirmó nombre: julio1
+[LobbyClient] DEBUG: Username: 'julio1' (length: 6)
+[LobbyClient] DEBUG: Buffer size: 9 bytes
+[LobbyClient] DEBUG: Buffer content: 01 00 06 6A 75 6C 69 6F 31 
+[LobbyClient] DEBUG: Length encoded in buffer: 6
+[LobbyClient] Sent username: julio1
 [Controller] Nombre enviado al servidor
 [Controller] Esperando mensaje de bienvenida...
 [LobbyClient] DEBUG: Waiting for welcome message...
 [LobbyClient] DEBUG: Received type: 16
 [LobbyClient] DEBUG: Reading welcome string...
-[LobbyClient] Received welcome: Welcome to Need for Speed 2D, julio!
-[Controller] Bienvenida recibida: Welcome to Need for Speed 2D, julio!
+[LobbyClient] Received welcome: Welcome to Need for Speed 2D, julio1!
+[Controller] Bienvenida recibida: Welcome to Need for Speed 2D, julio1!
 [Controller] Abriendo ventana de selección de partidas
 [Controller] Solicitando lista de partidas al servidor...
 [LobbyClient] Requested games list
@@ -167,137 +164,79 @@ Confirmando creación de partida:
 [LobbyClient] Requested to create game: sala1 (max players: 2, races: 3)
 [LobbyClient] Game created with ID: 1
 [Controller] Partida creada con ID: 1
+[Controller] Conectando señales de notificaciones...
 [Controller] Abriendo garage...
 [Controller] Abriendo ventana de garage...
-Auto seleccionado: Leyenda Urbana (classic)
-[Controller] Auto seleccionado: Leyenda Urbana
+Auto seleccionado: Stallion GT (sport)
+[Controller] Auto seleccionado: Stallion GT
 [Controller] DEBUG: Enviando selección de auto...
-[LobbyClient] Selected car: Leyenda Urbana (classic)
+[LobbyClient] Selected car: Stallion GT (sport)
 [Controller] DEBUG: Esperando ACK...
-[LobbyClient] Server confirmed car: Leyenda Urbana (classic)
-[Controller] ✅ CAR confirmed: Leyenda Urbana
+[LobbyClient] Server confirmed car: Stallion GT (sport)
+[Controller] ✅ CAR confirmed: Stallion GT
 [Controller] Conectando señales de notificaciones...
 [Controller] Iniciando listener de notificaciones...
 [LobbyClient] Notification listener started
 [Controller] Abriendo sala de espera...
-[Controller] Abriendo sala de espera...
 [LobbyClient] Notification listener running...
-[LobbyClient] Received notification type: 35
-[LobbyClient] Player julio selected Leyenda Urbana
-[WaitingRoom] Adding player: julio
-[WaitingRoom] Player 'julio' added at slot 0
-[Controller] Notification: Player julio selected Leyenda Urbana
-[WaitingRoom] Player 'julio' selected car: Leyenda Urbana
-[WaitingRoom] Usuario confirmó salir de la sala
-[Controller] Usuario salió de la sala de espera
-[Controller] Deteniendo listener...
-[LobbyClient] Stopping notification listener...
-[LobbyClient] Listener stopped gracefully
-[LobbyClient] Notification listener exited
-[LobbyClient] Notification listener joined
-[LobbyClient] Notification listener stopped
-[Controller] Listener detenido
-[Controller] Enviando leave_game para partida 1
-[LobbyClient] Leave game request sent for ID: 1
-[Controller] ✅ Leave game enviado
-[Controller] Solicitando lista de partidas al servidor...
-[LobbyClient] Requested games list
-[Controller]  Error: Connection closed by server
-[Controller] Limpiando estado y volviendo al lobby...
-[LobbyClient] Listener already stopped
-[Controller] Estado limpiado
-[LobbyWindow] Botón Jugar presionado
-[Controller] Usuario presionó 'Jugar'
-[Controller] Conectando al servidor localhost:8080...
-[LobbyClient] Connected to server localhost:8080
-[Controller] Conectado exitosamente
-[Controller] Mostrando ventana de ingreso de nombre
-Nombre de jugador confirmado: julio
-[Controller] Usuario confirmó nombre: julio
-[LobbyClient] DEBUG: Username: 'julio' (length: 5)
-[LobbyClient] DEBUG: Buffer size: 8 bytes
-[LobbyClient] DEBUG: Buffer content: 01 00 05 6A 75 6C 69 6F 
-[LobbyClient] DEBUG: Length encoded in buffer: 5
-[LobbyClient] Sent username: julio
-[Controller] Nombre enviado al servidor
-[Controller] Esperando mensaje de bienvenida...
-[LobbyClient] DEBUG: Waiting for welcome message...
-[LobbyClient] DEBUG: Received type: 16
-[LobbyClient] DEBUG: Reading welcome string...
-[LobbyClient] Received welcome: Welcome to Need for Speed 2D, julio!
-[Controller] Bienvenida recibida: Welcome to Need for Speed 2D, julio!
-[Controller] Abriendo ventana de selección de partidas
-[Controller] Solicitando lista de partidas al servidor...
-[LobbyClient] Requested games list
-[LobbyClient] Received 0 games
-[Controller] Recibidas 0 partidas
-[MatchSelectionWindow] Actualizando lista con 0 partidas
-Creando nueva partida...
-[Controller] Usuario quiere crear nueva partida
-Carrera 1 configurada: Liberty City - Circuito Centro
-Carrera 2 configurada: San Andreas - Desierto
-Carrera 3 configurada: Vice City - Playa
-Confirmando creación de partida:
-  Nombre: sala1
-  Jugadores: 2
-  Carreras: 3
-  Carrera 1: Liberty City - Circuito Centro
-  Carrera 2: San Andreas - Desierto
-  Carrera 3: Vice City - Playa
-[Controller] Usuario confirmó creación de partida:
-  Nombre: sala1
-  Jugadores máximos: 2
-  Número de carreras: 3
-  Carrera: Liberty City - Circuito Centro
-  Carrera: San Andreas - Desierto
-  Carrera: Vice City - Playa
-[LobbyClient] Requested to create game: sala1 (max players: 2, races: 3)
-[LobbyClient] Game created with ID: 2
-[Controller] Partida creada con ID: 2
-[Controller] Abriendo garage...
-[Controller] Abriendo ventana de garage...
-Auto seleccionado: Leyenda Urbana (classic)
-[Controller] Auto seleccionado: Leyenda Urbana
-[Controller] DEBUG: Enviando selección de auto...
-[LobbyClient] Selected car: Leyenda Urbana (classic)
-[Controller] DEBUG: Esperando ACK...
-[LobbyClient] Server confirmed car: Leyenda Urbana (classic)
-[Controller] ✅ CAR confirmed: Leyenda Urbana
-[Controller] Conectando señales de notificaciones...
-[Controller] Iniciando listener de notificaciones...
-[LobbyClient] Notification listener started
 [Controller] Abriendo sala de espera...
-[Controller] Abriendo sala de espera...
-[LobbyClient] Notification listener running...
-[LobbyClient] Received notification type: 35
-[LobbyClient] Player julio selected Leyenda Urbana
-[WaitingRoom] Adding player: julio
-[WaitingRoom] Player 'julio' added at slot 0
-[Controller] Notification: Player julio selected Leyenda Urbana
-[WaitingRoom] Player 'julio' selected car: Leyenda Urbana
-[Controller] Jugador marcado como: LISTO
-[LobbyClient] Set ready: YES
-Estado listo: SI
-[LobbyClient] Received notification type: 34
-[LobbyClient] Player julio is now READY
-[Controller] Notification: Player julio ready: 1
-[WaitingRoom] Player 'julio' is now READY
-[Controller] Jugador marcado como: NO LISTO
-[LobbyClient] Set ready: NO
-Estado listo: NO
-[LobbyClient] Received notification type: 34
-[LobbyClient] Player julio is now NOT READY
-[Controller] Notification: Player julio ready: 0
-[WaitingRoom] Player 'julio' is now NOT READY
+[Controller] Agregando jugador local: julio1
+[WaitingRoom] Adding player: julio1
+[WaitingRoom] Player 'julio1' added at slot 0
+[Controller] Sala de espera inicializada
+[Controller] Actualizando auto del jugador local: Stallion GT
+[WaitingRoom] Player 'julio1' selected car: Stallion GT
 [LobbyClient] Received notification type: 32
 [LobbyClient] Player joined: julio2
 [Controller] Notification: Player joined: julio2
 [WaitingRoom] Adding player: julio2
 [WaitingRoom] Player 'julio2' added at slot 1
+[Controller] Notification: Player joined: julio2
+[WaitingRoom] Adding player: julio2
+[WaitingRoom] Player 'julio2' added at slot 2
 [LobbyClient] Received notification type: 35
-[LobbyClient] Player julio2 selected Stallion GT
-[Controller] Notification: Player julio2 selected Stallion GT
-[WaitingRoom] Player 'julio2' selected car: Stallion GT
+[LobbyClient] Player julio2 selected Nómada
+[Controller] Notification: Player julio2 selected Nómada
+[WaitingRoom] Player 'julio2' selected car: Nómada
+[Controller] Notification: Player julio2 selected Nómada
+[WaitingRoom] Player 'julio2' selected car: Nómada
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio2 is now READY
+[Controller] Notification: Player julio2 ready: 1
+[WaitingRoom] Player 'julio2' is now READY
+[Controller] Notification: Player julio2 ready: 1
+[WaitingRoom] Player 'julio2' is now READY
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio2 is now NOT READY
+[Controller] Notification: Player julio2 ready: 0
+[WaitingRoom] Player 'julio2' is now NOT READY
+[Controller] Notification: Player julio2 ready: 0
+[WaitingRoom] Player 'julio2' is now NOT READY
+[Controller] Jugador marcado como: LISTO
+[LobbyClient] Set ready: YES
+Estado listo: SI
+[Controller] Jugador marcado como: NO LISTO
+[LobbyClient] Set ready: NO
+Estado listo: NO
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio2 is now READY
+[Controller] Notification: Player julio2 ready: 1
+[WaitingRoom] Player 'julio2' is now READY
+[Controller] Notification: Player julio2 ready: 1
+[WaitingRoom] Player 'julio2' is now READY
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio2 is now NOT READY
+[Controller] Notification: Player julio2 ready: 0
+[WaitingRoom] Player 'julio2' is now NOT READY
+[Controller] Notification: Player julio2 ready: 0
+[WaitingRoom] Player 'julio2' is now NOT READY
+
+
+
+
+
+
+
 
 
 
@@ -344,19 +283,58 @@ Nombre de jugador confirmado: julio2
 [LobbyClient] Received 1 games
 [Controller] Recibidas 1 partidas
 [MatchSelectionWindow] Actualizando lista con 1 partidas
-[MatchSelectionWindow] Partida seleccionada ID: 2
-[MatchSelectionWindow] Emitiendo señal de unirse a: 2
-[Controller] Usuario quiere unirse a partida con matchId: 2
-[Controller] Intentando unirse a game_id (de UserRole): 2
-[LobbyClient] Requested to join game: 2
-[LobbyClient] Joined game: 2
-[Controller] Unido exitosamente a partida ID: 2
+[MatchSelectionWindow] Partida seleccionada ID: 1
+[MatchSelectionWindow] Emitiendo señal de unirse a: 1
+[Controller] Usuario quiere unirse a partida con matchId: 1
+[Controller] Intentando unirse a game_id (de UserRole): 1
+[Controller] Conectando señales de notificaciones...
+[Controller] Iniciando listener de notificaciones...
+[LobbyClient] Notification listener started
+[LobbyClient] Requested to join game: 1
+[LobbyClient] Notification listener running...
+[LobbyClient] Joined game: 1
+[Controller] Unido exitosamente a partida ID: 1
+[LobbyClient] Received notification type: 32
+[LobbyClient] Player joined: julio1
+[LobbyClient] Received notification type: 35
+[LobbyClient] Player julio1 selected Stallion GT
 [Controller] Abriendo garage...
 [Controller] Abriendo ventana de garage...
-Auto seleccionado: Stallion GT (sport)
-[Controller] Auto seleccionado: Stallion GT
+[Controller] Notification: Player joined: julio1
+[Controller] Notification: Player julio1 selected Stallion GT
+Auto seleccionado: Nómada (truck)
+[Controller] Auto seleccionado: Nómada
 [Controller] DEBUG: Enviando selección de auto...
-[LobbyClient] Selected car: Stallion GT (sport)
+[LobbyClient] Selected car: Nómada (truck)
 [Controller] DEBUG: Esperando ACK...
-[Controller]  Error: Expected CAR_SELECTED_ACK
+[LobbyClient] Server confirmed car: Nómada (truck)
+[Controller] ✅ CAR confirmed: Nómada
+[Controller] Abriendo sala de espera...
+[Controller] Abriendo sala de espera...
+[Controller] Agregando jugador local: julio2
+[WaitingRoom] Adding player: julio2
+[WaitingRoom] Player 'julio2' added at slot 0
+[Controller] Sala de espera inicializada
+[Controller] Actualizando auto del jugador local: Nómada
+[WaitingRoom] Player 'julio2' selected car: Nómada
+[Controller] Jugador marcado como: LISTO
+[LobbyClient] Set ready: YES
+Estado listo: SI
+[Controller] Jugador marcado como: NO LISTO
+[LobbyClient] Set ready: NO
+Estado listo: NO
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio1 is now READY
+[Controller] Notification: Player julio1 ready: 1
+[WaitingRoom] Player julio1 not found
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio1 is now NOT READY
+[Controller] Notification: Player julio1 ready: 0
+[WaitingRoom] Player julio1 not found
+[Controller] Jugador marcado como: LISTO
+[LobbyClient] Set ready: YES
+Estado listo: SI
+[Controller] Jugador marcado como: NO LISTO
+[LobbyClient] Set ready: NO
+Estado listo: NO
 

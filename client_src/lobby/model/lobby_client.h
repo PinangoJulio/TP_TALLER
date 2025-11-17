@@ -79,6 +79,8 @@ public:
 
     void send_selected_races(const std::vector<std::pair<std::string, std::string>>& races);
 
+    bool is_listening() const { return listening.load(); }
+
 signals:
     //  Señales para notificar cambios en la sala
     void playerJoinedNotification(QString username);

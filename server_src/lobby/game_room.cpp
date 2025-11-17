@@ -29,17 +29,14 @@ bool GameRoom::add_player(const std::string& username) {
     info.is_ready = false;
     info.car_name = "";
     info.car_type = "";
-    // 🔥 ELIMINADO: is_host = false;
     
     players[username] = info;
     
     std::cout << "[GameRoom " << game_id << "] Player '" << username << "' joined (" 
               << players.size() << "/" << static_cast<int>(max_players) << ")" << std::endl;
     
-    if (broadcast_callback) {
-        auto buffer = LobbyProtocol::serialize_player_joined_notification(username);
-        broadcast_callback(buffer);
-    }
+    // 🔥 BROADCAST SOLO DESPUÉS DE QUE EL JUGADOR RECIBA EL SNAPSHOT
+    // El broadcast lo hará manualmente el Receiver DESPUÉS del snapshot
     
     if (players.size() >= 2 && state == RoomState::WAITING) {
         state = RoomState::READY;
@@ -83,12 +80,6 @@ bool GameRoom::set_player_ready(const std::string& username, bool ready) {
     
     std::cout << "[GameRoom " << game_id << "] Player '" << username 
               << "' is now " << (ready ? "READY" : "NOT READY") << std::endl;
-    
-    // 🔥 ELIMINADO: El broadcast lo hace el Receiver manualmente
-    // if (broadcast_callback) {
-    //     auto buffer = LobbyProtocol::serialize_player_ready_notification(username, ready);
-    //     broadcast_callback(buffer);
-    // }
     
     return true;
 }
