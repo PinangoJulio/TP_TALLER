@@ -115,6 +115,7 @@ bool GameRoom::all_players_ready() const {
     return true;
 }
 
+
 bool GameRoom::set_player_car(const std::string& username, const std::string& car_name, const std::string& car_type) {
     auto it = players.find(username);
     if (it == players.end()) {
@@ -128,11 +129,7 @@ bool GameRoom::set_player_car(const std::string& username, const std::string& ca
     std::cout << "[GameRoom] ✅ Player '" << username << "' car saved: " 
               << car_name << " (" << car_type << ")" << std::endl;
     
-    // 🔥 BROADCAST: Notificar selección de auto
-    if (broadcast_callback) {
-        auto buffer = LobbyProtocol::serialize_car_selected_notification(username, car_name, car_type);
-        broadcast_callback(buffer);
-    }
+    // 🔥 NO HACER BROADCAST AQUÍ - Lo maneja el Receiver
     
     return true;
 }

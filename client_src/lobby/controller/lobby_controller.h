@@ -93,6 +93,7 @@ private:
     void refreshGamesList();
     void openGarage();
     void openWaitingRoom();
+    void connectNotificationSignals();
 };
 
 #endif // LOBBY_CONTROLLER_H

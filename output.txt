@@ -1,5 +1,4 @@
 Terminal 1: Server
-
 julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL/TP_TALLER$ ./server config.yaml
 [Acceptor] Socket created on port 8080
 ==================================================
@@ -15,29 +14,25 @@ Press 'q' + Enter to stop
            Client ID: 1
            Total clients: 1
 ==================================================
-[Receiver] Player connected: julio1
-[Receiver] julio1 requested games list
-[Receiver] julio1 creating game: sala 1 (max: 2, races: 3)
-[GameRoom 1] Created by 'julio1' (HOST)
-[LobbyManager] Game 'sala 1' created with ID 1 by 'julio1'
-[LobbyManager] Registered socket for player 'julio1' in game 1
+[Receiver] Player connected: host
+[Receiver] host requested games list
+[Receiver] Sending 0 games to host
+[Receiver] host creating game: sala1 (max: 2, races: 3)
+[GameRoom 1] Created by 'host' (HOST)
+[LobbyManager] Game 'sala1' created with ID 1 by 'host'
+[LobbyManager] Registered socket for player 'host' in game 1
 [Receiver]   Race 1: Liberty City - Circuito Centro
-[Receiver]   Race 2: San Andreas - Desierto
-[Receiver]   Race 3: Vice City - Playa
+[Receiver]   Race 2: Liberty City - Circuito Centro
+[Receiver]   Race 3: Liberty City - Circuito Centro
 [Receiver] Game created with ID: 1
-[Receiver] julio1 selected car: Leyenda Urbana (classic)
-[GameRoom] ✅ Player 'julio1' car saved: Leyenda Urbana (classic)
+[Receiver] host selected car: Leyenda Urbana (classic)
+[GameRoom] ✅ Player 'host' car saved: Leyenda Urbana (classic)
+[Receiver] ✅ ACK sent to host
 [LobbyManager] Broadcasting to 1 players in game 1
-[LobbyManager] ✅ Sent to julio1
-[Receiver] julio1 selected car: Leyenda Urbana (classic)
-[GameRoom] ✅ Player 'julio1' car saved: Leyenda Urbana (classic)
-[LobbyManager] Broadcasting to 1 players in game 1
-[LobbyManager] ✅ Sent to julio1
-[Receiver] julio1 selected car: J-Classic 600 (classic)
-[GameRoom] ✅ Player 'julio1' car saved: J-Classic 600 (classic)
-[LobbyManager] Broadcasting to 1 players in game 1
-[LobbyManager] ✅ Sent to julio1
-[Receiver] Lobby error: Connection closed
+[LobbyManager] ✅ Sent to host
+[Receiver] ✅ Broadcast triggered
+
+
 
 
 
@@ -61,20 +56,20 @@ QWidget::setLayout: Cannot set layout to 0
 [LobbyClient] Connected to server localhost:8080
 [Controller] Conectado exitosamente
 [Controller] Mostrando ventana de ingreso de nombre
-Nombre de jugador confirmado: julio1
-[Controller] Usuario confirmó nombre: julio1
-[LobbyClient] DEBUG: Username: 'julio1' (length: 6)
-[LobbyClient] DEBUG: Buffer size: 9 bytes
-[LobbyClient] DEBUG: Buffer content: 01 00 06 6A 75 6C 69 6F 31 
-[LobbyClient] DEBUG: Length encoded in buffer: 6
-[LobbyClient] Sent username: julio1
+Nombre de jugador confirmado: host
+[Controller] Usuario confirmó nombre: host
+[LobbyClient] DEBUG: Username: 'host' (length: 4)
+[LobbyClient] DEBUG: Buffer size: 7 bytes
+[LobbyClient] DEBUG: Buffer content: 01 00 04 68 6F 73 74 
+[LobbyClient] DEBUG: Length encoded in buffer: 4
+[LobbyClient] Sent username: host
 [Controller] Nombre enviado al servidor
 [Controller] Esperando mensaje de bienvenida...
 [LobbyClient] DEBUG: Waiting for welcome message...
 [LobbyClient] DEBUG: Received type: 16
 [LobbyClient] DEBUG: Reading welcome string...
-[LobbyClient] Received welcome: Welcome to Need for Speed 2D, julio1!
-[Controller] Bienvenida recibida: Welcome to Need for Speed 2D, julio1!
+[LobbyClient] Received welcome: Welcome to Need for Speed 2D, host!
+[Controller] Bienvenida recibida: Welcome to Need for Speed 2D, host!
 [Controller] Abriendo ventana de selección de partidas
 [Controller] Solicitando lista de partidas al servidor...
 [LobbyClient] Requested games list
@@ -84,37 +79,108 @@ Nombre de jugador confirmado: julio1
 Creando nueva partida...
 [Controller] Usuario quiere crear nueva partida
 Carrera 1 configurada: Liberty City - Circuito Centro
-Carrera 2 configurada: San Andreas - Desierto
-Carrera 3 configurada: Vice City - Playa
+Carrera 2 configurada: Liberty City - Circuito Centro
+Carrera 2 configurada: Liberty City - Circuito Centro
+Carrera 3 configurada: Liberty City - Circuito Centro
 Confirmando creación de partida:
-  Nombre: sala 1
+  Nombre: sala1
   Jugadores: 2
   Carreras: 3
   Carrera 1: Liberty City - Circuito Centro
-  Carrera 2: San Andreas - Desierto
-  Carrera 3: Vice City - Playa
+  Carrera 2: Liberty City - Circuito Centro
+  Carrera 3: Liberty City - Circuito Centro
 [Controller] Usuario confirmó creación de partida:
-  Nombre: sala 1
+  Nombre: sala1
   Jugadores máximos: 2
   Número de carreras: 3
   Carrera: Liberty City - Circuito Centro
-  Carrera: San Andreas - Desierto
-  Carrera: Vice City - Playa
-[LobbyClient] Requested to create game: sala 1 (max players: 2, races: 3)
+  Carrera: Liberty City - Circuito Centro
+  Carrera: Liberty City - Circuito Centro
+[LobbyClient] Requested to create game: sala1 (max players: 2, races: 3)
 [LobbyClient] Game created with ID: 1
 [Controller] Partida creada con ID: 1
 [Controller] Abriendo garage...
 [Controller] Abriendo ventana de garage...
 Auto seleccionado: Leyenda Urbana (classic)
 [Controller] Auto seleccionado: Leyenda Urbana
+[Controller] DEBUG: Enviando selección de auto...
 [LobbyClient] Selected car: Leyenda Urbana (classic)
-[Controller]  Error: Expected CAR_SELECTED_ACK
-Auto seleccionado: Leyenda Urbana (classic)
-[Controller] Auto seleccionado: Leyenda Urbana
-[LobbyClient] Selected car: Leyenda Urbana (classic)
-[Controller]  Error: Expected CAR_SELECTED_ACK
+[Controller] DEBUG: Esperando ACK...
+[LobbyClient] Server confirmed car: Leyenda Urbana (classic)
+[Controller] ✅ CAR confirmed: Leyenda Urbana
+[Controller] Conectando señales de notificaciones...
+[Controller] Iniciando listener de notificaciones...
+[LobbyClient] Notification listener started
+[Controller] Abriendo sala de espera...
+[Controller] Abriendo sala de espera...
+[LobbyClient] Notification listener running...
+[LobbyClient] Received notification type: 35
+[LobbyClient] Player host selected Leyenda Urbana
+[WaitingRoom] Adding player: host
+[WaitingRoom] Player 'host' added at slot 0
+[Controller] Notification: Player host selected Leyenda Urbana
+[WaitingRoom] Player 'host' selected car: Leyenda Urbana
+[WaitingRoom] Usuario confirmó salir de la sala
+[Controller] Usuario salió de la sala de espera
+[Controller] Deteniendo listener...
+[LobbyClient] Stopping notification listener...
+
+
+
+
+
+
+
+Terminal 3: Cliente 2:
+julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL/TP_TALLER$ ./client
+=== Need for Speed 2D - Cliente ===
+Conectando a localhost:8080
+[Controller] Controlador creado (sin conectar al servidor todavía)
+[Controller] Servidor configurado: localhost:8080
+[Controller] Mostrando lobby principal
+Fuente cargada: ArcadeClassic
+Imagen de fondo cargada correctamente
+SDL Audio inicializado correctamente
+Música de fondo iniciada en loop
+QWidget::setLayout: Cannot set layout to 0
+[LobbyWindow] Botón Jugar presionado
+[Controller] Usuario presionó 'Jugar'
+[Controller] Conectando al servidor localhost:8080...
+[LobbyClient] Connected to server localhost:8080
+[Controller] Conectado exitosamente
+[Controller] Mostrando ventana de ingreso de nombre
+Nombre de jugador confirmado: guest
+[Controller] Usuario confirmó nombre: guest
+[LobbyClient] DEBUG: Username: 'guest' (length: 5)
+[LobbyClient] DEBUG: Buffer size: 8 bytes
+[LobbyClient] DEBUG: Buffer content: 01 00 05 67 75 65 73 74 
+[LobbyClient] DEBUG: Length encoded in buffer: 5
+[LobbyClient] Sent username: guest
+[Controller] Nombre enviado al servidor
+[Controller] Esperando mensaje de bienvenida...
+[LobbyClient] DEBUG: Waiting for welcome message...
+[LobbyClient] DEBUG: Received type: 16
+[LobbyClient] DEBUG: Reading welcome string...
+[LobbyClient] Received welcome: Welcome to Need for Speed 2D, guest!
+[Controller] Bienvenida recibida: Welcome to Need for Speed 2D, guest!
+[Controller] Abriendo ventana de selección de partidas
+[Controller] Solicitando lista de partidas al servidor...
+[LobbyClient] Requested games list
+[LobbyClient] Received 1 games
+[Controller] Recibidas 1 partidas
+[MatchSelectionWindow] Actualizando lista con 1 partidas
+[MatchSelectionWindow] Partida seleccionada ID: 1
+[MatchSelectionWindow] Emitiendo señal de unirse a: 1
+[Controller] Usuario quiere unirse a partida con matchId: 1
+[Controller] Intentando unirse a game_id (de UserRole): 1
+[LobbyClient] Requested to join game: 1
+[LobbyClient] Joined game: 1
+[Controller] Unido exitosamente a partida ID: 1
+[Controller] Abriendo garage...
+[Controller] Abriendo ventana de garage...
 Auto seleccionado: J-Classic 600 (classic)
 [Controller] Auto seleccionado: J-Classic 600
 [LobbyClient] Selected car: J-Classic 600 (classic)
 [Controller]  Error: Expected CAR_SELECTED_ACK
 [Controller] Destructor llamado
+[LobbyClient] Listener already stopped

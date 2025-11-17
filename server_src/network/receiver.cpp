@@ -104,9 +104,17 @@ void Receiver::handle_lobby() {
                     std::cout << "[Receiver] " << username << " creating game: " << game_name 
                               << " (max: " << (int)max_players << ", races: " << (int)num_races << ")\n";
                 
+                    // 🔥 VERIFICAR: ¿Ya está en una partida?
                     if (current_game_id != -1) {
                         std::cout << "[Receiver] ERROR: " << username << " is already in game " << current_game_id << "\n";
                         protocol.send_buffer(LobbyProtocol::serialize_error(ERR_ALREADY_IN_GAME, "You are already in a game"));
+                        break;
+                    }
+                    
+                    // 🔥 DOBLE VERIFICACIÓN: Comprobar en lobby_manager
+                    if (lobby_manager.is_player_in_game(username)) {
+                        std::cout << "[Receiver] ERROR: LobbyManager says " << username << " is already in a game!\n";
+                        protocol.send_buffer(LobbyProtocol::serialize_error(ERR_ALREADY_IN_GAME, "You are already in a game (manager check)"));
                         break;
                     }
                 
@@ -129,10 +137,6 @@ void Receiver::handle_lobby() {
                         races.push_back({city, map});
                         std::cout << "[Receiver]   Race " << (i+1) << ": " << city << " - " << map << "\n";
                     }
-                
-                    // Aquí asumo que monitor tiene un método para agregar carreras
-                    // Si no, necesitas adaptarlo según tu implementación
-                    // monitor.add_races_to_match(game_id, races);
                     
                     protocol.send_buffer(LobbyProtocol::serialize_game_created(game_id));
                     std::cout << "[Receiver] Game created with ID: " << game_id << "\n";
@@ -251,31 +255,21 @@ void Receiver::handle_lobby() {
                     
                     GameRoom* room = it->second.get();
                     
-                    // 🔥 PASO 1: Desactivar callback de broadcast temporalmente
-                    auto original_callback = room->get_broadcast_callback();
-                    room->set_broadcast_callback(nullptr);
-                    
-                    // 🔥 PASO 2: Guardar el auto (SIN broadcast)
+                    // 🔥 PASO 1: Guardar el auto (SIN broadcast todavía)
                     if (!room->set_player_car(username, car_name, car_type)) {
-                        room->set_broadcast_callback(original_callback);
                         protocol.send_buffer(LobbyProtocol::serialize_error(
                             ERR_INVALID_CAR_INDEX, "Failed to select car"));
                         break;
                     }
                     
-                    // 🔥 PASO 3: Restaurar callback
-                    room->set_broadcast_callback(original_callback);
-                    
-                    // 🔥 PASO 4: Enviar ACK al cliente que seleccionó (PRIMERO)
+                    // 🔥 PASO 2: Enviar ACK al cliente que seleccionó (PRIMERO)
                     protocol.send_buffer(LobbyProtocol::serialize_car_selected_ack(car_name, car_type));
                     std::cout << "[Receiver] ✅ ACK sent to " << username << std::endl;
                     
-                    // 🔥 PASO 5: AHORA SÍ hacer broadcast a TODOS (incluyendo al que seleccionó)
-                    if (original_callback) {
-                        auto notif = LobbyProtocol::serialize_car_selected_notification(username, car_name, car_type);
-                        original_callback(notif);
-                        std::cout << "[Receiver] ✅ Broadcast triggered" << std::endl;
-                    }
+                    // 🔥 PASO 3: AHORA SÍ hacer broadcast a TODOS
+                    auto notif = LobbyProtocol::serialize_car_selected_notification(username, car_name, car_type);
+                    lobby_manager.broadcast_to_game(current_game_id, notif);
+                    std::cout << "[Receiver] ✅ Broadcast triggered" << std::endl;
                     
                     break;
                 }
@@ -299,28 +293,9 @@ void Receiver::handle_lobby() {
                     // Desregistrar socket y eliminar del manager
                     lobby_manager.leave_game(username);
                     
-                    // Enviar lista de partidas actualizada
-                    std::vector<GameInfo> games;
-                    for (const auto& [gid, room] : lobby_manager.get_all_games()) {
-                        GameInfo info{};
-                        info.game_id = gid;
-                        
-                        std::string name = room->get_game_name();
-                        size_t copy_len = std::min(name.length(), sizeof(info.game_name) - 1);
-                        std::memcpy(info.game_name, name.c_str(), copy_len);
-                        info.game_name[copy_len] = '\0';
-                        
-                        info.current_players = room->get_player_count();
-                        info.max_players = room->get_max_players();
-                        info.is_started = room->is_started();
-                        
-                        games.push_back(info);
-                    }
+                    // 🔥 NO ENVIAR NADA - El cliente pedirá la lista cuando quiera
+                    std::cout << "[Receiver] " << username << " successfully left game " << game_id << std::endl;
                     
-                    protocol.send_buffer(LobbyProtocol::serialize_games_list(games));
-                    
-                    std::cout << "[Receiver] " << username << " successfully left game " << game_id 
-                              << ", sent " << games.size() << " available games\n";
                     break;
                 }
                 // ------------------------------------------------------------
