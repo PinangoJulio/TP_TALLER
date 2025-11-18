@@ -153,7 +153,7 @@ void Receiver::handle_lobby() {
                         break;
                     }
                 
-                    // 🔥 1. OBTENER LA SALA
+                    // 1. OBTENER LA SALA
                     auto& games = lobby_manager.get_all_games();
                     auto room_it = games.find(game_id);
                     if (room_it == games.end()) {
@@ -163,13 +163,13 @@ void Receiver::handle_lobby() {
                     
                     GameRoom* room = room_it->second.get();
                 
-                    // 🔥 2. CAPTURAR SNAPSHOT **ANTES** DE AGREGAR AL JUGADOR
+                    // 2. CAPTURAR SNAPSHOT **ANTES** DE AGREGAR AL JUGADOR
                     std::map<std::string, LobbyPlayerInfo> existing_players = room->get_players();
                     
-                    // 🔥 3. REGISTRAR SOCKET **ANTES** DE JOIN
+                    // 3. REGISTRAR SOCKET **ANTES** DE JOIN
                     lobby_manager.register_player_socket(game_id, username, protocol.get_socket());
                     
-                    // 🔥 4. HACER JOIN (esto agregará al jugador a la sala)
+                    // 4. HACER JOIN (esto agregará al jugador a la sala)
                     bool success = lobby_manager.join_game(game_id, username);
                 
                     if (!success) {
@@ -180,16 +180,16 @@ void Receiver::handle_lobby() {
                     
                     current_game_id = game_id;
                     
-                    // 🔥 5. ENVIAR CONFIRMACIÓN AL NUEVO JUGADOR
+                    // 5. ENVIAR CONFIRMACIÓN AL NUEVO JUGADOR
                     protocol.send_buffer(LobbyProtocol::serialize_game_joined(static_cast<uint16_t>(game_id)));
                     std::cout << "[Receiver] " << username << " joined match " << game_id << std::endl;
                     
-                    // 🔥 6. ENVIAR SNAPSHOT AL NUEVO JUGADOR (SOLO jugadores que YA estaban)
+                    // 6. ENVIAR SNAPSHOT AL NUEVO JUGADOR (SOLO jugadores que YA estaban)
                     std::cout << "[Receiver] Sending room snapshot to " << username 
                               << " (" << existing_players.size() << " existing players)" << std::endl;
                     
                     for (const auto& [player_name, player_info] : existing_players) {
-                        // ✅ Notificar que este jugador existe
+                        // Notificar que este jugador existe
                         auto joined_notif = LobbyProtocol::serialize_player_joined_notification(player_name);
                         protocol.send_buffer(joined_notif);
                         
@@ -219,18 +219,16 @@ void Receiver::handle_lobby() {
                         }
                     }
                     
-                    // 🔥 7. BROADCAST A LOS DEMÁS (que el nuevo jugador se unió)
-                    // IMPORTANTE: El broadcast se hace AUTOMÁTICAMENTE por GameRoom::add_player()
-                    // NO necesitamos hacerlo manualmente aquí
-                    
                     std::cout << "[Receiver] Snapshot sent to " << username << std::endl;
-    
-                    // 🔥 8. AHORA SÍ, BROADCAST A LOS DEMÁS (que el nuevo jugador se unió)
+                    
+                    // 🔥 7. BROADCAST A LOS DEMÁS **DESPUÉS** de que el nuevo jugador reciba el snapshot
+                    // IMPORTANTE: Esperar un poco para asegurar que el snapshot llegó primero
+                                        
                     auto joined_notif = LobbyProtocol::serialize_player_joined_notification(username);
-                    lobby_manager.broadcast_to_game(game_id, joined_notif, username);  // ✅ Excluir al que se acaba de unir
-    
+                    lobby_manager.broadcast_to_game(game_id, joined_notif, username);
+                    
                     std::cout << "[Receiver] Broadcasted join notification (excluding " << username << ")" << std::endl;
-                   
+                    
                     break;
                 }
                 // ------------------------------------------------------------

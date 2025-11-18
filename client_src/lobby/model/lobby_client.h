@@ -81,6 +81,9 @@ public:
 
     bool is_listening() const { return listening.load(); }
 
+    void read_room_snapshot(std::vector<QString>& players, 
+        std::map<QString, QString>& cars);
+
 signals:
     //  Señales para notificar cambios en la sala
     void playerJoinedNotification(QString username);
@@ -89,6 +92,7 @@ signals:
     void carSelectedNotification(QString username, QString carName, QString carType);
     void gameStartedNotification();
     void errorOccurred(QString errorMessage);
+    void gamesListReceived(std::vector<GameInfo> games);
 };
 
 #endif // LOBBY_CLIENT_H
