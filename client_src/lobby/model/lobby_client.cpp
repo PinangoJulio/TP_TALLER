@@ -276,9 +276,17 @@ void LobbyClient::leave_game(uint16_t game_id) {
 
 
 void LobbyClient::start_listening() {
+    // 🔥 FIX CRÍTICO: Si el listener ya está corriendo, NO hacer nada
     if (listening.load()) {
-        std::cout << "[LobbyClient] Already listening" << std::endl;
+        std::cout << "[LobbyClient] Listener is already running, skipping start" << std::endl;
         return;
+    }
+    
+    // 🔥 FIX: Si hay un thread anterior, asegurarse de que terminó
+    if (notification_thread.joinable()) {
+        std::cout << "[LobbyClient] ⚠️  Previous listener thread still exists, joining..." << std::endl;
+        notification_thread.join();
+        std::cout << "[LobbyClient] ✅ Previous thread cleaned up" << std::endl;
     }
     
     listening.store(true);
@@ -297,29 +305,11 @@ void LobbyClient::stop_listening() {
     // 🔥 PASO 1: Marcar como detenido
     listening.store(false);
     
-    // 🔥 PASO 2: Esperar a que el thread termine (con timeout)
+    // 🔥 PASO 2: Esperar a que el thread termine
     if (notification_thread.joinable()) {
         std::cout << "[LobbyClient] Waiting for listener thread to finish..." << std::endl;
-        
-        // Dar 3 segundos máximo
-        auto start = std::chrono::steady_clock::now();
-        while (notification_thread.joinable()) {
-            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now() - start
-            ).count();
-            
-            if (elapsed > 3000) {
-                std::cerr << "[LobbyClient] ⚠️  Timeout waiting for listener!" << std::endl;
-                break;
-            }
-            
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-        
-        if (notification_thread.joinable()) {
-            notification_thread.join();
-            std::cout << "[LobbyClient] Notification listener joined" << std::endl;
-        }
+        notification_thread.join();
+        std::cout << "[LobbyClient] Notification listener joined" << std::endl;
     }
     
     std::cout << "[LobbyClient] Notification listener stopped" << std::endl;

@@ -556,6 +556,8 @@ void LobbyController::openWaitingRoom() {
     waitingRoomWindow = new WaitingRoomWindow(maxPlayers);
     
     // 1. Procesar jugadores pendientes (del snapshot)
+    std::cout << "[Controller] 📋 Processing " << pendingPlayers.size() << " pending players" << std::endl;
+    
     for (const auto& username : pendingPlayers) {
         std::cout << "[Controller] Procesando jugador pendiente: " << username.toStdString() << std::endl;
         waitingRoomWindow->addPlayerByName(username);
@@ -567,11 +569,15 @@ void LobbyController::openWaitingRoom() {
         }
     }
     
+    // 🔥 DEBUG: Verificar estado después de procesar pendientes
+    std::cout << "[Controller] 🔍 After processing pending players" << std::endl;
+    
+    // Limpiar pendientes
     pendingPlayers.clear();
     pendingCars.clear();
     
     // 2. Agregar jugador local
-    std::cout << "[Controller] Agregando jugador local: " << playerName.toStdString() << std::endl;
+    std::cout << "[Controller] 👤 Adding local player: " << playerName.toStdString() << std::endl;
     waitingRoomWindow->addPlayerByName(playerName);
     
     // 3. Conectar botones de la UI

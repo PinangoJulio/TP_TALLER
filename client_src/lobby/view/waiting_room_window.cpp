@@ -303,20 +303,39 @@ void WaitingRoomWindow::removePlayerByName(const QString& name) {
     updateStartButtonState();
 }
 
-// 🔥 NUEVO: Cambiar ready state por nombre
 void WaitingRoomWindow::setPlayerReadyByName(const QString& name, bool ready) {
+    std::cout << "[WaitingRoom] 🔍 setPlayerReadyByName('" << name.toStdString() 
+              << "', " << (ready ? "TRUE" : "FALSE") << ")" << std::endl;
+    
     auto it = player_name_to_index.find(name);
     if (it == player_name_to_index.end()) {
-        std::cerr << "[WaitingRoom] ❌ Player " << name.toStdString() << " not found" << std::endl;
+        std::cerr << "[WaitingRoom] ❌ Player " << name.toStdString() << " not found in map" << std::endl;
+        std::cerr << "[WaitingRoom] 📋 Available players in map: ";
+        for (const auto& [pname, idx] : player_name_to_index) {
+            std::cerr << pname.toStdString() << "=" << idx << " ";
+        }
+        std::cerr << std::endl;
         return;
     }
     
     int index = it->second;
     
-    // 🔥 FIX: Verificar que el índice sea válido
+    std::cout << "[WaitingRoom] 🎯 Found player '" << name.toStdString() 
+              << "' at index " << index << std::endl;
+    
+    // Verificar que el índice sea válido
     if (index < 0 || index >= static_cast<int>(players.size())) {
-        std::cerr << "[WaitingRoom] ❌ Invalid index " << index << " for player " << name.toStdString() << std::endl;
+        std::cerr << "[WaitingRoom] ❌ Invalid index " << index 
+                  << " for player " << name.toStdString() 
+                  << " (players.size=" << players.size() << ")" << std::endl;
         return;
+    }
+    
+    // Verificar que el nombre coincida
+    if (players[index].name != name) {
+        std::cerr << "[WaitingRoom] ⚠️  WARNING: Name mismatch at index " << index << std::endl;
+        std::cerr << "   Expected: " << name.toStdString() << std::endl;
+        std::cerr << "   Found: " << players[index].name.toStdString() << std::endl;
     }
     
     players[index].isReady = ready;
@@ -423,12 +442,19 @@ void WaitingRoomWindow::setLocalPlayerInfo(const QString& name, const QString& c
 void WaitingRoomWindow::updatePlayerDisplay() {
     int startIdx = currentPage * 4;
     
+    std::cout << "[WaitingRoom] 📺 updatePlayerDisplay() - Page " << currentPage 
+              << ", startIdx=" << startIdx << std::endl;
+    
     for (int i = 0; i < 4; i++) {
         int playerIdx = startIdx + i;
         
         if (playerIdx < static_cast<int>(players.size())) {
             const PlayerInfo& player = players[playerIdx];
             PlayerCardWidgets& card = playerCardWidgets[i];
+            
+            std::cout << "[WaitingRoom]   Slot " << i << " (idx=" << playerIdx << "): " 
+                      << player.name.toStdString() 
+                      << " ready=" << player.isReady << std::endl;
             
             // Mostrar la tarjeta
             card.container->show();
