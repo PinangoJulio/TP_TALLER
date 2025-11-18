@@ -276,13 +276,13 @@ void LobbyClient::leave_game(uint16_t game_id) {
 
 
 void LobbyClient::start_listening() {
-    // 🔥 FIX CRÍTICO: Si el listener ya está corriendo, NO hacer nada
+    // Si el listener ya está corriendo, NO hacer nada
     if (listening.load()) {
         std::cout << "[LobbyClient] Listener is already running, skipping start" << std::endl;
         return;
     }
     
-    // 🔥 FIX: Si hay un thread anterior, asegurarse de que terminó
+    //FIX: Si hay un thread anterior, asegurarse de que terminó
     if (notification_thread.joinable()) {
         std::cout << "[LobbyClient] ⚠️  Previous listener thread still exists, joining..." << std::endl;
         notification_thread.join();
@@ -295,24 +295,23 @@ void LobbyClient::start_listening() {
 }
 
 void LobbyClient::stop_listening() {
-    if (!listening.load()) {
-        std::cout << "[LobbyClient] Listener already stopped" << std::endl;
-        return;
-    }
-    
     std::cout << "[LobbyClient] Stopping notification listener..." << std::endl;
-    
-    // 🔥 PASO 1: Marcar como detenido
+
+    // Siempre marcar como detenido
     listening.store(false);
-    
-    // 🔥 PASO 2: Esperar a que el thread termine
+
+    // Siempre intentar join si está joinable (aunque ya estuviera detenido)
     if (notification_thread.joinable()) {
-        std::cout << "[LobbyClient] Waiting for listener thread to finish..." << std::endl;
-        notification_thread.join();
-        std::cout << "[LobbyClient] Notification listener joined" << std::endl;
+        try {
+            std::cout << "[LobbyClient] Joining listener thread..." << std::endl;
+            notification_thread.join();
+            std::cout << "[LobbyClient] Listener thread joined" << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "[LobbyClient] Error joining listener: " << e.what() << std::endl;
+        }
+    } else {
+        std::cout << "[LobbyClient] No join needed (not joinable)" << std::endl;
     }
-    
-    std::cout << "[LobbyClient] Notification listener stopped" << std::endl;
 }
 
 void LobbyClient::notification_listener() {
@@ -500,6 +499,7 @@ void LobbyClient::read_room_snapshot(std::vector<QString>& players,
 
 // Destructor actualizado
 LobbyClient::~LobbyClient() {
+    // Asegurar join antes de destruir el objeto para evitar std::terminate
     stop_listening();
 }
 
