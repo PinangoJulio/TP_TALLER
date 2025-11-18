@@ -297,13 +297,29 @@ void LobbyClient::stop_listening() {
     // 🔥 PASO 1: Marcar como detenido
     listening.store(false);
     
-    // 🔥 PASO 2: NO cerrar el socket, el thread se despertará con el próximo mensaje
-    // (que será MSG_GAMES_LIST enviado por el servidor después del leave_game)
-    
-    // 🔥 PASO 3: Esperar a que el thread termine
+    // 🔥 PASO 2: Esperar a que el thread termine (con timeout)
     if (notification_thread.joinable()) {
-        notification_thread.join();
-        std::cout << "[LobbyClient] Notification listener joined" << std::endl;
+        std::cout << "[LobbyClient] Waiting for listener thread to finish..." << std::endl;
+        
+        // Dar 3 segundos máximo
+        auto start = std::chrono::steady_clock::now();
+        while (notification_thread.joinable()) {
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - start
+            ).count();
+            
+            if (elapsed > 3000) {
+                std::cerr << "[LobbyClient] ⚠️  Timeout waiting for listener!" << std::endl;
+                break;
+            }
+            
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        
+        if (notification_thread.joinable()) {
+            notification_thread.join();
+            std::cout << "[LobbyClient] Notification listener joined" << std::endl;
+        }
     }
     
     std::cout << "[LobbyClient] Notification listener stopped" << std::endl;

@@ -294,7 +294,7 @@ void Receiver::handle_lobby() {
                         break;
                     }
                     
-                    // 🔥 RESETEAR current_game_id **PRIMERO**
+                    // 🔥 FIX CRÍTICO: RESETEAR current_game_id **ANTES** de leave_game
                     current_game_id = -1;
                     
                     // Desregistrar socket y eliminar del manager
@@ -302,7 +302,7 @@ void Receiver::handle_lobby() {
                     
                     std::cout << "[Receiver] " << username << " successfully left game " << game_id << std::endl;
                     
-                    // 🔥 Enviar lista de partidas actualizada
+                    // Enviar lista de partidas actualizada
                     std::vector<GameInfo> games;
                     
                     for (const auto& [gid, room] : lobby_manager.get_all_games()) {
@@ -335,14 +335,12 @@ void Receiver::handle_lobby() {
                     std::cout << "[Receiver] " << username << " set ready: " 
                               << (is_ready ? "YES" : "NO") << "\n";
                     
-                    // 🔥 VALIDAR: ¿Está en una partida?
                     if (current_game_id == -1) {
                         protocol.send_buffer(LobbyProtocol::serialize_error(
                             ERR_PLAYER_NOT_IN_GAME, "You are not in any game"));
                         break;
                     }
                     
-                    // Obtener la sala y cambiar estado
                     auto& games = lobby_manager.get_all_games();
                     auto it = games.find(current_game_id);
                     if (it == games.end()) {
@@ -352,18 +350,17 @@ void Receiver::handle_lobby() {
                     }
                     
                     GameRoom* room = it->second.get();
-    
-                    // Cambiar estado (esto NO debe hacer broadcast automático)
+                
                     if (!room->set_player_ready(username, is_ready != 0)) {
                         protocol.send_buffer(LobbyProtocol::serialize_error(
                             ERR_INVALID_CAR_INDEX, "You must select a car before being ready"));
                         break;
                     }
-    
-                    // 🔥 Broadcast manual EXCLUYENDO al emisor
+                
+                    // 🔥 FIX: Broadcast manual EXCLUYENDO al emisor
                     auto notif = LobbyProtocol::serialize_player_ready_notification(username, is_ready != 0);
-                    lobby_manager.broadcast_to_game(current_game_id, notif, username);
-    
+                    lobby_manager.broadcast_to_game(current_game_id, notif, username);  // ✅ YA ESTÁ CORRECTO
+                
                     break;
                 }
                 // ------------------------------------------------------------                

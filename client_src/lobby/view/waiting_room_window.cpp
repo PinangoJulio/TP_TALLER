@@ -307,15 +307,22 @@ void WaitingRoomWindow::removePlayerByName(const QString& name) {
 void WaitingRoomWindow::setPlayerReadyByName(const QString& name, bool ready) {
     auto it = player_name_to_index.find(name);
     if (it == player_name_to_index.end()) {
-        std::cerr << "[WaitingRoom] Player " << name.toStdString() << " not found" << std::endl;
+        std::cerr << "[WaitingRoom] ❌ Player " << name.toStdString() << " not found" << std::endl;
         return;
     }
     
     int index = it->second;
+    
+    // 🔥 FIX: Verificar que el índice sea válido
+    if (index < 0 || index >= static_cast<int>(players.size())) {
+        std::cerr << "[WaitingRoom] ❌ Invalid index " << index << " for player " << name.toStdString() << std::endl;
+        return;
+    }
+    
     players[index].isReady = ready;
     
-    std::cout << "[WaitingRoom] Player '" << name.toStdString() 
-              << "' is now " << (ready ? "READY" : "NOT READY") << std::endl;
+    std::cout << "[WaitingRoom] ✅ Player '" << name.toStdString() 
+              << "' at slot " << index << " is now " << (ready ? "READY" : "NOT READY") << std::endl;
     
     updatePlayerDisplay();
     updateStartButtonState();
