@@ -12,6 +12,7 @@
 const int SCREEN_WIDTH = 700;
 const int SCREEN_HEIGHT = 700;
 
+
 struct Player {
     float x = 2320.0f; //Posicion inicial de mentiritas
     float y = 2336.0f;
