@@ -15,7 +15,7 @@ MatchSelectionWindow::MatchSelectionWindow(QWidget *parent)
     customFontId = QFontDatabase::addApplicationFont("assets/fonts/arcade-classic.ttf");
     
   
-    backgroundImage.load("assets/img/race.png");
+    backgroundImage.load("assets/img/lobby/window_covers/race.png");
     if (!backgroundImage.isNull()) {
         backgroundImage = backgroundImage.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }

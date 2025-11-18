@@ -38,7 +38,7 @@ LobbyWindow::LobbyWindow(QWidget *parent)
         }
     }
     // Cargar imagen de fondo con Qt
-    backgroundImage.load("assets/img/menu2.png");
+    backgroundImage.load("assets/img/lobby/window_covers/menu2.png");
     if (backgroundImage.isNull()) {
         std::cerr << "Error: No se pudo cargar assets/img/menu.png" << std::endl;
     } else {

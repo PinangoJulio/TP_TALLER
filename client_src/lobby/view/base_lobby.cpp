@@ -5,8 +5,8 @@
  BaseLobby:: BaseLobby(QWidget *parent)
     : QWidget(parent), musicToggleButton(nullptr), customFontId(-1) {
     
-    musicOnIcon.addFile("assets/img/icons/music_on.png");
-    musicOffIcon.addFile("assets/img/icons/music_off.png");
+    musicOnIcon.addFile("assets/img/lobby/icons/music_on.png");
+    musicOffIcon.addFile("assets/img/lobby/icons/music_off.png");
 }
 
 void  BaseLobby::setupMusicControl() {

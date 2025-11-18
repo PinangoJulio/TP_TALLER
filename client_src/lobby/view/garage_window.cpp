@@ -14,7 +14,7 @@ GarageWindow::GarageWindow(QWidget *parent)
     customFontId = QFontDatabase::addApplicationFont("assets/fonts/arcade-classic.ttf");
 
     // Cargar fondo
-    backgroundImage.load("assets/img/race.png");
+    backgroundImage.load("assets/img/lobby/window_covers/race.png");
     if (!backgroundImage.isNull())
     {
         backgroundImage = backgroundImage.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
@@ -29,13 +29,13 @@ void GarageWindow::loadCars()
 {
     // autos
     cars = {
-        {"Leyenda Urbana", "assets/img/autos/escarabajo.png", 40, 60, 80, 40},
-        {"Brisa", "assets/img/autos/convertible.png", 60, 60, 60, 40},
-        {"J-Classic 600", "assets/img/autos/carro-verde.png", 20, 60, 100, 40},
-        {"Cavallo V8", "assets/img/autos/carro-rojo.png", 100, 80, 40, 40},
-        {"Senator", "assets/img/autos/carro-azul.png", 60, 40, 20, 100},
-        {"Nómada", "assets/img/autos/pickup.png", 40, 40, 40, 80},
-        {"Stallion GT", "assets/img/autos/carro-rojo-2.png", 60, 80, 20, 60}};
+        {"Leyenda Urbana", "assets/img/lobby/autos/escarabajo.png", 40, 60, 80, 40},
+        {"Brisa", "assets/img/lobby/autos/convertible.png", 60, 60, 60, 40},
+        {"J-Classic 600", "assets/img/lobby/autos/carro-verde.png", 20, 60, 100, 40},
+        {"Cavallo V8", "assets/img/lobby/autos/carro-rojo.png", 100, 80, 40, 40},
+        {"Senator", "assets/img/lobby/autos/carro-azul.png", 60, 40, 20, 100},
+        {"Nómada", "assets/img/lobby/autos/pickup.png", 40, 40, 40, 80},
+        {"Stallion GT", "assets/img/lobby/autos/carro-rojo-2.png", 60, 80, 20, 60}};
 }
 
 void GarageWindow::setupUI()

@@ -20,7 +20,7 @@ CreateMatchWindow::CreateMatchWindow(QWidget *parent)
 
     customFontId = QFontDatabase::addApplicationFont("assets/fonts/arcade-classic.ttf");
 
-    backgroundImage.load("assets/img/race.png");
+    backgroundImage.load("assets/img/lobby/window_covers/race.png");
     if (!backgroundImage.isNull())
     {
         backgroundImage = backgroundImage.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
@@ -43,7 +43,7 @@ void CreateMatchWindow::loadCities()
     // Cargar información de las 3 ciudades
     CityInfo liberty;
     liberty.name = "Liberty City";
-    liberty.imagePath = "assets/img/cities/liberty-city.png";
+    liberty.imagePath = "assets/img/lobby/cities/liberty-city.png";
     liberty.trackNames = {"Circuito Centro", "Ruta Costera", "Autopista Norte"};
     liberty.trackImagePaths = {
         "assets/img/tracks/liberty_track1.png",
@@ -53,7 +53,7 @@ void CreateMatchWindow::loadCities()
 
     CityInfo sanAndreas;
     sanAndreas.name = "San Andreas";
-    sanAndreas.imagePath = "assets/img/cities/san-andreas.png";
+    sanAndreas.imagePath = "assets/img/lobby/cities/san-andreas.png";
     sanAndreas.trackNames = {"Desierto", "Ciudad", "Montaña"};
     sanAndreas.trackImagePaths = {
         "assets/img/tracks/san_andreas_track1.png",
@@ -63,7 +63,7 @@ void CreateMatchWindow::loadCities()
 
     CityInfo viceCity;
     viceCity.name = "Vice City";
-    viceCity.imagePath = "assets/img/cities/vice-city.png";
+    viceCity.imagePath = "assets/img/lobby/cities/vice-city.png";
     viceCity.trackNames = {"Playa", "Centro", "Puentes"};
     viceCity.trackImagePaths = {
         "assets/img/tracks/vice_city_track1.png",
@@ -794,7 +794,7 @@ void CreateMatchWindow::onConfirmSelection()
     connect(prevCityButton, &QPushButton::clicked, this, &CreateMatchWindow::onPreviousCity);
     connect(nextCityButton, &QPushButton::clicked, this, &CreateMatchWindow::onNextCity);
 
-    backgroundImage.load("assets/img/race.png");
+    backgroundImage.load("assets/img/lobby/window_covers/race.png");
     if (!backgroundImage.isNull())
     {
         backgroundImage = backgroundImage.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
@@ -812,7 +812,7 @@ void CreateMatchWindow::onBackFromSelector()
     connect(prevCityButton, &QPushButton::clicked, this, &CreateMatchWindow::onPreviousCity);
     connect(nextCityButton, &QPushButton::clicked, this, &CreateMatchWindow::onNextCity);
 
-    backgroundImage.load("assets/img/race.png");
+    backgroundImage.load("assets/img/lobby/window_covers/race.png");
     if (!backgroundImage.isNull())
     {
         backgroundImage = backgroundImage.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);

@@ -18,7 +18,7 @@ NameInputWindow::NameInputWindow(QWidget *parent)
         std::cerr << "Error: No se pudo cargar la fuente Arcade Classic" << std::endl;
     }
     
-    backgroundImage.load("assets/img/nombre.png");
+    backgroundImage.load("assets/img/lobby/window_covers/nombre.png");
     if (!backgroundImage.isNull()) {
         backgroundImage = backgroundImage.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }

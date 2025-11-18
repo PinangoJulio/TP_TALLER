@@ -18,7 +18,7 @@ WaitingRoomWindow::WaitingRoomWindow(QWidget *parent)
     customFontId = QFontDatabase::addApplicationFont("assets/fonts/arcade-classic.ttf");
 
     // Cargar fondo
-    backgroundImage.load("assets/img/waiting.jpeg");
+    backgroundImage.load("assets/img/lobby/window_covers/waiting.jpeg");
     if (!backgroundImage.isNull())
     {
         backgroundImage = backgroundImage.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
