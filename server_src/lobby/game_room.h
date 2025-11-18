@@ -17,14 +17,13 @@ struct LobbyPlayerInfo {
     bool is_ready;
     std::string car_name;
     std::string car_type;
-    // 🔥 ELIMINADO: bool is_host;
 };
 
 class GameRoom {
 private:
     uint16_t game_id;
     std::string game_name;
-    std::string creator_username;  // 🔥 NUEVO: Solo para info, sin privilegios
+    std::string creator_username;
     std::map<std::string, LobbyPlayerInfo> players;
     uint8_t max_players;
     RoomState state;
@@ -52,9 +51,6 @@ public:
     bool is_started() const;
     void start();
 
-    // 🔥 ELIMINADO: bool is_host(const std::string& username) const;
-    
-    // 🔥 NUEVO: Cualquiera puede iniciar si todos están listos
     bool can_start() const { return is_ready() && all_players_ready(); }
 
     // Ready state
@@ -70,7 +66,7 @@ public:
     // Getters
     uint16_t get_game_id() const;
     std::string get_game_name() const;
-    std::string get_creator() const { return creator_username; }  // 🔥 NUEVO
+    std::string get_creator() const { return creator_username; }
     uint8_t get_player_count() const;
     uint8_t get_max_players() const;
     const std::map<std::string, LobbyPlayerInfo>& get_players() const;

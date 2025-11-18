@@ -80,21 +80,14 @@ bool LobbyManager::leave_game(const std::string& username) {
     return true;
 }
 
-// 🔥 CORRECCIÓN CRÍTICA: Eliminar validación de is_host
 bool LobbyManager::start_game(uint16_t game_id, const std::string& username) {
     auto it = games.find(game_id);
     if (it == games.end()) {
         std::cout << "[LobbyManager] Game " << game_id << " not found" << std::endl;
         return false;
     }
+
     
-    // 🔥 ELIMINADO: Validación de is_host()
-    // if (!it->second->is_host(username)) {
-    //     std::cout << "[LobbyManager] Player '" << username << "' is not the host of game " << game_id << std::endl;
-    //     return false;
-    // }
-    
-    // 🔥 NUEVO: Solo verificar que el jugador esté en la partida
     if (!it->second->has_player(username)) {
         std::cout << "[LobbyManager] Player '" << username << "' is not in game " << game_id << std::endl;
         return false;
@@ -171,9 +164,8 @@ void LobbyManager::broadcast_to_game(uint16_t game_id, const std::vector<uint8_t
               << " (excluding: " << (exclude_username.empty() ? "none" : exclude_username) << ")" << std::endl;
     
     for (auto& [username, socket_ptr] : it->second) {
-        // 🔥 SKIP el jugador que envió el mensaje original
         if (username == exclude_username) {
-            std::cout << "[LobbyManager] ⏭️  Skipping " << username << " (sender)" << std::endl;
+            std::cout << "[LobbyManager]   Skipping " << username << " (sender)" << std::endl;
             continue;
         }
         

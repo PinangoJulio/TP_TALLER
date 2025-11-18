@@ -224,11 +224,10 @@ void LobbyController::onMatchCreated(const QString& matchName, int maxPlayers, c
             createMatchWindow = nullptr;
         }
         
-        // 🔥 FIX: Conectar señales pero NO iniciar listener todavía
+        // Conectar señales pero NO iniciar listener todavía
         if (!lobbyClient->is_listening()) {
             std::cout << "[Controller] Conectando señales de notificaciones..." << std::endl;
             connectNotificationSignals();
-            // ❌ NO HACER: lobbyClient->start_listening();
         }
         
         std::cout << "[Controller] Abriendo garage..." << std::endl;
@@ -342,11 +341,9 @@ void LobbyController::onJoinMatchRequested(const QString& matchId) {
             matchSelectionWindow->hide();
         }
         
-        // 🔥 FIX: Conectar señales pero NO iniciar listener todavía
         if (!lobbyClient->is_listening()) {
             std::cout << "[Controller] Conectando señales de notificaciones..." << std::endl;
             connectNotificationSignals();
-            // ❌ NO HACER: lobbyClient->start_listening();
         }
         
         std::cout << "[Controller] Abriendo garage..." << std::endl;
@@ -421,7 +418,6 @@ void LobbyController::onCarSelected(const CarInfo& car) {
             garageWindow = nullptr;
         }
         
-        // 🔥 FIX: AHORA SÍ iniciar listener (después de recibir ACK)
         if (!lobbyClient->is_listening()) {
             std::cout << "[Controller] 🚀 Starting listener NOW..." << std::endl;
             lobbyClient->start_listening();
@@ -474,7 +470,7 @@ void LobbyController::connectNotificationSignals() {
                           << " ready: " << isReady 
                           << " (local player: " << playerName.toStdString() << ")" << std::endl;
                 
-                // 🔥 DEBUG: Verificar si es el jugador local
+                //Verificar si es el jugador local
                 if (username == playerName) {
                     std::cout << "[Controller] ⚠️  WARNING: Received ready notification for LOCAL player!" << std::endl;
                 }
@@ -556,8 +552,6 @@ void LobbyController::openWaitingRoom() {
     waitingRoomWindow = new WaitingRoomWindow(maxPlayers);
     
     // 1. Procesar jugadores pendientes (del snapshot)
-    std::cout << "[Controller] 📋 Processing " << pendingPlayers.size() << " pending players" << std::endl;
-    
     for (const auto& username : pendingPlayers) {
         std::cout << "[Controller] Procesando jugador pendiente: " << username.toStdString() << std::endl;
         waitingRoomWindow->addPlayerByName(username);
@@ -568,16 +562,13 @@ void LobbyController::openWaitingRoom() {
             waitingRoomWindow->setPlayerCarByName(username, it->second);
         }
     }
-    
-    // 🔥 DEBUG: Verificar estado después de procesar pendientes
-    std::cout << "[Controller] 🔍 After processing pending players" << std::endl;
-    
+
     // Limpiar pendientes
     pendingPlayers.clear();
     pendingCars.clear();
     
     // 2. Agregar jugador local
-    std::cout << "[Controller] 👤 Adding local player: " << playerName.toStdString() << std::endl;
+    std::cout << "[Controller] Adding local player: " << playerName.toStdString() << std::endl;
     waitingRoomWindow->addPlayerByName(playerName);
     
     // 3. Conectar botones de la UI
@@ -598,7 +589,7 @@ void LobbyController::onPlayerReadyToggled(bool isReady) {
               << (isReady ? "LISTO" : "NO LISTO") << std::endl;
     
     try {
-        // 🔥 FIX: PRIMERO marcar localmente
+        // PRIMERO marcar localmente
         if (waitingRoomWindow) {
             waitingRoomWindow->setPlayerReadyByName(playerName, isReady);
             std::cout << "[Controller] ✅ Local ready state updated for " << playerName.toStdString() << std::endl;
@@ -635,7 +626,7 @@ void LobbyController::onBackFromWaitingRoom() {
         try {
             std::cout << "[Controller] Enviando leave_game para partida " << currentGameId << std::endl;
             lobbyClient->leave_game(currentGameId);
-            std::cout << "[Controller] ✅ Leave game enviado" << std::endl;
+            std::cout << "[Controller] Leave game enviado" << std::endl;
             
         } catch (const std::exception& e) {
             std::cerr << "[Controller] ⚠️ Error al enviar leave_game: " << e.what() << std::endl;

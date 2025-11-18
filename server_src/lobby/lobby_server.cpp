@@ -119,7 +119,6 @@ void LobbyServer::handle_client(Socket client_socket) {
         }
     }
     
-    // 🔥 CORREGIDO: Cleanup cuando el cliente se desconecta
     try {
         if (!username.empty() && lobby_manager.is_player_in_game(username)) {
             uint16_t game_id = lobby_manager.get_player_game(username);
@@ -154,7 +153,6 @@ void LobbyServer::send_games_list(Socket& client_socket) {
     std::vector<GameInfo> games;
     
     for (const auto& pair : lobby_manager.get_all_games()) {
-        // 🔥 CORREGIDO: Usar -> para desreferenciar el unique_ptr
         const GameRoom& room = *pair.second;
         
         GameInfo info;

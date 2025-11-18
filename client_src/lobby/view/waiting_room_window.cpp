@@ -555,7 +555,10 @@ void WaitingRoomWindow::onReadyClicked() {
         readyButton->setText("Listo!");
     }
     
-    setPlayerReady(0, localPlayerReady); // Player 0 es el local
+    // Eliminado: setPlayerReady(0, localPlayerReady);
+    // La actualización local y del resto de jugadores se realiza en el Controller
+    // vía setPlayerReadyByName(playerName, isReady) y notificaciones del servidor.
+
     emit readyToggled(localPlayerReady);
     
     std::cout << "Estado listo: " << (localPlayerReady ? "SI" : "NO") << std::endl;

@@ -149,7 +149,6 @@ uint16_t LobbyClient::receive_game_joined() {
     uint16_t game_id = read_uint16();
     std::cout << "[LobbyClient] Joined game: " << game_id << std::endl;
     
-    // 🔥 ELIMINADO: receive_room_snapshot()
     // El snapshot llegará vía notificaciones automáticamente
     
     return game_id;
@@ -331,7 +330,7 @@ void LobbyClient::notification_listener() {
                 throw;
             }
             
-            // 🔥 Si estamos cerrando, ignorar todos los mensajes
+            // Si estamos cerrando, ignorar todos los mensajes
             if (!listening.load()) {
                 std::cout << "[LobbyClient] Listener stopped, ignoring message type " 
                           << static_cast<int>(msg_type) << std::endl;
@@ -388,7 +387,6 @@ void LobbyClient::notification_listener() {
                     uint16_t count = read_uint16();
                     std::cout << "[LobbyClient] Games list has " << count << " games" << std::endl;
                     
-                    // 🔥 Leer TODOS los juegos
                     std::vector<GameInfo> games;
                     for (uint16_t i = 0; i < count; i++) {
                         GameInfo info;
@@ -404,7 +402,6 @@ void LobbyClient::notification_listener() {
                         std::cout << "[LobbyClient]   Game " << info.game_id << ": " << info.game_name << std::endl;
                     }
                     
-                    // 🔥 EMITIR SEÑAL para actualizar la UI
                     emit gamesListReceived(games);
                     
                     std::cout << "[LobbyClient] MSG_GAMES_LIST fully consumed, exiting listener" << std::endl;
@@ -449,7 +446,6 @@ void LobbyClient::read_room_snapshot(std::vector<QString>& players,
                                       std::map<QString, QString>& cars) {
     std::cout << "[LobbyClient] Reading room snapshot manually..." << std::endl;
     
-    // 🔥 FIX: Leer hasta encontrar el marcador MSG_ROOM_SNAPSHOT con count=0
     while (true) {
         uint8_t msg_type;
         
@@ -462,7 +458,6 @@ void LobbyClient::read_room_snapshot(std::vector<QString>& players,
         
         std::cout << "[LobbyClient] Snapshot msg type: " << static_cast<int>(msg_type) << std::endl;
         
-        // 🔥 DETECTAR FIN DE SNAPSHOT
         if (msg_type == MSG_ROOM_SNAPSHOT) {
             uint8_t count1, count2;
             socket.recvall(&count1, sizeof(count1));

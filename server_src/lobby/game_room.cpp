@@ -5,7 +5,7 @@
 GameRoom::GameRoom(uint16_t id, const std::string& name, const std::string& creator, uint8_t max_players)
     : game_id(id), 
       game_name(name),
-      creator_username(creator),  // 🔥 NUEVO: Guardar creador sin privilegios
+      creator_username(creator),
       max_players(max_players), 
       state(RoomState::WAITING) {
     
@@ -13,8 +13,7 @@ GameRoom::GameRoom(uint16_t id, const std::string& name, const std::string& crea
     creator_info.is_ready = false;  
     creator_info.car_name = "";
     creator_info.car_type = "";
-    // 🔥 ELIMINADO: is_host = true;
-    
+
     players[creator] = creator_info;
     
     std::cout << "[GameRoom " << game_id << "] Created by '" << creator << "'" << std::endl;
@@ -34,9 +33,7 @@ bool GameRoom::add_player(const std::string& username) {
     
     std::cout << "[GameRoom " << game_id << "] Player '" << username << "' joined (" 
               << players.size() << "/" << static_cast<int>(max_players) << ")" << std::endl;
-    
-    // 🔥 BROADCAST SOLO DESPUÉS DE QUE EL JUGADOR RECIBA EL SNAPSHOT
-    // El broadcast lo hará manualmente el Receiver DESPUÉS del snapshot
+
     
     if (players.size() >= 2 && state == RoomState::WAITING) {
         state = RoomState::READY;
@@ -53,14 +50,12 @@ void GameRoom::remove_player(const std::string& username) {
     
     std::cout << "[GameRoom " << game_id << "] Player '" << username << "' left" << std::endl;
     
-    // 🔥 ELIMINADO: Lógica de transferencia de HOST
-    
+
     if (broadcast_callback) {
         auto buffer = LobbyProtocol::serialize_player_left_notification(username);
         broadcast_callback(buffer);
     }
     
-    // 🔥 CAMBIO: Si quedan < 2 jugadores, volver a WAITING
     if (players.size() < 2 && state == RoomState::READY) {
         state = RoomState::WAITING;
     }
