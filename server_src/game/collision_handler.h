@@ -7,13 +7,12 @@
 #include "car.h"
 #include "obstacle.h"
 
-// Estructura para almacenar información de colisiones
 struct CollisionEvent {
     int car_id_a;
     int car_id_b;
     float impact_force;
     bool is_with_obstacle;
-    float damage_multiplier;  // ← AGREGADO punto y coma
+    float damage_multiplier; 
 };
 
 class CollisionHandler {

@@ -36,18 +36,15 @@ void GameLoop::initialize_physics() {
 }
 
 void GameLoop::create_test_obstacles() {
-    // Crear paredes de borde (como límites de la pista)
     obstacle_manager.create_wall(-50.0f, 0.0f, 2.0f, 100.0f);  // Pared izquierda
     obstacle_manager.create_wall(50.0f, 0.0f, 2.0f, 100.0f);   // Pared derecha
     obstacle_manager.create_wall(0.0f, -50.0f, 100.0f, 2.0f);  // Pared inferior
     obstacle_manager.create_wall(0.0f, 50.0f, 100.0f, 2.0f);   // Pared superior
     
-    // Crear algunos edificios en el mapa
     obstacle_manager.create_building(20.0f, 20.0f, 8.0f, 8.0f);
     obstacle_manager.create_building(-20.0f, 20.0f, 8.0f, 8.0f);
     obstacle_manager.create_building(20.0f, -20.0f, 8.0f, 8.0f);
     
-    // Crear barreras en el medio
     obstacle_manager.create_barrier(0.0f, 0.0f, 15.0f);
     
     std::cout << "[GameLoop] Test obstacles created" << std::endl;
@@ -210,14 +207,11 @@ void GameLoop::run() {
 void GameLoop::load_map(const std::string& yaml_path) {
     std::cout << "[GameLoop] Loading map: " << yaml_path << std::endl;
     
-    // Cargar el mapa con MapLoader
     MapLoader loader(mundo, obstacle_manager);
     loader.load_map(yaml_path);
     
-    // Cargar checkpoints en el manager
     checkpoint_manager.load_checkpoints(loader.get_checkpoints());
     
-    // Guardar spawn points para crear autos
     auto spawn_points = loader.get_spawn_points();
     std::cout << "[GameLoop] Map loaded with " << spawn_points.size() 
               << " spawn points" << std::endl;

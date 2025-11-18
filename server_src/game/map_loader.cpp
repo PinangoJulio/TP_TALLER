@@ -11,15 +11,12 @@ MapLoader::MapLoader(b2WorldId world, ObstacleManager& obstacles)
 void MapLoader::load_map(const std::string& yaml_path) {
     std::cout << "[MapLoader] Loading map: " << yaml_path << std::endl;
     
-    // Verificar que el archivo existe
     if (!std::filesystem::exists(yaml_path)) {
         throw std::runtime_error("Map file not found: " + yaml_path);
     }
     
-    // Cargar el YAML
     YAML::Node map = YAML::LoadFile(yaml_path);
     
-    //1. CARGAR SPAWN POINTS
     if (map["spawn_points"]) {
         for (const auto& spawn_node : map["spawn_points"]) {
             SpawnPoint spawn;
@@ -33,16 +30,15 @@ void MapLoader::load_map(const std::string& yaml_path) {
         }
     }
     
-    //2. CARGAR CHECKPOINTS
     if (map["checkpoints"]) {
         for (const auto& cp_node : map["checkpoints"]) {
             CheckpointData cp;
             cp.id = cp_node["id"].as<int>();
             cp.x = cp_node["x"].as<float>();
             cp.y = cp_node["y"].as<float>();
-            cp.width = cp_node["width"].as<float>(5.0f);   // Default 5
-            cp.height = cp_node["height"].as<float>(1.0f); // Default 1
-            cp.angle = cp_node["angle"].as<float>(0.0f);   // Default 0
+            cp.width = cp_node["width"].as<float>(5.0f);
+            cp.height = cp_node["height"].as<float>(1.0f);
+            cp.angle = cp_node["angle"].as<float>(0.0f);
             
             checkpoints.push_back(cp);
             std::cout << "[MapLoader] Checkpoint " << cp.id << ": (" 
@@ -50,7 +46,6 @@ void MapLoader::load_map(const std::string& yaml_path) {
         }
     }
     
-    //3. CARGAR PAREDES (WALLS)
     if (map["walls"]) {
         for (const auto& wall_node : map["walls"]) {
             float x = wall_node["x"].as<float>();
@@ -63,7 +58,6 @@ void MapLoader::load_map(const std::string& yaml_path) {
         }
     }
     
-    // 4. CARGAR EDIFICIOS (BUILDINGS)
     if (map["buildings"]) {
         for (const auto& building_node : map["buildings"]) {
             float x = building_node["x"].as<float>();
@@ -76,7 +70,6 @@ void MapLoader::load_map(const std::string& yaml_path) {
         }
     }
     
-    // 5. CARGAR BARRERAS (BARRIERS)
     if (map["barriers"]) {
         for (const auto& barrier_node : map["barriers"]) {
             float x = barrier_node["x"].as<float>();

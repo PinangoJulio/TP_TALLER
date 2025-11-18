@@ -6,15 +6,15 @@
 #include <vector>
 
 enum class ObstacleType {
-    WALL,           // Pared/edificio
-    BARRIER,        // Barrera de pista
-    BRIDGE_PILLAR   // Pilar de puente
+    WALL,
+    BARRIER,
+    BRIDGE_PILLAR
 };
 
 struct Obstacle {
     ObstacleType type;
     b2BodyId body;
-    float damage_multiplier;  // Multiplicador de daño (paredes = 1.5x)
+    float damage_multiplier;
     
     Obstacle(ObstacleType t, b2BodyId b, float dmg_mult = 1.0f)
         : type(t), body(b), damage_multiplier(dmg_mult) {}
@@ -28,18 +28,12 @@ private:
 public:
     explicit ObstacleManager(b2WorldId world_id);
     
-    // Crear diferentes tipos de obstáculos
     void create_wall(float x, float y, float width, float height);
     void create_barrier(float x, float y, float length);
     void create_building(float x, float y, float width, float height);
     
-    // Verificar si un cuerpo es un obstáculo
     bool is_obstacle(b2BodyId body) const;
-    
-    // Obtener multiplicador de daño del obstáculo
     float get_damage_multiplier(b2BodyId body) const;
-    
-    // Limpiar todos los obstáculos
     void clear();
     
     ~ObstacleManager();

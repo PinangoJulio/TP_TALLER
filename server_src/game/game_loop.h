@@ -7,7 +7,6 @@
 #include <thread>
 #include <vector>
 #include <map>
-
 #include <box2d/box2d.h>
 
 #include "../../common_src/thread.h"

@@ -28,14 +28,12 @@ void CollisionHandler::process_contact_event(b2ContactEvents events) {
         void* userDataA = b2Body_GetUserData(bodyA);
         void* userDataB = b2Body_GetUserData(bodyB);
         
-        // Calcular velocidades relativas
         b2Vec2 velA = b2Body_GetLinearVelocity(bodyA);
         b2Vec2 velB = b2Body_GetLinearVelocity(bodyB);
         b2Vec2 relative_vel = {velA.x - velB.x, velA.y - velB.y};
         float impact_force = std::sqrt(relative_vel.x * relative_vel.x + 
                                       relative_vel.y * relative_vel.y);
         
-        // CASO 1: Colisión entre dos autos
         if (userDataA && userDataB) {
             int player_id_a = *static_cast<int*>(userDataA);
             int player_id_b = *static_cast<int*>(userDataB);
@@ -53,7 +51,6 @@ void CollisionHandler::process_contact_event(b2ContactEvents events) {
                       << player_id_a << " <-> " << player_id_b 
                       << " | Force: " << impact_force << std::endl;
         }
-        // CASO 2: Colisión auto-obstáculo (A es auto, B es obstáculo)
         else if (userDataA && !userDataB && obstacle_manager) {
             if (obstacle_manager->is_obstacle(bodyB)) {
                 int player_id = *static_cast<int*>(userDataA);
@@ -73,7 +70,6 @@ void CollisionHandler::process_contact_event(b2ContactEvents events) {
                           << " | Multiplier: " << damage_mult << "x" << std::endl;
             }
         }
-        // CASO 3: Colisión auto-obstáculo (B es auto, A es obstáculo)
         else if (!userDataA && userDataB && obstacle_manager) {
             if (obstacle_manager->is_obstacle(bodyA)) {
                 int player_id = *static_cast<int*>(userDataB);
@@ -101,7 +97,6 @@ void CollisionHandler::apply_pending_collisions() {
         auto it_a = car_map.find(collision.car_id_a);
         
         if (collision.is_with_obstacle) {
-            // COLISIÓN CON OBSTÁCULO
             if (it_a != car_map.end() && it_a->second->is_alive()) {
                 float adjusted_force = collision.impact_force * collision.damage_multiplier;
                 it_a->second->apply_collision_damage(adjusted_force);
@@ -111,7 +106,6 @@ void CollisionHandler::apply_pending_collisions() {
                           << " | Force: " << adjusted_force << std::endl;
             }
         } else {
-            // COLISIÓN ENTRE AUTOS
             auto it_b = car_map.find(collision.car_id_b);
             
             if (it_a != car_map.end() && it_a->second->is_alive()) {

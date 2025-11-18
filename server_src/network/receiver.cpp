@@ -60,20 +60,17 @@ void Receiver::handle_lobby() {
         auto welcome_buffer = LobbyProtocol::serialize_welcome(welcome_msg);
         protocol.send_buffer(welcome_buffer);
 
-        // --- Paso 2: bucle principal del lobby ---
         bool in_lobby = true;
         while (is_running && in_lobby) {
             uint8_t msg_type = protocol.read_message_type();
 
             switch (msg_type) {
-                // ------------------------------------------------------------
                 case MSG_LIST_GAMES: {
                     auto games = lobby_manager.get_games_list();
                     auto response = LobbyProtocol::serialize_games_list(games);
                     protocol.send_buffer(response);
                     break;
                 }
-                // ------------------------------------------------------------
                 case MSG_CREATE_GAME: {
                     std::string game_name = protocol.read_string();
                     uint8_t max_players = protocol.get_max_amount_of_players();
@@ -124,7 +121,6 @@ void Receiver::handle_lobby() {
                     break;
                 }
 
-                // ------------------------------------------------------------
                 case MSG_START_GAME: {
                     uint16_t game_id = protocol.read_uint16();
                     bool success = lobby_manager.start_game(game_id, username);
@@ -134,9 +130,7 @@ void Receiver::handle_lobby() {
                         protocol.send_buffer(response);
                         std::cout << "[Lobby] Game " << game_id << " started by " << username << "\n";
 
-                        // 🔹 Transición al modo juego
                         in_lobby = false;
-                        // acá podrías guardar el match_id si querés
                         match_id = game_id;
                     } else {
                         auto response = LobbyProtocol::serialize_error(
@@ -153,7 +147,6 @@ void Receiver::handle_lobby() {
 
         if (!in_lobby) {
             std::cout << "[Lobby] Player " << username << " entering match " << match_id << std::endl;
-            // podés iniciar handle_match_messages() o solo marcar transición
         }
 
     } catch (const std::exception& e) {
@@ -167,14 +160,12 @@ void Receiver::handle_lobby() {
 
 
 void Receiver::handle_match_messages() {
-    //implementar comunicacion de juego
     is_running = false;
 }
 
 
 void Receiver::run() {
     handle_lobby();
-    // handle_match_messages  --> llamar una vez que termina el lobby y arranca la comunicacion del juego
 }
 
 void Receiver::kill() { is_running = false; }

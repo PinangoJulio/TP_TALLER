@@ -76,7 +76,6 @@ void Car::destroy() {
     health = 0;
     nitro_active = false;
     
-    // Detener el cuerpo completamente
     if (B2_IS_NON_NULL(body)) {
         b2Body_SetLinearVelocity(body, {0.0f, 0.0f});
         b2Body_SetAngularVelocity(body, 0.0f);

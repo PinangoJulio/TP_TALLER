@@ -39,4 +39,4 @@ public:
     virtual ~Receiver();
 };
 
-#endif  // SERVER_RECEIVER_H
+#endif

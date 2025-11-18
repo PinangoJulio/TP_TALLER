@@ -8,15 +8,12 @@ void CheckpointManager::load_checkpoints(const std::vector<CheckpointData>& cps)
 }
 
 void CheckpointManager::register_player(int player_id) {
-    player_current_checkpoint[player_id] = 0;  // Empieza en el primer checkpoint
+    player_current_checkpoint[player_id] = 0;
     player_laps_completed[player_id] = 0;
     std::cout << "[CheckpointManager] Player " << player_id << " registered" << std::endl;
 }
 
 bool CheckpointManager::is_point_in_checkpoint(b2Vec2 point, const CheckpointData& cp) {
-    // Simplificación: Asumimos checkpoints sin rotación (angle = 0)
-    // Si necesitas rotación, debes aplicar transformación de coordenadas
-    
     float half_width = cp.width / 2.0f;
     float half_height = cp.height / 2.0f;
     
@@ -38,24 +35,21 @@ bool CheckpointManager::check_crossing(int player_id, b2Vec2 car_position) {
     int current_cp_index = it->second;
     const CheckpointData& next_cp = checkpoints[current_cp_index];
     
-    // Verificar si el auto está dentro del checkpoint
     if (is_point_in_checkpoint(car_position, next_cp)) {
         std::cout << "[CheckpointManager] Player " << player_id 
                   << " crossed checkpoint " << next_cp.id << std::endl;
         
-        // Avanzar al siguiente checkpoint
         current_cp_index++;
         
-        // Si completó todos los checkpoints → vuelta completa
         if (current_cp_index >= static_cast<int>(checkpoints.size())) {
-            current_cp_index = 0;  // Reiniciar checkpoints
+            current_cp_index = 0;
             player_laps_completed[player_id]++;
             
             std::cout << "[CheckpointManager] 🏁 Player " << player_id 
                       << " completed lap " << player_laps_completed[player_id] << "!" << std::endl;
             
             player_current_checkpoint[player_id] = current_cp_index;
-            return true;  // Completó vuelta
+            return true;
         }
         
         player_current_checkpoint[player_id] = current_cp_index;

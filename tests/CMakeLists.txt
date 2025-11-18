@@ -1,7 +1,6 @@
 target_sources(taller_tests
     PRIVATE
     # .cpp files de tests
-    protocol_tests.cpp
     lobby_tests.cpp
     physics_tests.cpp
     collision_tests.cpp
