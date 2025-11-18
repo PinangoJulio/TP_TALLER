@@ -110,7 +110,7 @@ void LobbyController::onBackFromNameInput() {
 }
 
 void LobbyController::handleNetworkError(const std::exception& e) {
-    std::cerr << "[Controller]  Error: " << e.what() << std::endl;
+    std::cerr << "[Controller] ❌ Error: " << e.what() << std::endl;
     
     QWidget* currentWindow = lobbyWindow;
     
@@ -191,7 +191,6 @@ void LobbyController::cleanupAndReturnToLobby() {
     }
 }
 
-
 void LobbyController::onMatchCreated(const QString& matchName, int maxPlayers, const std::vector<RaceConfig>& races) {
     std::cout << "[Controller] Usuario confirmó creación de partida:" << std::endl;
     std::cout << "  Nombre: " << matchName.toStdString() << std::endl;
@@ -225,9 +224,11 @@ void LobbyController::onMatchCreated(const QString& matchName, int maxPlayers, c
             createMatchWindow = nullptr;
         }
         
-        // 🔥 NUEVO: CONECTAR SEÑALES E INICIAR LISTENER **AQUÍ**
-        std::cout << "[Controller] Conectando señales de notificaciones..." << std::endl;
-        connectNotificationSignals();
+        // 🔥 FIX: Conectar señales SOLO si NO están conectadas
+        if (!lobbyClient->is_listening()) {
+            std::cout << "[Controller] Conectando señales de notificaciones..." << std::endl;
+            connectNotificationSignals();
+        }
         
         std::cout << "[Controller] Abriendo garage..." << std::endl;
         openGarage();
@@ -317,7 +318,7 @@ void LobbyController::onJoinMatchRequested(const QString& matchId) {
               << gameId << std::endl;
     
     try {
-        // 🔥 1. Hacer JOIN
+        // 1. Hacer JOIN
         lobbyClient->join_game(gameId);
         
         uint16_t confirmedGameId = lobbyClient->receive_game_joined();
@@ -327,13 +328,13 @@ void LobbyController::onJoinMatchRequested(const QString& matchId) {
         std::cout << "[Controller] Unido exitosamente a partida ID: " 
                   << currentGameId << std::endl;
         
-        // 🔥 2. Leer snapshot MANUALMENTE (sin listener)
+        // 2. Leer snapshot MANUALMENTE
         std::vector<QString> snapshotPlayers;
         std::map<QString, QString> snapshotCars;
         
         lobbyClient->read_room_snapshot(snapshotPlayers, snapshotCars);
         
-        // 🔥 3. Almacenar en pendientes
+        // 3. Almacenar en pendientes
         pendingPlayers = snapshotPlayers;
         pendingCars = snapshotCars;
         
@@ -343,12 +344,14 @@ void LobbyController::onJoinMatchRequested(const QString& matchId) {
             matchSelectionWindow->hide();
         }
         
-        // 🔥 4. AHORA SÍ conectar señales e iniciar listener (para futuros cambios)
-        std::cout << "[Controller] Conectando señales de notificaciones..." << std::endl;
-        connectNotificationSignals();
-        
-        std::cout << "[Controller] Iniciando listener de notificaciones..." << std::endl;
-        lobbyClient->start_listening();
+        // 🔥 FIX: Conectar señales SOLO si NO están conectadas
+        if (!lobbyClient->is_listening()) {
+            std::cout << "[Controller] Conectando señales de notificaciones..." << std::endl;
+            connectNotificationSignals();
+            
+            std::cout << "[Controller] Iniciando listener de notificaciones..." << std::endl;
+            lobbyClient->start_listening();
+        }
         
         std::cout << "[Controller] Abriendo garage..." << std::endl;
         openGarage();
@@ -422,11 +425,8 @@ void LobbyController::onCarSelected(const CarInfo& car) {
             garageWindow = nullptr;
         }
         
-        // 🔥 SOLO conectar señales SI NO ESTÁN CONECTADAS
+        // 🔥 FIX CRÍTICO: Iniciar listener SOLO si NO está corriendo
         if (!lobbyClient->is_listening()) {
-            std::cout << "[Controller] Conectando señales de notificaciones..." << std::endl;
-            connectNotificationSignals();
-            
             std::cout << "[Controller] Iniciando listener de notificaciones..." << std::endl;
             lobbyClient->start_listening();
         }
@@ -434,7 +434,7 @@ void LobbyController::onCarSelected(const CarInfo& car) {
         std::cout << "[Controller] Abriendo sala de espera..." << std::endl;
         openWaitingRoom();
         
-        // 🔥 ACTUALIZAR AUTO DEL JUGADOR LOCAL (después de abrir la sala)
+        // Actualizar auto del jugador local
         if (waitingRoomWindow) {
             std::cout << "[Controller] Actualizando auto del jugador local: " 
                       << car.name.toStdString() << std::endl;
@@ -446,9 +446,8 @@ void LobbyController::onCarSelected(const CarInfo& car) {
     }
 }
 
-
 void LobbyController::connectNotificationSignals() {
-    // 🔥 Conectar señales de notificaciones
+    // Conectar señales de notificaciones
     connect(lobbyClient.get(), &LobbyClient::playerJoinedNotification,
             this, [this](QString username) {
                 std::cout << "[Controller] Notification: Player joined: " 
@@ -457,7 +456,6 @@ void LobbyController::connectNotificationSignals() {
                 if (waitingRoomWindow) {
                     waitingRoomWindow->addPlayerByName(username);
                 } else {
-                    // 🔥 Almacenar para procesar después
                     pendingPlayers.push_back(username);
                     std::cout << "[Controller] Stored pending player: " << username.toStdString() << std::endl;
                 }
@@ -489,7 +487,6 @@ void LobbyController::connectNotificationSignals() {
                 if (waitingRoomWindow) {
                     waitingRoomWindow->setPlayerCarByName(username, carName);
                 } else {
-                    // 🔥 Almacenar para procesar después
                     pendingCars[username] = carName;
                     std::cout << "[Controller] Stored pending car for " << username.toStdString() << std::endl;
                 }
@@ -518,7 +515,6 @@ void LobbyController::connectNotificationSignals() {
             });
 }
 
-
 void LobbyController::onBackFromGarage() {
     std::cout << "[Controller] Usuario volvió desde garage" << std::endl;
     
@@ -532,8 +528,6 @@ void LobbyController::onBackFromGarage() {
         try {
             std::cout << "[Controller] Enviando leave_game para partida " << currentGameId << std::endl;
             lobbyClient->leave_game(currentGameId);
-            
-            // 🔥 NO ESPERAR RESPUESTA
             std::cout << "[Controller] ✅ Leave confirmado" << std::endl;
             
         } catch (const std::exception& e) {
@@ -541,7 +535,6 @@ void LobbyController::onBackFromGarage() {
         }
     }
     
-    // Resetear estado local
     currentGameId = 0;
     selectedCarIndex = -1;
     
@@ -551,19 +544,17 @@ void LobbyController::onBackFromGarage() {
     }
 }
 
-
 void LobbyController::openWaitingRoom() {
     std::cout << "[Controller] Abriendo sala de espera..." << std::endl;
     
     uint8_t maxPlayers = 8;
     waitingRoomWindow = new WaitingRoomWindow(maxPlayers);
     
-    // 🔥 1. Procesar jugadores pendientes (del snapshot)
+    // 1. Procesar jugadores pendientes (del snapshot)
     for (const auto& username : pendingPlayers) {
         std::cout << "[Controller] Procesando jugador pendiente: " << username.toStdString() << std::endl;
         waitingRoomWindow->addPlayerByName(username);
         
-        // Si tiene auto pendiente, agregarlo también
         auto it = pendingCars.find(username);
         if (it != pendingCars.end()) {
             std::cout << "[Controller] Procesando auto pendiente: " << it->second.toStdString() << std::endl;
@@ -571,15 +562,14 @@ void LobbyController::openWaitingRoom() {
         }
     }
     
-    // Limpiar pendientes
     pendingPlayers.clear();
     pendingCars.clear();
     
-    // 🔥 2. Agregar jugador local
+    // 2. Agregar jugador local
     std::cout << "[Controller] Agregando jugador local: " << playerName.toStdString() << std::endl;
     waitingRoomWindow->addPlayerByName(playerName);
     
-    // 🔥 3. Conectar botones de la UI
+    // 3. Conectar botones de la UI
     connect(waitingRoomWindow, &WaitingRoomWindow::readyToggled,
             this, &LobbyController::onPlayerReadyToggled);
     connect(waitingRoomWindow, &WaitingRoomWindow::startGameRequested,
@@ -613,18 +603,15 @@ void LobbyController::onStartGameRequested() {
     }
 }
 
-
 void LobbyController::onBackFromWaitingRoom() {
     std::cout << "[Controller] Usuario salió de la sala de espera" << std::endl;
     
-    // 🔥 1. Cerrar ventana PRIMERO
     if (waitingRoomWindow) {
         waitingRoomWindow->close();
         waitingRoomWindow->deleteLater();
         waitingRoomWindow = nullptr;
     }
     
-    // 🔥 2. Enviar leave_game (esto enviará MSG_GAMES_LIST que el listener consumirá)
     if (lobbyClient && currentGameId > 0) {
         try {
             std::cout << "[Controller] Enviando leave_game para partida " << currentGameId << std::endl;
@@ -636,12 +623,10 @@ void LobbyController::onBackFromWaitingRoom() {
         }
     }
     
-    // 🔥 3. ESPERAR a que el listener se detenga (consume MSG_GAMES_LIST)
     if (lobbyClient) {
         std::cout << "[Controller] Esperando a que el listener se detenga..." << std::endl;
         
-        // Esperar hasta que el listener se detenga (máx 3 segundos)
-        int timeout = 30; // 30 * 100ms = 3 segundos
+        int timeout = 30;
         while (lobbyClient->is_listening() && timeout > 0) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             timeout--;
@@ -655,11 +640,9 @@ void LobbyController::onBackFromWaitingRoom() {
         std::cout << "[Controller] Listener detenido completamente" << std::endl;
     }
     
-    // 🔥 4. Resetear estado local
     currentGameId = 0;
     selectedCarIndex = -1;
     
-    // 🔥 5. Mostrar ventana de selección (la lista ya fue actualizada por el listener)
     if (matchSelectionWindow) {
         matchSelectionWindow->show();
     }

@@ -184,7 +184,7 @@ void Receiver::handle_lobby() {
                     protocol.send_buffer(LobbyProtocol::serialize_game_joined(static_cast<uint16_t>(game_id)));
                     std::cout << "[Receiver] " << username << " joined match " << game_id << std::endl;
                     
-                    // 6. ENVIAR SNAPSHOT AL NUEVO JUGADOR (SOLO jugadores que YA estaban)
+                    // 🔥 6. ENVIAR SNAPSHOT COMO **MENSAJES INDIVIDUALES** (sin marcador de fin)
                     std::cout << "[Receiver] Sending room snapshot to " << username 
                               << " (" << existing_players.size() << " existing players)" << std::endl;
                     
@@ -219,11 +219,18 @@ void Receiver::handle_lobby() {
                         }
                     }
                     
-                    std::cout << "[Receiver] Snapshot sent to " << username << std::endl;
+                    // 🔥 7. ENVIAR MARCADOR DE FIN DE SNAPSHOT
+                    // Crear un mensaje especial "END_SNAPSHOT" o usar un contador
+                    // OPCIÓN 1: Enviar un mensaje con count = 0
+                    std::vector<uint8_t> end_marker;
+                    end_marker.push_back(MSG_ROOM_SNAPSHOT);  // Tipo especial
+                    end_marker.push_back(0);  // Count = 0 (marca el fin)
+                    end_marker.push_back(0);
+                    protocol.send_buffer(end_marker);
                     
-                    // 🔥 7. BROADCAST A LOS DEMÁS **DESPUÉS** de que el nuevo jugador reciba el snapshot
-                    // IMPORTANTE: Esperar un poco para asegurar que el snapshot llegó primero
-                                        
+                    std::cout << "[Receiver] ✅ Snapshot sent with END marker to " << username << std::endl;
+                    
+                    // 🔥 8. BROADCAST A LOS DEMÁS **DESPUÉS**
                     auto joined_notif = LobbyProtocol::serialize_player_joined_notification(username);
                     lobby_manager.broadcast_to_game(game_id, joined_notif, username);
                     

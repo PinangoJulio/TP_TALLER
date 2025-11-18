@@ -444,7 +444,7 @@ void LobbyClient::read_room_snapshot(std::vector<QString>& players,
                                       std::map<QString, QString>& cars) {
     std::cout << "[LobbyClient] Reading room snapshot manually..." << std::endl;
     
-    // Leer mensajes hasta que no haya más notificaciones de snapshot
+    // 🔥 FIX: Leer hasta encontrar el marcador MSG_ROOM_SNAPSHOT con count=0
     while (true) {
         uint8_t msg_type;
         
@@ -457,6 +457,19 @@ void LobbyClient::read_room_snapshot(std::vector<QString>& players,
         
         std::cout << "[LobbyClient] Snapshot msg type: " << static_cast<int>(msg_type) << std::endl;
         
+        // 🔥 DETECTAR FIN DE SNAPSHOT
+        if (msg_type == MSG_ROOM_SNAPSHOT) {
+            uint8_t count1, count2;
+            socket.recvall(&count1, sizeof(count1));
+            socket.recvall(&count2, sizeof(count2));
+            
+            if (count1 == 0 && count2 == 0) {
+                std::cout << "[LobbyClient] ✅ END OF SNAPSHOT detected" << std::endl;
+                break;  // Fin del snapshot
+            }
+        }
+        
+        // Procesar mensajes de snapshot
         if (msg_type == MSG_PLAYER_JOINED_NOTIFICATION) {
             std::string username = read_string();
             players.push_back(QString::fromStdString(username));
@@ -473,13 +486,6 @@ void LobbyClient::read_room_snapshot(std::vector<QString>& players,
             std::string username = read_string();
             uint8_t is_ready = read_uint8();
             std::cout << "[LobbyClient]   Snapshot ready: " << username << " -> " << (is_ready ? "YES" : "NO") << std::endl;
-            // Ignorar por ahora, no lo almacenamos
-            
-        } else {
-            // Fin del snapshot, devolver el mensaje al stream
-            std::cout << "[LobbyClient] Snapshot complete, found other message type: " << static_cast<int>(msg_type) << std::endl;
-            // NO podemos "devolver" el mensaje, así que terminamos
-            break;
         }
     }
     
