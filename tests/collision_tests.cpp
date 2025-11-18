@@ -108,7 +108,7 @@ TEST(CollisionIntegrationTest, TwoBodiesCollide) {
         // Si las velocidades se invirtieron → hubo colisión
         if (vel1.x < 0.0f && vel2.x > 0.0f) {
             collision_detected = true;
-            std::cout << "[Test] ✅ Collision detected via velocity change at frame " << i << std::endl;
+            std::cout << "[Test] Collision detected via velocity change at frame " << i << std::endl;
             break;
         }
         

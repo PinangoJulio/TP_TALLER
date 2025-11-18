@@ -160,6 +160,5 @@ TEST(GameLoopTest, ProcessCommands) {
     
     game_queue.push(cmd);
     
-    // El test pasa si no crashea
     SUCCEED();
 }

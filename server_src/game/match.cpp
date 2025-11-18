@@ -52,7 +52,7 @@ void Match::startNextRace(const std::string& mapa_yaml_path) {
 }
 
 bool Match::isRunning() const {
-    return active_races && active_races->isRunning();  // ← Usar plural
+    return active_races && active_races->isRunning(); 
 }
 
 Match::~Match() {

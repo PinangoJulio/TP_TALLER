@@ -16,7 +16,9 @@
 
 #include "car.h"
 #include "collision_handler.h"
-#include "obstacle.h"  // NUEVO
+#include "obstacle.h"
+#include "map_loader.h"
+#include "checkpoint_manager.h"
 #include "../network/monitor.h"
 
 #define NITRO_DURATION 12
@@ -37,6 +39,7 @@ private:
     
     CollisionHandler collision_handler;
     ObstacleManager obstacle_manager;
+    CheckpointManager checkpoint_manager;
     
     void initialize_physics();
     void create_test_obstacles(); 
@@ -50,6 +53,11 @@ private:
 
 public:
     explicit GameLoop(Monitor& monitor_ref, Queue<struct Command>& queue, Configuracion& cfg);
+
+    void load_map(const std::string& yaml_path);
+    
+    b2WorldId get_world() const { return mundo; }
+    ObstacleManager& get_obstacles() { return obstacle_manager; }
 
     void run() override;
     void stop() override { is_running = false; }

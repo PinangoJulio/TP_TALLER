@@ -17,7 +17,7 @@ TEST(LobbyManagerTest, CannotCreateMultipleGames) {
     uint16_t game2 = manager.create_game("Game 2", "player1", 4);
     
     EXPECT_GT(game1, 0);
-    EXPECT_EQ(game2, 0);  // Debe fallar
+    EXPECT_EQ(game2, 0); 
 }
 
 TEST(LobbyManagerTest, JoinGame) {
@@ -34,7 +34,7 @@ TEST(LobbyManagerTest, CannotJoinMultipleGames) {
     uint16_t game2 = manager.create_game("Game 2", "player2", 4);
     
     EXPECT_TRUE(manager.join_game(game1, "player3"));
-    EXPECT_FALSE(manager.join_game(game2, "player3"));  // Debe fallar
+    EXPECT_FALSE(manager.join_game(game2, "player3")); 
 }
 
 TEST(LobbyManagerTest, AutoDestroyGameWithLessThanTwoPlayers) {
@@ -56,7 +56,7 @@ TEST(LobbyManagerTest, HostCanStartGame) {
     manager.join_game(game_id, "player2");
     
     EXPECT_TRUE(manager.is_game_ready(game_id));
-    EXPECT_TRUE(manager.start_game(game_id, "player1"));  // Host puede iniciar
+    EXPECT_TRUE(manager.start_game(game_id, "player1"));
 }
 
 TEST(LobbyManagerTest, NonHostCannotStartGame) {
@@ -64,7 +64,7 @@ TEST(LobbyManagerTest, NonHostCannotStartGame) {
     uint16_t game_id = manager.create_game("Test Game", "player1", 4);
     manager.join_game(game_id, "player2");
     
-    EXPECT_FALSE(manager.start_game(game_id, "player2"));  // No-host no puede
+    EXPECT_FALSE(manager.start_game(game_id, "player2"));
 }
 
 TEST(LobbyManagerTest, CannotStartWithLessThanTwoPlayers) {
@@ -79,7 +79,7 @@ TEST(LobbyManagerTest, HostTransferOnLeave) {
     LobbyManager manager;
     uint16_t game_id = manager.create_game("Test Game", "player1", 4);
     manager.join_game(game_id, "player2");
-    manager.join_game(game_id, "player3");  // Agregar un 3er jugador
+    manager.join_game(game_id, "player3");
     
     // player1 (host original) se va
     manager.leave_game("player1");

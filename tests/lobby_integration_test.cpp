@@ -62,17 +62,17 @@ int main(int argc, char* argv[]) {
             
             int option;
             std::cin >> option;
-            std::cin.ignore(); // Limpiar buffer
+            std::cin.ignore();
             
             switch (option) {
-                case 1: { // List games
+                case 1: {
                     client.request_games_list();
                     auto games = client.receive_games_list();
                     print_games(games);
                     break;
                 }
                 
-                case 2: { // Create game
+                case 2: { 
                     std::string game_name;
                     int max_players;
                     
@@ -86,12 +86,12 @@ int main(int argc, char* argv[]) {
                     client.create_game(game_name, max_players);
                     uint16_t game_id = client.receive_game_created();
                     
-                    std::cout << "\n✅ Game created! ID: " << game_id << std::endl;
+                    std::cout << "\nGame created! ID: " << game_id << std::endl;
                     std::cout << "Waiting for other players to join..." << std::endl;
                     break;
                 }
                 
-                case 3: { // Join game
+                case 3: {
                     int game_id;
                     std::cout << "Game ID to join: ";
                     std::cin >> game_id;
@@ -99,7 +99,6 @@ int main(int argc, char* argv[]) {
                     
                     client.join_game(game_id);
                     
-                    // Leer el tipo de mensaje de respuesta
                     uint8_t msg_type = client.peek_message_type();
                     
                     if (msg_type == MSG_ERROR) {
@@ -108,7 +107,7 @@ int main(int argc, char* argv[]) {
                         std::cout << "\n  Error: " << error_msg << std::endl;
                     } else if (msg_type == MSG_GAME_JOINED) {
                         uint16_t joined_id = client.read_uint16();
-                        std::cout << "\n✅ Joined game " << joined_id << "!" << std::endl;
+                        std::cout << "\n Joined game " << joined_id << "!" << std::endl;
                     } else {
                         std::cout << "\n  Unexpected message type: " 
                                   << static_cast<int>(msg_type) << std::endl;
@@ -116,7 +115,7 @@ int main(int argc, char* argv[]) {
                     break;
                 }
                 
-                case 4: // Exit
+                case 4:
                     running = false;
                     std::cout << "Goodbye!" << std::endl;
                     break;

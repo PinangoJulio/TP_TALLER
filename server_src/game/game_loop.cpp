@@ -163,7 +163,7 @@ void GameLoop::process_commands() {
             it->body = body;
             
             collision_handler.register_car(cmd.player_id, &(*it));
-            
+            checkpoint_manager.register_player(cmd.player_id);
             std::cout << "[GameLoop] Player " << cmd.player_id << " body created" << std::endl;
         }
         
@@ -185,7 +185,6 @@ void GameLoop::run() {
     std::cout << "[GameLoop] Starting game loop..." << std::endl;
     while (is_running) {
         process_commands();
-        
         update_physics();
         
         b2ContactEvents events = b2World_GetContactEvents(mundo);
@@ -193,10 +192,34 @@ void GameLoop::run() {
         collision_handler.apply_pending_collisions();
         collision_handler.clear_collisions();
         
+        for (const auto& [player_id, body] : player_bodies) {
+            b2Vec2 pos = b2Body_GetPosition(body);
+            if (checkpoint_manager.check_crossing(player_id, pos)) {
+                std::cout << "[GameLoop] Player " << player_id 
+                          << " completed a lap!" << std::endl;
+            }
+        }
+        
         simulate_cars();
         
         std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP));
     }
     std::cout << "[GameLoop] Game loop stopped." << std::endl;
+}
+
+void GameLoop::load_map(const std::string& yaml_path) {
+    std::cout << "[GameLoop] Loading map: " << yaml_path << std::endl;
+    
+    // Cargar el mapa con MapLoader
+    MapLoader loader(mundo, obstacle_manager);
+    loader.load_map(yaml_path);
+    
+    // Cargar checkpoints en el manager
+    checkpoint_manager.load_checkpoints(loader.get_checkpoints());
+    
+    // Guardar spawn points para crear autos
+    auto spawn_points = loader.get_spawn_points();
+    std::cout << "[GameLoop] Map loaded with " << spawn_points.size() 
+              << " spawn points" << std::endl;
 }
 

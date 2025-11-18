@@ -36,10 +36,8 @@ bool Car::simulate_tick() {
 void Car::apply_collision_damage(float impact_force) {
     if (is_destroyed) return;
     
-    // 🔹 NUEVO: Daño proporcional a la fuerza del impacto
     int damage = static_cast<int>(impact_force * 0.5f); // 50% de la fuerza = daño
     
-    // Clasificar severidad para logging
     if (impact_force > 50.0f) {
         std::cout << "[Car " << client_id << "] SEVERE collision! Force: " 
                   << impact_force << ", Damage: " << damage << std::endl;
@@ -54,7 +52,6 @@ void Car::apply_collision_damage(float impact_force) {
     health -= damage;
     if (health < 0) health = 0;
     
-    // Reducir velocidad proporcionalmente al daño
     float speed_reduction = damage * 0.02f;
     if (B2_IS_NON_NULL(body)) {
         b2Vec2 vel = b2Body_GetLinearVelocity(body);
@@ -67,7 +64,6 @@ void Car::apply_collision_damage(float impact_force) {
         }
     }
     
-    // Si la salud llega a 0, destruir el auto
     if (health <= 0 && !is_destroyed) { 
         destroy();
     }
@@ -86,5 +82,5 @@ void Car::destroy() {
         b2Body_SetAngularVelocity(body, 0.0f);
     }
     
-    std::cout << "[Car " << client_id << "] DESTROYED! 💥" << std::endl;
+    std::cout << "[Car " << client_id << "] DESTROYED!" << std::endl;
 }
