@@ -91,13 +91,23 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(box2d)
 
 # --- yaml-cpp Integration (Parser YAML) ---
-FetchContent_Declare(
-        yaml-cpp
-        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-        GIT_TAG master
-        GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(yaml-cpp)
+# Primero intentar usar el paquete del sistema; si no existe, bajar un tarball estable (no git).
+find_package(yaml-cpp QUIET)
+
+if (NOT yaml-cpp_FOUND AND NOT TARGET yaml-cpp)
+    include(FetchContent)
+    FetchContent_Declare(
+            yaml-cpp
+            URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-0.7.0.tar.gz
+            # URL_HASH SHA256=<<opcional-agregar-sha256-para-integridad>>
+    )
+    FetchContent_MakeAvailable(yaml-cpp)
+endif()
+
+# Si el paquete del sistema exporta yaml-cpp::yaml-cpp, crear un alias simple "yaml-cpp"
+if (TARGET yaml-cpp::yaml-cpp AND NOT TARGET yaml-cpp)
+    add_library(yaml-cpp ALIAS yaml-cpp::yaml-cpp)
+endif()
 
 # --- GoogleTest (para tests) ---
 if(TALLER_TESTS)
@@ -125,6 +135,7 @@ set_project_warnings(taller_common ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 target_include_directories(taller_common PUBLIC .)
 
 # Box2D está fuera para evitar propagación al cliente.
+# Usar el alias yaml-cpp (ya sea del sistema o del FetchContent)
 target_link_libraries(taller_common PUBLIC yaml-cpp)
 
 # =======================================================
@@ -166,9 +177,10 @@ if(TALLER_CLIENT)
             PRIVATE
             taller_common
             SDL2pp::SDL2pp
-            SDL2_image
-            SDL2_ttf
-            SDL2_mixer
+            SDL2::SDL2
+            SDL2_image::SDL2_image
+            SDL2_ttf::SDL2_ttf
+            SDL2_mixer::SDL2_mixer
             Qt6::Widgets
             Qt6::Multimedia
             Qt6::Core
