@@ -4,30 +4,38 @@
 #include <iostream>
 
 CollisionManager::CollisionManager(const std::string& pathCamino, 
-                                 const std::string& pathPuentes) {
+                                   const std::string& pathPuentes,
+                                   const std::string& pathRampas) {
     try {
-        // usando sdl y no el wrapper
-        SDL_Surface* rawCamino = IMG_Load(pathCamino.c_str());
-        SDL_Surface* rawPuentes = IMG_Load(pathPuentes.c_str());
+        // Cargar capas principales
+        SDL_Surface* layerCamino = IMG_Load(pathCamino.c_str());
+        SDL_Surface* layerPuente = IMG_Load(pathPuentes.c_str());
 
-        if (!rawCamino || !rawPuentes) {
+        if (!layerCamino || !layerPuente) {
             throw std::runtime_error("Error al cargar imágenes: " + std::string(IMG_GetError()));
         }
 
-        // Envolver en SDL2pp::Surface
-        surfCamino = std::make_unique<SDL2pp::Surface>(rawCamino);
-        surfPuentes = std::make_unique<SDL2pp::Surface>(rawPuentes);
+        surfCamino = std::make_unique<SDL2pp::Surface>(layerCamino);
+        surfPuentes = std::make_unique<SDL2pp::Surface>(layerPuente);
+
+        // Cargar capa de rampas
+        if (!pathRampas.empty()) {
+            SDL_Surface* layerRampas = IMG_Load(pathRampas.c_str());
+            if (layerRampas) {
+                surfRampas = std::make_unique<SDL2pp::Surface>(layerRampas);
+                std::cout << "CollisionManager: Capa de rampas cargada." << std::endl;
+            } 
+        }
 
         std::cout << "CollisionManager: Capas cargadas OK." << std::endl;
-        std::cout << " - Camino: " << surfCamino->GetWidth() << "x" << surfCamino->GetHeight() << std::endl;
-        std::cout << " - Puentes: " << surfPuentes->GetWidth() << "x" << surfPuentes->GetHeight() << std::endl;
-
+        
     } catch (const std::exception& e) {
         throw std::runtime_error("Error al cargar capas de colisión: " + std::string(e.what()));
     }
 }
 
 Uint32 CollisionManager::getPixel(SDL2pp::Surface& surface, int x, int y) {
+    // Verifico que el pixel que estoy chequeando efectivamente pertenezca a la img
     if (x < 0 || x >= surface.GetWidth() || y < 0 || y >= surface.GetHeight()) {
         return 0;
     }
@@ -36,6 +44,7 @@ Uint32 CollisionManager::getPixel(SDL2pp::Surface& surface, int x, int y) {
     int bpp = rawSurf->format->BytesPerPixel;
     Uint8 *p = (Uint8 *)rawSurf->pixels + y * rawSurf->pitch + x * bpp;
 
+    // Feo feo
     switch (bpp) {
         case 1:
             return *p;
@@ -54,59 +63,96 @@ Uint32 CollisionManager::getPixel(SDL2pp::Surface& surface, int x, int y) {
 }
 
 bool CollisionManager::hasGroundLevel(int x, int y) {
-    SDL_Surface* rawCamino = surfCamino->Get();
-    SDL_LockSurface(rawCamino);
+    SDL_Surface* layerCamino = surfCamino->Get();
+    SDL_LockSurface(layerCamino);
     
     Uint32 pixelCamino = getPixel(*surfCamino, x, y);
     SDL_Color rgbCamino;
-    SDL_GetRGB(pixelCamino, rawCamino->format, &rgbCamino.r, &rgbCamino.g, &rgbCamino.b);
+    SDL_GetRGB(pixelCamino, layerCamino->format, &rgbCamino.r, &rgbCamino.g, &rgbCamino.b);
     
-    SDL_UnlockSurface(rawCamino);
+    SDL_UnlockSurface(layerCamino);
     
-    // Blanco = hay camino en nivel 0
     return rgbCamino.r > 128;
 }
 
 bool CollisionManager::hasBridgeLevel(int x, int y) {
-    SDL_Surface* rawPuentes = surfPuentes->Get();
-    SDL_LockSurface(rawPuentes);
+    SDL_Surface* layerPuente = surfPuentes->Get();
+    SDL_LockSurface(layerPuente);
     
     Uint32 pixelPuentes = getPixel(*surfPuentes, x, y);
     SDL_Color rgbPuentes;
-    SDL_GetRGB(pixelPuentes, rawPuentes->format, &rgbPuentes.r, &rgbPuentes.g, &rgbPuentes.b);
+    SDL_GetRGB(pixelPuentes, layerPuente->format, &rgbPuentes.r, &rgbPuentes.g, &rgbPuentes.b);
     
-    SDL_UnlockSurface(rawPuentes);
+    SDL_UnlockSurface(layerPuente);
     
-    // Blanco = hay puente en nivel 1
     return rgbPuentes.r > 128;
 }
 
-bool CollisionManager::isWall(int x, int y, int currentLevel) {
-    SDL_Surface* rawCamino = surfCamino->Get();
-    SDL_Surface* rawPuentes = surfPuentes->Get();
+bool CollisionManager::isRamp(int x, int y) {
+    if (!surfRampas) {
+        // Si no hay máscara de rampas, permito transiciones en cualquier lugar
+        // donde se superpongan camino y puente, no es lo ideal porque toma una especie
+        // de vista aerea y el carro pasa entre puente y camino por cualquier lado básicamente
+        return hasGroundLevel(x, y) && hasBridgeLevel(x, y);
+    }
+    
+    SDL_Surface* layerRampas = surfRampas->Get();
+    SDL_LockSurface(layerRampas);
+    
+    Uint32 pixelRampas = getPixel(*surfRampas, x, y);
+    SDL_Color rgbRampas;
+    SDL_GetRGB(pixelRampas, layerRampas->format, &rgbRampas.r, &rgbRampas.g, &rgbRampas.b);
+    
+    SDL_UnlockSurface(layerRampas);
+    
+    // Blanco = es una rampa
+    return rgbRampas.r > 128;
+}
 
-    SDL_LockSurface(rawCamino);
-    SDL_LockSurface(rawPuentes);
+bool CollisionManager::canTransition(int x, int y, int fromLevel, int toLevel) {
+    // Verificar que estemos en una zona de rampa válida
+    bool hasGround = hasGroundLevel(x, y);
+    bool hasBridge = hasBridgeLevel(x, y);
+    bool isRampZone = isRamp(x, y);
+    
+    
+    if (fromLevel == 0 && toLevel == 1) {
+        // Subiendo de calle a puente
+        return isRampZone && hasBridge;
+    } 
+    else if (fromLevel == 1 && toLevel == 0) {
+        // Bajando de puente a calle
+         return isRampZone && hasGround;
+    }
+    
+    return false;
+}
+
+bool CollisionManager::isWall(int x, int y, int currentLevel) {
+    SDL_Surface* layerCamino = surfCamino->Get();
+    SDL_Surface* layerPuente = surfPuentes->Get();
+
+    SDL_LockSurface(layerCamino);
+    SDL_LockSurface(layerPuente);
 
     Uint32 pixelCamino = getPixel(*surfCamino, x, y);
     Uint32 pixelPuentes = getPixel(*surfPuentes, x, y);
 
     SDL_Color rgbCamino, rgbPuentes;
-    SDL_GetRGB(pixelCamino, rawCamino->format, &rgbCamino.r, &rgbCamino.g, &rgbCamino.b);
-    SDL_GetRGB(pixelPuentes, rawPuentes->format, &rgbPuentes.r, &rgbPuentes.g, &rgbPuentes.b);
+    SDL_GetRGB(pixelCamino, layerCamino->format, &rgbCamino.r, &rgbCamino.g, &rgbCamino.b);
+    SDL_GetRGB(pixelPuentes, layerPuente->format, &rgbPuentes.r, &rgbPuentes.g, &rgbPuentes.b);
 
-    SDL_UnlockSurface(rawCamino);
-    SDL_UnlockSurface(rawPuentes);
+    SDL_UnlockSurface(layerCamino);
+    SDL_UnlockSurface(layerPuente);
 
     bool isCamino = rgbCamino.r > 128;
     bool isPuente = rgbPuentes.r > 128;
 
-    // Lógica según el nivel actual
     if (currentLevel == 0) {
-       // Nivel calle: solo puedo moverme por camino
+        // Nivel camino, solo puedo moverme por camino
         return !isCamino;
     } else {
-        // Nivel puente: solo puedo moverme por puente, a chequear porue a veces se sale del puente y cae en el camino
+        // Nivel puente, solo puedo moverme por puente
         return !isPuente;
     }
 }
