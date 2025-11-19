@@ -9,6 +9,7 @@
 #include <SDL2pp/Mixer.hh>
 #include <vector>
 #include "common_types.h"
+#include "base_lobby.h"
 #include "garage_window.h"
 
 // Forward declarations
@@ -18,9 +19,8 @@ class GarageWindow;
 class WaitingRoomWindow;
 class CreateMatchWindow;
 
-class LobbyWindow : public QWidget {
+class LobbyWindow : public  BaseLobby {
     Q_OBJECT
-
 public:
     // Constructor sin parámetros - lobby inicial
     explicit LobbyWindow(QWidget *parent = nullptr);

@@ -6,8 +6,10 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QPixmap>
+#include "base_lobby.h" 
 
-class NameInputWindow : public QWidget {
+
+class NameInputWindow : public  BaseLobby {
     Q_OBJECT
 
 public:
@@ -25,6 +27,7 @@ signals:
 private slots:
     void onConfirmClicked();
     void onTextChanged(const QString& text);
+    
 
 private:
     void setupUI();
@@ -38,7 +41,6 @@ private:
     QLineEdit* nameInput;
     QPushButton* confirmButton;
     
-    int customFontId;
     QString playerName;
 };
 

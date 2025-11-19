@@ -10,9 +10,10 @@
 
 
 #include "common_src/lobby_protocol.h"  
+#include "base_lobby.h"  
 
 
-class MatchSelectionWindow : public QWidget {
+class MatchSelectionWindow : public  BaseLobby{
     Q_OBJECT
 
 public:

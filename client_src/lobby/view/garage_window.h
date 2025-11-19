@@ -7,6 +7,7 @@
 #include <QPixmap>
 #include <QPainter>
 #include <vector>
+#include "base_lobby.h"
 
 struct CarInfo {
     QString name;
@@ -18,7 +19,7 @@ struct CarInfo {
     int durability;
 };
 
-class GarageWindow : public QWidget {
+class GarageWindow : public BaseLobby {
     Q_OBJECT
 
 public:

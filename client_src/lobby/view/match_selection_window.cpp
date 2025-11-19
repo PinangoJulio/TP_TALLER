@@ -6,7 +6,7 @@
 #include <QScrollBar>
 
 MatchSelectionWindow::MatchSelectionWindow(QWidget *parent)
-    : QWidget(parent), customFontId(-1), selectedMatchId("") {
+    : BaseLobby(parent), customFontId(-1), selectedMatchId("") {
     
     setWindowTitle("Need for Speed 2D - Selección de Partida");
     setFixedSize(700, 700);
@@ -15,7 +15,7 @@ MatchSelectionWindow::MatchSelectionWindow(QWidget *parent)
     customFontId = QFontDatabase::addApplicationFont("assets/fonts/arcade-classic.ttf");
     
   
-    backgroundImage.load("assets/img/race.png");
+    backgroundImage.load("assets/img/lobby/window_covers/race.png");
     if (!backgroundImage.isNull()) {
         backgroundImage = backgroundImage.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }
@@ -188,6 +188,8 @@ void MatchSelectionWindow::setupUI() {
     backButton->setCursor(Qt::PointingHandCursor);
     backButton->setGeometry(50, 600, 180, 60);
     connect(backButton, &QPushButton::clicked, this, &MatchSelectionWindow::onBackClicked);
+    setupMusicControl(); 
+
 }
 
 

@@ -9,6 +9,7 @@
 #include <QTimer>
 #include <vector>
 #include <QMessageBox> 
+#include "base_lobby.h"
 
 struct PlayerInfo {
     QString name;
@@ -25,7 +26,7 @@ struct PlayerCardWidgets {
     QLabel* statusLabel;
 };
 
-class WaitingRoomWindow : public QWidget {
+class WaitingRoomWindow : public BaseLobby{
     Q_OBJECT
 
 public:

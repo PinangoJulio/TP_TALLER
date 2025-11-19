@@ -11,7 +11,9 @@
 #include <QPixmap>
 #include <vector>
 #include "common_types.h"
-
+#include "base_lobby.h"
+#include <QComboBox>       
+#include <SDL2/SDL_mixer.h>
 struct CityInfo {
     QString name;
     QString imagePath;
@@ -19,7 +21,7 @@ struct CityInfo {
     std::vector<QString> trackImagePaths;
 };
 
-class CreateMatchWindow : public QWidget {
+class CreateMatchWindow : public BaseLobby {
     Q_OBJECT
 
 public:
