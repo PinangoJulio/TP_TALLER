@@ -11,11 +11,8 @@ class ServerProtocol {
     Socket& socket;
     LobbyManager& lobby_manager;
 
-
 public:
     ServerProtocol(Socket& s, LobbyManager& manager);
-
-    bool handle_client();
 
     // Procesa mensajes del cliente
     bool process_client_messages(const std::string& username);
@@ -28,11 +25,15 @@ public:
 
     // Lee un uint16_t
     uint16_t read_uint16();
+    
+    // Lee un uint8_t
+    uint8_t get_uint8_t();
 
     // Envía un buffer
     void send_buffer(const std::vector<uint8_t>& buffer);
-
-    uint8_t  get_uint8_t();
+    
+    // 🔥 NUEVO: Obtener referencia al socket
+    Socket& get_socket() { return socket; }
 };
 
 #endif //SERVER_PROTOCOL_H

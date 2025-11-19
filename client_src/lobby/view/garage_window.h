@@ -7,12 +7,13 @@
 #include <QPixmap>
 #include <QPainter>
 #include <vector>
+#include <cstdint>
 #include "base_lobby.h"
 
 struct CarInfo {
     QString name;
     QString imagePath;
-    QString type;  // <-- nuevo campo (ej. "sport", "truck", "classic")
+    QString type;  // tipo de auto (sport, truck, classic)
     int speed;
     int acceleration;
     int handling;
@@ -56,7 +57,7 @@ private:
     QLabel* carImageLabel;
     QWidget* statsPanel;
     
-    // Widgets para las estadísticas
+    // Widgets estadísticas
     std::vector<QLabel*> statNameLabels;
     std::vector<QWidget*> statBarBackgrounds;
     std::vector<QWidget*> statBarFills;

@@ -5,13 +5,18 @@
 #include <string>
 #include <memory>
 #include <cstdint>
+#include <functional>
+#include <vector>
 #include "game_room.h"
+#include "../../common_src/socket.h"
 
 class LobbyManager {
 private:
     std::map<uint16_t, std::unique_ptr<GameRoom>> games;
     std::map<std::string, uint16_t> player_to_game;
     uint16_t next_game_id;
+    
+    std::map<uint16_t, std::map<std::string, Socket*>> player_sockets;
 
 public:
     LobbyManager();
@@ -26,6 +31,10 @@ public:
     bool is_game_ready(uint16_t game_id) const;
     
     const std::map<uint16_t, std::unique_ptr<GameRoom>>& get_all_games() const;
+    
+    void register_player_socket(uint16_t game_id, const std::string& username, Socket& socket);
+    void unregister_player_socket(uint16_t game_id, const std::string& username);
+    void broadcast_to_game(uint16_t game_id, const std::vector<uint8_t>& buffer, const std::string& exclude_username = "");
 };
 
 #endif // LOBBY_MANAGER_H

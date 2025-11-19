@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <iostream>
 #include <sys/socket.h>
+#include <cstring>
 
 #define RUTA_MAPS "server_src/city_maps/"
 
@@ -42,6 +43,7 @@ std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::strin
 
 
 void Receiver::handle_lobby() {
+    int current_game_id = -1;
     try {
         uint8_t msg_type_user = protocol.read_message_type();
         if (msg_type_user != MSG_USERNAME) {
@@ -49,7 +51,7 @@ void Receiver::handle_lobby() {
             return;
         }
 
-        std::string username = protocol.read_string();
+        username = protocol.read_string();
         std::cout << "[Receiver] Player connected: " << username << std::endl;
 
         auto welcome_msg = "Welcome to Need for Speed 2D, " + username + "!";
@@ -57,7 +59,7 @@ void Receiver::handle_lobby() {
 
         // --- Paso 2: bucle principal del lobby ---
         bool in_lobby = true;
-        int current_game_id = -1;  // 🔥 AGREGADO: Rastrear en qué partida está el jugador
+        int current_game_id = -1;  //Rastrear en qué partida está el jugador
         
         while (is_running && in_lobby) {
             uint8_t msg_type = protocol.read_message_type();
@@ -66,7 +68,29 @@ void Receiver::handle_lobby() {
                 // ------------------------------------------------------------
                 case MSG_LIST_GAMES: {
                     std::cout << "[Receiver] " << username << " requested games list\n";
-                    auto games = monitor.list_available_matches();
+                    
+                    // Usar lobby_manager en lugar de monitor
+                    std::vector<GameInfo> games;
+                    
+                    for (const auto& [game_id, room] : lobby_manager.get_all_games()) {
+                        GameInfo info{};
+                        info.game_id = game_id;
+                        
+                        // Copiar nombre del juego
+                        std::string name = room->get_game_name();
+                        size_t copy_len = std::min(name.length(), sizeof(info.game_name) - 1);
+                        std::memcpy(info.game_name, name.c_str(), copy_len);
+                        info.game_name[copy_len] = '\0';
+                        
+                        info.current_players = room->get_player_count();
+                        info.max_players = room->get_max_players();
+                        info.is_started = room->is_started();
+                        
+                        games.push_back(info);
+                    }
+                    
+                    std::cout << "[Receiver] Sending " << games.size() << " games to " << username << "\n";
+                    
                     auto response = LobbyProtocol::serialize_games_list(games);
                     protocol.send_buffer(response);
                     break;
@@ -76,26 +100,32 @@ void Receiver::handle_lobby() {
                     std::string game_name = protocol.read_string();
                     uint8_t max_players = protocol.get_uint8_t();
                     uint8_t num_races = protocol.get_uint8_t();
-
+                
                     std::cout << "[Receiver] " << username << " creating game: " << game_name 
                               << " (max: " << (int)max_players << ", races: " << (int)num_races << ")\n";
-
-                    // 🔥 VALIDAR: No puede crear si ya está en una partida
+                
                     if (current_game_id != -1) {
                         std::cout << "[Receiver] ERROR: " << username << " is already in game " << current_game_id << "\n";
                         protocol.send_buffer(LobbyProtocol::serialize_error(ERR_ALREADY_IN_GAME, "You are already in a game"));
                         break;
                     }
-
-                    int game_id = monitor.create_match(max_players, game_name, id, sender_messages_queue);
+                    
+                    if (lobby_manager.is_player_in_game(username)) {
+                        std::cout << "[Receiver] ERROR: LobbyManager says " << username << " is already in a game!\n";
+                        protocol.send_buffer(LobbyProtocol::serialize_error(ERR_ALREADY_IN_GAME, "You are already in a game (manager check)"));
+                        break;
+                    }
+                
+                    int game_id = lobby_manager.create_game(game_name, username, max_players);
                     if (game_id == 0) {
                         protocol.send_buffer(LobbyProtocol::serialize_error(ERR_ALREADY_IN_GAME, "Error creating match"));
                         break;
                     }
-
-                    // 🔥 GUARDAR: Ahora está en esta partida
+                
                     current_game_id = game_id;
-
+                    
+                    lobby_manager.register_player_socket(game_id, username, protocol.get_socket());
+                
                     // Recibir selección de carreras
                     std::vector<RaceConfig> races;
                     for (int i = 0; i < num_races; ++i) {
@@ -104,8 +134,7 @@ void Receiver::handle_lobby() {
                         races.push_back({city, map});
                         std::cout << "[Receiver]   Race " << (i+1) << ": " << city << " - " << map << "\n";
                     }
-
-                    monitor.add_races_to_match(game_id, races);
+                    
                     protocol.send_buffer(LobbyProtocol::serialize_game_created(game_id));
                     std::cout << "[Receiver] Game created with ID: " << game_id << "\n";
                     break;
@@ -115,22 +144,91 @@ void Receiver::handle_lobby() {
                     int game_id = static_cast<int>(protocol.read_uint16());
                     std::cout << "[Receiver] " << username << " joining game " << game_id << "\n";
                     
-                    // 🔥 VALIDAR: No puede unirse si ya está en una partida
                     if (current_game_id != -1) {
                         std::cout << "[Receiver] ERROR: " << username << " is already in game " << current_game_id << "\n";
                         protocol.send_buffer(LobbyProtocol::serialize_error(ERR_ALREADY_IN_GAME, "You are already in a game"));
                         break;
                     }
-
-                    bool success = monitor.join_match(game_id, username, id, sender_messages_queue);
-
-                    if (success) {
-                        current_game_id = game_id;  // 🔥 GUARDAR
-                        protocol.send_buffer(LobbyProtocol::serialize_game_joined(static_cast<uint16_t>(game_id)));
-                        std::cout << "[Receiver] " << username << " joined match " << game_id << std::endl;
-                    } else {
-                        protocol.send_buffer(LobbyProtocol::serialize_error(ERR_GAME_FULL, "Game is full or started"));
+                
+                    // 1. OBTENER LA SALA
+                    auto& games = lobby_manager.get_all_games();
+                    auto room_it = games.find(game_id);
+                    if (room_it == games.end()) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(ERR_GAME_NOT_FOUND, "Game not found"));
+                        break;
                     }
+                    
+                    GameRoom* room = room_it->second.get();
+                
+                    // 2. CAPTURAR SNAPSHOT **ANTES** DE AGREGAR AL JUGADOR
+                    std::map<std::string, LobbyPlayerInfo> existing_players = room->get_players();
+                    
+                    // 3. REGISTRAR SOCKET **ANTES** DE JOIN
+                    lobby_manager.register_player_socket(game_id, username, protocol.get_socket());
+                    
+                    // 4. HACER JOIN (esto agregará al jugador a la sala)
+                    bool success = lobby_manager.join_game(game_id, username);
+                
+                    if (!success) {
+                        lobby_manager.unregister_player_socket(game_id, username);
+                        protocol.send_buffer(LobbyProtocol::serialize_error(ERR_GAME_FULL, "Game is full or started"));
+                        break;
+                    }
+                    
+                    current_game_id = game_id;
+                    
+                    // 5. ENVIAR CONFIRMACIÓN AL NUEVO JUGADOR
+                    protocol.send_buffer(LobbyProtocol::serialize_game_joined(static_cast<uint16_t>(game_id)));
+                    std::cout << "[Receiver] " << username << " joined match " << game_id << std::endl;
+                    
+                    std::cout << "[Receiver] Sending room snapshot to " << username
+                              << " (" << existing_players.size() << " existing players)" << std::endl;
+                    
+                    for (const auto& [player_name, player_info] : existing_players) {
+                        // Notificar que este jugador existe
+                        auto joined_notif = LobbyProtocol::serialize_player_joined_notification(player_name);
+                        protocol.send_buffer(joined_notif);
+                        
+                        std::cout << "[Receiver]   → Player exists: " << player_name << std::endl;
+                        
+                        // Si tiene auto seleccionado, notificarlo
+                        if (!player_info.car_name.empty()) {
+                            auto car_notif = LobbyProtocol::serialize_car_selected_notification(
+                                player_name, 
+                                player_info.car_name, 
+                                player_info.car_type
+                            );
+                            protocol.send_buffer(car_notif);
+                            
+                            std::cout << "[Receiver]   → Car: " << player_info.car_name << std::endl;
+                        }
+                        
+                        // Si está ready, notificarlo
+                        if (player_info.is_ready) {
+                            auto ready_notif = LobbyProtocol::serialize_player_ready_notification(
+                                player_name, 
+                                true
+                            );
+                            protocol.send_buffer(ready_notif);
+                            
+                            std::cout << "[Receiver]   → Ready: YES" << std::endl;
+                        }
+                    }
+
+                    std::vector<uint8_t> end_marker;
+                    end_marker.push_back(MSG_ROOM_SNAPSHOT);  // Tipo especial
+                    end_marker.push_back(0);  // Count = 0 (marca el fin)
+                    end_marker.push_back(0);
+                    protocol.send_buffer(end_marker);
+                    
+                    std::cout << "[Receiver] ✅ Snapshot sent with END marker to " << username << std::endl;
+                    
+                    // BROADCAST A LOS DEMÁS **DESPUÉS**
+                    auto joined_notif = LobbyProtocol::serialize_player_joined_notification(username);
+                    lobby_manager.broadcast_to_game(game_id, joined_notif, username);
+                    
+                    std::cout << "[Receiver] Broadcasted join notification (excluding " << username << ")" << std::endl;
+                    
                     break;
                 }
                 // ------------------------------------------------------------
@@ -141,20 +239,47 @@ void Receiver::handle_lobby() {
                     std::cout << "[Receiver] " << username << " selected car: " 
                               << car_name << " (" << car_type << ")\n";
                     
-                    monitor.set_player_car(id, car_name, car_type);
+                    if (current_game_id == -1) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_PLAYER_NOT_IN_GAME, "You are not in any game"));
+                        break;
+                    }
                     
-                    // 🔥 ENVIAR CONFIRMACIÓN AL CLIENTE
+                    auto& games = lobby_manager.get_all_games();
+                    auto it = games.find(current_game_id);
+                    if (it == games.end()) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_GAME_NOT_FOUND, "Game not found"));
+                        break;
+                    }
+                    
+                    GameRoom* room = it->second.get();
+                    
+                    // Guardar el auto (SIN broadcast todavía)
+                    if (!room->set_player_car(username, car_name, car_type)) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_INVALID_CAR_INDEX, "Failed to select car"));
+                        break;
+                    }
+                    
+                    // Enviar ACK al cliente
                     protocol.send_buffer(LobbyProtocol::serialize_car_selected_ack(car_name, car_type));
+                    std::cout << "[Receiver] ✅ ACK sent to " << username << std::endl;
+    
+                    // Broadcast a TODOS EXCEPTO al que seleccionó
+                    auto notif = LobbyProtocol::serialize_car_selected_notification(username, car_name, car_type);
+                    lobby_manager.broadcast_to_game(current_game_id, notif, username);
+                    std::cout << "[Receiver] ✅ Broadcast triggered (excluding " << username << ")" << std::endl;
+    
                     break;
                 }
                 // ------------------------------------------------------------
-                // 🔥 CORREGIDO: Handler completo para MSG_LEAVE_GAME
                 case MSG_LEAVE_GAME: {
-                    int game_id = static_cast<int>(protocol.read_uint16());
+                    uint16_t game_id = protocol.read_uint16();
                     
                     std::cout << "[Receiver] " << username << " leaving game " << game_id << "\n";
                     
-                    // 🔥 VALIDAR: ¿Está realmente en esa partida?
+                    // Validar que esté en esa partida
                     if (current_game_id != game_id) {
                         std::cout << "[Receiver] ERROR: " << username << " is not in game " << game_id 
                                   << " (current: " << current_game_id << ")\n";
@@ -162,35 +287,114 @@ void Receiver::handle_lobby() {
                         break;
                     }
                     
-                    // Eliminar del monitor
-                    monitor.delete_player_from_match(id, game_id);
-                    
-                    // 🔥 RESETEAR: Ya no está en ninguna partida
                     current_game_id = -1;
                     
-                    // 🔥 ENVIAR CONFIRMACIÓN (puedes usar GAMES_LIST vacía o un ACK custom)
-                    // Opción 1: Enviar lista vacía (el cliente espera esto)
-                    std::vector<GameInfo> empty_list;
-                    protocol.send_buffer(LobbyProtocol::serialize_games_list(empty_list));
+                    // Desregistrar socket y eliminar del manager
+                    lobby_manager.leave_game(username);
                     
-                    std::cout << "[Receiver] " << username << " successfully left game " << game_id << "\n";
+                    std::cout << "[Receiver] " << username << " successfully left game " << game_id << std::endl;
+                    
+                    // Enviar lista de partidas actualizada
+                    std::vector<GameInfo> games;
+                    
+                    for (const auto& [gid, room] : lobby_manager.get_all_games()) {
+                        GameInfo info{};
+                        info.game_id = gid;
+                        
+                        std::string name = room->get_game_name();
+                        size_t copy_len = std::min(name.length(), sizeof(info.game_name) - 1);
+                        std::memcpy(info.game_name, name.c_str(), copy_len);
+                        info.game_name[copy_len] = '\0';
+                        
+                        info.current_players = room->get_player_count();
+                        info.max_players = room->get_max_players();
+                        info.is_started = room->is_started();
+                        
+                        games.push_back(info);
+                    }
+                    
+                    auto buffer = LobbyProtocol::serialize_games_list(games);
+                    protocol.send_buffer(buffer);
+                    
+                    std::cout << "[Receiver] Sent updated games list (" << games.size() << " games)" << std::endl;
+                    
                     break;
                 }
                 // ------------------------------------------------------------
+                case MSG_PLAYER_READY: {
+                    uint8_t is_ready = protocol.get_uint8_t();
+                    
+                    std::cout << "[Receiver] " << username << " set ready: " 
+                              << (is_ready ? "YES" : "NO") << "\n";
+                    
+                    if (current_game_id == -1) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_PLAYER_NOT_IN_GAME, "You are not in any game"));
+                        break;
+                    }
+                    
+                    auto& games = lobby_manager.get_all_games();
+                    auto it = games.find(current_game_id);
+                    if (it == games.end()) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_GAME_NOT_FOUND, "Game not found"));
+                        break;
+                    }
+                    
+                    GameRoom* room = it->second.get();
+                
+                    if (!room->set_player_ready(username, is_ready != 0)) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_INVALID_CAR_INDEX, "You must select a car before being ready"));
+                        break;
+                    }
+                
+                    auto notif = LobbyProtocol::serialize_player_ready_notification(username, is_ready != 0);
+                    lobby_manager.broadcast_to_game(current_game_id, notif, username);  // ✅ YA ESTÁ CORRECTO
+                
+                    break;
+                }
+                // ------------------------------------------------------------                
                 case MSG_START_GAME: {
                     int game_id = static_cast<int>(protocol.read_uint16());
-
+                
                     std::cout << "[Receiver] " << username << " starting game " << game_id << "\n";
                     
-                    // 🔥 TODO: Validar que sea el host y que todos estén listos
-                    protocol.send_buffer(LobbyProtocol::serialize_game_started(static_cast<uint16_t>(game_id)));
-
-                    in_lobby = false;
-                    this->match_id = game_id;
-                    current_game_id = -1;  // 🔥 Ya no está en lobby
+                    // Validaciones...
+                    auto& games = lobby_manager.get_all_games();
+                    auto it = games.find(game_id);
+                    if (it == games.end()) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_GAME_NOT_FOUND, "Game not found"));
+                        break;
+                    }
                     
-                    // Iniciar el juego
-                    monitor.start_match(game_id);
+                    GameRoom* room = it->second.get();
+                    
+                    if (!room->has_player(username)) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_PLAYER_NOT_IN_GAME, "You are not in this game"));
+                        break;
+                    }
+                    
+                    // Validar que todos estén listos
+                    if (!room->all_players_ready()) {
+                        protocol.send_buffer(LobbyProtocol::serialize_error(
+                            ERR_PLAYERS_NOT_READY, "Not all players are ready"));
+                        break;
+                    }
+                    
+                    // Iniciar la partida
+                    room->start();
+                    
+                    // Broadcast MSG_GAME_STARTED a todos
+                    auto buffer = LobbyProtocol::serialize_game_started(static_cast<uint16_t>(game_id));
+                    if (room->get_broadcast_callback()) {
+                        room->get_broadcast_callback()(buffer);
+                    }
+                    
+                    std::cout << "[Receiver] Game " << game_id << " started successfully!" << std::endl;
+                    
                     break;
                 }
                 // ------------------------------------------------------------
@@ -206,15 +410,48 @@ void Receiver::handle_lobby() {
         }
 
     } catch (const std::exception& e) {
-        std::cerr << "[Receiver] Lobby error: " << e.what() << std::endl;
+        std::string error_msg = e.what();
+        
+        if (error_msg.find("Connection closed") != std::string::npos) {
+            std::cout << "[Receiver] Player " << username << " disconnected" << std::endl;
+        } else {
+            std::cerr << "[Receiver] Lobby error: " << error_msg << std::endl;
+        }
+        
+        if (!username.empty() && current_game_id != -1) {
+            std::cout << "[Receiver] Cleaning up " << username 
+                      << " from game " << current_game_id << " (disconnect)" << std::endl;
+            
+            try {
+                lobby_manager.leave_game(username);
+                std::cout << "[Receiver] ✅ " << username << " cleaned up successfully" << std::endl;
+            } catch (const std::exception& cleanup_error) {
+                std::cerr << "[Receiver] ❌ Failed to cleanup: " << cleanup_error.what() << std::endl;
+            }
+        }
+        
         is_running = false;
     }
 }
 
 
 void Receiver::handle_match_messages() {
-    //implementar comunicacion de juego
-    is_running = false;
+    std::cout << "[Receiver] Player " << username << " entered match " << match_id << std::endl;
+    std::cout << "[Receiver] Match communication not implemented yet, keeping connection alive..." << std::endl;
+    
+    // (esto se implementará cuando agregues la lógica del juego)
+    
+    try {
+        while (is_running) {
+            // aquí irán los comandos de movimiento, etc.)
+            
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "[Receiver] Match error: " << e.what() << std::endl;
+    }
+    
+    std::cout << "[Receiver] Player " << username << " left match " << match_id << std::endl;
 }
 
 

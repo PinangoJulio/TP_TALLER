@@ -148,7 +148,43 @@ uint16_t LobbyClient::receive_game_joined() {
     
     uint16_t game_id = read_uint16();
     std::cout << "[LobbyClient] Joined game: " << game_id << std::endl;
+    
+    // El snapshot llegará vía notificaciones automáticamente
+    
     return game_id;
+}
+
+void LobbyClient::receive_room_snapshot() {
+    uint8_t type = read_message_type();
+    if (type != MSG_ROOM_SNAPSHOT) {
+        throw std::runtime_error("Expected ROOM_SNAPSHOT message");
+    }
+    
+    uint16_t player_count = read_uint16();
+    
+    for (int i = 0; i < player_count; i++) {
+        std::string player_name = read_string();
+        std::string car_name = read_string();
+        std::string car_type = read_string();
+        uint8_t is_ready = read_uint8();
+        
+        // Emitir señales para actualizar la UI
+        emit playerJoinedNotification(QString::fromStdString(player_name));
+        
+        if (!car_name.empty()) {
+            emit carSelectedNotification(
+                QString::fromStdString(player_name),
+                QString::fromStdString(car_name),
+                QString::fromStdString(car_type)
+            );
+        }
+        
+        if (is_ready) {
+            emit playerReadyNotification(QString::fromStdString(player_name), true);
+        }
+    }
+    
+    std::cout << "[LobbyClient] Room snapshot received (" << player_count << " players)" << std::endl;
 }
 
 uint8_t LobbyClient::peek_message_type() {
@@ -236,6 +272,233 @@ void LobbyClient::leave_game(uint16_t game_id) {
     socket.sendall(buffer.data(), buffer.size());
     std::cout << "[LobbyClient] Leave game request sent for ID: " << game_id << std::endl;
 }
+
+
+void LobbyClient::start_listening() {
+    // Si el listener ya está corriendo, NO hacer nada
+    if (listening.load()) {
+        std::cout << "[LobbyClient] Listener is already running, skipping start" << std::endl;
+        return;
+    }
+    
+    //FIX: Si hay un thread anterior, asegurarse de que terminó
+    if (notification_thread.joinable()) {
+        std::cout << "[LobbyClient] ⚠️  Previous listener thread still exists, joining..." << std::endl;
+        notification_thread.join();
+        std::cout << "[LobbyClient] ✅ Previous thread cleaned up" << std::endl;
+    }
+    
+    listening.store(true);
+    notification_thread = std::thread(&LobbyClient::notification_listener, this);
+    std::cout << "[LobbyClient] Notification listener started" << std::endl;
+}
+
+void LobbyClient::stop_listening() {
+    std::cout << "[LobbyClient] Stopping notification listener..." << std::endl;
+
+    // Siempre marcar como detenido
+    listening.store(false);
+
+    // Siempre intentar join si está joinable (aunque ya estuviera detenido)
+    if (notification_thread.joinable()) {
+        try {
+            std::cout << "[LobbyClient] Joining listener thread..." << std::endl;
+            notification_thread.join();
+            std::cout << "[LobbyClient] Listener thread joined" << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "[LobbyClient] Error joining listener: " << e.what() << std::endl;
+        }
+    } else {
+        std::cout << "[LobbyClient] No join needed (not joinable)" << std::endl;
+    }
+}
+
+void LobbyClient::notification_listener() {
+    std::cout << "[LobbyClient] Notification listener running..." << std::endl;
+    
+    try {
+        while (listening.load() && connected) {
+            uint8_t msg_type;
+            
+            try {
+                msg_type = read_message_type();
+            } catch (const std::exception& e) {
+                if (!listening.load()) {
+                    std::cout << "[LobbyClient] Listener stopped gracefully" << std::endl;
+                    break;
+                }
+                throw;
+            }
+            
+            // Si estamos cerrando, ignorar todos los mensajes
+            if (!listening.load()) {
+                std::cout << "[LobbyClient] Listener stopped, ignoring message type " 
+                          << static_cast<int>(msg_type) << std::endl;
+                break;
+            }
+            
+            std::cout << "[LobbyClient] Received notification type: " 
+                      << static_cast<int>(msg_type) << std::endl;
+            
+            switch (msg_type) {
+                case MSG_PLAYER_JOINED_NOTIFICATION: {
+                    std::string username = read_string();
+                    std::cout << "[LobbyClient] Player joined: " << username << std::endl;
+                    emit playerJoinedNotification(QString::fromStdString(username));
+                    break;
+                }
+                
+                case MSG_PLAYER_LEFT_NOTIFICATION: {
+                    std::string username = read_string();
+                    std::cout << "[LobbyClient] Player left: " << username << std::endl;
+                    emit playerLeftNotification(QString::fromStdString(username));
+                    break;
+                }
+                
+                case MSG_PLAYER_READY_NOTIFICATION: {
+                    std::string username = read_string();
+                    uint8_t is_ready = read_uint8();
+                    std::cout << "[LobbyClient] Player " << username 
+                              << " is now " << (is_ready ? "READY" : "NOT READY") << std::endl;
+                    emit playerReadyNotification(
+                        QString::fromStdString(username), 
+                        is_ready != 0
+                    );
+                    break;
+                }
+                
+                case MSG_CAR_SELECTED_NOTIFICATION: {
+                    std::string username = read_string();
+                    std::string car_name = read_string();
+                    std::string car_type = read_string();
+                    std::cout << "[LobbyClient] Player " << username 
+                              << " selected " << car_name << std::endl;
+                    emit carSelectedNotification(
+                        QString::fromStdString(username),
+                        QString::fromStdString(car_name),
+                        QString::fromStdString(car_type)
+                    );
+                    break;
+                }
+                
+                case MSG_GAMES_LIST: {
+                    std::cout << "[LobbyClient] Received MSG_GAMES_LIST in listener (consuming fully)" << std::endl;
+                    
+                    uint16_t count = read_uint16();
+                    std::cout << "[LobbyClient] Games list has " << count << " games" << std::endl;
+                    
+                    std::vector<GameInfo> games;
+                    for (uint16_t i = 0; i < count; i++) {
+                        GameInfo info;
+                        info.game_id = read_uint16();  
+                        socket.recvall(info.game_name, sizeof(info.game_name));  
+                        socket.recvall(&info.current_players, sizeof(info.current_players));  
+                        socket.recvall(&info.max_players, sizeof(info.max_players));  
+                        uint8_t started;
+                        socket.recvall(&started, sizeof(started));
+                        info.is_started = (started != 0);
+                        
+                        games.push_back(info);
+                        std::cout << "[LobbyClient]   Game " << info.game_id << ": " << info.game_name << std::endl;
+                    }
+                    
+                    emit gamesListReceived(games);
+                    
+                    std::cout << "[LobbyClient] MSG_GAMES_LIST fully consumed, exiting listener" << std::endl;
+                    
+                    // Salir del listener
+                    listening.store(false);
+                    return;
+                }
+                
+                case MSG_ERROR: {
+                    uint8_t error_code = read_uint8();
+                    std::string error_msg = read_string();
+                    std::cerr << "[LobbyClient] Error " << static_cast<int>(error_code) 
+                              << ": " << error_msg << std::endl;
+                    emit errorOccurred(QString::fromStdString(error_msg));
+                    break;
+                }
+                
+                default:
+                    std::cerr << "[LobbyClient] Unknown notification type: " 
+                              << static_cast<int>(msg_type) << std::endl;
+                    break;
+            }
+        }
+    } catch (const std::exception& e) {
+        if (listening.load()) {
+            std::cerr << "[LobbyClient] Notification listener error: " << e.what() << std::endl;
+        }
+        connected = false;
+    }
+    
+    std::cout << "[LobbyClient] Notification listener exited" << std::endl;
+}
+
+void LobbyClient::set_ready(bool is_ready) {
+    auto buffer = LobbyProtocol::serialize_player_ready(is_ready);
+    socket.sendall(buffer.data(), buffer.size());
+    std::cout << "[LobbyClient] Set ready: " << (is_ready ? "YES" : "NO") << std::endl;
+}
+
+void LobbyClient::read_room_snapshot(std::vector<QString>& players, 
+                                      std::map<QString, QString>& cars) {
+    std::cout << "[LobbyClient] Reading room snapshot manually..." << std::endl;
+    
+    while (true) {
+        uint8_t msg_type;
+        
+        try {
+            msg_type = read_message_type();
+        } catch (const std::exception& e) {
+            std::cerr << "[LobbyClient] Error reading snapshot: " << e.what() << std::endl;
+            break;
+        }
+        
+        std::cout << "[LobbyClient] Snapshot msg type: " << static_cast<int>(msg_type) << std::endl;
+        
+        if (msg_type == MSG_ROOM_SNAPSHOT) {
+            uint8_t count1, count2;
+            socket.recvall(&count1, sizeof(count1));
+            socket.recvall(&count2, sizeof(count2));
+            
+            if (count1 == 0 && count2 == 0) {
+                std::cout << "[LobbyClient] ✅ END OF SNAPSHOT detected" << std::endl;
+                break;  // Fin del snapshot
+            }
+        }
+        
+        // Procesar mensajes de snapshot
+        if (msg_type == MSG_PLAYER_JOINED_NOTIFICATION) {
+            std::string username = read_string();
+            players.push_back(QString::fromStdString(username));
+            std::cout << "[LobbyClient]   Snapshot player: " << username << std::endl;
+            
+        } else if (msg_type == MSG_CAR_SELECTED_NOTIFICATION) {
+            std::string username = read_string();
+            std::string car_name = read_string();
+            std::string car_type = read_string();
+            cars[QString::fromStdString(username)] = QString::fromStdString(car_name);
+            std::cout << "[LobbyClient]   Snapshot car: " << username << " -> " << car_name << std::endl;
+            
+        } else if (msg_type == MSG_PLAYER_READY_NOTIFICATION) {
+            std::string username = read_string();
+            uint8_t is_ready = read_uint8();
+            std::cout << "[LobbyClient]   Snapshot ready: " << username << " -> " << (is_ready ? "YES" : "NO") << std::endl;
+        }
+    }
+    
+    std::cout << "[LobbyClient] Snapshot read complete: " << players.size() << " players" << std::endl;
+}
+
+// Destructor actualizado
+LobbyClient::~LobbyClient() {
+    // Asegurar join antes de destruir el objeto para evitar std::terminate
+    stop_listening();
+}
+
+
 // ========================================================================================================================================================================
 // Estas son las funciones que necesito nuevas para seguir
 

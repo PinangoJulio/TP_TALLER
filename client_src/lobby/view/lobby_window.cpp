@@ -335,7 +335,7 @@ void LobbyWindow::onCarSelected(const CarInfo& car) {
     }
     
     // Abrir sala de espera
-    waitingRoomWindow = new WaitingRoomWindow();
+    waitingRoomWindow = new WaitingRoomWindow(this->_max_players);
     
     // Configurar información del jugador local
     const std::vector<QString> carNames = {

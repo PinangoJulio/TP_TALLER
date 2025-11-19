@@ -3,75 +3,96 @@
 
 #include <string>
 #include <vector>
+#include <atomic>
+#include <thread>
+#include <QObject> 
 
 #include "client_src/lobby/view/common_types.h"
 #include "common_src/socket.h"
 #include "common_src/lobby_protocol.h"
 
-class LobbyClient {
+class LobbyClient : public QObject {
+    Q_OBJECT
+
 private:
     Socket socket;
     std::string username;
     bool connected;
 
+    std::atomic<bool> listening;
+    std::thread notification_thread;
+
+    // Helpers de lectura
     uint8_t read_message_type();
     std::string read_string();
     uint16_t read_uint16();
     uint8_t read_uint8();
     void send_string(const std::string& str);
+    void receive_room_snapshot();
+
+    void notification_listener();
 
 public:
     LobbyClient(const std::string& host, const std::string& port);
+    ~LobbyClient();
 
-    // Enviar username al servidor
+    // === LOBBY ===
     void send_username(const std::string& username);
-
-    // Recibir mensaje de bienvenida
     std::string receive_welcome();
-
-    // Pedir lista de juegos
     void request_games_list();
-
-    // Recibir lista de juegos
     std::vector<GameInfo> receive_games_list();
 
-    // Crear un nuevo juego
-    void create_game(const std::string &game_name, uint8_t max_players, const std::vector<std::pair<std::string, std::string>> &races);
+    // === MATCH ===
+    void create_game(const std::string &game_name, uint8_t max_players, 
+                     const std::vector<std::pair<std::string, std::string>> &races);
+    uint16_t receive_game_created();
+    void join_game(uint16_t game_id);
+    uint16_t receive_game_joined();
+    void leave_game(uint16_t game_id);
 
-    std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::string>>>> receive_city_maps();
-
-    void send_selected_races(const std::vector<std::pair<std::string, std::string>>& races);
-
+    // === GARAGE ===
     void select_car(const std::string& car_name, const std::string& car_type);
-
     std::string receive_car_confirmation();
 
-    // Recibir confirmación de juego creado
-    uint16_t receive_game_created();
+    // : Waiting Room
+    void set_ready(bool is_ready);
+    void start_game(uint16_t game_id);
 
-    // Unirse a un juego
-    void join_game(uint16_t game_id);
+    //  Control del thread receptor
+    void start_listening();
+    void stop_listening();
 
-    // Recibir confirmación de unión a juego
-    uint16_t receive_game_joined();
-
-    // Lee el tipo de mensaje (para decisiones en el cliente)
+    // Error handling
     uint8_t peek_message_type();
-
-    // Lee detalles de error (asume que MSG_ERROR ya fue leído)
     void read_error_details(std::string& error_message);
 
-    void leave_game(uint16_t game_id);
-    void select_car(uint8_t car_index);
-    void start_game(uint16_t game_id);
-   
     // Getters
     bool is_connected() const { return connected; }
     std::string get_username() const { return username; }
 
-    // No se pueden copiar
+    // No copiable
     LobbyClient(const LobbyClient&) = delete;
     LobbyClient& operator=(const LobbyClient&) = delete;
+
+    std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::string>>>> 
+    receive_city_maps(); 
+
+    void send_selected_races(const std::vector<std::pair<std::string, std::string>>& races);
+
+    bool is_listening() const { return listening.load(); }
+
+    void read_room_snapshot(std::vector<QString>& players, 
+        std::map<QString, QString>& cars);
+
+signals:
+    //  Señales para notificar cambios en la sala
+    void playerJoinedNotification(QString username);
+    void playerLeftNotification(QString username);
+    void playerReadyNotification(QString username, bool isReady);
+    void carSelectedNotification(QString username, QString carName, QString carType);
+    void gameStartedNotification();
+    void errorOccurred(QString errorMessage);
+    void gamesListReceived(std::vector<GameInfo> games);
 };
 
 #endif // LOBBY_CLIENT_H

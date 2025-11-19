@@ -48,6 +48,9 @@ private:
     QString playerName;
     uint16_t currentGameId;  
     int selectedCarIndex;   
+    std::vector<QString> pendingPlayers;  
+    std::map<QString, QString> pendingCars;  
+
 
 public:
     explicit LobbyController(const QString& host, const QString& port, QObject* parent = nullptr);
@@ -93,6 +96,7 @@ private:
     void refreshGamesList();
     void openGarage();
     void openWaitingRoom();
+    void connectNotificationSignals();
 };
 
 #endif // LOBBY_CONTROLLER_H

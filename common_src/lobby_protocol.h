@@ -35,8 +35,13 @@ namespace LobbyProtocol {
     std::vector<uint8_t> serialize_car_selected_ack(const std::string& car_name, const std::string& car_type);
     std::vector<uint8_t> serialize_select_car(const std::string& car_name, const std::string& car_type);
 
+    // NUEVAS FUNCIONES DE SERIALIZACIÓN PARA NOTIFICACIONES DEL LOBBY:
+    std::vector<uint8_t> serialize_player_joined_notification(const std::string& username);
+    std::vector<uint8_t> serialize_player_left_notification(const std::string& username);
+    std::vector<uint8_t> serialize_player_ready_notification(const std::string& username, bool ready);
+    std::vector<uint8_t> serialize_car_selected_notification(const std::string& username, const std::string& car_name, const std::string& car_type);
+    std::vector<uint8_t> serialize_player_ready(bool is_ready);
   
-
 }
 
 #endif // LOBBY_PROTOCOL_H

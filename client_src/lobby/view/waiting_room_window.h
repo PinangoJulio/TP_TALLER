@@ -8,7 +8,8 @@
 #include <QPixmap>
 #include <QTimer>
 #include <vector>
-#include <QMessageBox> 
+#include <map>
+#include <QMessageBox>
 #include "base_lobby.h"
 
 struct PlayerInfo {
@@ -26,16 +27,25 @@ struct PlayerCardWidgets {
     QLabel* statusLabel;
 };
 
-class WaitingRoomWindow : public BaseLobby{
+class WaitingRoomWindow : public BaseLobby {
     Q_OBJECT
 
 public:
-    explicit WaitingRoomWindow(QWidget *parent = nullptr);
+    explicit WaitingRoomWindow(uint8_t maxPlayers, QWidget *parent = nullptr);
     ~WaitingRoomWindow();
     
+    // Métodos orientados a actualización por nombre
+    void addPlayerByName(const QString& name);
+    void removePlayerByName(const QString& name);
+    void setPlayerReadyByName(const QString& name, bool ready);
+    void setPlayerCarByName(const QString& name, const QString& car);
+    
+    // API previa por índice
     void addPlayer(const QString& name, const QString& car, bool isLocal = false);
     void setPlayerReady(int playerIndex, bool ready);
     void setLocalPlayerInfo(const QString& name, const QString& car);
+    
+    void updateStartButtonState();
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -58,10 +68,12 @@ private:
     void updatePlayerDisplay();
     void createPlayerCards();
     void updatePaginationButtons();
-    
+    int getCardsPerPage() const;
+
     QPixmap backgroundImage;
     
     std::vector<PlayerInfo> players;
+    std::map<QString, int> player_name_to_index;
     std::vector<PlayerCardWidgets> playerCardWidgets;
     bool localPlayerReady;
     int currentPage;
@@ -81,6 +93,7 @@ private:
     int animationFrame;
     
     int customFontId;
+    uint8_t max_players;
 };
 
 #endif // WAITING_ROOM_WINDOW_H
