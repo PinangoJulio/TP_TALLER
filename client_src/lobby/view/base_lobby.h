@@ -4,7 +4,7 @@
 #include <QWidget>
 #include <QPushButton>     
 #include <QIcon>           
-#include <SDL2/SDL_mixer.h>
+#include <SDL_mixer.h>
 
 class  BaseLobby : public QWidget {
     Q_OBJECT

@@ -8,7 +8,7 @@
 #include <QPainter>
 #include <QCloseEvent>
 #include <QFontDatabase>
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 LobbyWindow::LobbyWindow(QWidget *parent) 
     : BaseLobby(parent), 
@@ -59,8 +59,8 @@ LobbyWindow::LobbyWindow(QWidget *parent)
         }
     }
     
-  
-    
+
+
     // Botones (diseño original)
     playButton = new QPushButton("Jugar", this);
     

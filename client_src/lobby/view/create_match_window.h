@@ -13,7 +13,7 @@
 #include "common_types.h"
 #include "base_lobby.h"
 #include <QComboBox>       
-#include <SDL2/SDL_mixer.h>
+#include <SDL_mixer.h>
 struct CityInfo {
     QString name;
     QString imagePath;
@@ -119,3 +119,4 @@ private:
 };
 
 #endif // CREATE_MATCH_WINDOW_H
+

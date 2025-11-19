@@ -132,17 +132,17 @@ target_link_libraries(taller_common PUBLIC yaml-cpp)
 # =======================================================
 
 add_library(taller_lobby STATIC
-    server_src/lobby/lobby_manager.cpp
-    server_src/lobby/game_room.cpp
-    server_src/lobby/lobby_server.cpp
+        server_src/lobby/lobby_manager.cpp
+        server_src/lobby/game_room.cpp
+        server_src/lobby/lobby_server.cpp
 )
 
-target_include_directories(taller_lobby PUBLIC 
-    ${CMAKE_SOURCE_DIR}
+target_include_directories(taller_lobby PUBLIC
+        ${CMAKE_SOURCE_DIR}
 )
 
-target_link_libraries(taller_lobby PUBLIC 
-    taller_common
+target_link_libraries(taller_lobby PUBLIC
+        taller_common
 )
 
 set_project_warnings(taller_lobby ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
@@ -157,15 +157,15 @@ if(TALLER_CLIENT)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
     add_executable(client)
-    
+
     add_subdirectory(client_src)  # PRIMERO el subdirectorio
-    
+
     # DESPUÉS los includes (AMBAS líneas necesarias)
-    target_include_directories(client PRIVATE 
-        ${libSDL2pp_SOURCE_DIR}/include
-        ${CMAKE_SOURCE_DIR}
+    target_include_directories(client PRIVATE
+            ${libSDL2pp_SOURCE_DIR}/include
+            ${CMAKE_SOURCE_DIR}
     )
-    
+
     set_project_warnings(client ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 
     target_link_libraries(client
@@ -203,10 +203,10 @@ if(TALLER_SERVER)
     target_include_directories(server PRIVATE ${box2d_SOURCE_DIR})
     target_link_directories(server PRIVATE ${box2d_SOURCE_DIR})
 
-    target_link_libraries(server PRIVATE 
-        taller_common 
-        taller_lobby
-        box2d
+    target_link_libraries(server PRIVATE
+            taller_common
+            taller_lobby
+            box2d
     )
 endif()
 
@@ -235,30 +235,30 @@ endif()
 # Target del Test de Colisión y Movimiento
 # =======================================================
 add_executable(collision_test
-    tests/test_collision_movimiento.cpp
-    client_src/game/collision_manager.cpp
+        tests/test_collision_movimiento.cpp
+        client_src/game/collision_manager.cpp
 )
 
 target_include_directories(collision_test
-    PRIVATE
-    ${CMAKE_SOURCE_DIR}
-  # ${libSDL2pp_SOURCE_DIR} # Necesario para SDL2pp
-  ${libSDL2pp_SOURCE_DIR}/include
+        PRIVATE
+        ${CMAKE_SOURCE_DIR}
+        # ${libSDL2pp_SOURCE_DIR} # Necesario para SDL2pp
+        ${libSDL2pp_SOURCE_DIR}/include
 )
 
 target_link_libraries(collision_test
-    PRIVATE
-    taller_common   # Para dependencias comunes (socket, etc., aunque este test no las usa)
-    SDL2pp::SDL2pp  # Para la ventana y renderizado
-    SDL2_image      # Para cargar los PNG
+        PRIVATE
+        taller_common   # Para dependencias comunes (socket, etc., aunque este test no las usa)
+        SDL2pp::SDL2pp  # Para la ventana y renderizado
+        SDL2_image      # Para cargar los PNG
 )
 
 set_target_properties(collision_test PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 if(TALLER_TESTS)
     add_executable(taller_tests
-            )
+    )
     add_subdirectory(tests)
     set_project_warnings(taller_tests ${TALLER_MAKE_WARNINGS_AS_ERRORS} TRUE)
 
