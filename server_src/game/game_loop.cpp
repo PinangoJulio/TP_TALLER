@@ -1,65 +1,47 @@
-/*#include "game_loop.h"
+#include "game_loop.h"
+#include <iostream>
+#include <chrono>
+#include <thread>
+#include <utility>
 
-GameLoop::GameLoop(Monitor& monitor_ref, Queue<struct Command>& queue):
-        is_running(true), monitor(monitor_ref), cars_with_nitro(0), game_queue(queue) {}
+// ==========================================================
+// GAME LOOP IMPLEMENTATION
+// ==========================================================
 
-void GameLoop::send_nitro_on() {
-    cars_with_nitro++;
-    ServerMsg msg;
-    msg.type = static_cast<uint8_t>(ServerMessageType::MSG_SERVER);  
-    msg.cars_with_nitro = static_cast<uint16_t>(this->cars_with_nitro);
-    msg.nitro_status = static_cast<uint8_t>(ServerMessageType::NITRO_ON);  
-    std::cout << "A car hit the nitro!" << std::endl;
-    monitor.broadcast(msg);
+// Definición del constructor para que el linker lo encuentre (vtable)
+GameLoop::GameLoop(Queue<ComandMatchDTO> &comandos, ClientMonitor &queues, std::string &yaml_path)
+    : is_running(true),
+      comandos(comandos),
+      queues_players(queues),
+      yaml_path(yaml_path)
+{
+    std::cout << "[GameLoop] Constructor compilado OK. Simulación lista para iniciar." << std::endl;
 }
 
-void GameLoop::send_nitro_off() {
-    cars_with_nitro--;
-    ServerMsg msg;
-    msg.type = static_cast<uint8_t>(ServerMessageType::MSG_SERVER);  
-    msg.cars_with_nitro = static_cast<uint16_t>(this->cars_with_nitro);
-    msg.nitro_status = static_cast<uint8_t>(ServerMessageType::NITRO_OFF);  
-    std::cout << "A car is out of juice." << std::endl;
-    monitor.broadcast(msg);
-}
-
-void GameLoop::process_commands() {
-    Command cmd;
-    while (game_queue.try_pop(cmd)) {
-        auto it = std::find_if(cars.begin(), cars.end(),
-                               [&](const Car& c) { 
-                                   return c.get_client_id() == cmd.player_id;  
-                               });
-
-        if (it == cars.end()) {
-            cars.emplace_back(cmd.player_id, NITRO_DURATION);  
-            it = cars.end() - 1;
-        }
-
-        if (cmd.action == GameCommand::USE_NITRO) {  
-            if (!it->is_nitro_active()) {
-                it->activate_nitro();
-                send_nitro_on();
-            }
-        }
-    }
-}
-
-void GameLoop::simulate_cars() {
-    for (auto& car: cars) {
-        if (car.simulate_tick()) {
-            send_nitro_off();
-        }
-    }
-}
-
+// Implementación del método virtual puro heredado: Thread::run()
 void GameLoop::run() {
+    is_running = true;
+    std::cout << "[GameLoop] Hilo de simulación principal iniciado." << std::endl;
+
     while (is_running) {
-        // 1. Procesar todos los comandos pendientes y ejecutarlos
-        process_commands();
-        // 2. Simular consumición de nitro
-        simulate_cars();
-        // 3. Sleep
-        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP));
+        // --- LÓGICA DEL BUCLE DE JUEGO (Fase 2) ---
+
+        // 1. Procesar Comandos de Entrada
+        // Aquí se procesan los comandos de movimiento, cheats, etc., desde la cola.
+
+        // 2. Simular Física (Box2D::Step)
+
+        // 3. Generar y Enviar Snapshot
+
+        // --- Fin de la lógica ---
+
+        // Dormir el hilo para mantener la frecuencia de ticks y liberar CPU
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-}*/
+
+    std::cout << "[GameLoop] Hilo de simulación detenido correctamente." << std::endl;
+}
+
+GameLoop::~GameLoop() {
+    is_running = false;
+}

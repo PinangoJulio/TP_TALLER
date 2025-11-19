@@ -15,174 +15,268 @@ Press Ctrl+C to stop
 [LobbyServer] DEBUG: Reading username string...
 [LobbyServer] DEBUG: read_string() - Reading length...
 [LobbyServer] DEBUG: read_string() - Bytes read: 2
-[LobbyServer] DEBUG: read_string() - String length (after ntohs): 6
-[LobbyServer] DEBUG: read_string() - String received: julio1
-[LobbyServer] Client connected: julio1
+[LobbyServer] DEBUG: read_string() - String length (after ntohs): 5
+[LobbyServer] DEBUG: read_string() - String received: julio
+[LobbyServer] Client connected: julio
 [LobbyServer] DEBUG: Sending welcome message...
 [LobbyServer] DEBUG: Welcome sent!
-[LobbyServer] Client 'julio1' joining game: 1
-[LobbyManager] Game 1 not found
-[LobbyServer] Client 'julio1' requested games list
+[LobbyServer] Client 'julio' requested games list
+[LobbyServer] Client 'julio' requested games list
+[LobbyServer] Client 'julio' requested games list
 [LobbyServer] DEBUG: read_string() - Reading length...
 [LobbyServer] DEBUG: read_string() - Bytes read: 2
 [LobbyServer] DEBUG: read_string() - String length (after ntohs): 5
-[LobbyServer] DEBUG: read_string() - String received: race1
-[LobbyServer] Client 'julio1' creating game: race1
-[LobbyManager] Game 'race1' created with ID 1
-[GameRoom 1] Player 'julio1' joined (1/2)
-[LobbyServer] Client 'julio1' joining game: 1
-[GameRoom 1] Player 'julio1' is already in the game!
-[LobbyServer] Client 'julio1' joining game: 2
-[LobbyManager] Game 2 not found
+[LobbyServer] DEBUG: read_string() - String received: sala1
+[LobbyServer] Client 'julio' creating game: sala1
+[GameRoom 1] Created by 'julio' (HOST) (1/2)
+[LobbyManager] Game 'sala1' created with ID 1 by 'julio'
 [LobbyServer] DEBUG: read_string() - Reading length...
 [LobbyServer] DEBUG: read_string() - Bytes read: 2
-[LobbyServer] DEBUG: read_string() - String length (after ntohs): 1
-[LobbyServer] DEBUG: read_string() - String received: 2
-[LobbyServer] Client 'julio1' creating game: 2
-[LobbyManager] Game '2' created with ID 2
-[GameRoom 2] Player 'julio1' joined (1/4)
-[LobbyServer] Client 'julio1' requested games list
-[LobbyServer] Client 'julio1' joining game: 2
-[GameRoom 2] Player 'julio1' is already in the game!
-[LobbyServer] Client 'julio1' disconnected: Connection closed
+[LobbyServer] DEBUG: read_string() - String length (after ntohs): 12
+[LobbyServer] DEBUG: read_string() - String received: Liberty City
+[LobbyServer] Client 'julio' creating game: Liberty City
+[LobbyManager] Player 'julio' is already in a game!
+[LobbyServer] Unknown message type: 15
+[LobbyServer] Unknown message type: 67
+[LobbyServer] Unknown message type: 105
+[LobbyServer] Unknown message type: 114
+[LobbyServer] Unknown message type: 99
+[LobbyServer] Unknown message type: 117
+[LobbyServer] Unknown message type: 105
+[LobbyServer] Unknown message type: 116
+[LobbyServer] Unknown message type: 111
+[LobbyServer] Unknown message type: 32
+[LobbyServer] Unknown message type: 67
+[LobbyServer] Unknown message type: 101
+[LobbyServer] Unknown message type: 110
+[LobbyServer] Unknown message type: 116
+[LobbyServer] Unknown message type: 114
+[LobbyServer] Unknown message type: 111
+[LobbyServer] Unknown message type: 0
+[LobbyServer] Unknown message type: 9
+[LobbyServer] Unknown message type: 86
+[LobbyServer] Unknown message type: 105
+[LobbyServer] Unknown message type: 99
+[LobbyServer] Unknown message type: 101
+[LobbyServer] Unknown message type: 32
+[LobbyServer] Unknown message type: 67
+[LobbyServer] Unknown message type: 105
+[LobbyServer] Unknown message type: 116
+[LobbyServer] Unknown message type: 121
+[LobbyServer] Unknown message type: 0
+[LobbyServer] Client 'julio' trying to start game 20588
+[LobbyServer] Unknown message type: 97
+[LobbyServer] Unknown message type: 121
+[LobbyServer] Unknown message type: 97
+[LobbyServer] Unknown message type: 0
+[LobbyServer] Unknown message type: 12
+[LobbyServer] Unknown message type: 76
+[LobbyServer] Unknown message type: 105
+[LobbyServer] Unknown message type: 98
+[LobbyServer] Unknown message type: 101
+[LobbyServer] Unknown message type: 114
+[LobbyServer] Unknown message type: 116
+[LobbyServer] Unknown message type: 121
+[LobbyServer] Unknown message type: 32
+[LobbyServer] Unknown message type: 67
+[LobbyServer] Unknown message type: 105
+[LobbyServer] Unknown message type: 116
+[LobbyServer] Unknown message type: 121
+[LobbyServer] Unknown message type: 0
+[LobbyServer] Unknown message type: 15
+[LobbyServer] Unknown message type: 65
+[LobbyServer] Unknown message type: 117
+[LobbyServer] Unknown message type: 116
+[LobbyServer] Unknown message type: 111
+[LobbyServer] Unknown message type: 112
+[LobbyServer] Unknown message type: 105
+[LobbyServer] Unknown message type: 115
+[LobbyServer] Unknown message type: 116
+[LobbyServer] Unknown message type: 97
+[LobbyServer] Unknown message type: 32
+[LobbyServer] Unknown message type: 78
+[LobbyServer] Unknown message type: 111
+[LobbyServer] Unknown message type: 114
+[LobbyServer] Unknown message type: 116
+[LobbyServer] Unknown message type: 101
+[LobbyServer] Unknown message type: 8
+[LobbyServer] Unknown message type: 0
+[LobbyServer] Unknown message type: 14
+[LobbyServer] Unknown message type: 76
+[LobbyServer] Unknown message type: 101
+[LobbyServer] Unknown message type: 121
+[LobbyServer] Unknown message type: 101
+[LobbyServer] Unknown message type: 110
+[LobbyServer] Unknown message type: 100
+[LobbyServer] Unknown message type: 97
+[LobbyServer] Unknown message type: 32
+[LobbyServer] Unknown message type: 85
+[LobbyServer] Unknown message type: 114
+[LobbyServer] Unknown message type: 98
+[LobbyServer] Unknown message type: 97
+[LobbyServer] Unknown message type: 110
+[LobbyServer] Unknown message type: 97
+[LobbyServer] Unknown message type: 0
+[LobbyServer] Client 'julio' leaving game 25452
+[GameRoom 1] Player 'julio' left (0/2)
+[GameRoom 1] Not enough players, state changed to WAITING
+[LobbyManager] Game 1 has less than 2 players, deleting...
+[LobbyServer] Client 'julio' left game successfully
+[LobbyServer] Unknown message type: 97
+[LobbyServer] Unknown message type: 115
+[LobbyServer] Unknown message type: 115
+[LobbyServer] Unknown message type: 105
+[LobbyServer] Unknown message type: 99
+[LobbyServer] Unknown message type: 8
+[LobbyServer] Unknown message type: 0
+[LobbyServer] Unknown message type: 14
+[LobbyServer] Unknown message type: 76
+[LobbyServer] Unknown message type: 101
+[LobbyServer] Unknown message type: 121
+[LobbyServer] Unknown message type: 101
+[LobbyServer] Unknown message type: 110
+[LobbyServer] Unknown message type: 100
+[LobbyServer] Unknown message type: 97
+[LobbyServer] Unknown message type: 32
+[LobbyServer] Unknown message type: 85
+[LobbyServer] Unknown message type: 114
+[LobbyServer] Unknown message type: 98
+[LobbyServer] Unknown message type: 97
+[LobbyServer] Unknown message type: 110
+[LobbyServer] Unknown message type: 97
+[LobbyServer] Unknown message type: 0
+[LobbyServer] Client 'julio' leaving game 25452
+[LobbyServer] Client 'julio' was not in a game
+[LobbyServer] Unknown message type: 97
+[LobbyServer] Unknown message type: 115
+[LobbyServer] Unknown message type: 115
+[LobbyServer] Unknown message type: 105
+[LobbyServer] Unknown message type: 99
+[LobbyServer] Unknown message type: 8
+[LobbyServer] Unknown message type: 0
+[LobbyServer] Unknown message type: 14
+[LobbyServer] Unknown message type: 76
+[LobbyServer] Unknown message type: 101
+[LobbyServer] Unknown message type: 121
+[LobbyServer] Unknown message type: 101
+[LobbyServer] Unknown message type: 110
+[LobbyServer] Unknown message type: 100
+[LobbyServer] Unknown message type: 97
+[LobbyServer] Unknown message type: 32
+[LobbyServer] Unknown message type: 85
+[LobbyServer] Unknown message type: 114
+[LobbyServer] Unknown message type: 98
+[LobbyServer] Unknown message type: 97
+[LobbyServer] Unknown message type: 110
+[LobbyServer] Unknown message type: 97
+[LobbyServer] Unknown message type: 0
+[LobbyServer] Client 'julio' leaving game 25452
+[LobbyServer] Client 'julio' was not in a game
+[LobbyServer] Unknown message type: 97
+[LobbyServer] Unknown message type: 115
+[LobbyServer] Unknown message type: 115
+[LobbyServer] Unknown message type: 105
+[LobbyServer] Unknown message type: 99
+[LobbyServer] Client 'julio' leaving game 1
+[LobbyServer] Client 'julio' was not in a game
+[LobbyServer] Client 'julio' requested games list
+[LobbyServer] Client 'julio' disconnected: Connection closed
 
 
 
 
 
 Terminal 2: Cliente 1:
-julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL/TP_TALLER$ ./lobby_client_test localhost 8080
-==================================================
-    NEED FOR SPEED 2D - LOBBY CLIENT (TEST)
-==================================================
-Enter your username: julio1
+
+julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL/TP_TALLER$ ./client
+=== Need for Speed 2D - Cliente ===
+Conectando a localhost:8080
+[Controller] Controlador creado (sin conectar al servidor todavía)
+[Controller] Servidor configurado: localhost:8080
+[Controller] Mostrando lobby principal
+Fuente cargada: ArcadeClassic
+Imagen de fondo cargada correctamente
+SDL Audio inicializado correctamente
+Música de fondo iniciada en loop
+QWidget::setLayout: Cannot set layout to 0
+[LobbyWindow] Botón Jugar presionado
+[Controller] Usuario presionó 'Jugar'
+[Controller] Conectando al servidor localhost:8080...
 [LobbyClient] Connected to server localhost:8080
-[LobbyClient] DEBUG: Username: 'julio1' (length: 6)
-[LobbyClient] DEBUG: Buffer size: 9 bytes
-[LobbyClient] DEBUG: Buffer content: 01 00 06 6A 75 6C 69 6F 31 
-[LobbyClient] DEBUG: Length encoded in buffer: 6
-[LobbyClient] Sent username: julio1
+[Controller] Conectado exitosamente
+[Controller] Mostrando ventana de ingreso de nombre
+Nombre de jugador confirmado: julio
+[Controller] Usuario confirmó nombre: julio
+[LobbyClient] DEBUG: Username: 'julio' (length: 5)
+[LobbyClient] DEBUG: Buffer size: 8 bytes
+[LobbyClient] DEBUG: Buffer content: 01 00 05 6A 75 6C 69 6F 
+[LobbyClient] DEBUG: Length encoded in buffer: 5
+[LobbyClient] Sent username: julio
+[Controller] Nombre enviado al servidor
+[Controller] Esperando mensaje de bienvenida...
 [LobbyClient] DEBUG: Waiting for welcome message...
 [LobbyClient] DEBUG: Received type: 16
 [LobbyClient] DEBUG: Reading welcome string...
-[LobbyClient] Received welcome: Welcome to Need for Speed 2D, julio1!
-
-Welcome to Need for Speed 2D, julio1!
-
-
---- LOBBY MENU ---
-1. List games
-2. Create game
-3. Join game
-4. Exit
-Choose option: 3
-Game ID to join: 1
-[LobbyClient] Requested to join game: 1
-[LobbyClient] Error received (code 2): Game is full or already started
-
-  Error: Game is full or already started
-
---- LOBBY MENU ---
-1. List games
-2. Create game
-3. Join game
-4. Exit
-Choose option: 1
+[LobbyClient] Received welcome: Welcome to Need for Speed 2D, julio!
+[Controller] Bienvenida recibida: Welcome to Need for Speed 2D, julio!
+[Controller] Abriendo ventana de selección de partidas
+[Controller] Solicitando lista de partidas al servidor...
 [LobbyClient] Requested games list
 [LobbyClient] Received 0 games
-
-========== AVAILABLE GAMES ==========
-No games available.
-=====================================
-
---- LOBBY MENU ---
-1. List games
-2. Create game
-3. Join game
-4. Exit
-Choose option: 2
-Game name: race1
-Max players (2-8): 2
-[LobbyClient] Requested to create game: race1
-[LobbyClient] Game created with ID: 1
-
-✅ Game created! ID: 1
-Waiting for other players to join...
-
---- LOBBY MENU ---
-1. List games
-2. Create game
-3. Join game
-4. Exit
-Choose option: 3
-Game ID to join: 1
-[LobbyClient] Requested to join game: 1
-
-✅ Joined game 1!
-
---- LOBBY MENU ---
-1. List games
-2. Create game
-3. Join game
-4. Exit
-Choose option: 3
-Game ID to join: 2
-[LobbyClient] Requested to join game: 2
-[LobbyClient] Error received (code 2): Game is full or already started
-
-  Error: Game is full or already started
-
---- LOBBY MENU ---
-1. List games
-2. Create game
-3. Join game
-4. Exit
-Choose option: 2
-Game name: 2
-Max players (2-8): 4
-[LobbyClient] Requested to create game: 2
-[LobbyClient] Game created with ID: 2
-
-✅ Game created! ID: 2
-Waiting for other players to join...
-
---- LOBBY MENU ---
-1. List games
-2. Create game
-3. Join game
-4. Exit
-Choose option: 1
+[Controller] Recibidas 0 partidas
+[MatchSelectionWindow] Actualizando lista con 0 partidas
+[Controller] Usuario solicitó actualizar lista
+[Controller] Solicitando lista de partidas al servidor...
 [LobbyClient] Requested games list
-[LobbyClient] Received 2 games
-
-========== AVAILABLE GAMES ==========
-[1] race1 (1/2)
-[2] 2 (1/4)
-=====================================
-
---- LOBBY MENU ---
-1. List games
-2. Create game
-3. Join game
-4. Exit
-Choose option: 3
-Game ID to join: 2
-[LobbyClient] Requested to join game: 2
-
-✅ Joined game 2!
-
---- LOBBY MENU ---
-1. List games
-2. Create game
-3. Join game
-4. Exit
-Choose option: 4
-Goodbye!
-
-
-
-
-
-
-
-
+[LobbyClient] Received 0 games
+[Controller] Recibidas 0 partidas
+[MatchSelectionWindow] Actualizando lista con 0 partidas
+[Controller] Usuario solicitó actualizar lista
+[Controller] Solicitando lista de partidas al servidor...
+[LobbyClient] Requested games list
+[LobbyClient] Received 0 games
+[Controller] Recibidas 0 partidas
+[MatchSelectionWindow] Actualizando lista con 0 partidas
+Creando nueva partida...
+[Controller] Usuario quiere crear nueva partida
+Carrera 1 configurada: Liberty City - Circuito Centro
+Carrera 2 configurada: Vice City - Playa
+Carrera 3 configurada: Liberty City - Autopista Norte
+Confirmando creación de partida:
+  Nombre: sala1
+  Jugadores: 2
+  Carreras: 3
+  Carrera 1: Liberty City - Circuito Centro
+  Carrera 2: Vice City - Playa
+  Carrera 3: Liberty City - Autopista Norte
+[Controller] Usuario confirmó creación de partida:
+  Nombre: sala1
+  Jugadores máximos: 2
+  Número de carreras: 3
+  Carrera: Liberty City - Circuito Centro
+  Carrera: Vice City - Playa
+  Carrera: Liberty City - Autopista Norte
+[LobbyClient] Requested to create game: sala1 (max players: 2, races: 3)
+[LobbyClient] Game created with ID: 1
+[Controller] Partida creada con ID: 1
+[Controller] Abriendo garage...
+[Controller] Abriendo ventana de garage...
+Auto seleccionado: Leyenda Urbana (classic)
+[Controller] Auto seleccionado: Leyenda Urbana
+[LobbyClient] Selected car: Leyenda Urbana (classic)
+[Controller]  Error: Expected CAR_CHOSEN_ACK
+Auto seleccionado: Leyenda Urbana (classic)
+[Controller] Auto seleccionado: Leyenda Urbana
+[LobbyClient] Selected car: Leyenda Urbana (classic)
+[Controller]  Error: Expected CAR_CHOSEN_ACK
+Auto seleccionado: Leyenda Urbana (classic)
+[Controller] Auto seleccionado: Leyenda Urbana
+[LobbyClient] Selected car: Leyenda Urbana (classic)
+[Controller]  Error: Expected CAR_CHOSEN_ACK
+[Controller] Usuario volvió desde garage
+[LobbyClient] Leave game request sent for ID: 1
+[Controller] Abandonó la partida 1
+[Controller] Solicitando lista de partidas al servidor...
+[LobbyClient] Requested games list
+[Controller]  Error: Expected GAMES_LIST message
+[Controller] Destructor llamado

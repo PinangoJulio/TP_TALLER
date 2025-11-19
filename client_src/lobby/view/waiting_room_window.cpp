@@ -484,9 +484,20 @@ void WaitingRoomWindow::onStartClicked()
     emit startGameRequested();
 }
 
-void WaitingRoomWindow::onBackClicked()
-{
-    std::cout << "Saliendo de la sala..." << std::endl;
+void WaitingRoomWindow::onBackClicked() {
+    // ✅ AGREGADO: Diálogo de confirmación
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, 
+        "Salir de la Partida", 
+        "¿Estás seguro de que quieres salir?\n\n"
+        "Si eres el único jugador o el host, la partida se cancelará.",
+        QMessageBox::Yes | QMessageBox::No);
+    
+    if (reply == QMessageBox::No) {
+        return;  // Usuario canceló
+    }
+    
+    std::cout << "[WaitingRoom] Usuario confirmó salir de la sala" << std::endl;
     emit backRequested();
 }
 

@@ -10,49 +10,46 @@
 #include "../../common_src/queue.h"
 #include "../../common_src/dtos.h"
 #include "../../common_src/game_state.h"
-#include "../network/client_monitor.h" // El Broadcaster
+#include "../network/client_monitor.h"
 #include "race.h"
 
 class Race;
 
 class Match {
 private:
-    int match_code;
     std::string host_name;
+    int match_code;
     std::atomic<bool> is_active;
-    Queue<ComandMatchDTO> queue_comandos;
+    std::vector<std::unique_ptr<Race>> races;
+    int current_race_index;
 
-    // LISTA DE QUEUES (BROADCASTER): Contiene las colas de salida de TODOS los jugadores conectados a esta Partida. Permite enviar Snapshots.
     ClientMonitor players_queues;
-
-    // Instancia de la carrera actual (usa unique_ptr para gestionar la vida de la simulación)
-    //std::unique_ptr<Race> active_races;
-
-    int cant_actual_players;
-    int cant_max_players;
-    std::string race_path;
-
-    // (Aca iría la tabla de posiciones ACUMULADA de la Partida)
+    Queue<ComandMatchDTO> command_queue;
+    int max_players;
+    std::vector<std::unique_ptr<Player>> players;
 
 public:
-    Match(std::string host_name,
-            int code,
-            int max_players,
-            const std::string& map_yaml_path);
+    Match(std::string host_name, int code, int max_players);
 
-    // MÉTODOS DE LOBBY/UNIÓN
+    // ---- LOBBY ----
     bool can_player_join_match() const;
     bool add_player(int id, std::string nombre, Queue<GameState>& queue_enviadora);
     bool remove_player(int id_jugador);
+    void set_car(int player_id, const std::string& car_name, const std::string& car_type);
+    void add_race(const std::string& yaml_path, const std::string& city_name);
 
-    // MÉTODOS DE CONTROL DE CARRERA
-    void startNextRace(const std::string& mapa_yaml_path); // Inicia un nuevo hilo de Carrera
-    bool isRunning() const; // Devuelve el estado de la Carrera activa
+    // ---- CARRERAS ----
+    void start_next_race();
+    bool is_running() const { return is_active.load(); }
 
-    // GETTERS
-    std::string get_host_name() {return host_name;}
-    int getMatchCode() const { return this->match_code; }
-    Queue<ComandMatchDTO>& getComandQueue() { return this->queue_comandos; }
+    // ---- GETTERS ----
+    std::string get_host_name() const { return host_name; }
+    int getMatchCode() const { return match_code; }
+    int get_player_count() const { return players.size(); }
+    int get_max_players() const { return max_players; }
+    bool is_empty() const;  
+
+    Queue<ComandMatchDTO>& getComandQueue() { return command_queue; }
 
     ~Match();
 };

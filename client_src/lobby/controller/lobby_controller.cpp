@@ -1,7 +1,5 @@
 #include "lobby_controller.h"
 
-
-
 LobbyController::LobbyController(const QString& host, const QString& port, QObject* parent)
     : QObject(parent), 
       serverHost(host),
@@ -27,32 +25,25 @@ LobbyController::~LobbyController() {
 void LobbyController::start() {
     std::cout << "[Controller] Mostrando lobby principal" << std::endl;
     
-    // Crear y mostrar ventana principal del lobby
     lobbyWindow = new LobbyWindow();
     
-    // Conectar señal del botón "Jugar"
     connect(lobbyWindow, &LobbyWindow::playRequested,
             this, &LobbyController::onPlayClicked);
     
-    // Mostrar ventana
     lobbyWindow->show();
 }
 
 void LobbyController::onPlayClicked() {
     std::cout << "[Controller] Usuario presionó 'Jugar'" << std::endl;
     
-    // Ocultar lobby principal
     lobbyWindow->hide();
     
     try {
-        // Conectar al servidor AHORA (no antes)
         connectToServer();
         
-        // Mostrar ventana de ingreso de nombre
         std::cout << "[Controller] Mostrando ventana de ingreso de nombre" << std::endl;
         nameInputWindow = new NameInputWindow();
         
-        // Conectar señales
         connect(nameInputWindow, &NameInputWindow::nameConfirmed,
                 this, &LobbyController::onNameConfirmed);
         
@@ -60,7 +51,6 @@ void LobbyController::onPlayClicked() {
         
     } catch (const std::exception& e) {
         handleNetworkError(e);
-        // Volver a mostrar el lobby principal si falla
         lobbyWindow->show();
     }
 }
@@ -70,7 +60,6 @@ void LobbyController::connectToServer() {
               << serverHost.toStdString() << ":" << serverPort.toStdString() 
               << "..." << std::endl;
     
-    // Crear conexión con el servidor
     lobbyClient = std::make_unique<LobbyClient>(
         serverHost.toStdString(), 
         serverPort.toStdString()
@@ -86,23 +75,18 @@ void LobbyController::onNameConfirmed(const QString& name) {
     playerName = name;
     
     try {
-        //Enviar nombre al servidor
         lobbyClient->send_username(name.toStdString());
         std::cout << "[Controller] Nombre enviado al servidor" << std::endl;
         
-        //Esperar mensaje de bienvenida
         std::cout << "[Controller] Esperando mensaje de bienvenida..." << std::endl;
         std::string welcome = lobbyClient->receive_welcome();
         
-        //Mostrar mensaje de bienvenida
         std::cout << "[Controller] Bienvenida recibida: " << welcome << std::endl;
         
-        //Cerrar ventana de nombre
         nameInputWindow->close();
         nameInputWindow->deleteLater();
         nameInputWindow = nullptr;
         
-        //Abrir ventana de selección de partidas
         openMatchSelection();
         
     } catch (const std::exception& e) {
@@ -113,25 +97,21 @@ void LobbyController::onNameConfirmed(const QString& name) {
 void LobbyController::onBackFromNameInput() {
     std::cout << "[Controller] Usuario presionó 'Volver' desde ingreso de nombre" << std::endl;
     
-    // Cerrar ventana de nombre
     if (nameInputWindow) {
         nameInputWindow->close();
         nameInputWindow->deleteLater();
         nameInputWindow = nullptr;
     }
     
-    // Desconectar del servidor
     lobbyClient.reset();
     std::cout << "[Controller] Desconectado del servidor" << std::endl;
     
-    // Volver a mostrar lobby principal
     lobbyWindow->show();
 }
 
 void LobbyController::handleNetworkError(const std::exception& e) {
     std::cerr << "[Controller]  Error: " << e.what() << std::endl;
     
-    // Determinar ventana actual
     QWidget* currentWindow = lobbyWindow;
     
     if (waitingRoomWindow && waitingRoomWindow->isVisible()) {
@@ -148,7 +128,6 @@ void LobbyController::handleNetworkError(const std::exception& e) {
     
     QString errorMsg = QString::fromStdString(e.what());
     
-    // Detectar desconexión
     if (errorMsg.contains("Connection closed") || 
         errorMsg.contains("closed by server") ||
         errorMsg.contains("EOF")) {
@@ -174,7 +153,6 @@ void LobbyController::handleNetworkError(const std::exception& e) {
 void LobbyController::cleanupAndReturnToLobby() {
     std::cout << "[Controller] Limpiando estado y volviendo al lobby..." << std::endl;
     
-  
     if (waitingRoomWindow) {
         waitingRoomWindow->close();
         waitingRoomWindow->deleteLater();
@@ -201,7 +179,6 @@ void LobbyController::cleanupAndReturnToLobby() {
         nameInputWindow = nullptr;
     }
     
-    // Resetear estado
     lobbyClient.reset();
     currentGameId = 0;
     selectedCarIndex = -1;
@@ -209,11 +186,11 @@ void LobbyController::cleanupAndReturnToLobby() {
     
     std::cout << "[Controller] Estado limpiado" << std::endl;
     
-    // Volver al lobby principal
     if (lobbyWindow) {
         lobbyWindow->show();
     }
 }
+
 
 void LobbyController::onMatchCreated(const QString& matchName, int maxPlayers, const std::vector<RaceConfig>& races) {
     std::cout << "[Controller] Usuario confirmó creación de partida:" << std::endl;
@@ -221,19 +198,28 @@ void LobbyController::onMatchCreated(const QString& matchName, int maxPlayers, c
     std::cout << "  Jugadores máximos: " << maxPlayers << std::endl;
     std::cout << "  Número de carreras: " << races.size() << std::endl;
     
-    for (size_t i = 0; i < races.size(); i++) {
-        std::cout << "  Carrera " << (i+1) << ": " 
-                  << races[i].cityName.toStdString() 
-                  << " - " << races[i].trackName.toStdString() << std::endl;
-    }
+    // ✅ Convertir RaceConfig (Qt) -> pair<string, string> (C++)
+    std::vector<std::pair<std::string, std::string>> race_pairs;
+    race_pairs.reserve(races.size());
     
+    for (const auto& race : races) {
+        std::cout << "  Carrera: "
+                  << race.cityName.toStdString()
+                  << " - " << race.trackName.toStdString() << std::endl;
+
+        race_pairs.emplace_back(race.cityName.toStdString(), race.trackName.toStdString());
+    }
+
     try {
-        // Enviar petición al servidor para crear la partida
-        lobbyClient->create_game(matchName.toStdString(), static_cast<uint8_t>(maxPlayers));
+        // ✅ Enviar con los 3 parámetros (nombre, max_players, carreras)
+        lobbyClient->create_game(
+            matchName.toStdString(), 
+            static_cast<uint8_t>(maxPlayers), 
+            race_pairs  // ← Este es el tercer parámetro que faltaba
+        );
         
         // Recibir confirmación con el game_id
         currentGameId = lobbyClient->receive_game_created();
-        
         std::cout << "[Controller] Partida creada con ID: " << currentGameId << std::endl;
         
         // Cerrar ventana de creación
@@ -255,14 +241,12 @@ void LobbyController::onMatchCreated(const QString& matchName, int maxPlayers, c
 void LobbyController::onBackFromCreateMatch() {
     std::cout << "[Controller] Usuario canceló creación de partida" << std::endl;
     
-    // Cerrar ventana de creación
     if (createMatchWindow) {
         createMatchWindow->close();
         createMatchWindow->deleteLater();
         createMatchWindow = nullptr;
     }
     
-    // Volver a mostrar selección de partidas
     if (matchSelectionWindow) {
         matchSelectionWindow->show();
     }
@@ -271,10 +255,8 @@ void LobbyController::onBackFromCreateMatch() {
 void LobbyController::openMatchSelection() {
     std::cout << "[Controller] Abriendo ventana de selección de partidas" << std::endl;
     
-    // Crear ventana de selección de partidas
     matchSelectionWindow = new MatchSelectionWindow();
     
-    // Conectar señales
     connect(matchSelectionWindow, &MatchSelectionWindow::joinMatchRequested,
             this, &LobbyController::onJoinMatchRequested);
     connect(matchSelectionWindow, &MatchSelectionWindow::createMatchRequested,
@@ -284,10 +266,8 @@ void LobbyController::openMatchSelection() {
     connect(matchSelectionWindow, &MatchSelectionWindow::refreshRequested,
             this, &LobbyController::onRefreshMatchList);
     
-    // Mostrar ventana
     matchSelectionWindow->show();
     
-    // Cargar lista de partidas
     refreshGamesList();
 }
 
@@ -295,15 +275,12 @@ void LobbyController::refreshGamesList() {
     std::cout << "[Controller] Solicitando lista de partidas al servidor..." << std::endl;
     
     try {
-        //Pedir lista al servidor
         lobbyClient->request_games_list();
         
-        //Recibir lista
         std::vector<GameInfo> games = lobbyClient->receive_games_list();
         
         std::cout << "[Controller] Recibidas " << games.size() << " partidas" << std::endl;
         
-        //Actualizar la vista con los datos reales
         if (matchSelectionWindow) {
             matchSelectionWindow->updateGamesList(games);
         }
@@ -319,17 +296,14 @@ void LobbyController::onRefreshMatchList() {
 }
 
 void LobbyController::onJoinMatchRequested(const QString& matchId) {
-   
     std::cout << "[Controller] Usuario quiere unirse a partida con matchId: " 
               << matchId.toStdString() << std::endl;
     
-
     if (!matchSelectionWindow) {
         std::cerr << "[Controller] Error: matchSelectionWindow es nullptr" << std::endl;
         return;
     }
     
-    // Obtener el item seleccionado de la lista
     QListWidgetItem* selectedItem = matchSelectionWindow->getSelectedItem();
     if (!selectedItem) {
         QMessageBox::warning(matchSelectionWindow,
@@ -338,31 +312,25 @@ void LobbyController::onJoinMatchRequested(const QString& matchId) {
         return;
     }
     
-   
     uint16_t gameId = selectedItem->data(Qt::UserRole).toUInt();
     
     std::cout << "[Controller] Intentando unirse a game_id (de UserRole): " 
               << gameId << std::endl;
     
     try {
-        //Enviar petición al servidor
         lobbyClient->join_game(gameId);
         
-        //Recibir confirmación
         uint16_t confirmedGameId = lobbyClient->receive_game_joined();
         
-        //Guardar ID de la partida actual
         currentGameId = confirmedGameId;
         
         std::cout << "[Controller] Unido exitosamente a partida ID: " 
                   << currentGameId << std::endl;
-   
-        //Ocultar ventana de selección
+        
         if (matchSelectionWindow) {
             matchSelectionWindow->hide();
         }
         
-        //Abrir garage
         std::cout << "[Controller] Abriendo garage..." << std::endl;
         openGarage();
         
@@ -374,39 +342,32 @@ void LobbyController::onJoinMatchRequested(const QString& matchId) {
 void LobbyController::onCreateMatchRequested() {
     std::cout << "[Controller] Usuario quiere crear nueva partida" << std::endl;
     
-    // Ocultar ventana de selección de partidas
     if (matchSelectionWindow) {
         matchSelectionWindow->hide();
     }
     
-    // Crear ventana de creación de partida
     createMatchWindow = new CreateMatchWindow();
     
-    // Conectar señales
     connect(createMatchWindow, &CreateMatchWindow::matchCreated,
             this, &LobbyController::onMatchCreated);
     connect(createMatchWindow, &CreateMatchWindow::backRequested,
             this, &LobbyController::onBackFromCreateMatch);
     
-    // Mostrar ventana
     createMatchWindow->show();
 }
 
 void LobbyController::onBackFromMatchSelection() {
     std::cout << "[Controller] Volviendo al lobby principal desde match selection" << std::endl;
     
-    // Cerrar ventana de selección
     if (matchSelectionWindow) {
         matchSelectionWindow->close();
         matchSelectionWindow->deleteLater();
         matchSelectionWindow = nullptr;
     }
     
-    // Desconectar del servidor
     lobbyClient.reset();
     std::cout << "[Controller] Desconectado del servidor" << std::endl;
     
-    // Volver a mostrar lobby principal
     if (lobbyWindow) {
         lobbyWindow->show();
     }
@@ -415,82 +376,89 @@ void LobbyController::onBackFromMatchSelection() {
 void LobbyController::openGarage() {
     std::cout << "[Controller] Abriendo ventana de garage..." << std::endl;
     
-    // Crear ventana de garage
     garageWindow = new GarageWindow();
     
-    // Conectar señales
     connect(garageWindow, &GarageWindow::carSelected,
             this, &LobbyController::onCarSelected);
     connect(garageWindow, &GarageWindow::backRequested,
             this, &LobbyController::onBackFromGarage);
     
-    // Mostrar ventana
     garageWindow->show();
 }
 
-void LobbyController::onCarSelected(int carIndex) {
-    std::cout << "[Controller] Auto seleccionado: índice " << carIndex << std::endl;
-    
-    selectedCarIndex = carIndex;
-    
-    // No enviar al servidor todavía, falta la implementación del lado del server
-   // lobbyClient->select_car(static_cast<uint8_t>(carIndex));
-    
-    // Cerrar ventana de garage
-    if (garageWindow) {
-        garageWindow->close();
-        garageWindow->deleteLater();
-        garageWindow = nullptr;
+void LobbyController::onCarSelected(const CarInfo& car) {
+    std::cout << "[Controller] Auto seleccionado: "
+              << car.name.toStdString() << std::endl;
+
+    std::string car_name = car.name.toStdString();
+    std::string car_type = car.type.toStdString();
+
+    try {
+        lobbyClient->select_car(car_name, car_type);
+
+        std::string car_confirmed = lobbyClient->receive_car_confirmation();
+        std::cout << "[Controller] CAR confirmed: " << car_confirmed << std::endl;
+
+        if (garageWindow) {
+            garageWindow->close();
+            garageWindow->deleteLater();
+            garageWindow = nullptr;
+        }
+
+        std::cout << "[Controller] Abriendo sala de espera..." << std::endl;
+        openWaitingRoom();
+        
+    } catch (const std::exception& e) {
+        handleNetworkError(e);
     }
-    
-    // Abrir sala de espera
-    std::cout << "[Controller] Abriendo sala de espera..." << std::endl;
-    openWaitingRoom();
 }
 
 void LobbyController::onBackFromGarage() {
     std::cout << "[Controller] Usuario volvió desde garage" << std::endl;
     
-    // Cerrar ventana de garage
     if (garageWindow) {
         garageWindow->close();
         garageWindow->deleteLater();
         garageWindow = nullptr;
+
+    try {
+        std::cout << "[Controller] Enviando leave_game para partida " << currentGameId << std::endl;
+        lobbyClient->leave_game(currentGameId);
+
+        auto games = lobbyClient->receive_games_list();
+        std::cout << "[Controller] Leave confirmado. Juegos disponibles: " << games.size() << std::endl;
+        
+    } catch (const std::exception& e) {
+        std::cerr << "[Controller] Error al abandonar partida: " << e.what() << std::endl;
     }
     
-    // No enviar al servidor todavía, falta la implementación del lado del server
-    //lobbyClient->leave_game(currentGameId);
+    // Resetear estado local
+    currentGameId = 0;
+    selectedCarIndex = -1;
     
-    // Volver a mostrar match selection
     if (matchSelectionWindow) {
         matchSelectionWindow->show();
-        // Refrescar lista
         refreshGamesList();
     }
 }
-
+}
 void LobbyController::openWaitingRoom() {
     std::cout << "[Controller] Abriendo sala de espera..." << std::endl;
     
-    // Crear ventana de sala de espera
     waitingRoomWindow = new WaitingRoomWindow();
     
-    // Nombres de los autos para mostrar
     const std::vector<QString> carNames = {
         "Leyenda Urbana", "Brisa", "J-Classic 600", "Cavallo V8", 
         "Senator", "Nómada", "Stallion GT"
     };
     
-    // Obtener nombre del auto seleccionado
     QString carName = "Auto Desconocido";
     if (selectedCarIndex >= 0 && selectedCarIndex < static_cast<int>(carNames.size())) {
         carName = carNames[selectedCarIndex];
     }
     
-    // Configurar información del jugador local
     waitingRoomWindow->setLocalPlayerInfo(playerName, carName);
     
-    // Conectar señales
     connect(waitingRoomWindow, &WaitingRoomWindow::readyToggled,
             this, &LobbyController::onPlayerReadyToggled);
     connect(waitingRoomWindow, &WaitingRoomWindow::startGameRequested,
@@ -498,41 +466,42 @@ void LobbyController::openWaitingRoom() {
     connect(waitingRoomWindow, &WaitingRoomWindow::backRequested,
             this, &LobbyController::onBackFromWaitingRoom);
     
-    // Mostrar ventana
     waitingRoomWindow->show();
 }
 
 void LobbyController::onPlayerReadyToggled(bool isReady) {
     std::cout << "[Controller] Jugador marcado como: " 
               << (isReady ? "LISTO" : "NO LISTO") << std::endl;
-    
-    // No enviar al servidor todavía, falta la implementación del lado del server
-    //lobbyClient->set_ready(isReady);
 }
 
 void LobbyController::onStartGameRequested() {
     std::cout << "[Controller] Solicitando inicio de partida..." << std::endl;
-    
-    // No enviar al servidor todavía, falta la implementación del lado del server
-   // lobbyClient->start_game(currentGameId);
-    
-    
 }
 
 void LobbyController::onBackFromWaitingRoom() {
     std::cout << "[Controller] Usuario salió de la sala de espera" << std::endl;
     
-    // Cerrar ventana de sala de espera
     if (waitingRoomWindow) {
         waitingRoomWindow->close();
         waitingRoomWindow->deleteLater();
         waitingRoomWindow = nullptr;
     }
+
+    try {
+        std::cout << "[Controller] Enviando leave_game para partida " << currentGameId << std::endl;
+        lobbyClient->leave_game(currentGameId);
+        
+        auto games = lobbyClient->receive_games_list();
+        std::cout << "[Controller] Leave confirmado. Juegos disponibles: " << games.size() << std::endl;
+        
+    } catch (const std::exception& e) {
+        std::cerr << "[Controller] Error al abandonar partida: " << e.what() << std::endl;
+    }
     
-    // No enviar al servidor todavía, falta la implementación del lado del server
-   // lobbyClient->leave_game(currentGameId);
+    // Resetear estado local
+    currentGameId = 0;
+    selectedCarIndex = -1;
     
-    // Volver a match selection
     if (matchSelectionWindow) {
         matchSelectionWindow->show();
         refreshGamesList();

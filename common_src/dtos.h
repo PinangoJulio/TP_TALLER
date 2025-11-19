@@ -19,7 +19,9 @@ enum LobbyMessageType : uint8_t {
     MSG_CREATE_GAME = 0x03,
     MSG_JOIN_GAME = 0x04,
     MSG_START_GAME = 0x05,
+    MSG_SELECT_CAR = 0x06,       // ← DEBE SER 0x06
     MSG_LEAVE_GAME = 0x07,
+    MSG_PLAYER_READY = 0x08,
 
     // Servidor → Cliente
     MSG_WELCOME = 0x10,
@@ -27,6 +29,8 @@ enum LobbyMessageType : uint8_t {
     MSG_GAME_CREATED = 0x12,
     MSG_GAME_JOINED = 0x13,
     MSG_GAME_STARTED = 0x14,
+    MSG_CITY_MAPS = 0x15,
+    MSG_CAR_SELECTED_ACK = 0x16, 
 
     MSG_ERROR = 0xFF
 };
@@ -37,10 +41,11 @@ enum LobbyErrorCode : uint8_t {
     ERR_GAME_FULL = 0x02,
     ERR_INVALID_USERNAME = 0x03,
     ERR_GAME_ALREADY_STARTED = 0x04,
-    ERR_ALREADY_IN_GAME = 0x05,        // NUEVO
-    ERR_NOT_HOST = 0x06,               // NUEVO
-    ERR_NOT_ENOUGH_PLAYERS = 0x07,     // NUEVO
-    ERR_PLAYER_NOT_IN_GAME = 0x08      // NUEVO
+    ERR_ALREADY_IN_GAME = 0x05,
+    ERR_NOT_HOST = 0x06,
+    ERR_NOT_ENOUGH_PLAYERS = 0x07,
+    ERR_PLAYER_NOT_IN_GAME = 0x08,
+    ERR_INVALID_CAR_INDEX = 0x09      // ✅ AGREGADO
 };
 
 // ============================================
@@ -56,6 +61,8 @@ enum class GameCommand : uint8_t {
     USE_NITRO = 0x05,
     DISCONNECT = 0xFF
 };
+
+
 
 // ✅ AGREGAR: Tipos de mensajes del servidor
 enum class ServerMessageType : uint8_t {
@@ -89,7 +96,5 @@ struct ComandMatchDTO {
 
     ComandMatchDTO() : player_id(0), command(GameCommand::DISCONNECT) {}
 };
-
-
 
 #endif // DTOS_H

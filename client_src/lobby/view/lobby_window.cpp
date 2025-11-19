@@ -327,9 +327,8 @@ void LobbyWindow::openGarage() {
     garageWindow->show();
 }
 
-void LobbyWindow::onCarSelected(int carIndex) {
-    selectedCarIndex = carIndex;
-    std::cout << "Auto seleccionado (índice " << carIndex << "), abriendo sala de espera..." << std::endl;
+void LobbyWindow::onCarSelected(const CarInfo& car) {
+    std::cout << "Auto seleccionado : " << (car.name).toStdString() << "), abriendo sala de espera..." << std::endl;
     
     if (garageWindow) {
         garageWindow->hide();
@@ -345,11 +344,11 @@ void LobbyWindow::onCarSelected(int carIndex) {
     };
     
     QString carName = "Auto";
-    if (selectedCarIndex >= 0 && selectedCarIndex < static_cast<int>(carNames.size())) {
+    /*if (selectedCarIndex >= 0 && selectedCarIndex < static_cast<int>(carNames.size())) {
         carName = carNames[selectedCarIndex];
-    }
+    }*/
     
-    waitingRoomWindow->setLocalPlayerInfo(playerName, carName);
+    waitingRoomWindow->setLocalPlayerInfo(playerName, (car.name));
     
     connect(waitingRoomWindow, &WaitingRoomWindow::startGameRequested,
             this, &LobbyWindow::onStartGame);

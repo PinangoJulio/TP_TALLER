@@ -1,96 +1,104 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "../server_src/lobby/lobby_manager.h"
 
-TEST(LobbyManagerTest, CreateGame) {
-    LobbyManager manager;
-    uint16_t game_id = manager.create_game("Test Game", "player1", 4);
-    
-    EXPECT_GT(game_id, 0);
-    EXPECT_TRUE(manager.is_player_in_game("player1"));
-    EXPECT_EQ(manager.get_player_game("player1"), game_id);
+#include "../server_src/network/matches_monitor.h"
+#include "../server_src/game/match.h"
+#include "../common_src/queue.h"
+#include "common_src/config.h"
+
+using ::testing::Eq;
+using ::testing::Gt;
+
+class MatchesMonitorTest : public ::testing::Test {
+protected:
+    MatchesMonitor monitor;
+    Queue<GameState> dummy_queue;
+
+    void SetUp() override {
+        Configuration::load_path("config.yaml");
+        monitor.clear_all_matches();  // Limpiamos antes de cada test
+    }
+};
+
+// Test 1: crear una partida correctamente
+TEST_F(MatchesMonitorTest, CreateMatch) {
+    std::cout << "Creating matches monitor" << std::endl;
+    std::cout << "MAX PLAYERS: " << Configuration::get<int>("max_clients") << std::endl;
+    int match_id = monitor.create_match(4, "player1", 1, dummy_queue);
+    EXPECT_GT(match_id, 0);
 }
 
-TEST(LobbyManagerTest, CannotCreateMultipleGames) {
-    LobbyManager manager;
-    uint16_t game1 = manager.create_game("Game 1", "player1", 4);
-    uint16_t game2 = manager.create_game("Game 2", "player1", 4);
-    
-    EXPECT_GT(game1, 0);
-    EXPECT_EQ(game2, 0);  // Debe fallar
+// Test 2: unirse a una partida existente
+TEST_F(MatchesMonitorTest, JoinMatch) {
+    int match_id = monitor.create_match(4, "player1", 1, dummy_queue);
+    bool joined = monitor.join_match(match_id, "player2", 2, dummy_queue);
+    EXPECT_TRUE(joined);
 }
 
-TEST(LobbyManagerTest, JoinGame) {
-    LobbyManager manager;
-    uint16_t game_id = manager.create_game("Test Game", "player1", 4);
-    
-    EXPECT_TRUE(manager.join_game(game_id, "player2"));
-    EXPECT_TRUE(manager.is_player_in_game("player2"));
+// Test 3: no se puede unir si el match no existe
+TEST_F(MatchesMonitorTest, CannotJoinNonexistentMatch) {
+    bool joined = monitor.join_match(999, "playerX", 10, dummy_queue);
+    EXPECT_FALSE(joined);
 }
 
-TEST(LobbyManagerTest, CannotJoinMultipleGames) {
-    LobbyManager manager;
-    uint16_t game1 = manager.create_game("Game 1", "player1", 4);
-    uint16_t game2 = manager.create_game("Game 2", "player2", 4);
-    
-    EXPECT_TRUE(manager.join_game(game1, "player3"));
-    EXPECT_FALSE(manager.join_game(game2, "player3"));  // Debe fallar
+// Test 4: agregar carreras a una partida existente
+TEST_F(MatchesMonitorTest, AddRacesToMatch) {
+    int match_id = monitor.create_match(4, "player1", 1, dummy_queue);
+
+    std::vector<RaceConfig> races = {
+        {"Tokyo", "track1"},
+        {"Paris", "track2"}
+    };
+
+    EXPECT_TRUE(monitor.add_races_to_match(match_id, races));
 }
 
-TEST(LobbyManagerTest, AutoDestroyGameWithLessThanTwoPlayers) {
-    LobbyManager manager;
-    uint16_t game_id = manager.create_game("Test Game", "player1", 4);
-    manager.join_game(game_id, "player2");
-    
-    // Ambos jugadores abandonan
-    manager.leave_game("player1");
-    manager.leave_game("player2");
-    
-    // La partida debe haber sido destruida
-    EXPECT_FALSE(manager.join_game(game_id, "player3"));
+// Test 5: no se pueden agregar carreras si el match no existe
+TEST_F(MatchesMonitorTest, AddRacesToInvalidMatch) {
+    std::vector<RaceConfig> races = {
+        {"Tokyo", "track1"}
+    };
+    EXPECT_FALSE(monitor.add_races_to_match(999, races));
 }
 
-TEST(LobbyManagerTest, HostCanStartGame) {
-    LobbyManager manager;
-    uint16_t game_id = manager.create_game("Test Game", "player1", 4);
-    manager.join_game(game_id, "player2");
-    
-    EXPECT_TRUE(manager.is_game_ready(game_id));
-    EXPECT_TRUE(manager.start_game(game_id, "player1"));  // Host puede iniciar
+// Test 6: listar partidas disponibles devuelve información coherente
+TEST_F(MatchesMonitorTest, ListAvailableMatches) {
+    int match_id = monitor.create_match(4, "player1", 1, dummy_queue);
+    monitor.join_match(match_id, "player2", 2, dummy_queue);
+
+    auto matches = monitor.list_available_matches();
+    ASSERT_EQ(matches.size(), 1);
+    EXPECT_EQ(matches[0].game_id, match_id);
+    EXPECT_EQ(matches[0].current_players, 2);
+    EXPECT_EQ(matches[0].max_players, 4);
 }
 
-TEST(LobbyManagerTest, NonHostCannotStartGame) {
-    LobbyManager manager;
-    uint16_t game_id = manager.create_game("Test Game", "player1", 4);
-    manager.join_game(game_id, "player2");
-    
-    EXPECT_FALSE(manager.start_game(game_id, "player2"));  // No-host no puede
+// Test 7: asignar auto a jugador
+TEST_F(MatchesMonitorTest, SetPlayerCar) {
+    int match_id = monitor.create_match(4, "host", 1, dummy_queue);
+    monitor.join_match(match_id, "guest", 2, dummy_queue);
+
+    EXPECT_NO_THROW(monitor.set_player_car(2, "CarA", "TypeX"));
 }
 
-TEST(LobbyManagerTest, CannotStartWithLessThanTwoPlayers) {
-    LobbyManager manager;
-    uint16_t game_id = manager.create_game("Test Game", "player1", 4);
-    
-    EXPECT_FALSE(manager.is_game_ready(game_id));
-    EXPECT_FALSE(manager.start_game(game_id, "player1"));
+// Test 8: eliminar jugador de partida
+TEST_F(MatchesMonitorTest, DeletePlayerFromMatch) {
+    int match_id = monitor.create_match(4, "host", 1, dummy_queue);
+    monitor.join_match(match_id, "guest", 2, dummy_queue);
+
+    monitor.delete_player_from_match(2, match_id);
+
+    auto matches = monitor.list_available_matches();
+    ASSERT_EQ(matches.size(), 1);
+    EXPECT_EQ(matches[0].current_players, 1);
 }
 
-TEST(LobbyManagerTest, HostTransferOnLeave) {
-    LobbyManager manager;
-    uint16_t game_id = manager.create_game("Test Game", "player1", 4);
-    manager.join_game(game_id, "player2");
-    manager.join_game(game_id, "player3");  // Agregar un 3er jugador
-    
-    // player1 (host original) se va
-    manager.leave_game("player1");
-    
-    // player2 debería ser el nuevo host
-    // El juego NO se destruye porque quedan 2 jugadores (player2 y player3)
-    EXPECT_TRUE(manager.is_player_in_game("player2"));
-    EXPECT_TRUE(manager.is_player_in_game("player3"));
-    EXPECT_TRUE(manager.is_game_ready(game_id));
-    
-    // player2 (nuevo host) puede iniciar el juego
-    EXPECT_TRUE(manager.start_game(game_id, "player2"));
-}
+// Test 9: limpiar todas las partidas
+TEST_F(MatchesMonitorTest, ClearAllMatches) {
+    monitor.create_match(4, "p1", 1, dummy_queue);
+    monitor.create_match(4, "p2", 2, dummy_queue);
+    monitor.clear_all_matches();
 
+    auto matches = monitor.list_available_matches();
+    EXPECT_TRUE(matches.empty());
+}

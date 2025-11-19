@@ -44,8 +44,8 @@ void ServerProtocol::send_buffer(const std::vector<uint8_t>& buffer) {
 }
 
 
-uint8_t ServerProtocol::get_max_amount_of_players() {
-    uint8_t max_players;
-    socket.recvall(&max_players, sizeof(max_players));
-    return max_players;
+uint8_t ServerProtocol::get_uint8_t() {
+    uint8_t n;
+    socket.recvall(&n, sizeof(n));
+    return n;
 }
