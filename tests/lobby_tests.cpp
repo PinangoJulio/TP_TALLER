@@ -15,15 +15,13 @@ protected:
     Queue<GameState> dummy_queue;
 
     void SetUp() override {
-        Configuration::load_path("config.yaml");
+        // No cargar config.yaml para evitar problemas en tests
         monitor.clear_all_matches();  // Limpiamos antes de cada test
     }
 };
 
 // Test 1: crear una partida correctamente
 TEST_F(MatchesMonitorTest, CreateMatch) {
-    std::cout << "Creating matches monitor" << std::endl;
-    std::cout << "MAX PLAYERS: " << Configuration::get<int>("max_clients") << std::endl;
     int match_id = monitor.create_match(4, "player1", 1, dummy_queue);
     EXPECT_GT(match_id, 0);
 }
@@ -78,7 +76,7 @@ TEST_F(MatchesMonitorTest, SetPlayerCar) {
     int match_id = monitor.create_match(4, "host", 1, dummy_queue);
     monitor.join_match(match_id, "guest", 2, dummy_queue);
 
-    EXPECT_NO_THROW(monitor.set_player_car(2, "CarA", "TypeX"));
+    EXPECT_TRUE(monitor.set_player_car("guest", "CarA", "TypeX"));
 }
 
 // Test 8: eliminar jugador de partida
@@ -86,7 +84,7 @@ TEST_F(MatchesMonitorTest, DeletePlayerFromMatch) {
     int match_id = monitor.create_match(4, "host", 1, dummy_queue);
     monitor.join_match(match_id, "guest", 2, dummy_queue);
 
-    monitor.delete_player_from_match(2, match_id);
+    monitor.leave_match_by_id(2, match_id);
 
     auto matches = monitor.list_available_matches();
     ASSERT_EQ(matches.size(), 1);

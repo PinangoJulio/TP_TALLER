@@ -29,9 +29,56 @@ GarageWindow::GarageWindow(QWidget *parent)
 
 void GarageWindow::loadCars()
 {
-    // autos
+    // Cargar configuración
     const char *path_config = "config.yaml";
     Configuration::load_path(path_config);
+
+    // ✅ Limpiar el vector
+    cars.clear();
+
+    try {
+        // ✅ Cargar la cantidad de autos desde el YAML
+        auto carsNode = Configuration::get_node("cars");
+
+        if (!carsNode.IsDefined() || !carsNode.IsSequence()) {
+            std::cerr << "[GarageWindow] Error: 'cars' no encontrado o no es una secuencia en config.yaml" << std::endl;
+            // Fallback: cargar datos hardcodeados
+            loadDefaultCars();
+            return;
+        }
+
+        // ✅ Iterar sobre cada auto en el YAML
+        for (size_t i = 0; i < carsNode.size(); i++) {
+            YAML::Node carNode = carsNode[i];
+
+            CarInfo car;
+            car.name = QString::fromStdString(carNode["name"].template as<std::string>());
+            car.imagePath = QString::fromStdString(carNode["image_path"].template as<std::string>());
+            car.type = QString::fromStdString(carNode["type"].template as<std::string>());
+            car.speed = carNode["speed"].template as<int>();
+            car.acceleration = carNode["acceleration"].template as<int>();
+            car.handling = carNode["handling"].template as<int>();
+            car.durability = carNode["durability"].template as<int>();
+
+            cars.push_back(car);
+
+            std::cout << "[GarageWindow] Auto cargado: " << car.name.toStdString()
+                      << " (tipo: " << car.type.toStdString() << ")" << std::endl;
+        }
+
+        std::cout << "[GarageWindow] ✅ " << cars.size() << " autos cargados desde config.yaml" << std::endl;
+
+    } catch (const std::exception& e) {
+        std::cerr << "[GarageWindow] Error cargando autos desde YAML: " << e.what() << std::endl;
+        // Fallback: cargar datos hardcodeados
+        loadDefaultCars();
+    }
+}
+
+void GarageWindow::loadDefaultCars()
+{
+    // ⚠️ Fallback: datos hardcodeados si falla la carga del YAML
+    std::cout << "[GarageWindow] ⚠️ Usando autos por defecto (hardcoded)" << std::endl;
 
     cars = {
         {"Leyenda Urbana", "assets/img/lobby/autos/escarabajo.png", "classic", 70, 60, 65, 80},
@@ -42,15 +89,6 @@ void GarageWindow::loadCars()
         {"Nómada", "assets/img/lobby/autos/pickup.png", "truck", 60, 50, 55, 90},
         {"Stallion GT", "assets/img/lobby/autos/carro-rojo-2.png", "sport", 90, 85, 70, 60}
     };
-
-    // Cargar stats desde el YAML
-    /*for (auto &car : cars) {
-        std::string typeKey = car.type.toStdString();
-        car.speed = Configuration::get<int>("car_types." + typeKey + ".speed");
-        car.acceleration = Configuration::get<int>("car_types." + typeKey + ".acceleration");
-        car.handling = Configuration::get<int>("car_types." + typeKey + ".handling");
-        car.durability = Configuration::get<int>("car_types." + typeKey + ".durability");
-    }*/
 }
 
 void GarageWindow::setupUI()
