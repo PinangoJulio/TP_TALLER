@@ -369,7 +369,7 @@ void Receiver::handle_lobby() {
 
 
 void Receiver::handle_match_messages() {
-    std::cout << "[Receiver] 🎮 Game loop started - listening for player commands..." << std::endl;
+    std::cout << "[Receiver]  Game loop started - listening for player commands..." << std::endl;
 
     bool disconnected = false;
 
@@ -396,7 +396,7 @@ void Receiver::handle_match_messages() {
 
                 if (comand_match.command == GameCommand::DISCONNECT) {
                     disconnected = true;
-                    std::cout << "[Receiver] Player " << username << " sent DISCONNECT command" << std::endl;
+                    std::cout << "[Receiver]Player " << username << " sent DISCONNECT command" << std::endl;
                 }
             } catch (const std::exception& e) {
                 std::cerr << "[Receiver] Error pushing command: " << e.what() << std::endl;
@@ -413,32 +413,28 @@ void Receiver::handle_match_messages() {
 
 
 void Receiver::run() {
-    // 1️⃣ FASE LOBBY
+    //  FASE LOBBY
     handle_lobby();
 
-    // 2️⃣ VERIFICAR SI PASÓ A FASE DE JUEGO
+    //VERIFICAR SI PASÓ A FASE DE JUEGO
     if (match_id != -1 && is_running) {
-        std::cout << "[Receiver] ✅ Player " << username
+        std::cout << "[Receiver] Player " << username
                   << " transitioning to GAME MODE for match " << match_id << std::endl;
-
-        // 3️⃣ OBTENER QUEUE DE COMANDOS DEL MATCH
+        // OBTENER QUEUE DE COMANDOS DEL MATCH
         commands_queue = monitor.get_command_queue(match_id);
 
-        // 4️⃣ INICIAR SENDER (para enviar GameState a este jugador)
+        //INICIAR SENDER (para enviar GameState a este jugador)
         sender.start();
-        std::cout << "[Receiver] ✅ Sender started for player " << username << std::endl;
+        std::cout << "[Receiver] Sender started for player " << username << std::endl;
 
-        // 5️⃣ FASE JUEGO
+        // ⃣FASE JUEGO
         handle_match_messages();
     }
 
-    // 6️⃣ CLEANUP AL FINALIZAR
     if (match_id != -1) {
         monitor.delete_player_from_match(id, match_id);
     }
-
     sender_messages_queue.close();
-
     if (match_id != -1) {
         sender.join();
     }
