@@ -10,12 +10,10 @@
 #include "network/client_handler.h"
 #include "network/monitor.h"
 #include "network/matches_monitor.h"
-#include "lobby/lobby_manager.h"  // ✅ AGREGAR FORWARD DECLARATION
 
 class Acceptor: public Thread {
 private:
     Socket socket;
-    LobbyManager& lobby_manager;     // ✅ MOVER AQUÍ (antes de client_counter)
     int client_counter;
     std::list<ClientHandler*> clients_connected;
     std::atomic<bool> is_running;
@@ -25,7 +23,7 @@ private:
     void clear_all_connections();
 
 public:
-    explicit Acceptor(const char *servicename, LobbyManager& manager);
+    explicit Acceptor(const char *servicename);
 
     void run() override;
     void stop() override;

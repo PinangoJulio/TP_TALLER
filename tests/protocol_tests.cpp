@@ -1,15 +1,13 @@
 #include <thread>
 #include <chrono>
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
+#include <arpa/inet.h>
+#include <gtest/gtest.h>
 
 #include "../common_src/lobby_protocol.h"
 #include "../server_src/server_protocol.h"
 #include "../client_src/lobby/model/lobby_client.h"
 #include "../common_src/dtos.h"
-#include "common_src/config.h"
-
-using ::testing::Eq;
+#include "../common_src/config.h"
 
 constexpr const char* kHost = "127.0.0.1";
 constexpr const char* kPort = "8085";
@@ -26,8 +24,7 @@ TEST(ServerClientProtocolTest, UsernameSerializationAndReception) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        LobbyManager dummy_manager;
-        ServerProtocol server_protocol(client_conn, dummy_manager);
+        ServerProtocol server_protocol(client_conn);
 
         uint8_t type = server_protocol.read_message_type();
         EXPECT_EQ(type, MSG_USERNAME);
@@ -54,8 +51,7 @@ TEST(ServerClientProtocolTest, SendAndReceiveWelcomeMessage) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        LobbyManager dummy_manager;
-        ServerProtocol server_protocol(client_conn, dummy_manager);
+        ServerProtocol server_protocol(client_conn);
 
         server_protocol.send_buffer(LobbyProtocol::serialize_welcome(welcome_msg));
     });
@@ -82,8 +78,7 @@ TEST(ServerClientProtocolTest, CreateGameSerializationAndReception) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        LobbyManager dummy_manager;
-        ServerProtocol server_protocol(client_conn, dummy_manager);
+        ServerProtocol server_protocol(client_conn);
 
         uint8_t type = server_protocol.read_message_type();
         EXPECT_EQ(type, MSG_CREATE_GAME);
@@ -128,8 +123,8 @@ TEST(ServerClientProtocolTest, JoinGameSerializationAndReception) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        LobbyManager dummy_manager;
-        ServerProtocol server_protocol(client_conn, dummy_manager);
+        
+        ServerProtocol server_protocol(client_conn);
 
         uint8_t type = server_protocol.read_message_type();
         EXPECT_EQ(type, MSG_JOIN_GAME);
@@ -149,7 +144,6 @@ TEST(ServerClientProtocolTest, JoinGameSerializationAndReception) {
     server_thread.join();
 }
 
-// 🔥 TEST 5: Selección de auto (MSG_SELECT_CAR)
 TEST(ServerClientProtocolTest, SelectCarSerializationAndReception) {
     std::string car_name = "Ferrari";
     std::string car_type = "Sport";
@@ -158,8 +152,8 @@ TEST(ServerClientProtocolTest, SelectCarSerializationAndReception) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        LobbyManager dummy_manager;
-        ServerProtocol server_protocol(client_conn, dummy_manager);
+        
+        ServerProtocol server_protocol(client_conn);
 
         uint8_t type = server_protocol.read_message_type();
         EXPECT_EQ(type, MSG_SELECT_CAR);
@@ -182,7 +176,6 @@ TEST(ServerClientProtocolTest, SelectCarSerializationAndReception) {
     server_thread.join();
 }
 
-// 🔥 TEST 6: Leave game
 TEST(ServerClientProtocolTest, LeaveGameSerializationAndReception) {
     uint16_t game_id = 7;
 
@@ -190,8 +183,8 @@ TEST(ServerClientProtocolTest, LeaveGameSerializationAndReception) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        LobbyManager dummy_manager;
-        ServerProtocol server_protocol(client_conn, dummy_manager);
+        
+        ServerProtocol server_protocol(client_conn);
 
         uint8_t type = server_protocol.read_message_type();
         EXPECT_EQ(type, MSG_LEAVE_GAME);
@@ -211,7 +204,6 @@ TEST(ServerClientProtocolTest, LeaveGameSerializationAndReception) {
     server_thread.join();
 }
 
-// 🔥 TEST 7: Error message serialization
 TEST(ServerClientProtocolTest, ErrorMessageSerialization) {
     LobbyErrorCode error_code = ERR_GAME_FULL;
     std::string error_msg = "Game is full";
@@ -220,8 +212,8 @@ TEST(ServerClientProtocolTest, ErrorMessageSerialization) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        LobbyManager dummy_manager;
-        ServerProtocol server_protocol(client_conn, dummy_manager);
+        
+        ServerProtocol server_protocol(client_conn);
 
         auto buffer = LobbyProtocol::serialize_error(error_code, error_msg);
         server_protocol.send_buffer(buffer);
@@ -244,14 +236,13 @@ TEST(ServerClientProtocolTest, ErrorMessageSerialization) {
     server_thread.join();
 }
 
-// 🔥 TEST 8: List games con múltiples partidas
 TEST(ServerClientProtocolTest, ListMultipleGames) {
     std::thread server_thread([&]() {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        LobbyManager dummy_manager;
-        ServerProtocol server_protocol(client_conn, dummy_manager);
+        
+        ServerProtocol server_protocol(client_conn);
 
         uint8_t type = server_protocol.read_message_type();
         EXPECT_EQ(type, MSG_LIST_GAMES);
@@ -290,7 +281,6 @@ TEST(ServerClientProtocolTest, ListMultipleGames) {
     server_thread.join();
 }
 
-// 🔥 TEST 9: Game created confirmation
 TEST(ServerClientProtocolTest, GameCreatedConfirmation) {
     uint16_t expected_game_id = 123;
 
@@ -298,8 +288,8 @@ TEST(ServerClientProtocolTest, GameCreatedConfirmation) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        LobbyManager dummy_manager;
-        ServerProtocol server_protocol(client_conn, dummy_manager);
+        
+        ServerProtocol server_protocol(client_conn);
 
         auto buffer = LobbyProtocol::serialize_game_created(expected_game_id);
         server_protocol.send_buffer(buffer);
@@ -318,7 +308,6 @@ TEST(ServerClientProtocolTest, GameCreatedConfirmation) {
     server_thread.join();
 }
 
-// 🔥 TEST 10: Game joined confirmation
 TEST(ServerClientProtocolTest, GameJoinedConfirmation) {
     uint16_t expected_game_id = 456;
 
@@ -326,8 +315,8 @@ TEST(ServerClientProtocolTest, GameJoinedConfirmation) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        LobbyManager dummy_manager;
-        ServerProtocol server_protocol(client_conn, dummy_manager);
+        
+        ServerProtocol server_protocol(client_conn);
 
         auto buffer = LobbyProtocol::serialize_game_joined(expected_game_id);
         server_protocol.send_buffer(buffer);
@@ -346,7 +335,6 @@ TEST(ServerClientProtocolTest, GameJoinedConfirmation) {
     server_thread.join();
 }
 
-// 🔥 TEST 11: Car selection acknowledgment
 TEST(ServerClientProtocolTest, CarSelectedAcknowledgment) {
     std::string car_name = "Mustang";
     std::string car_type = "Muscle";
@@ -355,8 +343,8 @@ TEST(ServerClientProtocolTest, CarSelectedAcknowledgment) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        LobbyManager dummy_manager;
-        ServerProtocol server_protocol(client_conn, dummy_manager);
+        
+        ServerProtocol server_protocol(client_conn);
 
         auto buffer = LobbyProtocol::serialize_car_selected_ack(car_name, car_type);
         server_protocol.send_buffer(buffer);
@@ -374,3 +362,301 @@ TEST(ServerClientProtocolTest, CarSelectedAcknowledgment) {
     client_thread.join();
     server_thread.join();
 }
+
+// ============================================================
+// TESTS DE COMANDOS DEL JUEGO (GAME COMMANDS)
+// ============================================================
+
+TEST(GameCommandProtocolTest, AccelerateCommandSimple) {
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+
+        ServerProtocol server_protocol(client_conn);
+
+        ComandMatchDTO command;
+        bool success = server_protocol.read_command_client(command);
+
+        EXPECT_TRUE(success);
+        EXPECT_EQ(command.command, GameCommand::ACCELERATE);
+        EXPECT_FLOAT_EQ(command.speed_boost, 1.0f);
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        Socket client_socket(kHost, kPort);
+
+        // Enviar solo el código de comando (1 byte)
+        uint8_t cmd = CMD_ACCELERATE;
+        client_socket.sendall(&cmd, sizeof(cmd));
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+TEST(GameCommandProtocolTest, BrakeCommandSimple) {
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+
+        ServerProtocol server_protocol(client_conn);
+
+        ComandMatchDTO command;
+        bool success = server_protocol.read_command_client(command);
+
+        EXPECT_TRUE(success);
+        EXPECT_EQ(command.command, GameCommand::BRAKE);
+        EXPECT_FLOAT_EQ(command.speed_boost, 1.0f);
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        Socket client_socket(kHost, kPort);
+
+        uint8_t cmd = CMD_BRAKE;
+        client_socket.sendall(&cmd, sizeof(cmd));
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+TEST(GameCommandProtocolTest, TurnLeftWithIntensity) {
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+
+        ServerProtocol server_protocol(client_conn);
+
+        ComandMatchDTO command;
+        bool success = server_protocol.read_command_client(command);
+
+        EXPECT_TRUE(success);
+        EXPECT_EQ(command.command, GameCommand::TURN_LEFT);
+        EXPECT_FLOAT_EQ(command.turn_intensity, 0.75f);  // 75 / 100.0
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        Socket client_socket(kHost, kPort);
+
+        // Enviar código + intensidad (2 bytes)
+        uint8_t cmd = CMD_TURN_LEFT;
+        uint8_t intensity = 75;  // 75%
+
+        client_socket.sendall(&cmd, sizeof(cmd));
+        client_socket.sendall(&intensity, sizeof(intensity));
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+TEST(GameCommandProtocolTest, TurnRightWithIntensity) {
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+
+        ServerProtocol server_protocol(client_conn);
+
+        ComandMatchDTO command;
+        bool success = server_protocol.read_command_client(command);
+
+        EXPECT_TRUE(success);
+        EXPECT_EQ(command.command, GameCommand::TURN_RIGHT);
+        EXPECT_FLOAT_EQ(command.turn_intensity, 0.50f);  // 50 / 100.0
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        Socket client_socket(kHost, kPort);
+
+        uint8_t cmd = CMD_TURN_RIGHT;
+        uint8_t intensity = 50;  // 50%
+
+        client_socket.sendall(&cmd, sizeof(cmd));
+        client_socket.sendall(&intensity, sizeof(intensity));
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+TEST(GameCommandProtocolTest, UseNitroCommand) {
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+
+        ServerProtocol server_protocol(client_conn);
+
+        ComandMatchDTO command;
+        bool success = server_protocol.read_command_client(command);
+
+        EXPECT_TRUE(success);
+        EXPECT_EQ(command.command, GameCommand::USE_NITRO);
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        Socket client_socket(kHost, kPort);
+
+        uint8_t cmd = CMD_USE_NITRO;
+        client_socket.sendall(&cmd, sizeof(cmd));
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+TEST(GameCommandProtocolTest, CheatTeleportWithCheckpoint) {
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+
+        ServerProtocol server_protocol(client_conn);
+
+        ComandMatchDTO command;
+        bool success = server_protocol.read_command_client(command);
+
+        EXPECT_TRUE(success);
+        EXPECT_EQ(command.command, GameCommand::CHEAT_TELEPORT_CHECKPOINT);
+        EXPECT_EQ(command.checkpoint_id, 5);
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        Socket client_socket(kHost, kPort);
+
+        // Enviar código + checkpoint_id (3 bytes)
+        uint8_t cmd = CMD_CHEAT_TELEPORT;
+        uint16_t checkpoint_id = htons(5);  // Network order
+
+        client_socket.sendall(&cmd, sizeof(cmd));
+        client_socket.sendall(&checkpoint_id, sizeof(checkpoint_id));
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+TEST(GameCommandProtocolTest, UpgradeSpeedCommand) {
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+
+        ServerProtocol server_protocol(client_conn);
+
+        ComandMatchDTO command;
+        bool success = server_protocol.read_command_client(command);
+
+        EXPECT_TRUE(success);
+        EXPECT_EQ(command.command, GameCommand::UPGRADE_SPEED);
+        EXPECT_EQ(command.upgrade_type, UpgradeType::SPEED);
+        EXPECT_EQ(command.upgrade_level, 2);
+        EXPECT_EQ(command.upgrade_cost_ms, 500);
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        Socket client_socket(kHost, kPort);
+
+        // Enviar código + nivel + costo (4 bytes)
+        uint8_t cmd = CMD_UPGRADE_SPEED;
+        uint8_t level = 2;
+        uint16_t cost = htons(500);  // Network order
+
+        client_socket.sendall(&cmd, sizeof(cmd));
+        client_socket.sendall(&level, sizeof(level));
+        client_socket.sendall(&cost, sizeof(cost));
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+TEST(GameCommandProtocolTest, DisconnectCommand) {
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+
+        ServerProtocol server_protocol(client_conn);
+
+        ComandMatchDTO command;
+        bool success = server_protocol.read_command_client(command);
+
+        EXPECT_TRUE(success);
+        EXPECT_EQ(command.command, GameCommand::DISCONNECT);
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        Socket client_socket(kHost, kPort);
+
+        uint8_t cmd = CMD_DISCONNECT;
+        client_socket.sendall(&cmd, sizeof(cmd));
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+TEST(GameCommandProtocolTest, MultipleCommandsSequence) {
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+
+        ServerProtocol server_protocol(client_conn);
+
+        // Comando 1: ACCELERATE
+        ComandMatchDTO cmd1;
+        bool success1 = server_protocol.read_command_client(cmd1);
+        EXPECT_TRUE(success1);
+        EXPECT_EQ(cmd1.command, GameCommand::ACCELERATE);
+
+        // Comando 2: TURN_LEFT con intensidad
+        ComandMatchDTO cmd2;
+        bool success2 = server_protocol.read_command_client(cmd2);
+        EXPECT_TRUE(success2);
+        EXPECT_EQ(cmd2.command, GameCommand::TURN_LEFT);
+        EXPECT_FLOAT_EQ(cmd2.turn_intensity, 0.80f);
+
+        // Comando 3: USE_NITRO
+        ComandMatchDTO cmd3;
+        bool success3 = server_protocol.read_command_client(cmd3);
+        EXPECT_TRUE(success3);
+        EXPECT_EQ(cmd3.command, GameCommand::USE_NITRO);
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        Socket client_socket(kHost, kPort);
+
+        // Enviar 3 comandos consecutivos
+        uint8_t cmd1 = CMD_ACCELERATE;
+        client_socket.sendall(&cmd1, sizeof(cmd1));
+
+        uint8_t cmd2 = CMD_TURN_LEFT;
+        uint8_t intensity = 80;
+        client_socket.sendall(&cmd2, sizeof(cmd2));
+        client_socket.sendall(&intensity, sizeof(intensity));
+
+        uint8_t cmd3 = CMD_USE_NITRO;
+        client_socket.sendall(&cmd3, sizeof(cmd3));
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+
+

@@ -4,15 +4,14 @@
 #include <string>
 #include <vector>
 
+#include "common_src/dtos.h"
 #include "common_src/socket.h"
-#include "lobby/lobby_manager.h"
 
 class ServerProtocol {
     Socket& socket;
-    LobbyManager& lobby_manager;
 
 public:
-    ServerProtocol(Socket& s, LobbyManager& manager);
+    explicit ServerProtocol(Socket& s);
 
     // Procesa mensajes del cliente
     bool process_client_messages(const std::string& username);
@@ -32,8 +31,11 @@ public:
     // Envía un buffer
     void send_buffer(const std::vector<uint8_t>& buffer);
     
-    // 🔥 NUEVO: Obtener referencia al socket
+    // Obtener referencia al socket
     Socket& get_socket() { return socket; }
+
+    // leer comando cliente
+    bool read_command_client(ComandMatchDTO& command);
 };
 
 #endif //SERVER_PROTOCOL_H

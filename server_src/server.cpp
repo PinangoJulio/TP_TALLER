@@ -10,8 +10,8 @@
 
 #define QUIT 'q'
 
-Server::Server(const char *servicename): lobby_manager(), acceptor(servicename, lobby_manager){
-    // 🔥 AGREGADO: Banner de inicio
+Server::Server(const char *servicename): acceptor(servicename){
+    // 🔥 Banner de inicio
     std::cout << "==================================================" << std::endl;
     std::cout << "    NEED FOR SPEED 2D - SERVER" << std::endl;
     std::cout << "==================================================" << std::endl;

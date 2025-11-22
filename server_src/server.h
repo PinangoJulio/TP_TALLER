@@ -6,7 +6,6 @@
 
 class Server {
 private:
-    LobbyManager lobby_manager;
     Acceptor acceptor;
 
     void accept_connection();

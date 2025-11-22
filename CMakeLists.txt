@@ -282,6 +282,7 @@ if(TALLER_TESTS)
             server_src/network/client_monitor.cpp
             server_src/game/match.cpp
             server_src/game/game_loop.cpp
+            server_src/game/car.cpp
             server_src/server_protocol.cpp
             server_src/lobby/lobby_manager.cpp
             server_src/lobby/game_room.cpp

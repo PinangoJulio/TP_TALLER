@@ -18,9 +18,8 @@ class Receiver: public Thread {
     Queue<GameState>& sender_messages_queue;
     std::atomic<bool>& is_running;
     MatchesMonitor& monitor;
-    Queue<struct Command>* commands_queue = nullptr;
+    Queue<ComandMatchDTO>* commands_queue = nullptr;
     Sender sender;
-    LobbyManager& lobby_manager;
 
     bool handle_client_lobby();
 public:
@@ -30,7 +29,7 @@ public:
     Receiver(Receiver&& other) = default;
 
     explicit Receiver(ServerProtocol& protocol, int id, Queue<GameState>& sender_messages_queue, 
-                      std::atomic<bool>& is_running, MatchesMonitor& monitor, LobbyManager& lobby_manager);
+                      std::atomic<bool>& is_running, MatchesMonitor& monitor);
 
     void run() override;
     void kill();

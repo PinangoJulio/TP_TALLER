@@ -29,6 +29,26 @@ T Configuration::get(const std::string& field) {
     }
 }
 
+// Get YAML node for complex structures (arrays, maps, etc.)
+YAML::Node Configuration::get_node(const std::string& field) {
+    try {
+        YAML::Node node = yaml;
+        std::stringstream ss(field);
+        std::string key;
+
+        while (std::getline(ss, key, '.')) {
+            if (!node[key]) {
+                throw std::runtime_error("Field not found: " + field);
+            }
+            node = node[key];
+        }
+
+        return node;
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Error reading field '" + field + "': " + e.what());
+    }
+}
+
 // ✅ Ahora sí, recién acá las instanciaciones explícitas
 template std::string Configuration::get<std::string>(const std::string& field);
 template int Configuration::get<int>(const std::string& field);

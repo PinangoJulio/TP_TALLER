@@ -1,4 +1,4 @@
-.PHONY: all debug test clean server client install
+.PHONY: all debug test clean clean_all server client install
 
 BUILD_DIR = build
 INSTALLER = install.sh
@@ -33,12 +33,34 @@ test: debug
 	@echo "--- Ejecutando Tests ---"
 	@./taller_tests
 
-# Limpieza: elimina la carpeta de compilación.
+# Limpieza ligera: solo elimina ejecutables y archivos compilados (mantiene dependencias)
 clean:
-	@echo "--- Limpieza Profunda ---"
+	@echo "--- Limpieza de Ejecutables ---"
+	@echo "--- 1. Corrigiendo permisos (requiere sudo) ---"
+	sudo chown -R $(USER):$(USER) $(BUILD_DIR) 2>/dev/null || echo "No se pudo cambiar permisos, continuando..."
+	@echo "--- 2. Limpiando archivos compilados ---"
+	@rm -f client server taller_editor taller_tests collision_test
+	@if [ -d "$(BUILD_DIR)" ]; then \
+		cd $(BUILD_DIR) && make clean 2>/dev/null || true; \
+		rm -f CMakeCache.txt; \
+		rm -rf CMakeFiles/; \
+		rm -rf client_autogen/ server_autogen/ taller_editor_autogen/ taller_tests_autogen/ collision_test_autogen/; \
+		rm -rf taller_common_autogen/ taller_lobby_autogen/; \
+		rm -f *.a lib/*.a; \
+		rm -f bin/*; \
+		rm -rf client_src/ server_src/ common_src/ editor/; \
+	fi
+	@echo "--- Limpieza Completada (dependencias preservadas) ---"
+
+# Limpieza profunda: elimina TODO incluyendo dependencias descargadas
+clean_all:
+	@echo "--- Limpieza Profunda (incluyendo dependencias) ---"
+	@echo "--- 1. Corrigiendo permisos (requiere sudo) ---"
+	sudo chown -R $(USER):$(USER) $(BUILD_DIR) 2>/dev/null || echo "No se pudo cambiar permisos, continuando..."
+	@echo "--- 2. Eliminando todo el build ---"
 	@rm -Rf $(BUILD_DIR)
-	@rm -f client server taller_editor taller_tests
-	@echo "--- Limpieza Completada ---"
+	@rm -f client server taller_editor taller_tests collision_test
+	@echo "--- Limpieza Profunda Completada ---"
 
 
 # =======================================================

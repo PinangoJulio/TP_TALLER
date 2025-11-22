@@ -2,52 +2,90 @@
 #define GAME_LOOP_H
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <iostream>
+#include <map>
+#include <memory>
 #include <thread>
 #include <vector>
 
 #include "../../common_src/thread.h"
 #include "../../common_src/dtos.h"  
+#include "../../common_src/queue.h"
+#include "../../common_src/game_state.h"
 
 #include "car.h"
 #include "player.h"
-#include "../network/monitor.h"
-#include "server_src/network/client_monitor.h"
+#include "../network/client_monitor.h"
 
 #define NITRO_DURATION 12
 #define SLEEP 250
 
 /*
  * GameLoop:
- * Recibe Comandos de jugadores (acelerar, frenar, girar, etc)
- * Actualiza la fisica de los autos
- * Detectar colisiones (contra paredes, otros autos, obstaculos YAML)
- * Actualizar estado de juego (vueltas, checkpoints, tiempos)
- * Enviar el estado actualizado a los clientes
+ * - Recibe Comandos de jugadores (acelerar, frenar, girar, usar nitro)
+ * - Actualiza la física de los autos (Box2D)
+ * - Detecta colisiones (contra paredes, otros autos, obstáculos YAML)
+ * - Actualiza estado de juego (vueltas, checkpoints, tiempos)
+ * - Envía el estado actualizado a los clientes via broadcast
  */
 
 class GameLoop : public Thread {
-    bool is_running;
+private:
+    // ---- ESTADO ----
+    std::atomic<bool> is_running;
+    std::atomic<bool> race_finished;
 
-    Queue<ComandMatchDTO>& comandos;
-    ClientMonitor& queues_players;
-    std::vector<Player*> players;
-    std::string yaml_path;
+    // ---- COMUNICACIÓN ----
+    Queue<ComandMatchDTO>& comandos;        // Comandos de jugadores (ACCELERATE, BRAKE, etc)
+    ClientMonitor& queues_players;          // Queues para broadcast a jugadores
 
-    //Mapa mapa;  // construido desde YAML
+    // ---- JUGADORES Y AUTOS ----
+    std::map<int, std::unique_ptr<Player>> players;  // ID → Player (gestión automática)
+    std::map<int, std::unique_ptr<Car>> cars;        // ID → Car (gestión automática)
 
+    // ---- MAPA Y CONFIGURACIÓN ----
+    std::string yaml_path;                  // Ruta al YAML del mapa
+    std::string city_name;                  // Nombre de la ciudad
+    int total_laps;                         // Vueltas totales de la carrera
+    //Mapa mapa;                            // TODO: Mapa construido desde YAML
 
+    // ---- TIEMPOS ----
+    std::chrono::steady_clock::time_point race_start_time;
+
+    // ---- MÉTODOS PRIVADOS ----
     void procesar_comandos();
     void actualizar_fisica();
     void detectar_colisiones();
     void actualizar_estado_carrera();
     void enviar_estado_a_jugadores();
+    void verificar_ganadores();
 
 public:
-    GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues, std::string& yaml_path);
+    GameLoop(Queue<ComandMatchDTO>& comandos,
+             ClientMonitor& queues,
+             const std::string& yaml_path);
 
+    // ---- AGREGAR JUGADORES ----
+    // Se llama desde Match antes de iniciar la carrera
+    void add_player(int player_id,
+                   const std::string& name,
+                   const std::string& car_name,
+                   const std::string& car_type);
+
+    // ---- CONFIGURACIÓN ----
+    void set_total_laps(int laps) { total_laps = laps; }
+    void set_city_name(const std::string& city) { city_name = city; }
+
+    // ---- CONTROL ----
     void run() override;
+    void stop_race();
+    bool is_alive() const override { return is_running.load(); }
+
+    // ---- DEBUG ----
+    void print_race_info() const;
+
     ~GameLoop() override;
 };
 

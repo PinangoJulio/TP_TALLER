@@ -34,25 +34,67 @@ nitro_duration: 5                # seconds (int) - duration of nitro boost
 nitro_cooldown: 10               # seconds (int) - cooldown before nitro can be used again
 nitro_speed_multiplier: 1.5      # float - multiplier for max speed when nitro is active
 
+# ===============================
+# AVAILABLE CARS CONFIGURATION
+# ===============================
 
-car_types:
-  classic:
+cars:
+  - name: "Leyenda Urbana"
+    image_path: "assets/img/lobby/autos/escarabajo.png"
+    type: "classic"
     speed: 70
     acceleration: 60
     handling: 65
     durability: 80
 
-  sport:
+  - name: "Brisa"
+    image_path: "assets/img/lobby/autos/convertible.png"
+    type: "sport"
     speed: 90
     acceleration: 85
     handling: 70
     durability: 60
 
-  truck:
+  - name: "J-Classic 600"
+    image_path: "assets/img/lobby/autos/carro-verde.png"
+    type: "classic"
+    speed: 70
+    acceleration: 60
+    handling: 65
+    durability: 80
+
+  - name: "Cavallo V8"
+    image_path: "assets/img/lobby/autos/carro-rojo.png"
+    type: "sport"
+    speed: 90
+    acceleration: 85
+    handling: 70
+    durability: 60
+
+  - name: "Senator"
+    image_path: "assets/img/lobby/autos/carro-azul.png"
+    type: "classic"
+    speed: 70
+    acceleration: 60
+    handling: 65
+    durability: 80
+
+  - name: "Nómada"
+    image_path: "assets/img/lobby/autos/pickup.png"
+    type: "truck"
     speed: 60
     acceleration: 50
     handling: 55
     durability: 90
+
+  - name: "Stallion GT"
+    image_path: "assets/img/lobby/autos/carro-rojo-2.png"
+    type: "sport"
+    speed: 90
+    acceleration: 85
+    handling: 70
+    durability: 60
+
 
 
 # ===============================

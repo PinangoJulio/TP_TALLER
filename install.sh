@@ -86,22 +86,49 @@ echo "[3/4] Instalando archivos en el sistema Linux (/usr/bin, /var, /etc)..."
 TP_ROOT_DIR="/var/$TP_NAME"
 sudo mkdir -p /usr/bin /etc/$TP_NAME $TP_ROOT_DIR/assets $TP_ROOT_DIR/recorridos
 
-# 3.2 Copiar Binarios y Configuración (Rutas mixtas)
+# 3.2 Copiar Binarios a /usr/bin
+echo "   → Copiando binarios a /usr/bin..."
 sudo cp ./client /usr/bin/$TP_NAME-client
 sudo cp ./server /usr/bin/$TP_NAME-server
 sudo cp ./taller_editor /usr/bin/$TP_NAME-editor
 
-# 3.3 Copiar Archivos de Configuración (YAML)
-#sudo cp -r config/* /etc/$TP_NAME/
+# 3.3 Copiar Archivos de Configuración (YAML) a /etc
+echo "   → Copiando archivos de configuración a /etc/$TP_NAME/..."
+sudo cp config.yaml /etc/$TP_NAME/
 
-# 3.4 Copiar Assets (Imágenes, Sonidos)
-sudo cp -r gfx /var/$TP_NAME/assets/
-sudo cp -r sfx /var/$TP_NAME/assets/ 2>/dev/null || true
+# 3.4 Copiar Assets (Imágenes, Fuentes, Sonidos, Música) a /var
+echo "   → Copiando assets a $TP_ROOT_DIR/assets/..."
+# Copiar gráficos (si existen)
+[ -d "gfx" ] && sudo cp -r gfx/* $TP_ROOT_DIR/assets/ 2>/dev/null || true
+# Copiar sonidos (si existen)
+[ -d "sfx" ] && sudo cp -r sfx/* $TP_ROOT_DIR/assets/ 2>/dev/null || true
+# Copiar assets completos (fuentes, imágenes de lobby, música)
+[ -d "assets" ] && sudo cp -r assets/* $TP_ROOT_DIR/assets/ 2>/dev/null || true
 
-# 3.5 Copiar Recorridos/Mapas
-sudo cp -r server_src/city_maps/* /var/$TP_NAME/recorridos/
+# 3.5 Copiar Recorridos/Mapas a /var
+echo "   → Copiando mapas de ciudades a $TP_ROOT_DIR/recorridos/..."
+sudo cp -r server_src/city_maps/* $TP_ROOT_DIR/recorridos/
 
 ## ----------------------------------------------------
 ## [4/4] Finalización
 ## ----------------------------------------------------
 echo "[4/4] Instalación completada con éxito ✅"
+echo ""
+echo "==================================================="
+echo "           INSTALACIÓN COMPLETADA"
+echo "==================================================="
+echo ""
+echo " BINARIOS instalados en:"
+echo "   • /usr/bin/$TP_NAME-client"
+echo "   • /usr/bin/$TP_NAME-server"
+echo "   • /usr/bin/$TP_NAME-editor"
+echo ""
+echo "  CONFIGURACIÓN instalada en:"
+echo "   • /etc/$TP_NAME/config.yaml"
+echo ""
+echo " ASSETS (imágenes, música, fuentes) instalados en:"
+echo "   • /var/$TP_NAME/assets/"
+echo ""
+echo "  MAPAS/RECORRIDOS instalados en:"
+echo "   • /var/$TP_NAME/recorridos/"
+echo ""

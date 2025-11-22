@@ -16,5 +16,8 @@ public:
     // Generic getter for any configuration field
     template <typename T>
     static T get(const std::string& field);
+
+    // Get YAML node directly for complex structures (like arrays)
+    static YAML::Node get_node(const std::string& field);
 };
 #endif //CONFIG_H

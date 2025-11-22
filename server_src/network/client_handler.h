@@ -20,12 +20,11 @@ private:
 
     std::atomic<bool> is_alive;
     Queue<GameState> messages_queue;  // enviadora
-    LobbyManager& lobby_manager;
 
     Receiver receiver;
 
 public:
-    explicit ClientHandler(Socket skt, int id, MatchesMonitor& monitor, LobbyManager& lobby_manager);
+    explicit ClientHandler(Socket skt, int id, MatchesMonitor& monitor);
 
     void run_threads();
     bool is_running();
