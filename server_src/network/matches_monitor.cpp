@@ -2,12 +2,14 @@
 
 #include <cstring>
 #include <iostream>
+#include <utility>
 
 // ============================================
 // CREACIÓN Y GESTIÓN DE PARTIDAS
 // ============================================
 
-int MatchesMonitor::create_match(int max_players, const std::string &host_name, int player_id, Queue<GameState> &sender_message_queue) {
+int MatchesMonitor::create_match(int max_players, const std::string& host_name, int player_id,
+                                 Queue<GameState>& sender_message_queue) {
     std::lock_guard<std::mutex> lock(mtx);
 
     // ✅ Validar que el host no esté ya en otra partida
@@ -19,11 +21,7 @@ int MatchesMonitor::create_match(int max_players, const std::string &host_name, 
 
     int match_id = ++id_matches;
 
-    std::unique_ptr<Match> match = std::make_unique<Match>(
-        host_name,
-        match_id,
-        max_players
-    );
+    std::unique_ptr<Match> match = std::make_unique<Match>(host_name, match_id, max_players);
 
     // ✅ PRIMERO: Insertar el match en el mapa
     matches.emplace(match_id, std::move(match));
@@ -32,9 +30,10 @@ int MatchesMonitor::create_match(int max_players, const std::string &host_name, 
     auto& inserted_match = matches[match_id];
 
     // ✅ TERCERO: Configurar callback de broadcast
-    inserted_match->set_broadcast_callback([this, match_id](const std::vector<uint8_t>& buffer, int /*exclude_player_id*/) {
-        this->broadcast_to_match(match_id, buffer, "");
-    });
+    inserted_match->set_broadcast_callback(
+        [this, match_id](const std::vector<uint8_t>& buffer, int /*exclude_player_id*/) {
+            this->broadcast_to_match(match_id, buffer, "");
+        });
 
     // ✅ CUARTO: Agregar el host como primer jugador
     inserted_match->add_player(player_id, host_name, sender_message_queue);
@@ -42,13 +41,14 @@ int MatchesMonitor::create_match(int max_players, const std::string &host_name, 
     // ✅ QUINTO: Registrar en el lookup
     player_to_match[host_name] = match_id;
 
-    std::cout << "[MatchesMonitor] ✅ Match created: ID=" << match_id
-              << " Host=" << host_name << " (player_id=" << player_id << ")" << std::endl;
+    std::cout << "[MatchesMonitor] ✅ Match created: ID=" << match_id << " Host=" << host_name
+              << " (player_id=" << player_id << ")" << std::endl;
 
     return match_id;
 }
 
-bool MatchesMonitor::join_match(int match_id, const std::string &player_name, int player_id, Queue<GameState> &sender_message_queue) {
+bool MatchesMonitor::join_match(int match_id, const std::string& player_name, int player_id,
+                                Queue<GameState>& sender_message_queue) {
     std::lock_guard<std::mutex> lock(mtx);
 
     std::cout << "[MatchesMonitor] join_match() called: player=" << player_name
@@ -70,7 +70,8 @@ bool MatchesMonitor::join_match(int match_id, const std::string &player_name, in
     auto& match = it->second;
 
     if (!match->can_player_join_match()) {
-        std::cerr << "[MatchesMonitor] Match " << match_id << " is full or already started" << std::endl;
+        std::cerr << "[MatchesMonitor] Match " << match_id << " is full or already started"
+                  << std::endl;
         return false;
     }
 
@@ -81,8 +82,8 @@ bool MatchesMonitor::join_match(int match_id, const std::string &player_name, in
         std::cout << "[MatchesMonitor] ✅ " << player_name << " (id=" << player_id
                   << ") joined match " << match_id << std::endl;
     } else {
-        std::cerr << "[MatchesMonitor] ❌ Failed to add " << player_name
-                  << " to match " << match_id << std::endl;
+        std::cerr << "[MatchesMonitor] ❌ Failed to add " << player_name << " to match " << match_id
+                  << std::endl;
     }
 
     return success;
@@ -93,7 +94,8 @@ bool MatchesMonitor::leave_match(const std::string& player_name) {
 
     auto it = player_to_match.find(player_name);
     if (it == player_to_match.end()) {
-        std::cout << "[MatchesMonitor] Player '" << player_name << "' is not in any match" << std::endl;
+        std::cout << "[MatchesMonitor] Player '" << player_name << "' is not in any match"
+                  << std::endl;
         return false;
     }
 
@@ -107,13 +109,15 @@ bool MatchesMonitor::leave_match(const std::string& player_name) {
 
     auto match_it = matches.find(match_id);
     if (match_it == matches.end()) {
-        std::cerr << "[MatchesMonitor] Match " << match_id << " not found (inconsistency)" << std::endl;
+        std::cerr << "[MatchesMonitor] Match " << match_id << " not found (inconsistency)"
+                  << std::endl;
         return false;
     }
 
     int player_id = match_it->second->get_player_id_by_name(player_name);
     if (player_id == -1) {
-        std::cerr << "[MatchesMonitor] Player '" << player_name << "' not found in match " << match_id << std::endl;
+        std::cerr << "[MatchesMonitor] Player '" << player_name << "' not found in match "
+                  << match_id << std::endl;
         return false;
     }
 
@@ -145,8 +149,7 @@ bool MatchesMonitor::leave_match_by_id(int player_id, int match_id) {
 
     // Si quedó vacío, eliminar
     if (it->second->is_empty()) {
-        std::cout << "[MatchesMonitor] Match " << match_id
-                  << " está vacío, eliminándolo...\n";
+        std::cout << "[MatchesMonitor] Match " << match_id << " está vacío, eliminándolo...\n";
         matches.erase(it);
     }
 
@@ -218,7 +221,8 @@ bool MatchesMonitor::is_match_ready(int match_id) const {
 // ACCIONES DE JUGADORES
 // ============================================
 
-bool MatchesMonitor::set_player_car(const std::string& player_name, const std::string& car_name, const std::string& car_type) {
+bool MatchesMonitor::set_player_car(const std::string& player_name, const std::string& car_name,
+                                    const std::string& car_type) {
     std::lock_guard<std::mutex> lock(mtx);
 
     auto it = player_to_match.find(player_name);
@@ -239,7 +243,7 @@ bool MatchesMonitor::set_player_car(const std::string& player_name, const std::s
 
 bool MatchesMonitor::set_player_ready(const std::string& player_name, bool ready) {
     std::lock_guard<std::mutex> lock(mtx);
-    
+
     auto it = player_to_match.find(player_name);
     if (it == player_to_match.end()) {
         std::cerr << "[MatchesMonitor] Jugador " << player_name << " no está en ningún match\n";
@@ -275,13 +279,14 @@ std::map<int, PlayerLobbyInfo> MatchesMonitor::get_match_players_snapshot(int ma
 // SOCKETS Y BROADCAST
 // ============================================
 
-void MatchesMonitor::register_player_socket(int match_id, const std::string& player_name, Socket& socket) {
+void MatchesMonitor::register_player_socket(int match_id, const std::string& player_name,
+                                            Socket& socket) {
     std::lock_guard<std::mutex> lock(mtx);
 
     player_sockets[match_id][player_name] = &socket;
 
-    std::cout << "[MatchesMonitor] Socket registered: " << player_name
-              << " in match " << match_id << std::endl;
+    std::cout << "[MatchesMonitor] Socket registered: " << player_name << " in match " << match_id
+              << std::endl;
 }
 
 void MatchesMonitor::unregister_player_socket(int match_id, const std::string& player_name) {
@@ -291,8 +296,8 @@ void MatchesMonitor::unregister_player_socket(int match_id, const std::string& p
     if (it != player_sockets.end()) {
         it->second.erase(player_name);
 
-        std::cout << "[MatchesMonitor] Socket unregistered: " << player_name
-                  << " from match " << match_id << std::endl;
+        std::cout << "[MatchesMonitor] Socket unregistered: " << player_name << " from match "
+                  << match_id << std::endl;
 
         if (it->second.empty()) {
             player_sockets.erase(it);
@@ -300,17 +305,20 @@ void MatchesMonitor::unregister_player_socket(int match_id, const std::string& p
     }
 }
 
-void MatchesMonitor::broadcast_to_match(int match_id, const std::vector<uint8_t>& buffer, const std::string& exclude_player) {
+void MatchesMonitor::broadcast_to_match(int match_id, const std::vector<uint8_t>& buffer,
+                                        const std::string& exclude_player) {
     std::lock_guard<std::mutex> lock(mtx);
 
     auto it = player_sockets.find(match_id);
     if (it == player_sockets.end()) {
-        std::cout << "[MatchesMonitor] No hay sockets registrados para match " << match_id << std::endl;
+        std::cout << "[MatchesMonitor] No hay sockets registrados para match " << match_id
+                  << std::endl;
         return;
     }
-    
+
     std::cout << "[MatchesMonitor] Broadcasting to match " << match_id
-              << " (excluding: " << (exclude_player.empty() ? "none" : exclude_player) << ")" << std::endl;
+              << " (excluding: " << (exclude_player.empty() ? "none" : exclude_player) << ")"
+              << std::endl;
 
     int sent_count = 0;
     for (const auto& [player_name, socket] : it->second) {
@@ -330,13 +338,13 @@ void MatchesMonitor::broadcast_to_match(int match_id, const std::vector<uint8_t>
             sent_count++;
 
         } catch (const std::exception& e) {
-            std::cerr << "[MatchesMonitor] ❌ Error broadcasting to " << player_name
-                      << ": " << e.what() << std::endl;
+            std::cerr << "[MatchesMonitor] ❌ Error broadcasting to " << player_name << ": "
+                      << e.what() << std::endl;
         }
     }
 
-    std::cout << "[MatchesMonitor] Broadcast completed: " << sent_count
-              << " messages sent to match " << match_id << std::endl;
+    std::cout << "[MatchesMonitor] Broadcast completed: " << sent_count << " messages sent to match "
+              << match_id << std::endl;
 }
 
 // ============================================
@@ -391,7 +399,8 @@ std::string MatchesMonitor::get_match_name(int match_id) const {
 // ALIASES DE COMPATIBILIDAD
 // ============================================
 
-void MatchesMonitor::set_player_car(int player_id, const std::string& car_name, const std::string& car_type) {
+void MatchesMonitor::set_player_car(int player_id, const std::string& car_name,
+                                    const std::string& car_type) {
     std::lock_guard<std::mutex> lock(mtx);
     for (auto& [id, match] : matches) {
         if (match->has_player(player_id)) {

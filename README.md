@@ -50,7 +50,7 @@ sudo make install
 - Copiar binarios a `/usr/bin`
 - Crear directorios y copiar archivos a `/etc` y `/var`
 
-### ✅ Verificar la Instalación
+### Verificar la Instalación
 
 Después de instalar, puedes verificar que todo se instaló correctamente:
 
@@ -59,26 +59,12 @@ Después de instalar, puedes verificar que todo se instaló correctamente:
 ```
 
 Este script verifica:
-- ✅ Binarios en `/usr/bin`
-- ✅ Configuración en `/etc/NFS-TP`
-- ✅ Assets en `/var/NFS-TP/assets`
-- ✅ Mapas en `/var/NFS-TP/recorridos`
-- ✅ Permisos de ejecución
+- Binarios en `/usr/bin`
+- Configuración en `/etc/NFS-TP`
+- Assets en `/var/NFS-TP/assets`
+- Mapas en `/var/NFS-TP/recorridos`
+- Permisos de ejecución
 
-## 🎮 Uso
-
-Una vez instalado, puedes ejecutar las aplicaciones desde cualquier terminal:
-
-```sh
-# Ejecutar el cliente
-NFS-TP-client
-
-# Ejecutar el servidor  
-NFS-TP-server
-
-# Ejecutar el editor
-NFS-TP-editor
-```
 
 ## Desarrollo
 
@@ -116,16 +102,15 @@ make test
 ### Limpieza
 
 ```sh
-# Limpieza ligera (mantiene dependencias descargadas - RÁPIDO)
+# Limpieza ligera (mantiene dependencias descargadas)
 make clean
 
-# Limpieza profunda (elimina TODO incluyendo dependencias - LENTO)
+# Limpieza profunda (elimina todo incluyendo dependencias)
 make clean_all
 ```
+ Usa `make clean` durante desarrollo para recompilar rápidamente sin volver a descargar dependencias.
 
-**Recomendación**: Usa `make clean` durante desarrollo para recompilar rápidamente sin volver a descargar dependencias.
-
-## 📂Estructura de Archivos
+## Estructura de Archivos
 
 ```
 TP_TALLER/
@@ -144,3 +129,26 @@ TP_TALLER/
 └── install.sh          # Script de instalación
 
 ```
+## Pre-commit Hooks
+
+Si es la **primera vez** que trabajas con este proyecto:
+
+```bash
+./install_pre_commit.sh
+```
+
+Este script automáticamente:
+
+1. ✅ Instala `pre-commit` (si no está instalado)
+2. ✅ Instala `clang-format` (para formateo de C++)
+3. ✅ Instala `cppcheck` (para análisis estático)
+4. ✅ Instala `cmake-format` (para formateo de CMakeLists.txt)
+5. ✅ Instala los hooks en el repositorio Git
+6. ❓ Te pregunta si quieres ejecutar los hooks en todos los archivos
+
+### Requisitos previos
+
+- **Sistema operativo**: Ubuntu 24.04 (o Xubuntu 24.04)
+- **Python 3**: Debe estar instalado
+- **pip**: Para instalar pre-commit
+- **sudo**: Para instalar clang-format y cppcheck

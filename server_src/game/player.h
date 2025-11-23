@@ -1,9 +1,11 @@
 #ifndef PLAYER_H_
 #define PLAYER_H_
 
-#include <string>
 #include <atomic>
 #include <memory>
+#include <string>
+#include <utility>
+
 #include "car.h"  // ✅ Player tiene un Car
 
 class Player {
@@ -29,28 +31,19 @@ private:
 
 public:
     explicit Player(int id, const std::string& name)
-        : id(id),
-          name(name),
-          car(nullptr),
-          completed_laps(0),
-          current_checkpoint(0),
-          position_in_race(0),
-          score(0),
-          finished_race(false),
-          disconnected(false),
-          is_ready(false) {}
+        : id(id), name(name), car(nullptr), completed_laps(0), current_checkpoint(0),
+          position_in_race(0), score(0), finished_race(false), disconnected(false), is_ready(false) {
+    }
 
     // --- Auto ---
     // Método para transferir ownership del Car al Player
-    void setCarOwnership(std::unique_ptr<Car> new_car) {
-        car = std::move(new_car);
-    }
+    void setCarOwnership(std::unique_ptr<Car> new_car) { car = std::move(new_car); }
 
     // Método legacy para compatibilidad (NO debería usarse en código nuevo)
     void setCar(Car* new_car) {
         // ⚠️ ADVERTENCIA: No transfiere ownership
         // Solo se mantiene para compatibilidad con código antiguo
-        (void)new_car; // Suppress unused warning
+        (void)new_car;  // Suppress unused warning
     }
 
     Car* getCar() { return car.get(); }
@@ -78,17 +71,20 @@ public:
     float getX() const { return car ? car->getX() : 0.0f; }
     float getY() const { return car ? car->getY() : 0.0f; }
     void setPosition(float newX, float newY) {
-        if (car) car->setPosition(newX, newY);
+        if (car)
+            car->setPosition(newX, newY);
     }
 
     float getAngle() const { return car ? car->getAngle() : 0.0f; }
     void setAngle(float newAngle) {
-        if (car) car->setAngle(newAngle);
+        if (car)
+            car->setAngle(newAngle);
     }
 
     float getSpeed() const { return car ? car->getCurrentSpeed() : 0.0f; }
     void setSpeed(float newSpeed) {
-        if (car) car->setCurrentSpeed(newSpeed);
+        if (car)
+            car->setCurrentSpeed(newSpeed);
     }
 
     // --- Vueltas y Checkpoints ---
@@ -115,12 +111,14 @@ public:
     // --- Estado (delegado al Car) ---
     bool isDrifting() const { return car ? car->isDrifting() : false; }
     void setDrifting(bool state) {
-        if (car) car->setDrifting(state);
+        if (car)
+            car->setDrifting(state);
     }
 
     bool isColliding() const { return car ? car->isColliding() : false; }
     void setColliding(bool state) {
-        if (car) car->setColliding(state);
+        if (car)
+            car->setColliding(state);
     }
 
     // --- Conexión ---
@@ -134,7 +132,8 @@ public:
     // --- Alias para compatibilidad ---
     bool isAlive() const { return car ? !car->isDestroyed() : true; }
     void kill() {
-        if (car) car->takeDamage(1000.0f);  // Daño mortal
+        if (car)
+            car->takeDamage(1000.0f);  // Daño mortal
     }
 
     // --- Reset para nueva carrera ---
@@ -154,4 +153,4 @@ public:
     }
 };
 
-#endif // PLAYER_H_
+#endif  // PLAYER_H_

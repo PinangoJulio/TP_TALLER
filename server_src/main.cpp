@@ -1,24 +1,27 @@
-#include "../common_src/config.h" 
-#include <box2d/box2d.h>                      
+#include <box2d/box2d.h>
+
+#include <chrono>
 #include <iostream>
 #include <stdexcept>
-#include <chrono>
 #include <thread>
 
+#include "../common_src/config.h"
 #include "server.h"
 
-#define ERROR 1
-#define SUCCESS 0
+#define ERROR            1
+#define SUCCESS          0
 #define TIPO_AUTO_PRUEBA "DEPORTIVO"
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        std::cerr << "Error: Arguments are missing. Correct use : ./server <ruta_a_configuracion.yaml>" << std::endl;
+        std::cerr
+            << "Error: Arguments are missing. Correct use : ./server <ruta_a_configuracion.yaml>"
+            << std::endl;
         return ERROR;
     }
 
     try {
-        const char *path_config = argv[1];
+        const char* path_config = argv[1];
         Configuration::load_path(path_config);
         Server server((Configuration::get<std::string>("port")).c_str());
         server.start();

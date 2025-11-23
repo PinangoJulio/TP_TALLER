@@ -2,12 +2,13 @@
 #define RACE_H
 
 #include <atomic>
+#include <iostream>
 #include <memory>
 #include <string>
-#include <iostream>
-#include "game_loop.h"
+
 #include "../../common_src/queue.h"
 #include "../network/client_monitor.h"
+#include "game_loop.h"
 
 class Race {
 private:
@@ -18,22 +19,16 @@ private:
     std::string map_yaml_path;
 
 public:
-    Race(Queue<ComandMatchDTO>& cmdQueue,
-         ClientMonitor& brdcstr,
-         const std::string& city,
+    Race(Queue<ComandMatchDTO>& cmdQueue, ClientMonitor& brdcstr, const std::string& city,
          const std::string& yaml_mapa)
-        : commandQueue(cmdQueue),
-          broadcaster(brdcstr),
-          city_name(city),
-          map_yaml_path(yaml_mapa)
-    {
+        : commandQueue(cmdQueue), broadcaster(brdcstr), city_name(city), map_yaml_path(yaml_mapa) {
         gameLoop = std::make_unique<GameLoop>(commandQueue, broadcaster, map_yaml_path);
     }
 
     void start() {
-        std::cout << "[Race] Iniciando carrera en " << city_name
-                  << " (mapa: " << map_yaml_path << ")\n";
-        //gameLoop->start();  // Descomentarás esto cuando quieras activar el GameLoop
+        std::cout << "[Race] Iniciando carrera en " << city_name << " (mapa: " << map_yaml_path
+                  << ")\n";
+        // gameLoop->start();  // Descomentarás esto cuando quieras activar el GameLoop
     }
 
     void stop() {
@@ -43,8 +38,8 @@ public:
     }
 
     // ✅ Agregar jugadores al GameLoop
-    void add_player_to_gameloop(int player_id, const std::string& name,
-                                const std::string& car_name, const std::string& car_type) {
+    void add_player_to_gameloop(int player_id, const std::string& name, const std::string& car_name,
+                                const std::string& car_type) {
         gameLoop->add_player(player_id, name, car_name, car_type);
     }
 
@@ -63,11 +58,12 @@ public:
     /* Cuando la carrera termina, detener y limpiar el GameLoop en el destructor de Race,
      * para evitar hilos colgando*/
     ~Race() {
-        if (gameLoop && gameLoop->is_alive()) { // <-- Asegurarse de que solo se hace stop/join si es necesario
+        if (gameLoop &&
+            gameLoop->is_alive()) {  // <-- Asegurarse de que solo se hace stop/join si es necesario
             gameLoop->stop();
             gameLoop->join();
         }
     }
 };
 
-#endif // RACE_H
+#endif  // RACE_H

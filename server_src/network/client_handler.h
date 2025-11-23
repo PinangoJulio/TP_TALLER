@@ -1,14 +1,13 @@
 #ifndef SERVER_CLIENT_HANDLER_H
 #define SERVER_CLIENT_HANDLER_H
 
-#include "matches_monitor.h"
+#include "../../common_src/dtos.h"
 #include "../../common_src/queue.h"
 #include "../../common_src/socket.h"
-#include "../../common_src/dtos.h"
-
+#include "common_src/game_state.h"
+#include "matches_monitor.h"
 #include "receiver.h"
 #include "sender.h"
-#include "common_src/game_state.h"
 #include "server_src/server_protocol.h"
 
 class ClientHandler {

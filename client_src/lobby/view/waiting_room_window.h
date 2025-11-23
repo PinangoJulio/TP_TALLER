@@ -1,15 +1,16 @@
 #ifndef WAITING_ROOM_WINDOW_H
 #define WAITING_ROOM_WINDOW_H
 
-#include <QWidget>
-#include <QPushButton>
 #include <QLabel>
-#include <QVBoxLayout>
-#include <QPixmap>
-#include <QTimer>
-#include <vector>
-#include <map>
 #include <QMessageBox>
+#include <QPixmap>
+#include <QPushButton>
+#include <QTimer>
+#include <QVBoxLayout>
+#include <QWidget>
+#include <map>
+#include <vector>
+
 #include "base_lobby.h"
 
 struct PlayerInfo {
@@ -31,20 +32,20 @@ class WaitingRoomWindow : public BaseLobby {
     Q_OBJECT
 
 public:
-    explicit WaitingRoomWindow(uint8_t maxPlayers, QWidget *parent = nullptr);
+    explicit WaitingRoomWindow(uint8_t maxPlayers, QWidget* parent = nullptr);
     ~WaitingRoomWindow();
-    
+
     // Métodos orientados a actualización por nombre
     void addPlayerByName(const QString& name);
     void removePlayerByName(const QString& name);
     void setPlayerReadyByName(const QString& name, bool ready);
     void setPlayerCarByName(const QString& name, const QString& car);
-    
+
     // API previa por índice
     void addPlayer(const QString& name, const QString& car, bool isLocal = false);
     void setPlayerReady(int playerIndex, bool ready);
     void setLocalPlayerInfo(const QString& name, const QString& car);
-    
+
     void updateStartButtonState();
 
 protected:
@@ -71,29 +72,28 @@ private:
     int getCardsPerPage() const;
 
     QPixmap backgroundImage;
-    
+
     std::vector<PlayerInfo> players;
     std::map<QString, int> player_name_to_index;
     std::vector<PlayerCardWidgets> playerCardWidgets;
     bool localPlayerReady;
     int currentPage;
-    
+
     QLabel* titleLabel;
     QLabel* statusLabel;
     QLabel* pageLabel;
     QWidget* playersPanel;
-    
+
     QPushButton* readyButton;
     QPushButton* startButton;
     QPushButton* backButton;
     QPushButton* prevPageButton;
     QPushButton* nextPageButton;
-    
+
     QTimer* animationTimer;
     int animationFrame;
-    
-    int customFontId;
+
     uint8_t max_players;
 };
 
-#endif // WAITING_ROOM_WINDOW_H
+#endif  // WAITING_ROOM_WINDOW_H

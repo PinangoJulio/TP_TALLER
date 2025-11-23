@@ -1,7 +1,5 @@
 #include "socket.h"
 
-#include <stdexcept>
-
 #include <arpa/inet.h>
 #include <assert.h>
 #include <errno.h>
@@ -12,13 +10,15 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <stdexcept>
+
 #include "liberror.h"
 #include "resolver.h"
 
 #define STREAM_SEND_CLOSED 0x01
 #define STREAM_RECV_CLOSED 0x02
 #define STREAM_BOTH_CLOSED 0x03
-#define STREAM_BOTH_OPEN 0x00
+#define STREAM_BOTH_OPEN   0x00
 
 Socket::Socket(const char* hostname, const char* servname) {
     Resolver resolver(hostname, servname, false);
@@ -353,7 +353,6 @@ int Socket::recvall(void* data, unsigned int sz) {
     return sz;
 }
 
-
 int Socket::sendall(const void* data, unsigned int sz) {
     unsigned int sent = 0;
 
@@ -416,23 +415,27 @@ void Socket::shutdown(int how) {
     }
 
     switch (how) {
-        case 0:
-            stream_status |= STREAM_RECV_CLOSED;
-            break;
-        case 1:
-            stream_status |= STREAM_SEND_CLOSED;
-            break;
-        case 2:
-            stream_status |= STREAM_BOTH_CLOSED;
-            break;
-        default:
-            throw std::runtime_error("Unknow shutdown value");
+    case 0:
+        stream_status |= STREAM_RECV_CLOSED;
+        break;
+    case 1:
+        stream_status |= STREAM_SEND_CLOSED;
+        break;
+    case 2:
+        stream_status |= STREAM_BOTH_CLOSED;
+        break;
+    default:
+        throw std::runtime_error("Unknow shutdown value");
     }
 }
 
-bool Socket::is_stream_send_closed() const { return stream_status & STREAM_SEND_CLOSED; }
+bool Socket::is_stream_send_closed() const {
+    return stream_status & STREAM_SEND_CLOSED;
+}
 
-bool Socket::is_stream_recv_closed() const { return stream_status & STREAM_RECV_CLOSED; }
+bool Socket::is_stream_recv_closed() const {
+    return stream_status & STREAM_RECV_CLOSED;
+}
 
 int Socket::close() {
     chk_skt_or_fail();

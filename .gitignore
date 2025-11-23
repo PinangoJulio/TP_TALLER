@@ -64,3 +64,9 @@ server
 /server
 /taller_editor
 /taller_tests
+
+# ========================================
+# Pre-commit
+# ========================================
+.pre-commit-config.yaml.bak
+

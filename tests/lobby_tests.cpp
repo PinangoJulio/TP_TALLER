@@ -1,10 +1,9 @@
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
-
-#include "../server_src/network/matches_monitor.h"
-#include "../server_src/game/match.h"
 #include "../common_src/queue.h"
+#include "../server_src/game/match.h"
+#include "../server_src/network/matches_monitor.h"
 #include "common_src/config.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using ::testing::Eq;
 using ::testing::Gt;
@@ -43,19 +42,14 @@ TEST_F(MatchesMonitorTest, CannotJoinNonexistentMatch) {
 TEST_F(MatchesMonitorTest, AddRacesToMatch) {
     int match_id = monitor.create_match(4, "player1", 1, dummy_queue);
 
-    std::vector<RaceConfig> races = {
-        {"Tokyo", "track1"},
-        {"Paris", "track2"}
-    };
+    std::vector<RaceConfig> races = {{"Tokyo", "track1"}, {"Paris", "track2"}};
 
     EXPECT_TRUE(monitor.add_races_to_match(match_id, races));
 }
 
 // Test 5: no se pueden agregar carreras si el match no existe
 TEST_F(MatchesMonitorTest, AddRacesToInvalidMatch) {
-    std::vector<RaceConfig> races = {
-        {"Tokyo", "track1"}
-    };
+    std::vector<RaceConfig> races = {{"Tokyo", "track1"}};
     EXPECT_FALSE(monitor.add_races_to_match(999, races));
 }
 

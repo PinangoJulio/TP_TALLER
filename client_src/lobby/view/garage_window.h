@@ -1,13 +1,14 @@
 #ifndef GARAGE_WINDOW_H
 #define GARAGE_WINDOW_H
 
-#include <QWidget>
-#include <QPushButton>
 #include <QLabel>
-#include <QPixmap>
 #include <QPainter>
-#include <vector>
+#include <QPixmap>
+#include <QPushButton>
+#include <QWidget>
 #include <cstdint>
+#include <vector>
+
 #include "base_lobby.h"
 
 struct CarInfo {
@@ -24,7 +25,7 @@ class GarageWindow : public BaseLobby {
     Q_OBJECT
 
 public:
-    explicit GarageWindow(QWidget *parent = nullptr);
+    explicit GarageWindow(QWidget* parent = nullptr);
     ~GarageWindow();
 
 protected:
@@ -47,29 +48,27 @@ private:
     void updateCarDisplay();
     void createStatLabels();
     void drawStatBar(QPainter& painter, int x, int y, int width, int value, const QString& label);
-    
+
     QPixmap backgroundImage;
-    
+
     std::vector<CarInfo> cars;
     size_t currentCarIndex;
-    
+
     QLabel* titleLabel;
     QLabel* carNameLabel;
     QLabel* carImageLabel;
     QWidget* statsPanel;
-    
+
     // Widgets estadísticas
     std::vector<QLabel*> statNameLabels;
     std::vector<QWidget*> statBarBackgrounds;
     std::vector<QWidget*> statBarFills;
     std::vector<QLabel*> statValueLabels;
-    
+
     QPushButton* prevButton;
     QPushButton* nextButton;
     QPushButton* selectButton;
     QPushButton* backButton;
-    
-    int customFontId;
 };
 
-#endif // GARAGE_WINDOW_H
+#endif  // GARAGE_WINDOW_H

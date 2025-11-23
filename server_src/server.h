@@ -2,6 +2,7 @@
 #define SERVER_H
 
 #include <string>
+
 #include "acceptor.h"
 
 class Server {
@@ -12,12 +13,11 @@ private:
 
 public:
     /* Constructor del Server */
-    explicit Server(const char *servicename);
+    explicit Server(const char* servicename);
 
     void start();
 
-    ~Server(); //destructor
-
+    ~Server();  // destructor
 };
 
 #endif  // SERVER_H

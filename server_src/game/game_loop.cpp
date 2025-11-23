@@ -1,22 +1,22 @@
 #include "game_loop.h"
-#include "../../common_src/config.h"
-#include <iostream>
-#include <iomanip>
+
 #include <chrono>
+#include <iomanip>
+#include <iostream>
+#include <string>
 #include <thread>
 #include <utility>
+
+#include "../../common_src/config.h"
 
 // ==========================================================
 // CONSTRUCTOR Y DESTRUCTOR
 // ==========================================================
 
-GameLoop::GameLoop(Queue<ComandMatchDTO> &comandos, ClientMonitor &queues, const std::string &yaml_path)
-    : is_running(false),
-      race_finished(false),
-      comandos(comandos),
-      queues_players(queues),
-      yaml_path(yaml_path),
-      total_laps(3)  // Por defecto 3 vueltas
+GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues,
+                   const std::string& yaml_path)
+    : is_running(false), race_finished(false), comandos(comandos), queues_players(queues),
+      yaml_path(yaml_path), total_laps(3)  // Por defecto 3 vueltas
 {
     std::cout << "[GameLoop] Constructor compilado OK. Simulación lista para iniciar." << std::endl;
     std::cout << "[GameLoop] Mapa: " << yaml_path << std::endl;
@@ -58,11 +58,8 @@ GameLoop::~GameLoop() {
  *    - Enviamos el estado actualizado a través de queues_players
  */
 
-void GameLoop::add_player(int player_id,
-                         const std::string& name,
-                         const std::string& car_name,
-                         const std::string& car_type) {
-
+void GameLoop::add_player(int player_id, const std::string& name, const std::string& car_name,
+                          const std::string& car_type) {
     std::cout << "\n\n\n";
     std::cout << "***************************************************************" << std::endl;
     std::cout << "█                                                              █" << std::endl;
@@ -109,19 +106,21 @@ void GameLoop::add_player(int player_id,
                 }
 
                 // Conversión a parámetros físicos del juego
-                float max_speed = speed * 1.5f;                  // 60-90 → 90-135 km/h
-                float accel_power = acceleration * 0.8f;         // 50-85 → 40-68
-                float turn_rate = handling * 1.0f / 100.0f;      // 55-70 → 0.55-0.70
+                float max_speed = speed * 1.5f;              // 60-90 → 90-135 km/h
+                float accel_power = acceleration * 0.8f;     // 50-85 → 40-68
+                float turn_rate = handling * 1.0f / 100.0f;  // 55-70 → 0.55-0.70
                 // health ya está leído del YAML
-                float nitro_boost = 2.0f;                        // Boost fijo para todos
-                float mass = 1000.0f + (durability * 5.0f);      // 1300-1450 kg (basado en durability, NO en health)
+                float nitro_boost = 2.0f;  // Boost fijo para todos
+                float mass = 1000.0f + (durability *
+                                        5.0f);  // 1300-1450 kg (basado en durability, NO en health)
 
                 car->load_stats(max_speed, accel_power, turn_rate, health, nitro_boost, mass);
 
                 car_found = true;
 
                 std::cout << "[GameLoop]   Stats cargadas desde YAML:" << std::endl;
-                std::cout << "[GameLoop]      - Velocidad máxima: " << max_speed << " km/h" << std::endl;
+                std::cout << "[GameLoop]      - Velocidad máxima: " << max_speed << " km/h"
+                          << std::endl;
                 std::cout << "[GameLoop]      - Aceleración: " << accel_power << std::endl;
                 std::cout << "[GameLoop]      - Manejo: " << turn_rate << std::endl;
                 std::cout << "[GameLoop]      - Salud: " << health << " HP" << std::endl;
@@ -175,15 +174,23 @@ void GameLoop::add_player(int player_id,
     std::cout << "[GameLoop]   ├─ Posición: (" << registered_player->getX() << ", "
               << registered_player->getY() << ")" << std::endl;
     std::cout << "[GameLoop]   ├─ Ángulo: " << registered_player->getAngle() << "°" << std::endl;
-    std::cout << "[GameLoop]   ├─ Velocidad: " << registered_player->getSpeed() << " km/h" << std::endl;
-    std::cout << "[GameLoop]   ├─ Vueltas completadas: " << registered_player->getCompletedLaps() << std::endl;
-    std::cout << "[GameLoop]   ├─ Checkpoint actual: " << registered_player->getCurrentCheckpoint() << std::endl;
-    std::cout << "[GameLoop]   ├─ Posición en carrera: " << registered_player->getPositionInRace() << std::endl;
+    std::cout << "[GameLoop]   ├─ Velocidad: " << registered_player->getSpeed() << " km/h"
+              << std::endl;
+    std::cout << "[GameLoop]   ├─ Vueltas completadas: " << registered_player->getCompletedLaps()
+              << std::endl;
+    std::cout << "[GameLoop]   ├─ Checkpoint actual: " << registered_player->getCurrentCheckpoint()
+              << std::endl;
+    std::cout << "[GameLoop]   ├─ Posición en carrera: " << registered_player->getPositionInRace()
+              << std::endl;
     std::cout << "[GameLoop]   ├─ Score: " << registered_player->getScore() << std::endl;
-    std::cout << "[GameLoop]   ├─ Carrera finalizada: " << (registered_player->isFinished() ? "Sí" : "No") << std::endl;
-    std::cout << "[GameLoop]   ├─ Desconectado: " << (registered_player->isDisconnected() ? "Sí" : "No") << std::endl;
-    std::cout << "[GameLoop]   ├─ Listo: " << (registered_player->getIsReady() ? "Sí" : "No") << std::endl;
-    std::cout << "[GameLoop]   └─ Vivo: " << (registered_player->isAlive() ? "Sí" : "No") << std::endl;
+    std::cout << "[GameLoop]   ├─ Carrera finalizada: "
+              << (registered_player->isFinished() ? "Sí" : "No") << std::endl;
+    std::cout << "[GameLoop]   ├─ Desconectado: "
+              << (registered_player->isDisconnected() ? "Sí" : "No") << std::endl;
+    std::cout << "[GameLoop]   ├─ Listo: " << (registered_player->getIsReady() ? "Sí" : "No")
+              << std::endl;
+    std::cout << "[GameLoop]   └─ Vivo: " << (registered_player->isAlive() ? "Sí" : "No")
+              << std::endl;
     std::cout << "\n";
 
     if (registered_car) {
@@ -193,25 +200,36 @@ void GameLoop::add_player(int player_id,
         std::cout << "[GameLoop]   ├─ Posición: (" << registered_car->getX() << ", "
                   << registered_car->getY() << ")" << std::endl;
         std::cout << "[GameLoop]   ├─ Ángulo: " << registered_car->getAngle() << "°" << std::endl;
-        std::cout << "[GameLoop]   ├─ Velocidad actual: " << registered_car->getCurrentSpeed() << " km/h" << std::endl;
+        std::cout << "[GameLoop]   ├─ Velocidad actual: " << registered_car->getCurrentSpeed()
+                  << " km/h" << std::endl;
         std::cout << "[GameLoop]   ├─ Velocidad X: " << registered_car->getVelocityX() << std::endl;
         std::cout << "[GameLoop]   ├─ Velocidad Y: " << registered_car->getVelocityY() << std::endl;
         std::cout << "[GameLoop]   │" << std::endl;
         std::cout << "[GameLoop]   ├─  ESTADÍSTICAS:" << std::endl;
-        std::cout << "[GameLoop]   │  ├─ Velocidad máxima: " << registered_car->getMaxSpeed() << " km/h" << std::endl;
-        std::cout << "[GameLoop]   │  ├─ Aceleración: " << registered_car->getAcceleration() << std::endl;
-        std::cout << "[GameLoop]   │  ├─ Manejo (handling): " << registered_car->getHandling() << std::endl;
-        std::cout << "[GameLoop]   │  └─ Peso: " << registered_car->getWeight() << " kg" << std::endl;
+        std::cout << "[GameLoop]   │  ├─ Velocidad máxima: " << registered_car->getMaxSpeed()
+                  << " km/h" << std::endl;
+        std::cout << "[GameLoop]   │  ├─ Aceleración: " << registered_car->getAcceleration()
+                  << std::endl;
+        std::cout << "[GameLoop]   │  ├─ Manejo (handling): " << registered_car->getHandling()
+                  << std::endl;
+        std::cout << "[GameLoop]   │  └─ Peso: " << registered_car->getWeight() << " kg"
+                  << std::endl;
         std::cout << "[GameLoop]   │" << std::endl;
         std::cout << "[GameLoop]   ├─  SALUD:" << std::endl;
-        std::cout << "[GameLoop]   │  ├─ Salud actual: " << registered_car->getHealth() << " HP" << std::endl;
-        std::cout << "[GameLoop]   │  └─ Destruido: " << (registered_car->isDestroyed() ? "Sí" : "No") << std::endl;
+        std::cout << "[GameLoop]   │  ├─ Salud actual: " << registered_car->getHealth() << " HP"
+                  << std::endl;
+        std::cout << "[GameLoop]   │  └─ Destruido: "
+                  << (registered_car->isDestroyed() ? "Sí" : "No") << std::endl;
         std::cout << "[GameLoop]   │" << std::endl;
         std::cout << "[GameLoop]   ├─  ESTADO:" << std::endl;
-        std::cout << "[GameLoop]   │  ├─ Nitro disponible: " << registered_car->getNitroAmount() << "%" << std::endl;
-        std::cout << "[GameLoop]   │  ├─ Nitro activo: " << (registered_car->isNitroActive() ? "Sí" : "No") << std::endl;
-        std::cout << "[GameLoop]   │  ├─ Derrapando: " << (registered_car->isDrifting() ? "Sí" : "No") << std::endl;
-        std::cout << "[GameLoop]   │  └─ Colisionando: " << (registered_car->isColliding() ? "Sí" : "No") << std::endl;
+        std::cout << "[GameLoop]   │  ├─ Nitro disponible: " << registered_car->getNitroAmount()
+                  << "%" << std::endl;
+        std::cout << "[GameLoop]   │  ├─ Nitro activo: "
+                  << (registered_car->isNitroActive() ? "Sí" : "No") << std::endl;
+        std::cout << "[GameLoop]   │  ├─ Derrapando: "
+                  << (registered_car->isDrifting() ? "Sí" : "No") << std::endl;
+        std::cout << "[GameLoop]   │  └─ Colisionando: "
+                  << (registered_car->isColliding() ? "Sí" : "No") << std::endl;
     } else {
         std::cout << "[GameLoop]   AUTO: No asignado" << std::endl;
     }
@@ -219,7 +237,8 @@ void GameLoop::add_player(int player_id,
     std::cout << "\n";
     std::cout << "[GameLoop] RESUMEN PARTIDA:" << std::endl;
     std::cout << "[GameLoop]   ├─ Total jugadores registrados: " << players.size() << std::endl;
-    std::cout << "[GameLoop]   └─ Carrera iniciada: " << (is_running.load() ? "Sí" : "No") << std::endl;
+    std::cout << "[GameLoop]   └─ Carrera iniciada: " << (is_running.load() ? "Sí" : "No")
+              << std::endl;
     std::cout << "\n";
     std::cout << "[GameLoop] ══════════════════════════════════════════" << std::endl;
     std::cout << "\n";
@@ -240,8 +259,8 @@ void GameLoop::set_player_ready(int player_id, bool ready) {
     Player* player = it->second.get();
     player->setReady(ready);
 
-    std::cout << "[GameLoop] Jugador " << player->getName()
-              << " marcado como " << (ready ? "LISTO ✓" : "NO LISTO ✗") << std::endl;
+    std::cout << "[GameLoop] Jugador " << player->getName() << " marcado como "
+              << (ready ? "LISTO ✓" : "NO LISTO ✗") << std::endl;
 }
 
 // ==========================================================
@@ -254,7 +273,8 @@ void GameLoop::print_race_info() const {
     std::cout << "║  Mapa: " << std::setw(50) << std::left << yaml_path.substr(0, 50) << "║\n";
     std::cout << "║  Vueltas: " << total_laps << std::string(48, ' ') << "║\n";
     std::cout << "╠════════════════════════════════════════════════════════════╣\n";
-    std::cout << "║  JUGADORES REGISTRADOS (" << players.size() << ")" << std::string(33, ' ') << "║\n";
+    std::cout << "║  JUGADORES REGISTRADOS (" << players.size() << ")" << std::string(33, ' ')
+              << "║\n";
     std::cout << "╠════════════════════════════════════════════════════════════╣\n";
 
     if (players.empty()) {
@@ -325,9 +345,7 @@ void GameLoop::run() {
     std::cout << "[GameLoop] Hilo de simulación detenido correctamente." << std::endl;
 }
 
-
 // MÉTODOS PRIVADOS (LÓGICA DE JUEGO)
-
 
 void GameLoop::procesar_comandos() {
     ComandMatchDTO comando;
@@ -339,8 +357,8 @@ void GameLoop::procesar_comandos() {
         // ✅ Buscar el jugador por su ID (que es el client_id)
         auto player_it = players.find(comando.player_id);
         if (player_it == players.end()) {
-            std::cerr << "[GameLoop]   Comando ignorado: player_id "
-                      << comando.player_id << " no encontrado" << std::endl;
+            std::cerr << "[GameLoop]   Comando ignorado: player_id " << comando.player_id
+                      << " no encontrado" << std::endl;
             continue;
         }
 
@@ -349,97 +367,93 @@ void GameLoop::procesar_comandos() {
         Car* car = player->getCar();
 
         if (!car) {
-            std::cerr << "[GameLoop]  Player " << comando.player_id
-                      << " no tiene auto asignado" << std::endl;
+            std::cerr << "[GameLoop]  Player " << comando.player_id << " no tiene auto asignado"
+                      << std::endl;
             continue;
         }
 
         // ✅ Aplicar comando al auto del jugador
         switch (comando.command) {
-            case GameCommand::ACCELERATE:
-                // Usar speed_boost si está configurado
-                car->accelerate(delta_time * comando.speed_boost);
-                break;
+        case GameCommand::ACCELERATE:
+            // Usar speed_boost si está configurado
+            car->accelerate(delta_time * comando.speed_boost);
+            break;
 
-            case GameCommand::BRAKE:
-                car->brake(delta_time * comando.speed_boost);
-                break;
+        case GameCommand::BRAKE:
+            car->brake(delta_time * comando.speed_boost);
+            break;
 
-            case GameCommand::TURN_LEFT:
-                // Usar turn_intensity del comando
-                car->turn_left(delta_time * comando.turn_intensity);
-                break;
+        case GameCommand::TURN_LEFT:
+            // Usar turn_intensity del comando
+            car->turn_left(delta_time * comando.turn_intensity);
+            break;
 
-            case GameCommand::TURN_RIGHT:
-                car->turn_right(delta_time * comando.turn_intensity);
-                break;
+        case GameCommand::TURN_RIGHT:
+            car->turn_right(delta_time * comando.turn_intensity);
+            break;
 
-            case GameCommand::USE_NITRO:
-                car->activateNitro();
-                break;
+        case GameCommand::USE_NITRO:
+            car->activateNitro();
+            break;
 
-            case GameCommand::STOP_ALL:
-                car->setCurrentSpeed(0);
-                car->setVelocity(0, 0);
-                break;
+        case GameCommand::STOP_ALL:
+            car->setCurrentSpeed(0);
+            car->setVelocity(0, 0);
+            break;
 
-            // === CHEATS ===
-            case GameCommand::CHEAT_INVINCIBLE:
-                car->repair(1000.0f);
-                std::cout << "[GameLoop] CHEAT: Invencibilidad activada para player "
-                          << comando.player_id << std::endl;
-                break;
+        // === CHEATS ===
+        case GameCommand::CHEAT_INVINCIBLE:
+            car->repair(1000.0f);
+            std::cout << "[GameLoop] CHEAT: Invencibilidad activada para player "
+                      << comando.player_id << std::endl;
+            break;
 
-            case GameCommand::CHEAT_WIN_RACE:
-                {
-                    auto player_it = players.find(comando.player_id);
-                    if (player_it != players.end()) {
-                        player_it->second->markAsFinished();
-                        std::cout << "[GameLoop] CHEAT: " << player_it->second->getName()
-                                  << " ganó automáticamente" << std::endl;
-                    }
-                }
-                break;
+        case GameCommand::CHEAT_WIN_RACE: {
+            auto player_it = players.find(comando.player_id);
+            if (player_it != players.end()) {
+                player_it->second->markAsFinished();
+                std::cout << "[GameLoop] CHEAT: " << player_it->second->getName()
+                          << " ganó automáticamente" << std::endl;
+            }
+        } break;
 
-            case GameCommand::CHEAT_MAX_SPEED:
-                car->setCurrentSpeed(car->getMaxSpeed());
-                std::cout << "[GameLoop] CHEAT: Velocidad máxima para player "
-                          << comando.player_id << std::endl;
-                break;
+        case GameCommand::CHEAT_MAX_SPEED:
+            car->setCurrentSpeed(car->getMaxSpeed());
+            std::cout << "[GameLoop] CHEAT: Velocidad máxima para player " << comando.player_id
+                      << std::endl;
+            break;
 
-            case GameCommand::CHEAT_TELEPORT_CHECKPOINT:
-                // TODO: Implementar teleport a checkpoint
-                std::cout << "[GameLoop] CHEAT: Teleport a checkpoint "
-                          << comando.checkpoint_id << std::endl;
-                break;
+        case GameCommand::CHEAT_TELEPORT_CHECKPOINT:
+            // TODO: Implementar teleport a checkpoint
+            std::cout << "[GameLoop] CHEAT: Teleport a checkpoint " << comando.checkpoint_id
+                      << std::endl;
+            break;
 
-            // === UPGRADES ===
-            case GameCommand::UPGRADE_SPEED:
-            case GameCommand::UPGRADE_ACCELERATION:
-            case GameCommand::UPGRADE_HANDLING:
-            case GameCommand::UPGRADE_DURABILITY:
-                // TODO: Implementar sistema de upgrades
-                std::cout << "[GameLoop] UPGRADE solicitado: tipo="
-                          << static_cast<int>(comando.upgrade_type)
-                          << " nivel=" << static_cast<int>(comando.upgrade_level)
-                          << " costo=" << comando.upgrade_cost_ms << "ms" << std::endl;
-                break;
+        // === UPGRADES ===
+        case GameCommand::UPGRADE_SPEED:
+        case GameCommand::UPGRADE_ACCELERATION:
+        case GameCommand::UPGRADE_HANDLING:
+        case GameCommand::UPGRADE_DURABILITY:
+            // TODO: Implementar sistema de upgrades
+            std::cout << "[GameLoop] UPGRADE solicitado: tipo="
+                      << static_cast<int>(comando.upgrade_type)
+                      << " nivel=" << static_cast<int>(comando.upgrade_level)
+                      << " costo=" << comando.upgrade_cost_ms << "ms" << std::endl;
+            break;
 
-            case GameCommand::DISCONNECT:
-                {
-                    auto player_it = players.find(comando.player_id);
-                    if (player_it != players.end()) {
-                        player_it->second->disconnect();
-                        std::cout << "[GameLoop] Jugador " << player_it->second->getName()
-                                  << " se desconectó" << std::endl;
-                    }
-                }
-                break;
+        case GameCommand::DISCONNECT: {
+            auto player_it = players.find(comando.player_id);
+            if (player_it != players.end()) {
+                player_it->second->disconnect();
+                std::cout << "[GameLoop] Jugador " << player_it->second->getName()
+                          << " se desconectó" << std::endl;
+            }
+        } break;
 
-            default:
-                std::cout << "[GameLoop] Comando desconocido: "
-                          << static_cast<int>(comando.command) << std::endl;
-                break;
+        default:
+            std::cout << "[GameLoop] Comando desconocido: " << static_cast<int>(comando.command)
+                      << std::endl;
+            break;
         }
     }
 }
@@ -450,10 +464,12 @@ void GameLoop::actualizar_fisica() {
 
     // ✅ Actualizar posición de cada auto según su velocidad
     for (auto& [player_id, player_ptr] : players) {
+        (void)player_id;  // Unused
         Player* player = player_ptr.get();
         Car* car = player->getCar();
 
-        if (!car || car->isDestroyed()) continue;
+        if (!car || car->isDestroyed())
+            continue;
 
         // Actualizar posición basado en velocidad
         float new_x = car->getX() + (car->getVelocityX() * delta_time);
@@ -466,8 +482,7 @@ void GameLoop::actualizar_fisica() {
         if (current_speed > 0) {
             float friction = 0.98f;  // Factor de fricción
             car->setCurrentSpeed(current_speed * friction);
-            car->setVelocity(car->getVelocityX() * friction,
-                           car->getVelocityY() * friction);
+            car->setVelocity(car->getVelocityX() * friction, car->getVelocityY() * friction);
         }
     }
 
@@ -501,7 +516,8 @@ void GameLoop::verificar_ganadores() {
     // for (auto& [id, player] : players) {
     //     if (player->getCompletedLaps() >= total_laps && !player->isFinished()) {
     //         player->markAsFinished();
-    //         std::cout << "[GameLoop]  " << player->getName() << " terminó la carrera!" << std::endl;
+    //         std::cout << "[GameLoop]  " << player->getName() << " terminó la carrera!" <<
+    //         std::endl;
     //     }
     // }
 
@@ -531,4 +547,3 @@ void GameLoop::enviar_estado_a_jugadores() {
     // // Enviar a todos los clientes
     // queues_players.send_to_all(state);
 }
-

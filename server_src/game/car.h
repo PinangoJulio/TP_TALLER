@@ -14,29 +14,29 @@
 class Car {
 private:
     // ---- IDENTIFICACIÓN ----
-    std::string model_name;      // Ej: "Leyenda Urbana", "Stallion GT"
-    std::string car_type;        // Ej: "classic", "sport", "muscle"
+    std::string model_name;  // Ej: "Leyenda Urbana", "Stallion GT"
+    std::string car_type;    // Ej: "classic", "sport", "muscle"
 
     // ---- STATS DEL AUTO (cargar desde config.yaml) ----
-    float max_speed;             // Velocidad máxima
-    float acceleration;          // Aceleración
-    float handling;              // Manejo (giro)
-    float max_durability;        // Durabilidad máxima (HP)
-    float nitro_boost;           // Multiplicador de nitro
-    float weight;                // Peso (afecta física)
+    float max_speed;       // Velocidad máxima
+    float acceleration;    // Aceleración
+    float handling;        // Manejo (giro)
+    float max_durability;  // Durabilidad máxima (HP)
+    float nitro_boost;     // Multiplicador de nitro
+    float weight;          // Peso (afecta física)
 
     // ---- ESTADO ACTUAL ----
-    float current_speed;         // Velocidad actual
-    float current_health;        // Salud actual
-    float nitro_amount;          // Cantidad de nitro restante (0-100)
-    bool nitro_active;           // Si está usando nitro
+    float current_speed;   // Velocidad actual
+    float current_health;  // Salud actual
+    float nitro_amount;    // Cantidad de nitro restante (0-100)
+    bool nitro_active;     // Si está usando nitro
 
     // ---- FÍSICA Y POSICIÓN ----
-    float x;                     // Posición X
-    float y;                     // Posición Y
-    float angle;                 // Ángulo de rotación (radianes)
-    float velocity_x;            // Velocidad en X
-    float velocity_y;            // Velocidad en Y
+    float x;           // Posición X
+    float y;           // Posición Y
+    float angle;       // Ángulo de rotación (radianes)
+    float velocity_x;  // Velocidad en X
+    float velocity_y;  // Velocidad en Y
 
     // ---- BOX2D (cuando se implemente) ----
     // b2Body* body;             // Cuerpo de Box2D
@@ -51,15 +51,21 @@ public:
     Car(const std::string& model, const std::string& type);
 
     // ---- CONFIGURAR STATS (desde config.yaml) ----
-    void load_stats(float max_spd, float accel, float hand, float durability,
-                   float nitro, float wgt);
+    void load_stats(float max_spd, float accel, float hand, float durability, float nitro,
+                    float wgt);
 
     // ---- FÍSICA Y MOVIMIENTO ----
-    void setPosition(float nx, float ny) { x = nx; y = ny; }
+    void setPosition(float nx, float ny) {
+        x = nx;
+        y = ny;
+    }
     float getX() const { return x; }
     float getY() const { return y; }
 
-    void setVelocity(float vx, float vy) { velocity_x = vx; velocity_y = vy; }
+    void setVelocity(float vx, float vy) {
+        velocity_x = vx;
+        velocity_y = vy;
+    }
     float getVelocityX() const { return velocity_x; }
     float getVelocityY() const { return velocity_y; }
 
@@ -111,4 +117,4 @@ public:
     ~Car() = default;
 };
 
-#endif // CAR_H
+#endif  // CAR_H

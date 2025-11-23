@@ -1,17 +1,17 @@
 #ifndef MATCH_H
 #define MATCH_H
 
+#include <atomic>
+#include <functional>
+#include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
-#include <atomic>
-#include <mutex>
-#include <map>
-#include <functional>
 
-#include "../../common_src/queue.h"
 #include "../../common_src/dtos.h"
 #include "../../common_src/game_state.h"
+#include "../../common_src/queue.h"
 #include "../network/client_monitor.h"
 #include "race.h"
 
@@ -28,9 +28,9 @@ struct PlayerLobbyInfo {
 };
 
 enum class MatchState : uint8_t {
-    WAITING,    // Esperando jugadores
-    READY,      // >= 2 jugadores, puede iniciarse
-    STARTED     // Juego en curso
+    WAITING,  // Esperando jugadores
+    READY,    // >= 2 jugadores, puede iniciarse
+    STARTED   // Juego en curso
 };
 
 class Match {
@@ -48,9 +48,9 @@ private:
     Queue<ComandMatchDTO> command_queue;
     int max_players;
 
-    std::map<int, PlayerLobbyInfo> players_info;  // ✅ Información completa de lobby
-    std::map<std::string, int> player_name_to_id; // ✅ Lookup por nombre
-    std::vector<std::unique_ptr<Player>> players; // ✅ Mantener para compatibilidad
+    std::map<int, PlayerLobbyInfo> players_info;   // ✅ Información completa de lobby
+    std::map<std::string, int> player_name_to_id;  // ✅ Lookup por nombre
+    std::vector<std::unique_ptr<Player>> players;  // ✅ Mantener para compatibilidad
 
     std::mutex mtx;
     std::function<void(const std::vector<uint8_t>&, int exclude_player_id)> broadcast_callback;
@@ -68,7 +68,8 @@ public:
 
     // ---- LOBBY: Selección de auto ----
     bool set_player_car(int player_id, const std::string& car_name, const std::string& car_type);
-    bool set_player_car_by_name(const std::string& player_name, const std::string& car_name, const std::string& car_type);
+    bool set_player_car_by_name(const std::string& player_name, const std::string& car_name,
+                                const std::string& car_type);
     std::string get_player_car(int player_id) const;
     bool all_players_selected_car() const;
 
@@ -95,11 +96,13 @@ public:
     bool can_start() const;
 
     // ---- BROADCAST ----
-    void set_broadcast_callback(std::function<void(const std::vector<uint8_t>&, int exclude_player_id)> callback) {
+    void set_broadcast_callback(
+        std::function<void(const std::vector<uint8_t>&, int exclude_player_id)> callback) {
         broadcast_callback = callback;
     }
 
-    const std::function<void(const std::vector<uint8_t>&, int exclude_player_id)>& get_broadcast_callback() const {
+    const std::function<void(const std::vector<uint8_t>&, int exclude_player_id)>&
+    get_broadcast_callback() const {
         return broadcast_callback;
     }
 
@@ -109,7 +112,7 @@ public:
     int getMatchCode() const { return match_code; }
     int get_player_count() const;
     int get_max_players() const { return max_players; }
-    bool is_empty() const;  
+    bool is_empty() const;
     Queue<ComandMatchDTO>& getComandQueue() { return command_queue; }
 
     // Compatibility aliases
@@ -123,4 +126,4 @@ public:
     ~Match();
 };
 
-#endif //MATCH_H
+#endif  // MATCH_H

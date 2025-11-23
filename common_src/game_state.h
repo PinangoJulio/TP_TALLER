@@ -1,16 +1,17 @@
 #ifndef GAME_STATE_H_
 #define GAME_STATE_H_
 
-#include <vector>
-#include <string>
 #include <cstdint>
 #include <iostream>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "server_src/game/player.h"
 
 // No incluimos el Player real para evitar dependencias circulares.
 // Si prefieres, puedes incluir "../server_src/game/player.h" en la unidad .cpp
- // forward declaration: se usa en constructor que recibe Player*
+// forward declaration: se usa en constructor que recibe Player*
 
 // Estados generales de la partida (lobby/match)
 enum class MatchStatus : int {
@@ -21,23 +22,24 @@ enum class MatchStatus : int {
 
 // Config de una sola carrera (elección host: ciudad + sector/mapa)
 struct RaceConfig {
-    std::string city;   // Ej: "Vice City"
-    std::string map;    // Ej: "Centro" o "Puentes"
+    std::string city;  // Ej: "Vice City"
+    std::string map;   // Ej: "Centro" o "Puentes"
 };
 
 // Config general de la partida (lo que se define en el lobby)
 struct PlayerInfo {
-    int32_t player_id = 0;           // id del jugador dentro de la partida (generado por server)
-    std::string username;            // nombre del jugador
-    std::string car_name;            // modelo elegido, p.ej. "Coupe"
-    std::string car_type;            // p.ej. "Deportivo", "Camioneta" (opcional)
+    int32_t player_id = 0;  // id del jugador dentro de la partida (generado por server)
+    std::string username;   // nombre del jugador
+    std::string car_name;   // modelo elegido, p.ej. "Coupe"
+    std::string car_type;   // p.ej. "Deportivo", "Camioneta" (opcional)
 };
 
 struct MatchConfig {
-    std::string name;                      // nombre de la partida
-    std::uint8_t max_players = 8;          // cupo máximo
-    std::vector<RaceConfig> races;         // lista de carreras elegidas por el host (pueden repetirse)
-    std::vector<PlayerInfo> players_cfg;   // lista de jugadores unidos con su elección de auto (lobby)
+    std::string name;               // nombre de la partida
+    std::uint8_t max_players = 8;   // cupo máximo
+    std::vector<RaceConfig> races;  // lista de carreras elegidas por el host (pueden repetirse)
+    std::vector<PlayerInfo>
+        players_cfg;  // lista de jugadores unidos con su elección de auto (lobby)
 };
 
 // ======= Estructuras para el snapshot (GameState) que se transmite a los clientes =======
@@ -90,7 +92,7 @@ struct RaceInfo {
 
 // Snapshot completo que se envía a los clientes
 struct GameState {
-    std::vector<InfoPlayer> players;        // todos los jugadores (cars) en la carrera
+    std::vector<InfoPlayer> players;  // todos los jugadores (cars) en la carrera
     std::vector<CheckpointInfo> checkpoints;
     TrackInfo track_info;
     RaceInfo race_info;
@@ -104,9 +106,10 @@ struct GameState {
     //   isDrifting(), isColliding(), isFinished(), isDisconnected()
     //
     // Si tus métodos tienen otros nombres, cambia las llamadas en la implementación .cpp
-    GameState(const std::vector<Player*>& current_players) {
+    explicit GameState(const std::vector<Player*>& current_players) {
         for (const auto& pptr : current_players) {
-            if (!pptr) continue;
+            if (!pptr)
+                continue;
             InfoPlayer ip;
             // Estos métodos son suposiciones; adapta si tus getters se llaman distinto.
             ip.player_id = pptr->getId();
@@ -131,12 +134,14 @@ struct GameState {
     }
 
     // Buscar jugador en snapshot por id
-    InfoPlayer* getPlayerById(int32_t id) {
+    InfoPlayer* findPlayer(int id) {
         for (auto& p : players) {
-            if (p.player_id == id) return &p;
+            // cppcheck-suppress useStlAlgorithm
+            if (p.player_id == id)
+                return &p;
         }
         return nullptr;
     }
 };
 
-#endif // GAME_STATE_H_
+#endif  // GAME_STATE_H_

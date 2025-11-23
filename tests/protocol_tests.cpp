@@ -1,13 +1,14 @@
-#include <thread>
-#include <chrono>
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 
+#include <chrono>
+#include <thread>
+
+#include "../client_src/lobby/model/lobby_client.h"
+#include "../common_src/config.h"
+#include "../common_src/dtos.h"
 #include "../common_src/lobby_protocol.h"
 #include "../server_src/server_protocol.h"
-#include "../client_src/lobby/model/lobby_client.h"
-#include "../common_src/dtos.h"
-#include "../common_src/config.h"
 
 constexpr const char* kHost = "127.0.0.1";
 constexpr const char* kPort = "8085";
@@ -72,7 +73,8 @@ TEST(ServerClientProtocolTest, SendAndReceiveWelcomeMessage) {
 TEST(ServerClientProtocolTest, CreateGameSerializationAndReception) {
     std::string game_name = "Carrera1";
     uint8_t max_players = 4;
-    std::vector<std::pair<std::string, std::string>> races = {{"Tokyo","track1"}, {"Paris","track2"}};
+    std::vector<std::pair<std::string, std::string>> races = {{"Tokyo", "track1"},
+                                                              {"Paris", "track2"}};
 
     std::thread server_thread([&]() {
         Socket server_socket(kPort);
@@ -123,7 +125,6 @@ TEST(ServerClientProtocolTest, JoinGameSerializationAndReception) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        
         ServerProtocol server_protocol(client_conn);
 
         uint8_t type = server_protocol.read_message_type();
@@ -152,7 +153,6 @@ TEST(ServerClientProtocolTest, SelectCarSerializationAndReception) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        
         ServerProtocol server_protocol(client_conn);
 
         uint8_t type = server_protocol.read_message_type();
@@ -183,7 +183,6 @@ TEST(ServerClientProtocolTest, LeaveGameSerializationAndReception) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        
         ServerProtocol server_protocol(client_conn);
 
         uint8_t type = server_protocol.read_message_type();
@@ -212,7 +211,6 @@ TEST(ServerClientProtocolTest, ErrorMessageSerialization) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        
         ServerProtocol server_protocol(client_conn);
 
         auto buffer = LobbyProtocol::serialize_error(error_code, error_msg);
@@ -224,9 +222,9 @@ TEST(ServerClientProtocolTest, ErrorMessageSerialization) {
     std::thread client_thread([&]() {
         LobbyClient client(kHost, kPort);
         uint8_t type = client.peek_message_type();
-        
+
         EXPECT_EQ(type, MSG_ERROR);
-        
+
         std::string received_error;
         client.read_error_details(received_error);
         EXPECT_EQ(received_error, error_msg);
@@ -241,7 +239,6 @@ TEST(ServerClientProtocolTest, ListMultipleGames) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        
         ServerProtocol server_protocol(client_conn);
 
         uint8_t type = server_protocol.read_message_type();
@@ -270,7 +267,7 @@ TEST(ServerClientProtocolTest, ListMultipleGames) {
     std::thread client_thread([&]() {
         LobbyClient client(kHost, kPort);
         client.request_games_list();
-        
+
         auto received_games = client.receive_games_list();
         EXPECT_EQ(received_games.size(), 2);
         EXPECT_EQ(received_games[0].game_id, 1);
@@ -288,7 +285,6 @@ TEST(ServerClientProtocolTest, GameCreatedConfirmation) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        
         ServerProtocol server_protocol(client_conn);
 
         auto buffer = LobbyProtocol::serialize_game_created(expected_game_id);
@@ -300,7 +296,7 @@ TEST(ServerClientProtocolTest, GameCreatedConfirmation) {
     std::thread client_thread([&]() {
         LobbyClient client(kHost, kPort);
         uint16_t received_id = client.receive_game_created();
-        
+
         EXPECT_EQ(received_id, expected_game_id);
     });
 
@@ -315,7 +311,6 @@ TEST(ServerClientProtocolTest, GameJoinedConfirmation) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        
         ServerProtocol server_protocol(client_conn);
 
         auto buffer = LobbyProtocol::serialize_game_joined(expected_game_id);
@@ -327,7 +322,7 @@ TEST(ServerClientProtocolTest, GameJoinedConfirmation) {
     std::thread client_thread([&]() {
         LobbyClient client(kHost, kPort);
         uint16_t received_id = client.receive_game_joined();
-        
+
         EXPECT_EQ(received_id, expected_game_id);
     });
 
@@ -343,7 +338,6 @@ TEST(ServerClientProtocolTest, CarSelectedAcknowledgment) {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
 
-        
         ServerProtocol server_protocol(client_conn);
 
         auto buffer = LobbyProtocol::serialize_car_selected_ack(car_name, car_type);
@@ -355,7 +349,7 @@ TEST(ServerClientProtocolTest, CarSelectedAcknowledgment) {
     std::thread client_thread([&]() {
         LobbyClient client(kHost, kPort);
         std::string confirmed_car = client.receive_car_confirmation();
-        
+
         EXPECT_EQ(confirmed_car, car_name);
     });
 
@@ -657,6 +651,3 @@ TEST(GameCommandProtocolTest, MultipleCommandsSequence) {
     client_thread.join();
     server_thread.join();
 }
-
-
-

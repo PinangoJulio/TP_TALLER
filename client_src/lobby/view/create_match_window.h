@@ -1,19 +1,21 @@
 #ifndef CREATE_MATCH_WINDOW_H
 #define CREATE_MATCH_WINDOW_H
 
-#include <QWidget>
-#include <QPushButton>
+#include <SDL_mixer.h>
+
+#include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
-#include <QSpinBox>
 #include <QListWidget>
-#include <QStackedWidget>
 #include <QPixmap>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QStackedWidget>
+#include <QWidget>
 #include <vector>
-#include "common_types.h"
+
 #include "base_lobby.h"
-#include <QComboBox>       
-#include <SDL_mixer.h>
+#include "common_types.h"
 struct CityInfo {
     QString name;
     QString imagePath;
@@ -25,26 +27,27 @@ class CreateMatchWindow : public BaseLobby {
     Q_OBJECT
 
 public:
-    explicit CreateMatchWindow(QWidget *parent = nullptr);
+    explicit CreateMatchWindow(QWidget* parent = nullptr);
     ~CreateMatchWindow();
 
 protected:
     void paintEvent(QPaintEvent* event) override;
 
 signals:
-    void matchCreated(const QString& matchName, int maxPlayers, const std::vector<RaceConfig>& races);
+    void matchCreated(const QString& matchName, int maxPlayers,
+                      const std::vector<RaceConfig>& races);
     void backRequested();
 
 private slots:
     // Paso 1: Configuración básica
     void onMatchNameChanged(const QString& text);
     void onNextToRaceList();
-    
+
     // Paso 2: Lista de carreras
     void onRaceSlotClicked(QListWidgetItem* item);
     void onConfirmRaceList();
     void onBackFromRaceList();
-    
+
     // Paso 3: Selector de ciudad/recorrido
     void onPreviousCity();
     void onNextCity();
@@ -63,19 +66,18 @@ private:
     void updateTrackDisplay();
     void updateRaceList();
     void validateStep1();
-    
+
     QPixmap backgroundImage;
-    int customFontId;
-    
+
     // Datos
     std::vector<CityInfo> cities;
     std::vector<RaceConfig> configuredRaces;
     size_t currentCityIndex;
     int currentTrackIndex;
-    int currentEditingSlot; // Índice q se está editando
+    int currentEditingSlot;  // Índice q se está editando
     int totalRaces;
-    
-    //Paso 1 - Configuración básica
+
+    // Paso 1 - Configuración básica
     QStackedWidget* stepsStack;
     QWidget* step1Widget;
     QLabel* step1TitleLabel;
@@ -87,8 +89,8 @@ private:
     QLabel* numRacesLabel;
     QPushButton* nextStepButton;
     QPushButton* backButtonStep1;
-    
-    //Paso 2 - Lista de carreras
+
+    // Paso 2 - Lista de carreras
     QWidget* step2Widget;
     QLabel* step2TitleLabel;
     QLabel* instructionLabel;
@@ -96,27 +98,26 @@ private:
     QLabel* progressLabel;
     QPushButton* confirmButton;
     QPushButton* backButtonStep2;
-    
-    //Paso 3 - Selector de ciudad/recorrido
+
+    // Paso 3 - Selector de ciudad/recorrido
     QWidget* step3Widget;
     QLabel* step3TitleLabel;
     QLabel* editingLabel;
-    
+
     QLabel* citySectionLabel;
     QLabel* cityNameLabel;
     QLabel* cityImageLabel;
     QPushButton* prevCityButton;
     QPushButton* nextCityButton;
-    
+
     QLabel* trackSectionLabel;
     QLabel* trackNameLabel;
     QLabel* trackImageLabel;
     QPushButton* prevTrackButton;
     QPushButton* nextTrackButton;
-    
+
     QPushButton* confirmSelectionButton;
     QPushButton* backButtonStep3;
 };
 
-#endif // CREATE_MATCH_WINDOW_H
-
+#endif  // CREATE_MATCH_WINDOW_H

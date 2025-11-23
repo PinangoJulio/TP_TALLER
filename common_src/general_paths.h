@@ -3,8 +3,4 @@
 
 #define RUTA_SERVER_MAPS "server_src/city_maps"
 
-
-
-
-
-#endif //GENERAL_PATHS_H
+#endif  // GENERAL_PATHS_H

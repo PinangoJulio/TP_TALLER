@@ -19,11 +19,11 @@
 
 #include "liberror.h"
 
+#include <errno.h>
+
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
-
-#include <errno.h>
 
 LibError::LibError(int error_code, const char* fmt, ...) noexcept {
     /* Aquí empieza la magia arcana proveniente de C.
@@ -115,6 +115,8 @@ LibError::LibError(int error_code, const char* fmt, ...) noexcept {
     msg_error[sizeof(msg_error) - 1] = 0;
 }
 
-const char* LibError::what() const noexcept { return msg_error; }
+const char* LibError::what() const noexcept {
+    return msg_error;
+}
 
 LibError::~LibError() {}

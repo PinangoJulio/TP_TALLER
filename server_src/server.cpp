@@ -2,15 +2,14 @@
 
 #include <iostream>
 
-#include "../common_src/queue.h"
 #include "../common_src/dtos.h"
-
-#include "network/monitor.h"
+#include "../common_src/queue.h"
 #include "game/game_loop.h"
+#include "network/monitor.h"
 
 #define QUIT 'q'
 
-Server::Server(const char *servicename): acceptor(servicename){
+Server::Server(const char* servicename) : acceptor(servicename) {
     // 🔥 Banner de inicio
     std::cout << "==================================================" << std::endl;
     std::cout << "    NEED FOR SPEED 2D - SERVER" << std::endl;
@@ -28,11 +27,11 @@ void Server::accept_connection() {
 
 void Server::start() {
     accept_connection();
-    
+
     while (std::cin.get() != QUIT) {
         std::cout << "[Server] Press 'q' to quit..." << std::endl;
     }
-    
+
     std::cout << "[Server] Shutting down..." << std::endl;
 }
 

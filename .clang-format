@@ -1,0 +1,169 @@
+---
+# Configuración de clang-format para Need for Speed 2D
+# Estilo base: Google con modificaciones para C++20
+Language: Cpp
+Standard: c++20
+
+# ========================================
+# INDENTACIÓN Y ESPACIADO
+# ========================================
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 101  # Según tu CPPLINT.cfg
+ContinuationIndentWidth: 4
+AccessModifierOffset: -4
+
+# ========================================
+# ALINEACIÓN
+# ========================================
+AlignAfterOpenBracket: Align
+AlignConsecutiveMacros: Consecutive
+AlignConsecutiveAssignments: None
+AlignConsecutiveDeclarations: None
+AlignEscapedNewlines: Left
+AlignOperands: Align
+AlignTrailingComments: true
+AlignConsecutiveBitFields: Consecutive
+
+# ========================================
+# FUNCIONES Y PARÁMETROS
+# ========================================
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortLambdasOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Empty
+AllowShortEnumsOnASingleLine: false
+
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: Yes
+
+BinPackArguments: true
+BinPackParameters: true
+
+# ========================================
+# LLAVES Y CONTROL DE FLUJO
+# ========================================
+BreakBeforeBraces: Attach
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: false
+  AfterControlStatement: Never
+  AfterEnum: false
+  AfterFunction: false
+  AfterNamespace: false
+  AfterStruct: false
+  AfterUnion: false
+  AfterExternBlock: false
+  BeforeCatch: false
+  BeforeElse: false
+  BeforeLambdaBody: false
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+
+# ========================================
+# SALTOS DE LÍNEA
+# ========================================
+BreakBeforeBinaryOperators: None
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeColon
+BreakInheritanceList: BeforeColon
+BreakStringLiterals: true
+
+# ========================================
+# CONSTRUCTORES E INICIALIZADORES
+# ========================================
+ConstructorInitializerIndentWidth: 4
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+Cpp11BracedListStyle: true
+
+# ========================================
+# INCLUDES
+# ========================================
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex:           '^<.*\.h>'
+    Priority:        1
+  - Regex:           '^<.*>'
+    Priority:        2
+  - Regex:           '^".*"'
+    Priority:        3
+SortIncludes: CaseSensitive
+
+# ========================================
+# ESPACIOS
+# ========================================
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceBeforeSquareBrackets: false
+SpaceInEmptyBlock: false
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 2
+SpacesInAngles: Never
+SpacesInCStyleCastParentheses: false
+SpacesInConditionalStatement: false
+SpacesInContainerLiterals: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+# ========================================
+# PUNTEROS Y REFERENCIAS
+# ========================================
+DerivePointerAlignment: false
+PointerAlignment: Left
+ReferenceAlignment: Left
+
+# ========================================
+# COMENTARIOS
+# ========================================
+ReflowComments: true
+FixNamespaceComments: true
+
+# ========================================
+# NAMESPACES
+# ========================================
+CompactNamespaces: false
+NamespaceIndentation: None
+
+# ========================================
+# MACROS Y PREPROCESSOR
+# ========================================
+IndentPPDirectives: AfterHash
+MacroBlockBegin: ''
+MacroBlockEnd: ''
+
+# ========================================
+# PENALIZACIONES (para algoritmo de formateo)
+# ========================================
+PenaltyBreakAssignment: 2
+PenaltyBreakBeforeFirstCallParameter: 19
+PenaltyBreakComment: 300
+PenaltyBreakFirstLessLess: 120
+PenaltyBreakString: 1000
+PenaltyBreakTemplateDeclaration: 10
+PenaltyExcessCharacter: 1000000
+PenaltyReturnTypeOnItsOwnLine: 60
+
+# ========================================
+# OTRAS OPCIONES
+# ========================================
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1
+SortUsingDeclarations: true
+InsertTrailingCommas: None
+

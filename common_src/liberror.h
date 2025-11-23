@@ -8,7 +8,7 @@
  * Es una excepción genérica que se encarga de los detalles
  * de decodificar el `errno` en un mensaje más entendible.
  * */
-class LibError: public std::exception {
+class LibError : public std::exception {
     char msg_error[256];
 
 public:

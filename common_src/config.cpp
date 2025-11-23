@@ -1,10 +1,11 @@
 #include "config.h"
+
 #include <sstream>
 
 YAML::Node Configuration::yaml;
 
 // Loads the YAML file and stores it in the static 'yaml' variable
-void Configuration::load_path(const char *yaml_path) {
+void Configuration::load_path(const char* yaml_path) {
     yaml = YAML::LoadFile(yaml_path);
 }
 

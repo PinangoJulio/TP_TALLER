@@ -2,10 +2,10 @@
 #define MATCHES_MONITOR_H
 
 #include <map>
-#include <mutex>
 #include <memory>
-#include <vector>
+#include <mutex>
 #include <string>
+#include <vector>
 
 #include "common_src/game_state.h"
 #include "common_src/lobby_protocol.h"
@@ -38,8 +38,10 @@ public:
     MatchesMonitor& operator=(const MatchesMonitor& other) = delete;
 
     // ---- LOBBY: Gestión de partidas ----
-    int create_match(int max_players, const std::string& host_name, int player_id, Queue<GameState>& sender_message_queue);
-    bool join_match(int match_id, const std::string& player_name, int player_id, Queue<GameState>& sender_message_queue);
+    int create_match(int max_players, const std::string& host_name, int player_id,
+                     Queue<GameState>& sender_message_queue);
+    bool join_match(int match_id, const std::string& player_name, int player_id,
+                    Queue<GameState>& sender_message_queue);
     bool leave_match(const std::string& player_name);
     bool leave_match_by_id(int player_id, int match_id);
 
@@ -52,7 +54,8 @@ public:
     bool is_match_ready(int match_id) const;
 
     // ---- LOBBY: Acciones de jugadores ----
-    bool set_player_car(const std::string& player_name, const std::string& car_name, const std::string& car_type);
+    bool set_player_car(const std::string& player_name, const std::string& car_name,
+                        const std::string& car_type);
     bool set_player_ready(const std::string& player_name, bool ready);
 
     // ---- LOBBY: Snapshot ----
@@ -61,7 +64,8 @@ public:
     // ---- LOBBY: Sockets y Broadcast ----
     void register_player_socket(int match_id, const std::string& player_name, Socket& socket);
     void unregister_player_socket(int match_id, const std::string& player_name);
-    void broadcast_to_match(int match_id, const std::vector<uint8_t>& buffer, const std::string& exclude_player = "");
+    void broadcast_to_match(int match_id, const std::vector<uint8_t>& buffer,
+                            const std::string& exclude_player = "");
 
     // ---- GAME: Inicio de partida ----
     bool start_match(int match_id);
@@ -77,4 +81,4 @@ public:
     void delete_player_from_match(int player_id, int match_id);
 };
 
-#endif // MATCHES_MONITOR_H
+#endif  // MATCHES_MONITOR_H

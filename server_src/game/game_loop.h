@@ -7,20 +7,20 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <string>
 #include <thread>
 #include <vector>
 
-#include "../../common_src/thread.h"
-#include "../../common_src/dtos.h"  
-#include "../../common_src/queue.h"
+#include "../../common_src/dtos.h"
 #include "../../common_src/game_state.h"
-
+#include "../../common_src/queue.h"
+#include "../../common_src/thread.h"
+#include "../network/client_monitor.h"
 #include "car.h"
 #include "player.h"
-#include "../network/client_monitor.h"
 
 #define NITRO_DURATION 12
-#define SLEEP 250
+#define SLEEP          250
 
 /*
  * GameLoop:
@@ -38,8 +38,8 @@ private:
     std::atomic<bool> race_finished;
 
     // ---- COMUNICACIÓN ----
-    Queue<ComandMatchDTO>& comandos;        // Comandos de jugadores (ACCELERATE, BRAKE, etc)
-    ClientMonitor& queues_players;          // Queues para broadcast a jugadores
+    Queue<ComandMatchDTO>& comandos;  // Comandos de jugadores (ACCELERATE, BRAKE, etc)
+    ClientMonitor& queues_players;    // Queues para broadcast a jugadores
 
     // ---- JUGADORES Y AUTOS ----
     // Cada Player contiene su Car, no necesitamos un mapa separado
@@ -47,10 +47,10 @@ private:
     std::map<int, std::unique_ptr<Player>> players;  // player_id → Player (contiene Car)
 
     // ---- MAPA Y CONFIGURACIÓN ----
-    std::string yaml_path;                  // Ruta al YAML del mapa
-    std::string city_name;                  // Nombre de la ciudad
-    int total_laps;                         // Vueltas totales de la carrera
-    //Mapa mapa;                            // TODO: Mapa construido desde YAML
+    std::string yaml_path;  // Ruta al YAML del mapa
+    std::string city_name;  // Nombre de la ciudad
+    int total_laps;         // Vueltas totales de la carrera
+    // Mapa mapa;                            // TODO: Mapa construido desde YAML
 
     // ---- TIEMPOS ----
     std::chrono::steady_clock::time_point race_start_time;
@@ -64,16 +64,12 @@ private:
     void verificar_ganadores();
 
 public:
-    GameLoop(Queue<ComandMatchDTO>& comandos,
-             ClientMonitor& queues,
-             const std::string& yaml_path);
+    GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues, const std::string& yaml_path);
 
     // ---- AGREGAR JUGADORES ----
     // Se llama desde Match antes de iniciar la carrera
-    void add_player(int player_id,
-                   const std::string& name,
-                   const std::string& car_name,
-                   const std::string& car_type);
+    void add_player(int player_id, const std::string& name, const std::string& car_name,
+                    const std::string& car_type);
 
     // ---- ESTADO DE JUGADORES ----
     void set_player_ready(int player_id, bool ready);
@@ -93,4 +89,4 @@ public:
     ~GameLoop() override;
 };
 
-#endif //GAME_LOOP_H
+#endif  // GAME_LOOP_H

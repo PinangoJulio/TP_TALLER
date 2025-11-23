@@ -15,7 +15,7 @@ public:
     virtual ~Runnable() {}
 };
 
-class Thread: public Runnable {
+class Thread : public Runnable {
 private:
     std::thread thread;
 
@@ -28,7 +28,7 @@ protected:
     bool should_keep_running() const { return _keep_running; }
 
 public:
-    Thread(): _keep_running(true), _is_alive(false) {}
+    Thread() : _keep_running(true), _is_alive(false) {}
 
     void start() override {
         _is_alive = true;

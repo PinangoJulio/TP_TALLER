@@ -1,0 +1,106 @@
+---
+# Pre-commit hooks para Need for Speed 2D
+# Instalación: pip install pre-commit && pre-commit install
+# Ejecución manual: pre-commit run --all-files
+
+repos:
+  # ========================================
+  # 1. FORMATEO DE CÓDIGO (clang-format)
+  # ========================================
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v17.0.6  # ✅ Versión estable compatible con C++20
+    hooks:
+      - id: clang-format
+        files: ^(.*[.]cpp|.*[.]h|.*[.]hpp)$
+        args: ["--style=file", "-i"]
+        exclude: |
+          (?x)^(
+            build/.*|
+            cmake-build-debug/.*|
+            _deps/.*|
+            sockets-2025c2-PinangoJulio-main/.*|
+            threads-2025c2-loudemeglio/.*
+          )$
+
+  # ========================================
+  # 2. LINTING DE ESTILO (cpplint)
+  # ========================================
+  - repo: https://github.com/cpplint/cpplint
+    rev: 1.6.1  # ✅ Última versión
+    hooks:
+      - id: cpplint
+        files: ^(.*[.]cpp|.*[.]h|.*[.]hpp)$
+        exclude: |
+          (?x)^(
+            build/.*|
+            cmake-build-debug/.*|
+            _deps/.*|
+            sockets-2025c2-PinangoJulio-main/.*|
+            threads-2025c2-loudemeglio/.*|
+            .*_autogen/.*
+          )$
+
+  # ========================================
+  # 3. ANÁLISIS ESTÁTICO (cppcheck)
+  # ========================================
+  - repo: https://github.com/pocc/pre-commit-hooks
+    rev: v1.3.5  # ✅ Tag oficial en lugar de SHA
+    hooks:
+      - id: cppcheck
+        files: ^(.*[.]cpp|.*[.]h|.*[.]hpp)$
+        args:
+          - "--inline-suppr"
+          - "--enable=all"
+          - "--suppress=missingIncludeSystem"
+          - "--suppress=missingInclude"
+          - "--suppress=unusedFunction"
+          - "--suppress=unmatchedSuppression"
+          - "--suppress=unusedStructMember"
+          - "--suppress=passedByValue"  # ✅ Para evitar warnings en DTOs
+          - "--suppress=constParameter"  # ✅ Para parámetros que no se modifican
+          - "--language=c++"
+          - "--std=c++20"
+          - "--error-exitcode=1"
+          - "-I./common_src"  # ✅ Incluir directorios de headers
+          - "-I./server_src"
+          - "-I./client_src"
+        exclude: |
+          (?x)^(
+            build/.*|
+            cmake-build-debug/.*|
+            _deps/.*|
+            tests/.*|
+            sockets-2025c2-PinangoJulio-main/.*|
+            threads-2025c2-loudemeglio/.*
+          )$
+
+  # ========================================
+  # 4. TRAILING WHITESPACE (espacios al final)
+  # ========================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        files: ^(.*[.]cpp|.*[.]h|.*[.]hpp|.*[.]yaml|.*[.]yml|.*[.]md)$
+      - id: end-of-file-fixer
+        files: ^(.*[.]cpp|.*[.]h|.*[.]hpp|.*[.]yaml|.*[.]yml)$
+      - id: check-yaml
+        files: ^(.*[.]yaml|.*[.]yml)$
+        exclude: ^config.yaml$  # ✅ Evitar validar config.yaml si tiene sintaxis especial
+      - id: check-added-large-files
+        args: ['--maxkb=1000']  # ✅ No permitir archivos > 1MB
+
+  # ========================================
+  # 5. CMAKE FORMATTING (opcional)
+  # ========================================
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+      - id: cmake-format
+        files: ^(CMakeLists\.txt|.*\.cmake)$
+        exclude: |
+          (?x)^(
+            build/.*|
+            cmake-build-debug/.*|
+            _deps/.*
+          )$

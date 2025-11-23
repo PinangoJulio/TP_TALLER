@@ -9,23 +9,23 @@ Este proyecto implementa una prueba de concepto (PoC) para la fase de selección
 
 ```
 ├── client_src/
-│   ├── client.h           
-│   ├── client.cpp        
-│   └── client_main.cpp    
+│   ├── client.h
+│   ├── client.cpp
+│   └── client_main.cpp
 ├── server_src/
-│   ├── server.h           
-│   ├── server.cpp         
-│   └── server_main.cpp   
+│   ├── server.h
+│   ├── server.cpp
+│   └── server_main.cpp
 ├── common_src/
-│   ├── common_protocol.h  
-│   ├── common_protocol.cpp 
-│   ├── common_constants.h 
-│   ├── common_socket.*    
-│   ├── resolver.*         
-│   ├── liberror.*         
-│   └── resolvererror.*    
-├── MakefileSockets        
-└── README.md              
+│   ├── common_protocol.h
+│   ├── common_protocol.cpp
+│   ├── common_constants.h
+│   ├── common_socket.*
+│   ├── resolver.*
+│   ├── liberror.*
+│   └── resolvererror.*
+├── MakefileSockets
+└── README.md
 ```
 ##  Implementación Realizada
 - **Socket y comunicación de red**: Implementación provista por la cátedra

@@ -1,17 +1,17 @@
 #ifndef SERVER_ACCEPTOR_H
 #define SERVER_ACCEPTOR_H
 
+#include <atomic>
 #include <list>
 #include <string>
-#include <atomic>
 
 #include "../common_src/socket.h"
 #include "../common_src/thread.h"
 #include "network/client_handler.h"
-#include "network/monitor.h"
 #include "network/matches_monitor.h"
+#include "network/monitor.h"
 
-class Acceptor: public Thread {
+class Acceptor : public Thread {
 private:
     Socket socket;
     int client_counter;
@@ -23,7 +23,7 @@ private:
     void clear_all_connections();
 
 public:
-    explicit Acceptor(const char *servicename);
+    explicit Acceptor(const char* servicename);
 
     void run() override;
     void stop() override;

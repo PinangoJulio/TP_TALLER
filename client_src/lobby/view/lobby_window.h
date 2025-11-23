@@ -1,17 +1,18 @@
 #ifndef LOBBY_WINDOW_H
 #define LOBBY_WINDOW_H
 
-#include <QWidget>
-#include <QPushButton>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPixmap>
+#include <QPushButton>
+#include <QWidget>
 #include <SDL2pp/Mixer.hh>
-#include <vector>
-#include "common_types.h"
-#include "base_lobby.h"
-#include "garage_window.h"
 #include <cstdint>
+#include <vector>
+
+#include "base_lobby.h"
+#include "common_types.h"
+#include "garage_window.h"
 
 // Forward declarations
 class NameInputWindow;
@@ -20,11 +21,11 @@ class GarageWindow;
 class WaitingRoomWindow;
 class CreateMatchWindow;
 
-class LobbyWindow : public  BaseLobby {
+class LobbyWindow : public BaseLobby {
     Q_OBJECT
 public:
     // Constructor sin parámetros - lobby inicial
-    explicit LobbyWindow(QWidget *parent = nullptr);
+    explicit LobbyWindow(QWidget* parent = nullptr);
     ~LobbyWindow();
     uint8_t _max_players;
 
@@ -33,7 +34,7 @@ protected:
     void closeEvent(QCloseEvent* event) override;
 
 signals:
-    void playRequested();    
+    void playRequested();
 
 private slots:
     void onPlayClicked();
@@ -46,7 +47,8 @@ private slots:
     void onBackFromMatchSelection();
     void onBackFromGarage();
     void onBackFromWaitingRoom();
-    void onMatchCreated(const QString& matchName, int maxPlayers, const std::vector<RaceConfig>& races);
+    void onMatchCreated(const QString& matchName, int maxPlayers,
+                        const std::vector<RaceConfig>& races);
     void onBackFromCreateMatch();
 
 private:
@@ -54,24 +56,21 @@ private:
     void loadMusic(const char* musicPath);
     void cleanupAudio();
     void openGarage();
-    
+
     // Player info
     QString playerName;
     int selectedCarIndex;
-    
+
     // UI Elements
     QPushButton* playButton;
     QPushButton* quitButton;
     QLabel* titleLabel;
     QPixmap backgroundImage;
-    
+
     // Audio
     Mix_Music* backgroundMusic;
     bool audioInitialized;
-    
-    // Font
-    int customFontId;
-    
+
     // Ventanas secundarias
     NameInputWindow* nameInputWindow;
     MatchSelectionWindow* matchSelectionWindow;
@@ -80,4 +79,4 @@ private:
     CreateMatchWindow* createMatchWindow;
 };
 
-#endif // LOBBY_WINDOW_H
+#endif  // LOBBY_WINDOW_H

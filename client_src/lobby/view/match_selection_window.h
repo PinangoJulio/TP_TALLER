@@ -2,22 +2,21 @@
 #define MATCH_SELECTION_WINDOW_H
 
 #include <QLabel>
-#include <QWidget>
+#include <QListWidget>
 #include <QPixmap>
 #include <QPushButton>
-#include <QListWidget>
 #include <QVBoxLayout>
+#include <QWidget>
+#include <vector>
 
+#include "base_lobby.h"
+#include "common_src/lobby_protocol.h"
 
-#include "common_src/lobby_protocol.h"  
-#include "base_lobby.h"  
-
-
-class MatchSelectionWindow : public  BaseLobby{
+class MatchSelectionWindow : public BaseLobby {
     Q_OBJECT
 
 public:
-    explicit MatchSelectionWindow(QWidget *parent = nullptr);
+    explicit MatchSelectionWindow(QWidget* parent = nullptr);
     void updateGamesList(const std::vector<GameInfo>& games);
     QListWidgetItem* getSelectedItem() const;
     ~MatchSelectionWindow();
@@ -47,9 +46,8 @@ private:
     QPushButton* createButton;
     QPushButton* backButton;
     QPushButton* refreshButton;
-    
-    int customFontId;
+
     QString selectedMatchId;
 };
 
-#endif // MATCH_SELECTION_WINDOW_H
+#endif  // MATCH_SELECTION_WINDOW_H

@@ -24,13 +24,13 @@ public:
 
     // Lee un uint16_t
     uint16_t read_uint16();
-    
+
     // Lee un uint8_t
     uint8_t get_uint8_t();
 
     // Envía un buffer
     void send_buffer(const std::vector<uint8_t>& buffer);
-    
+
     // Obtener referencia al socket
     Socket& get_socket() { return socket; }
 
@@ -38,4 +38,4 @@ public:
     bool read_command_client(ComandMatchDTO& command);
 };
 
-#endif //SERVER_PROTOCOL_H
+#endif  // SERVER_PROTOCOL_H

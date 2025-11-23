@@ -1,10 +1,11 @@
 #include "collision_manager.h"
-#include <SDL2pp/SDL2pp.hh>
+
 #include <SDL_image.h>
+
+#include <SDL2pp/SDL2pp.hh>
 #include <iostream>
 
-CollisionManager::CollisionManager(const std::string& pathCamino, 
-                                   const std::string& pathPuentes,
+CollisionManager::CollisionManager(const std::string& pathCamino, const std::string& pathPuentes,
                                    const std::string& pathRampas) {
     try {
         // Cargar capas principales
@@ -24,11 +25,11 @@ CollisionManager::CollisionManager(const std::string& pathCamino,
             if (layerRampas) {
                 surfRampas = std::make_unique<SDL2pp::Surface>(layerRampas);
                 std::cout << "CollisionManager: Capa de rampas cargada." << std::endl;
-            } 
+            }
         }
 
         std::cout << "CollisionManager: Capas cargadas OK." << std::endl;
-        
+
     } catch (const std::exception& e) {
         throw std::runtime_error("Error al cargar capas de colisión: " + std::string(e.what()));
     }
@@ -42,49 +43,49 @@ Uint32 CollisionManager::getPixel(SDL2pp::Surface& surface, int x, int y) {
 
     SDL_Surface* rawSurf = surface.Get();
     int bpp = rawSurf->format->BytesPerPixel;
-    Uint8 *p = (Uint8 *)rawSurf->pixels + y * rawSurf->pitch + x * bpp;
+    Uint8* p = (Uint8*)rawSurf->pixels + y * rawSurf->pitch + x * bpp;
 
     // Feo feo
     switch (bpp) {
-        case 1:
-            return *p;
-        case 2:
-            return *(Uint16 *)p;
-        case 3:
-            if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
-                return p[0] << 16 | p[1] << 8 | p[2];
-            else
-                return p[0] | p[1] << 8 | p[2] << 16;
-        case 4:
-            return *(Uint32 *)p;
-        default:
-            return 0;
+    case 1:
+        return *p;
+    case 2:
+        return *(Uint16*)p;
+    case 3:
+        if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
+            return p[0] << 16 | p[1] << 8 | p[2];
+        else
+            return p[0] | p[1] << 8 | p[2] << 16;
+    case 4:
+        return *(Uint32*)p;
+    default:
+        return 0;
     }
 }
 
 bool CollisionManager::hasGroundLevel(int x, int y) {
     SDL_Surface* layerCamino = surfCamino->Get();
     SDL_LockSurface(layerCamino);
-    
+
     Uint32 pixelCamino = getPixel(*surfCamino, x, y);
     SDL_Color rgbCamino;
     SDL_GetRGB(pixelCamino, layerCamino->format, &rgbCamino.r, &rgbCamino.g, &rgbCamino.b);
-    
+
     SDL_UnlockSurface(layerCamino);
-    
+
     return rgbCamino.r > 128;
 }
 
 bool CollisionManager::hasBridgeLevel(int x, int y) {
     SDL_Surface* layerPuente = surfPuentes->Get();
     SDL_LockSurface(layerPuente);
-    
+
     Uint32 pixelPuentes = getPixel(*surfPuentes, x, y);
     SDL_Color rgbPuentes;
     SDL_GetRGB(pixelPuentes, layerPuente->format, &rgbPuentes.r, &rgbPuentes.g, &rgbPuentes.b);
-    
+
     SDL_UnlockSurface(layerPuente);
-    
+
     return rgbPuentes.r > 128;
 }
 
@@ -95,16 +96,16 @@ bool CollisionManager::isRamp(int x, int y) {
         // de vista aerea y el carro pasa entre puente y camino por cualquier lado básicamente
         return hasGroundLevel(x, y) && hasBridgeLevel(x, y);
     }
-    
+
     SDL_Surface* layerRampas = surfRampas->Get();
     SDL_LockSurface(layerRampas);
-    
+
     Uint32 pixelRampas = getPixel(*surfRampas, x, y);
     SDL_Color rgbRampas;
     SDL_GetRGB(pixelRampas, layerRampas->format, &rgbRampas.r, &rgbRampas.g, &rgbRampas.b);
-    
+
     SDL_UnlockSurface(layerRampas);
-    
+
     // Blanco = es una rampa
     return rgbRampas.r > 128;
 }
@@ -114,17 +115,15 @@ bool CollisionManager::canTransition(int x, int y, int fromLevel, int toLevel) {
     bool hasGround = hasGroundLevel(x, y);
     bool hasBridge = hasBridgeLevel(x, y);
     bool isRampZone = isRamp(x, y);
-    
-    
+
     if (fromLevel == 0 && toLevel == 1) {
         // Subiendo de calle a puente
         return isRampZone && hasBridge;
-    } 
-    else if (fromLevel == 1 && toLevel == 0) {
+    } else if (fromLevel == 1 && toLevel == 0) {
         // Bajando de puente a calle
-         return isRampZone && hasGround;
+        return isRampZone && hasGround;
     }
-    
+
     return false;
 }
 

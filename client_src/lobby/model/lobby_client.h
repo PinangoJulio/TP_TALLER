@@ -1,15 +1,17 @@
 #ifndef LOBBY_CLIENT_H
 #define LOBBY_CLIENT_H
 
-#include <string>
-#include <vector>
+#include <QObject>
 #include <atomic>
+#include <map>
+#include <string>
 #include <thread>
-#include <QObject> 
+#include <utility>
+#include <vector>
 
 #include "client_src/lobby/view/common_types.h"
-#include "common_src/socket.h"
 #include "common_src/lobby_protocol.h"
+#include "common_src/socket.h"
 
 class LobbyClient : public QObject {
     Q_OBJECT
@@ -43,8 +45,8 @@ public:
     std::vector<GameInfo> receive_games_list();
 
     // === MATCH ===
-    void create_game(const std::string &game_name, uint8_t max_players, 
-                     const std::vector<std::pair<std::string, std::string>> &races);
+    void create_game(const std::string& game_name, uint8_t max_players,
+                     const std::vector<std::pair<std::string, std::string>>& races);
     uint16_t receive_game_created();
     void join_game(uint16_t game_id);
     uint16_t receive_game_joined();
@@ -74,15 +76,14 @@ public:
     LobbyClient(const LobbyClient&) = delete;
     LobbyClient& operator=(const LobbyClient&) = delete;
 
-    std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::string>>>> 
-    receive_city_maps(); 
+    std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::string>>>>
+    receive_city_maps();
 
     void send_selected_races(const std::vector<std::pair<std::string, std::string>>& races);
 
     bool is_listening() const { return listening.load(); }
 
-    void read_room_snapshot(std::vector<QString>& players, 
-        std::map<QString, QString>& cars);
+    void read_room_snapshot(std::vector<QString>& players, std::map<QString, QString>& cars);
 
 signals:
     //  Señales para notificar cambios en la sala
@@ -95,4 +96,4 @@ signals:
     void gamesListReceived(std::vector<GameInfo> games);
 };
 
-#endif // LOBBY_CLIENT_H
+#endif  // LOBBY_CLIENT_H

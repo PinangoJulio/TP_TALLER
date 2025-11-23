@@ -1,15 +1,19 @@
 #ifndef GAME_PROTOCOL_H
 #define GAME_PROTOCOL_H
 
-#include <vector>
 #include <cstdint>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "dtos.h"
+#include "socket.h"
 
 // Tipos de mensajes del juego
 enum GameMessageType : uint8_t {
     // Cliente → Servidor
     MSG_GAME_COMMAND = 0x20,
-    
+
     // Servidor → Cliente
     MSG_GAME_SNAPSHOT = 0x30,
     MSG_GAME_EVENT = 0x31,
@@ -18,20 +22,21 @@ enum GameMessageType : uint8_t {
 };
 
 namespace GameProtocol {
-    // Serialización Cliente → Servidor
-    std::vector<uint8_t> serialize_command(const Command& cmd);
-    
-    // Serialización Servidor → Cliente
-    std::vector<uint8_t> serialize_snapshot(const GameSnapshot& snapshot, 
-                                            const std::vector<CarState>& cars);
-    std::vector<uint8_t> serialize_event(const GameEvent& event);
-    std::vector<uint8_t> serialize_race_start();
-    std::vector<uint8_t> serialize_race_end(const std::vector<uint16_t>& rankings);
-    std::vector<uint8_t> serialize_city_maps(
-        const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::string>>>>& maps);
-    
-    std::vector<uint8_t> serialize_car_chosen(const std::string& car_name, const std::string& car_type);
+// Serialización Cliente → Servidor
+std::vector<uint8_t> serialize_command(const Command& cmd);
 
-}
+// Serialización Servidor → Cliente
+std::vector<uint8_t> serialize_snapshot(const GameSnapshot& snapshot,
+                                        const std::vector<CarState>& cars);
+std::vector<uint8_t> serialize_event(const GameEvent& event);
+std::vector<uint8_t> serialize_race_start();
+std::vector<uint8_t> serialize_race_end(const std::vector<uint16_t>& rankings);
+std::vector<uint8_t> serialize_city_maps(
+    const std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::string>>>>&
+        maps);
 
-#endif // GAME_PROTOCOL_H
+std::vector<uint8_t> serialize_car_chosen(const std::string& car_name, const std::string& car_type);
+
+}  // namespace GameProtocol
+
+#endif  // GAME_PROTOCOL_H

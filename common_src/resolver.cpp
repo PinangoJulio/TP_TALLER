@@ -1,7 +1,5 @@
 #include "resolver.h"
 
-#include <stdexcept>
-
 #include <arpa/inet.h>
 #include <errno.h>
 #include <netdb.h>
@@ -10,6 +8,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include <stdexcept>
 
 #include "liberror.h"
 #include "resolvererror.h"
@@ -151,7 +151,6 @@ Resolver::~Resolver() {
     if (this->result)
         freeaddrinfo(this->result);
 }
-
 
 void Resolver::chk_addr_or_fail() const {
     if (result == nullptr) {
