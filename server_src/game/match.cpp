@@ -136,8 +136,7 @@ bool Match::set_player_car(int player_id, const std::string& car_name, const std
     it->second.car_type = car_type;
 
     // Actualizar en Player también
-    // cppcheck-suppress useStlAlgorithm
-    for (auto& player : players) {
+    for (auto& player : players) {  // cppcheck-suppress useStlAlgorithm
         if (player->getId() == player_id) {
             player->setSelectedCar(car_name);
             // El car_type se establecerá cuando se cree el Car en GameLoop::add_player()
@@ -187,8 +186,7 @@ std::string Match::get_player_car(int player_id) const {
 
 bool Match::all_players_selected_car() const {
     std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(mtx));
-    for (const auto& [id, info] : players_info) {
-        (void)id;  // Unused
+    for (const auto& [id, info] : players_info) {  // cppcheck-suppress unusedVariable
         if (info.car_name.empty())
             return false;
     }
@@ -250,8 +248,7 @@ bool Match::all_players_ready() const {
     if (players_info.empty())
         return false;
 
-    for (const auto& [id, info] : players_info) {
-        (void)id;  // Unused
+    for (const auto& [id, info] : players_info) {  // cppcheck-suppress unusedVariable
         if (!info.is_ready)
             return false;
     }
@@ -280,13 +277,13 @@ const std::map<int, PlayerLobbyInfo>& Match::get_players() const {
 // CARRERAS
 // ============================================
 
-void Match::set_race_configs(const std::vector<RaceConfig>& configs) {
+void Match::set_race_configs(const std::vector<ServerRaceConfig>& configs) {
     std::lock_guard<std::mutex> lock(mtx);
     race_configs = configs;
 
     // Crear las races
     for (const auto& config : configs) {
-        std::string yaml_path = "server_src/city_maps/" + config.city + "/" + config.map;
+        std::string yaml_path = "server_src/city_maps/" + config.city + "/" + config.race_name;
         add_race(yaml_path, config.city);
     }
 
@@ -363,8 +360,7 @@ void Match::start_next_race() {
     std::cout << "[Match] ══════════════════════════════════════════════════════════" << std::endl;
 
     // Verificar que todos los jugadores estén registrados (solo para debug)
-    for (const auto& [id, info] : players_info) {
-        (void)id;  // Unused
+    for (const auto& [id, info] : players_info) {  // cppcheck-suppress unusedVariable
         std::cout << "[Match]   ✓ Jugador: " << info.name << " (" << info.car_name << " - "
                   << info.car_type << ")" << std::endl;
     }
@@ -399,8 +395,7 @@ void Match::print_players_info() const {
     if (players_info.empty()) {
         std::cout << "║  [VACÍO] No hay jugadores en esta partida" << std::string(17, ' ') << "║\n";
     } else {
-        // cppcheck-suppress unassignedVariable
-        for (const auto& [player_id, info] : players_info) {
+        for (const auto& [player_id, info] : players_info) {  // cppcheck-suppress unusedVariable
             std::cout << "║ ID: " << std::setw(3) << player_id << " │ ";
             std::cout << std::setw(15) << std::left << info.name << " │ ";
 

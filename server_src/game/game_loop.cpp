@@ -498,12 +498,12 @@ void GameLoop::actualizar_fisica() {
 }
 
 void GameLoop::detectar_colisiones() {
-    // TODO: Detectar colisiones entre autos y con el mapa
+    // Detectar colisiones entre autos y con el mapa --> sin implementar
     // Usar Box2D contact listeners o queries
 }
 
 void GameLoop::actualizar_estado_carrera() {
-    // TODO: Actualizar vueltas, checkpoints, posiciones
+    // Actualizar vueltas, checkpoints, posiciones  --> sin implementar
     // for (auto& [id, player] : players) {
     //     if (checkCrossedFinishLine(player)) {
     //         player->incrementLap();
@@ -512,7 +512,7 @@ void GameLoop::actualizar_estado_carrera() {
 }
 
 void GameLoop::verificar_ganadores() {
-    // TODO: Verificar si algún jugador completó todas las vueltas
+    // Verificar si algún jugador completó todas las vueltas  --> sin implementar
     // for (auto& [id, player] : players) {
     //     if (player->getCompletedLaps() >= total_laps && !player->isFinished()) {
     //         player->markAsFinished();
@@ -530,20 +530,32 @@ void GameLoop::verificar_ganadores() {
 }
 
 void GameLoop::enviar_estado_a_jugadores() {
-    // TODO: Crear GameState y enviarlo a todos los jugadores
-    // GameState state;
-    // // Llenar state con información de todos los jugadores
-    // for (const auto& [id, player] : players) {
-    //     CarState car_state;
-    //     car_state.player_id = id;
-    //     car_state.pos_x = player->getX();
-    //     car_state.pos_y = player->getY();
-    //     car_state.angle = player->getAngle();
-    //     car_state.velocity = player->getSpeed();
-    //     // ... llenar más datos
-    //     state.cars.push_back(car_state);
-    // }
-    //
-    // // Enviar a todos los clientes
-    // queues_players.send_to_all(state);
+    // Crear snapshot del estado actual
+    GameState snapshot = create_snapshot();
+
+    // Broadcast a todos los jugadores a través del ClientMonitor
+    queues_players.broadcast(snapshot);
+}
+
+// ==========================================================
+// CREAR SNAPSHOT (GAMESTATE)
+// ==========================================================
+
+GameState GameLoop::create_snapshot() {
+    // Convertir map<int, unique_ptr<Player>> a vector<Player*>
+    std::vector<Player*> player_list;
+    for (const auto& [id, player_ptr] : players) {
+        player_list.push_back(player_ptr.get());
+    }
+
+    // Crear snapshot usando el constructor
+    GameState snapshot(player_list, city_name, yaml_path, total_laps, is_running.load());
+
+    // TODO: Cuando se implementen, agregar:
+    // - checkpoints
+    // - hints
+    // - NPCs
+    // - eventos
+
+    return snapshot;
 }

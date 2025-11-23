@@ -13,7 +13,7 @@ target_sources(server
     # Game
     game/game_loop.cpp
     game/car.cpp
-    
+
     # Network
     network/client_handler.cpp
     network/receiver.cpp

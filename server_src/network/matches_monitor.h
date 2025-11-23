@@ -45,7 +45,7 @@ public:
     bool leave_match(const std::string& player_name);
     bool leave_match_by_id(int player_id, int match_id);
 
-    bool add_races_to_match(int match_id, const std::vector<RaceConfig>& race_paths);
+    bool add_races_to_match(int match_id, const std::vector<ServerRaceConfig>& race_paths);
     std::vector<GameInfo> list_available_matches();
 
     // ---- LOBBY: Validaciones ----

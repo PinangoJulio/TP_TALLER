@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "common_src/dtos.h"
+#include "common_src/game_state.h"
 #include "common_src/socket.h"
 
 class ServerProtocol {
@@ -36,6 +37,9 @@ public:
 
     // leer comando cliente
     bool read_command_client(ComandMatchDTO& command);
+
+    // Enviar snapshot (GameState) al cliente
+    bool send_snapshot(const GameState& snapshot);
 };
 
 #endif  // SERVER_PROTOCOL_H

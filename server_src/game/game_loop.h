@@ -63,6 +63,9 @@ private:
     void enviar_estado_a_jugadores();
     void verificar_ganadores();
 
+    // Crear snapshot del estado actual
+    GameState create_snapshot();
+
 public:
     GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues, const std::string& yaml_path);
 

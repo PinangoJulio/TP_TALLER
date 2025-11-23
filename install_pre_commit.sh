@@ -4,7 +4,7 @@
 set -e  # Salir si hay error
 
 echo "=================================================="
-echo "🔧 Instalando Pre-commit Hooks"
+echo " Instalando Pre-commit Hooks"
 echo "=================================================="
 echo ""
 
@@ -23,13 +23,13 @@ if [ ! -f ".pre-commit-config.yaml" ]; then
     exit 1
 fi
 
-echo -e "${YELLOW}📁 Directorio actual:${NC} $(pwd)"
+echo -e "${YELLOW} Directorio actual:${NC} $(pwd)"
 echo ""
 
 # ========================================
 # 2. Instalar pre-commit
 # ========================================
-echo -e "${YELLOW}📦 Instalando pre-commit...${NC}"
+echo -e "${YELLOW} Instalando pre-commit...${NC}"
 if command -v pre-commit &> /dev/null; then
     echo -e "${GREEN}✓ pre-commit ya está instalado${NC}"
 else
@@ -75,7 +75,7 @@ echo ""
 # ========================================
 # 5. Instalar cmake-format (opcional)
 # ========================================
-echo -e "${YELLOW}📝 Instalando cmake-format (opcional)...${NC}"
+echo -e "${YELLOW} Instalando cmake-format (opcional)...${NC}"
 if command -v cmake-format &> /dev/null; then
     echo -e "${GREEN}✓ cmake-format ya está instalado${NC}"
 else
@@ -88,7 +88,7 @@ echo ""
 # ========================================
 # 6. Instalar hooks en el repositorio
 # ========================================
-echo -e "${YELLOW}🔗 Instalando hooks en el repositorio...${NC}"
+echo -e "${YELLOW} Instalando hooks en el repositorio...${NC}"
 pre-commit install
 echo -e "${GREEN}✓ Hooks instalados en .git/hooks/${NC}"
 echo ""
@@ -103,7 +103,7 @@ echo ""
 
 if [[ $REPLY =~ ^[SsYy]$ ]]; then
     echo ""
-    echo -e "${YELLOW}🚀 Ejecutando pre-commit en todos los archivos...${NC}"
+    echo -e "${YELLOW}Ejecutando pre-commit en todos los archivos...${NC}"
     echo "   (Esto puede tardar un rato la primera vez)"
     echo ""
 
@@ -112,13 +112,13 @@ if [[ $REPLY =~ ^[SsYy]$ ]]; then
         echo -e "${GREEN}✓ Todos los checks pasaron correctamente${NC}"
     else
         echo ""
-        echo -e "${YELLOW}⚠️  Algunos archivos fueron modificados automáticamente${NC}"
+        echo -e "${YELLOW}⚠  Algunos archivos fueron modificados automáticamente${NC}"
         echo "   Revisa los cambios con: git diff"
         echo "   Luego haz: git add . && git commit"
     fi
 else
     echo ""
-    echo -e "${YELLOW}ℹ️  Los hooks se ejecutarán automáticamente en tu próximo commit${NC}"
+    echo -e "${YELLOW}ℹ  Los hooks se ejecutarán automáticamente en tu próximo commit${NC}"
 fi
 
 echo ""
@@ -126,9 +126,9 @@ echo "=================================================="
 echo -e "${GREEN}✅ Instalación completada${NC}"
 echo "=================================================="
 echo ""
-echo "📚 Para más información, lee: PRE_COMMIT_SETUP.md"
+echo " Para más información, lee: PRE_COMMIT_SETUP.md"
 echo ""
-echo "🚀 Comandos útiles:"
+echo " Comandos útiles:"
 echo "   • pre-commit run --all-files    (ejecutar manualmente)"
 echo "   • pre-commit autoupdate         (actualizar versiones)"
 echo "   • pre-commit uninstall          (desinstalar hooks)"

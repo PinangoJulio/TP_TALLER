@@ -42,14 +42,14 @@ TEST_F(MatchesMonitorTest, CannotJoinNonexistentMatch) {
 TEST_F(MatchesMonitorTest, AddRacesToMatch) {
     int match_id = monitor.create_match(4, "player1", 1, dummy_queue);
 
-    std::vector<RaceConfig> races = {{"Tokyo", "track1"}, {"Paris", "track2"}};
+    std::vector<ServerRaceConfig> races = {{"Tokyo", "track1"}, {"Paris", "track2"}};
 
     EXPECT_TRUE(monitor.add_races_to_match(match_id, races));
 }
 
 // Test 5: no se pueden agregar carreras si el match no existe
 TEST_F(MatchesMonitorTest, AddRacesToInvalidMatch) {
-    std::vector<RaceConfig> races = {{"Tokyo", "track1"}};
+    std::vector<ServerRaceConfig> races = {{"Tokyo", "track1"}};
     EXPECT_FALSE(monitor.add_races_to_match(999, races));
 }
 

@@ -1,5 +1,6 @@
 #include "client_monitor.h"
 
+#include <iostream>
 #include <utility>
 
 ClientMonitor::ClientMonitor() {}

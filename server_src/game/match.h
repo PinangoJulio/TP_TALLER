@@ -41,7 +41,7 @@ private:
     MatchState state;
 
     std::vector<std::unique_ptr<Race>> races;
-    std::vector<RaceConfig> race_configs;  // ✅ Guardar las carreras seleccionadas
+    std::vector<ServerRaceConfig> race_configs;  // ✅ Guardar las carreras seleccionadas
     int current_race_index;
 
     ClientMonitor players_queues;
@@ -85,8 +85,8 @@ public:
 
     // ---- LOBBY: Carreras ----
     void add_race(const std::string& yaml_path, const std::string& city_name);
-    void set_race_configs(const std::vector<RaceConfig>& configs);
-    const std::vector<RaceConfig>& get_race_configs() const { return race_configs; }
+    void set_race_configs(const std::vector<ServerRaceConfig>& configs);
+    const std::vector<ServerRaceConfig>& get_race_configs() const { return race_configs; }
 
     // ---- CARRERAS ----
     void start_match();  // ✅ Inicia el gameloop

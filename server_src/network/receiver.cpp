@@ -126,7 +126,7 @@ void Receiver::handle_lobby() {
                 monitor.register_player_socket(match_id, username, protocol.get_socket());
 
                 // Recibir selección de carreras
-                std::vector<RaceConfig> races;
+                std::vector<ServerRaceConfig> races;
                 for (int i = 0; i < num_races; ++i) {
                     std::string city = protocol.read_string();
                     std::string map = protocol.read_string();
@@ -397,8 +397,6 @@ void Receiver::handle_lobby() {
 void Receiver::handle_match_messages() {
     std::cout << "[Receiver]  Game loop started - listening for player commands..." << std::endl;
 
-    bool disconnected = false;
-
     try {
         // ♾- Espera comandos del jugador constantemente
         while (is_running) {
@@ -417,13 +415,10 @@ void Receiver::handle_match_messages() {
                 // pushear a la queue (GameLoop lo consumirá)
                 commands_queue->try_push(comand_match);
 
-                if (disconnected)
-                    break;
-
                 if (comand_match.command == GameCommand::DISCONNECT) {
-                    disconnected = true;
                     std::cout << "[Receiver]Player " << username << " sent DISCONNECT command"
                               << std::endl;
+                    break;
                 }
             } catch (const std::exception& e) {
                 std::cerr << "[Receiver] Error pushing command: " << e.what() << std::endl;
