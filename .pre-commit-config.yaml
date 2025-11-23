@@ -58,6 +58,9 @@ repos:
           - "--suppress=unusedStructMember"
           - "--suppress=passedByValue"  # ✅ Para evitar warnings en DTOs
           - "--suppress=constParameter"  # ✅ Para parámetros que no se modifican
+          - "--suppress=unusedVariable"  # ✅ Para structured bindings donde no se usa la clave
+          - "--suppress=unassignedVariable"  # ✅ Para structured bindings en iteraciones
+          - "--suppress=useStlAlgorithm"  # ✅ Permitir loops tradicionales cuando son más claros
           - "--language=c++"
           - "--std=c++20"
           - "--error-exitcode=1"

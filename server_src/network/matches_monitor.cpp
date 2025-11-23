@@ -183,7 +183,7 @@ std::vector<GameInfo> MatchesMonitor::list_available_matches() {
     std::lock_guard<std::mutex> lock(mtx);
     std::vector<GameInfo> result;
 
-    for (auto& [id, match] : matches) {  // cppcheck-suppress unusedVariable
+    for (auto& [id, match] : matches) {
         GameInfo info{};
         info.game_id = id;
 
@@ -321,7 +321,7 @@ void MatchesMonitor::broadcast_to_match(int match_id, const std::vector<uint8_t>
               << std::endl;
 
     int sent_count = 0;
-    for (const auto& [player_name, socket] : it->second) {  // cppcheck-suppress unusedVariable
+    for (const auto& [player_name, socket] : it->second) {
         if (player_name == exclude_player) {
             std::cout << "[MatchesMonitor]   Skipping " << player_name << " (sender)" << std::endl;
             continue;
@@ -402,7 +402,7 @@ std::string MatchesMonitor::get_match_name(int match_id) const {
 void MatchesMonitor::set_player_car(int player_id, const std::string& car_name,
                                     const std::string& car_type) {
     std::lock_guard<std::mutex> lock(mtx);
-    for (auto& [id, match] : matches) {  // cppcheck-suppress unusedVariable
+    for (auto& [id, match] : matches) {
         if (match->has_player(player_id)) {
             match->set_player_car(player_id, car_name, car_type);
             return;

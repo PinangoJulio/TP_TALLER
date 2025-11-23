@@ -136,7 +136,7 @@ bool Match::set_player_car(int player_id, const std::string& car_name, const std
     it->second.car_type = car_type;
 
     // Actualizar en Player también
-    for (auto& player : players) {  // cppcheck-suppress useStlAlgorithm
+    for (auto& player : players) {
         if (player->getId() == player_id) {
             player->setSelectedCar(car_name);
             // El car_type se establecerá cuando se cree el Car en GameLoop::add_player()
@@ -186,7 +186,7 @@ std::string Match::get_player_car(int player_id) const {
 
 bool Match::all_players_selected_car() const {
     std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(mtx));
-    for (const auto& [id, info] : players_info) {  // cppcheck-suppress unusedVariable
+    for (const auto& [id, info] : players_info) {
         if (info.car_name.empty())
             return false;
     }
@@ -248,7 +248,7 @@ bool Match::all_players_ready() const {
     if (players_info.empty())
         return false;
 
-    for (const auto& [id, info] : players_info) {  // cppcheck-suppress unusedVariable
+    for (const auto& [id, info] : players_info) {
         if (!info.is_ready)
             return false;
     }
@@ -360,7 +360,7 @@ void Match::start_next_race() {
     std::cout << "[Match] ══════════════════════════════════════════════════════════" << std::endl;
 
     // Verificar que todos los jugadores estén registrados (solo para debug)
-    for (const auto& [id, info] : players_info) {  // cppcheck-suppress unusedVariable
+    for (const auto& [id, info] : players_info) {
         std::cout << "[Match]   ✓ Jugador: " << info.name << " (" << info.car_name << " - "
                   << info.car_type << ")" << std::endl;
     }
@@ -395,7 +395,7 @@ void Match::print_players_info() const {
     if (players_info.empty()) {
         std::cout << "║  [VACÍO] No hay jugadores en esta partida" << std::string(17, ' ') << "║\n";
     } else {
-        for (const auto& [player_id, info] : players_info) {  // cppcheck-suppress unusedVariable
+        for (const auto& [player_id, info] : players_info) {
             std::cout << "║ ID: " << std::setw(3) << player_id << " │ ";
             std::cout << std::setw(15) << std::left << info.name << " │ ";
 
