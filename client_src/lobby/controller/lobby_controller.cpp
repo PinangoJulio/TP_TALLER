@@ -441,6 +441,8 @@ void LobbyController::onCarSelected(const CarInfo& car) {
 }
 
 void LobbyController::connectNotificationSignals() {
+    lobbyClient->disconnect(this);
+
     // Conectar señales de notificaciones
     connect(lobbyClient.get(), &LobbyClient::playerJoinedNotification,
             this, [this](QString username) {

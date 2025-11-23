@@ -142,6 +142,14 @@ void LobbyClient::join_game(uint16_t game_id) {
 
 uint16_t LobbyClient::receive_game_joined() {
     uint8_t type = read_message_type();
+    
+    // [FIX] Manejar respuesta de error explícitamente
+    if (type == MSG_ERROR) {
+        std::string error_msg;
+        read_error_details(error_msg); 
+        throw std::runtime_error(error_msg);
+    }
+
     if (type != MSG_GAME_JOINED) {
         throw std::runtime_error("Expected GAME_JOINED message");
     }
@@ -149,10 +157,9 @@ uint16_t LobbyClient::receive_game_joined() {
     uint16_t game_id = read_uint16();
     std::cout << "[LobbyClient] Joined game: " << game_id << std::endl;
     
-    // El snapshot llegará vía notificaciones automáticamente
-    
     return game_id;
 }
+
 
 void LobbyClient::receive_room_snapshot() {
     uint8_t type = read_message_type();
