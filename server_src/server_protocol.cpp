@@ -51,6 +51,9 @@ uint8_t ServerProtocol::get_uint8_t() {
     return n;
 }
 
+
+/** lee comandos que el cliente envia durante la fase de juego. Lee los datos del socket y los interpreta
+ segun el codigo de comando recibido **/
 bool ServerProtocol::read_command_client(ComandMatchDTO& command) {
     // Leer el código de comando (1 byte)
     uint8_t cmd_code;
@@ -67,7 +70,7 @@ bool ServerProtocol::read_command_client(ComandMatchDTO& command) {
             command.speed_boost = 1.0f;
             break;
 
-        case CMD_BRAKE:
+        case CMD_BRAKE: //(frenar)
             command.command = GameCommand::BRAKE;
             command.speed_boost = 1.0f;
             break;

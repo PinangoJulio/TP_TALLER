@@ -46,6 +46,7 @@ cars:
     acceleration: 60
     handling: 65
     durability: 80
+    health: 100
 
   - name: "Brisa"
     image_path: "assets/img/lobby/autos/convertible.png"
@@ -54,6 +55,7 @@ cars:
     acceleration: 85
     handling: 70
     durability: 60
+    health: 80
 
   - name: "J-Classic 600"
     image_path: "assets/img/lobby/autos/carro-verde.png"
@@ -62,6 +64,7 @@ cars:
     acceleration: 60
     handling: 65
     durability: 80
+    health: 100
 
   - name: "Cavallo V8"
     image_path: "assets/img/lobby/autos/carro-rojo.png"
@@ -70,6 +73,7 @@ cars:
     acceleration: 85
     handling: 70
     durability: 60
+    health: 80
 
   - name: "Senator"
     image_path: "assets/img/lobby/autos/carro-azul.png"
@@ -78,6 +82,7 @@ cars:
     acceleration: 60
     handling: 65
     durability: 80
+    health: 100
 
   - name: "Nómada"
     image_path: "assets/img/lobby/autos/pickup.png"
@@ -86,6 +91,7 @@ cars:
     acceleration: 50
     handling: 55
     durability: 90
+    health: 9999  # ✅ Vida casi infinita (tanque)
 
   - name: "Stallion GT"
     image_path: "assets/img/lobby/autos/carro-rojo-2.png"
@@ -94,6 +100,7 @@ cars:
     acceleration: 85
     handling: 70
     durability: 60
+    health: 80
 
 
 

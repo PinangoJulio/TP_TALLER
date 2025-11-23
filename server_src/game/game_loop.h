@@ -42,8 +42,9 @@ private:
     ClientMonitor& queues_players;          // Queues para broadcast a jugadores
 
     // ---- JUGADORES Y AUTOS ----
-    std::map<int, std::unique_ptr<Player>> players;  // ID → Player (gestión automática)
-    std::map<int, std::unique_ptr<Car>> cars;        // ID → Car (gestión automática)
+    // Cada Player contiene su Car, no necesitamos un mapa separado
+    // La clave (int) es el player_id (también client_id)
+    std::map<int, std::unique_ptr<Player>> players;  // player_id → Player (contiene Car)
 
     // ---- MAPA Y CONFIGURACIÓN ----
     std::string yaml_path;                  // Ruta al YAML del mapa
@@ -73,6 +74,9 @@ public:
                    const std::string& name,
                    const std::string& car_name,
                    const std::string& car_type);
+
+    // ---- ESTADO DE JUGADORES ----
+    void set_player_ready(int player_id, bool ready);
 
     // ---- CONFIGURACIÓN ----
     void set_total_laps(int laps) { total_laps = laps; }

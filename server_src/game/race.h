@@ -48,6 +48,11 @@ public:
         gameLoop->add_player(player_id, name, car_name, car_type);
     }
 
+    // ✅ Actualizar estado de jugadores
+    void set_player_ready(int player_id, bool ready) {
+        gameLoop->set_player_ready(player_id, ready);
+    }
+
     // ✅ Configurar parámetros de la carrera
     void set_total_laps(int laps) { gameLoop->set_total_laps(laps); }
     void set_city(const std::string& city) { gameLoop->set_city_name(city); }

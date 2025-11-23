@@ -3,6 +3,7 @@
 
 #include <string>
 #include <atomic>
+#include <memory>
 #include "car.h"  // ✅ Player tiene un Car
 
 class Player {
@@ -12,7 +13,8 @@ private:
     std::string name;
 
     // ---- AUTO ASIGNADO ----
-    Car* car;  // ✅ El auto con toda la física
+    // Player es DUEÑO de su Car (gestión automática de memoria)
+    std::unique_ptr<Car> car;
 
     // ---- ESTADO EN LA CARRERA ----
     int completed_laps;
@@ -39,9 +41,20 @@ public:
           is_ready(false) {}
 
     // --- Auto ---
-    void setCar(Car* new_car) { car = new_car; }
-    Car* getCar() { return car; }
-    const Car* getCar() const { return car; }
+    // Método para transferir ownership del Car al Player
+    void setCarOwnership(std::unique_ptr<Car> new_car) {
+        car = std::move(new_car);
+    }
+
+    // Método legacy para compatibilidad (NO debería usarse en código nuevo)
+    void setCar(Car* new_car) {
+        // ⚠️ ADVERTENCIA: No transfiere ownership
+        // Solo se mantiene para compatibilidad con código antiguo
+        (void)new_car; // Suppress unused warning
+    }
+
+    Car* getCar() { return car.get(); }
+    const Car* getCar() const { return car.get(); }
 
     // Helpers para acceder a propiedades del auto
     const std::string& getSelectedCar() const {
@@ -49,15 +62,12 @@ public:
         return car ? car->getModelName() : empty;
     }
     void setSelectedCar(const std::string& /* model */) {
-        // No hace nada, el auto se asigna con setCar()
+        // No hace nada, el auto se asigna con setCarOwnership()
     }
 
     const std::string& getCarType() const {
         static const std::string empty = "";
         return car ? car->getCarType() : empty;
-    }
-    void getCarType(const std::string& /* type */) {
-        // Typo heredado, no hace nada
     }
 
     // --- Basic Getters ---
@@ -140,7 +150,7 @@ public:
     }
 
     ~Player() {
-        // NO eliminar el car aquí, es manejado por GameLoop
+        // ✅ unique_ptr libera automáticamente el Car
     }
 };
 

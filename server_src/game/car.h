@@ -38,7 +38,7 @@ private:
     float velocity_x;            // Velocidad en X
     float velocity_y;            // Velocidad en Y
 
-    // ---- BOX2D (TODO: cuando se implemente) ----
+    // ---- BOX2D (cuando se implemente) ----
     // b2Body* body;             // Cuerpo de Box2D
 
     // ---- ESTADO ----
