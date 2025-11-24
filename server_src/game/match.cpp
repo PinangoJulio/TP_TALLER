@@ -1,9 +1,12 @@
 #include "match.h"
 
+#include <arpa/inet.h>  // htons, htonl
+#include <cstring>      // memset, strncpy
 #include <iomanip>
 #include <utility>
 
 #include "common_src/config.h"
+#include "common_src/dtos.h"  // RaceInfoDTO, ServerMessageType
 
 Match::Match(std::string host_name, int code, int max_players)
     : host_name(std::move(host_name)), match_code(code), is_active(false),
@@ -306,6 +309,106 @@ void Match::add_race(const std::string& yaml_path, const std::string& city_name)
     std::cout << "[Match] Carrera agregada: " << city_name << " -> " << yaml_path << "\n";
 }
 
+// ============================================
+// ENVÍO DE INFORMACIÓN DE CARRERA
+// ============================================
+
+void Match::send_race_info_to_all_players() {
+    if (races.empty() || race_configs.empty()) {
+        std::cerr << "[Match] ❌ No hay carreras configuradas para enviar info" << std::endl;
+        return;
+    }
+
+    // Obtener información de la primera carrera (current_race_index debería ser 0)
+    const auto& first_race_config = race_configs[0];
+    const auto& first_race = races[0];
+
+    // Crear el DTO con la información de la carrera
+    RaceInfoDTO race_info;
+    std::memset(&race_info, 0, sizeof(race_info));
+
+    // Copiar ciudad
+    std::strncpy(race_info.city_name, first_race_config.city.c_str(),
+                 sizeof(race_info.city_name) - 1);
+
+    // Copiar nombre de carrera
+    std::strncpy(race_info.race_name, first_race_config.race_name.c_str(),
+                 sizeof(race_info.race_name) - 1);
+
+    // Copiar ruta del mapa
+    std::string map_path = first_race->get_map_path();
+    std::strncpy(race_info.map_file_path, map_path.c_str(), sizeof(race_info.map_file_path) - 1);
+
+    // Configuración numérica
+    race_info.total_laps = 3;  // TODO: Obtener de config
+    race_info.race_number = 1;
+    race_info.total_races = static_cast<uint8_t>(races.size());
+    race_info.total_checkpoints = 0;  // TODO: Obtener del mapa parseado
+    race_info.max_time_ms = 600000;   // 10 minutos en ms
+
+    std::cout << "[Match] 📨 Enviando info de carrera a todos los jugadores..." << std::endl;
+    std::cout << "[Match]   Ciudad: " << race_info.city_name << std::endl;
+    std::cout << "[Match]   Carrera: " << race_info.race_name << std::endl;
+    std::cout << "[Match]   Mapa: " << race_info.map_file_path << std::endl;
+
+    if (!broadcast_callback) {
+        std::cerr << "[Match] ❌ No hay broadcast_callback configurado" << std::endl;
+        return;
+    }
+
+    // Serializar RaceInfoDTO manualmente
+    std::vector<uint8_t> buffer;
+
+    // 1. Tipo de mensaje
+    buffer.push_back(static_cast<uint8_t>(ServerMessageType::RACE_INFO));
+
+    // 2. Ciudad (string con longitud)
+    std::string city_str(race_info.city_name);
+    uint16_t city_len = htons(static_cast<uint16_t>(city_str.size()));
+    buffer.push_back(reinterpret_cast<uint8_t*>(&city_len)[0]);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&city_len)[1]);
+    buffer.insert(buffer.end(), city_str.begin(), city_str.end());
+
+    // 3. Nombre de carrera (string con longitud)
+    std::string race_str(race_info.race_name);
+    uint16_t race_len = htons(static_cast<uint16_t>(race_str.size()));
+    buffer.push_back(reinterpret_cast<uint8_t*>(&race_len)[0]);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&race_len)[1]);
+    buffer.insert(buffer.end(), race_str.begin(), race_str.end());
+
+    // 4. Ruta del mapa (string con longitud)
+    std::string map_str(race_info.map_file_path);
+    uint16_t map_len = htons(static_cast<uint16_t>(map_str.size()));
+    buffer.push_back(reinterpret_cast<uint8_t*>(&map_len)[0]);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&map_len)[1]);
+    buffer.insert(buffer.end(), map_str.begin(), map_str.end());
+
+    // 5. Datos numéricos
+    buffer.push_back(race_info.total_laps);
+    buffer.push_back(race_info.race_number);
+    buffer.push_back(race_info.total_races);
+
+    uint16_t checkpoints = htons(race_info.total_checkpoints);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&checkpoints)[0]);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&checkpoints)[1]);
+
+    uint32_t max_time = htonl(race_info.max_time_ms);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&max_time)[0]);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&max_time)[1]);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&max_time)[2]);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&max_time)[3]);
+
+    // Enviar a todos los jugadores (sin excluir a nadie)
+    broadcast_callback(buffer, -1);
+
+    std::cout << "[Match] ✅ Información de carrera enviada a " << players_info.size()
+              << " jugadores" << std::endl;
+}
+
+// ============================================
+// INICIO DE PARTIDA
+// ============================================
+
 void Match::start_match() {
     std::cout << "[Match] ════════════════════════════════════════════" << std::endl;
     std::cout << "[Match] 🏁 INICIANDO PARTIDA CODE " << match_code << std::endl;
@@ -327,6 +430,9 @@ void Match::start_match() {
     std::cout << "[Match]  Partida iniciada con " << players_info.size() << " jugadores"
               << std::endl;
     std::cout << "[Match]  Carreras configuradas: " << races.size() << std::endl;
+
+    // ✅ Enviar información de la primera carrera a todos los clientes
+    send_race_info_to_all_players();
 
     // Los jugadores se registran en start_next_race() para cada carrera
     // Iniciar primera carrera

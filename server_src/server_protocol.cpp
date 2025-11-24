@@ -209,6 +209,13 @@ static void push_back_string(std::vector<uint8_t>& buffer, const std::string& st
     buffer.insert(buffer.end(), str.begin(), str.end());
 }
 
+bool ServerProtocol::send_client_id(int client_id) {
+    uint16_t id = htons(static_cast<uint16_t>(client_id));
+    socket.sendall(&id, sizeof(id));
+    return true;
+}
+
+
 // ============================================================================
 // SERIALIZACIÓN DEL GAMESTATE (SNAPSHOT)
 // ============================================================================
@@ -334,3 +341,40 @@ bool ServerProtocol::send_snapshot(const GameState& snapshot) {
 
     return true;
 }
+
+// ============================================================================
+// ENVÍO DE INFORMACIÓN DE CARRERA
+// ============================================================================
+
+bool ServerProtocol::send_race_info(const RaceInfoDTO& race_info) {
+    std::vector<uint8_t> buffer;
+
+    // 1. Tipo de mensaje
+    buffer.push_back(static_cast<uint8_t>(ServerMessageType::RACE_INFO));
+
+    // 2. Ciudad (string con longitud)
+    std::string city_str(race_info.city_name);
+    push_back_string(buffer, city_str);
+
+    // 3. Nombre de carrera (string con longitud)
+    std::string race_str(race_info.race_name);
+    push_back_string(buffer, race_str);
+
+    // 4. Ruta del mapa (string con longitud)
+    std::string map_str(race_info.map_file_path);
+    push_back_string(buffer, map_str);
+
+    // 5. Datos numéricos
+    buffer.push_back(race_info.total_laps);
+    buffer.push_back(race_info.race_number);
+    buffer.push_back(race_info.total_races);
+
+    push_back_uint16_t(buffer, race_info.total_checkpoints);
+    push_back_uint32_t(buffer, race_info.max_time_ms);
+
+    // ENVIAR BUFFER
+    socket.sendall(buffer.data(), buffer.size());
+
+    return true;
+}
+

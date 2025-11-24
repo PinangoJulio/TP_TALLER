@@ -32,6 +32,9 @@ public:
     // Envía un buffer
     void send_buffer(const std::vector<uint8_t>& buffer);
 
+    //envia client id
+    bool send_client_id(int client_id);
+
     // Obtener referencia al socket
     Socket& get_socket() { return socket; }
 
@@ -40,6 +43,9 @@ public:
 
     // Enviar snapshot (GameState) al cliente
     bool send_snapshot(const GameState& snapshot);
+
+    // Enviar información inicial de la carrera
+    bool send_race_info(const RaceInfoDTO& race_info);
 };
 
 #endif  // SERVER_PROTOCOL_H

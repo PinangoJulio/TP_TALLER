@@ -94,11 +94,26 @@ void Acceptor::stop() {
 }
 
 Acceptor::~Acceptor() {
+    std::cout << "[Acceptor] Destructor: stopping all client connections..." << std::endl;
+
+    // Primero detener todos los clients
     for (auto& ch : clients_connected) {
-        ch->stop_connection();
-        delete ch;
+        if (ch) {
+            ch->stop_connection();
+        }
+    }
+
+    std::cout << "[Acceptor] Destructor: waiting for all clients to finish..." << std::endl;
+
+    // Ahora hacer join y eliminar
+    for (auto& ch : clients_connected) {
+        if (ch) {
+            delete ch;  // El destructor de ClientHandler hace join del receiver
+        }
     }
     clients_connected.clear();
+
+    std::cout << "[Acceptor] Destructor: stopping acceptor thread..." << std::endl;
     // cppcheck-suppress virtualCallInConstructor
     stop();
     this->join();

@@ -4,7 +4,9 @@
 
 Sender::Sender(ServerProtocol& protocol, Queue<GameState>& sender_queue, std::atomic<bool>& alive,
                int player_id)
-    : protocol(protocol), sender_queue(sender_queue), alive(alive), player_id(player_id) {}
+    : protocol(protocol), sender_queue(sender_queue), alive(alive), player_id(player_id) {
+    protocol.send_client_id(player_id);
+}
 
 void Sender::run() {
     try {
