@@ -4,6 +4,7 @@
 #include <chrono>
 #include <thread>
 
+#include "../client_src/client_protocol.h"
 #include "../client_src/lobby/model/lobby_client.h"
 #include "../common_src/config.h"
 #include "../common_src/dtos.h"
@@ -37,7 +38,8 @@ TEST(ServerClientProtocolTest, UsernameSerializationAndReception) {
     std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
 
     std::thread client_thread([&]() {
-        LobbyClient client(kHost, kPort);
+        ClientProtocol protocol(kHost, kPort);
+        LobbyClient client(protocol);
         client.send_username(username);
     });
 
@@ -60,7 +62,8 @@ TEST(ServerClientProtocolTest, SendAndReceiveWelcomeMessage) {
     std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
 
     std::thread client_thread([&]() {
-        LobbyClient client(kHost, kPort);
+        ClientProtocol protocol(kHost, kPort);
+        LobbyClient client(protocol);
         std::string received_msg = client.receive_welcome();
 
         EXPECT_EQ(received_msg, welcome_msg);
@@ -105,7 +108,8 @@ TEST(ServerClientProtocolTest, CreateGameSerializationAndReception) {
     std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
 
     std::thread client_thread([&]() {
-        LobbyClient client(kHost, kPort);
+        ClientProtocol protocol(kHost, kPort);
+        LobbyClient client(protocol);
         try {
             client.create_game(game_name, max_players, races);
         } catch (const std::exception& e) {
@@ -137,7 +141,9 @@ TEST(ServerClientProtocolTest, JoinGameSerializationAndReception) {
     std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
 
     std::thread client_thread([&]() {
-        LobbyClient client(kHost, kPort);
+        ClientProtocol protocol(kHost, kPort);
+
+        LobbyClient client(protocol);
         client.join_game(game_id);
     });
 
@@ -168,7 +174,9 @@ TEST(ServerClientProtocolTest, SelectCarSerializationAndReception) {
     std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
 
     std::thread client_thread([&]() {
-        LobbyClient client(kHost, kPort);
+        ClientProtocol protocol(kHost, kPort);
+
+        LobbyClient client(protocol);
         client.select_car(car_name, car_type);
     });
 
@@ -195,7 +203,9 @@ TEST(ServerClientProtocolTest, LeaveGameSerializationAndReception) {
     std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
 
     std::thread client_thread([&]() {
-        LobbyClient client(kHost, kPort);
+        ClientProtocol protocol(kHost, kPort);
+
+        LobbyClient client(protocol);
         client.leave_game(game_id);
     });
 
@@ -220,7 +230,9 @@ TEST(ServerClientProtocolTest, ErrorMessageSerialization) {
     std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
 
     std::thread client_thread([&]() {
-        LobbyClient client(kHost, kPort);
+        ClientProtocol protocol(kHost, kPort);
+
+        LobbyClient client(protocol);
         uint8_t type = client.peek_message_type();
 
         EXPECT_EQ(type, MSG_ERROR);
@@ -265,7 +277,9 @@ TEST(ServerClientProtocolTest, ListMultipleGames) {
     std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
 
     std::thread client_thread([&]() {
-        LobbyClient client(kHost, kPort);
+        ClientProtocol protocol(kHost, kPort);
+
+        LobbyClient client(protocol);
         client.request_games_list();
 
         auto received_games = client.receive_games_list();
@@ -294,7 +308,9 @@ TEST(ServerClientProtocolTest, GameCreatedConfirmation) {
     std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
 
     std::thread client_thread([&]() {
-        LobbyClient client(kHost, kPort);
+        ClientProtocol protocol(kHost, kPort);
+
+        LobbyClient client(protocol);
         uint16_t received_id = client.receive_game_created();
 
         EXPECT_EQ(received_id, expected_game_id);
@@ -320,7 +336,9 @@ TEST(ServerClientProtocolTest, GameJoinedConfirmation) {
     std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
 
     std::thread client_thread([&]() {
-        LobbyClient client(kHost, kPort);
+        ClientProtocol protocol(kHost, kPort);
+
+        LobbyClient client(protocol);
         uint16_t received_id = client.receive_game_joined();
 
         EXPECT_EQ(received_id, expected_game_id);
@@ -347,7 +365,9 @@ TEST(ServerClientProtocolTest, CarSelectedAcknowledgment) {
     std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
 
     std::thread client_thread([&]() {
-        LobbyClient client(kHost, kPort);
+        ClientProtocol protocol(kHost, kPort);
+
+        LobbyClient client(protocol);
         std::string confirmed_car = client.receive_car_confirmation();
 
         EXPECT_EQ(confirmed_car, car_name);
@@ -651,3 +671,226 @@ TEST(GameCommandProtocolTest, MultipleCommandsSequence) {
     client_thread.join();
     server_thread.join();
 }
+
+// TESTS DE RACE_INFO (INFORMACIÓN INICIAL DE CARRERA)
+
+TEST(RaceInfoProtocolTest, SendAndReceiveRaceInfo) {
+    // Datos de prueba
+    RaceInfoDTO sent_info;
+    std::memset(&sent_info, 0, sizeof(sent_info));
+    std::strncpy(sent_info.city_name, "Vice City", sizeof(sent_info.city_name) - 1);
+    std::strncpy(sent_info.race_name, "Playa", sizeof(sent_info.race_name) - 1);
+    std::strncpy(sent_info.map_file_path, "server_src/city_maps/Vice City/Playa",
+                 sizeof(sent_info.map_file_path) - 1);
+    sent_info.total_laps = 3;
+    sent_info.race_number = 1;
+    sent_info.total_races = 3;
+    sent_info.total_checkpoints = 15;
+    sent_info.max_time_ms = 600000;
+
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+
+        ServerProtocol server_protocol(client_conn);
+
+        // Enviar RACE_INFO
+        bool success = server_protocol.send_race_info(sent_info);
+        EXPECT_TRUE(success);
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        ClientProtocol protocol(kHost, kPort);
+
+        // Recibir RACE_INFO
+        RaceInfoDTO received_info = protocol.receive_race_info();
+
+        // Verificar que los datos sean correctos
+        EXPECT_STREQ(received_info.city_name, sent_info.city_name);
+        EXPECT_STREQ(received_info.race_name, sent_info.race_name);
+        EXPECT_STREQ(received_info.map_file_path, sent_info.map_file_path);
+        EXPECT_EQ(received_info.total_laps, sent_info.total_laps);
+        EXPECT_EQ(received_info.race_number, sent_info.race_number);
+        EXPECT_EQ(received_info.total_races, sent_info.total_races);
+        EXPECT_EQ(received_info.total_checkpoints, sent_info.total_checkpoints);
+        EXPECT_EQ(received_info.max_time_ms, sent_info.max_time_ms);
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+TEST(RaceInfoProtocolTest, SendRaceInfoWithLongPaths) {
+    // Test con rutas más largas
+    RaceInfoDTO sent_info;
+    std::memset(&sent_info, 0, sizeof(sent_info));
+    std::strncpy(sent_info.city_name, "San Andreas", sizeof(sent_info.city_name) - 1);
+    std::strncpy(sent_info.race_name, "Desierto del Diablo Extremo",
+                 sizeof(sent_info.race_name) - 1);
+    std::strncpy(sent_info.map_file_path,
+                 "server_src/city_maps/San Andreas/Desierto del Diablo Extremo",
+                 sizeof(sent_info.map_file_path) - 1);
+    sent_info.total_laps = 5;
+    sent_info.race_number = 2;
+    sent_info.total_races = 5;
+    sent_info.total_checkpoints = 25;
+    sent_info.max_time_ms = 900000;  // 15 minutos
+
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+
+        ServerProtocol server_protocol(client_conn);
+        bool success = server_protocol.send_race_info(sent_info);
+        EXPECT_TRUE(success);
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        ClientProtocol protocol(kHost, kPort);
+        RaceInfoDTO received_info = protocol.receive_race_info();
+
+        EXPECT_STREQ(received_info.city_name, "San Andreas");
+        EXPECT_STREQ(received_info.race_name, "Desierto del Diablo Extremo");
+        EXPECT_EQ(received_info.total_laps, 5);
+        EXPECT_EQ(received_info.race_number, 2);
+        EXPECT_EQ(received_info.total_races, 5);
+        EXPECT_EQ(received_info.total_checkpoints, 25);
+        EXPECT_EQ(received_info.max_time_ms, 900000);
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+TEST(RaceInfoProtocolTest, SendRaceInfoFirstRaceOfThree) {
+    // Simular la primera carrera de una partida de 3 carreras
+    RaceInfoDTO sent_info;
+    std::memset(&sent_info, 0, sizeof(sent_info));
+    std::strncpy(sent_info.city_name, "Liberty City", sizeof(sent_info.city_name) - 1);
+    std::strncpy(sent_info.race_name, "Circuito Centro", sizeof(sent_info.race_name) - 1);
+    std::strncpy(sent_info.map_file_path, "server_src/city_maps/Liberty City/Circuito Centro",
+                 sizeof(sent_info.map_file_path) - 1);
+    sent_info.total_laps = 3;
+    sent_info.race_number = 1;  // Primera carrera
+    sent_info.total_races = 3;  // De 3 totales
+    sent_info.total_checkpoints = 12;
+    sent_info.max_time_ms = 600000;
+
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+
+        ServerProtocol server_protocol(client_conn);
+        bool success = server_protocol.send_race_info(sent_info);
+        EXPECT_TRUE(success);
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        ClientProtocol protocol(kHost, kPort);
+        RaceInfoDTO received_info = protocol.receive_race_info();
+
+        // Verificar que es la primera carrera de 3
+        EXPECT_EQ(received_info.race_number, 1);
+        EXPECT_EQ(received_info.total_races, 3);
+        EXPECT_STREQ(received_info.city_name, "Liberty City");
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+TEST(RaceInfoProtocolTest, SendRaceInfoWithMinimalData) {
+    // Test con datos mínimos
+    RaceInfoDTO sent_info;
+    std::memset(&sent_info, 0, sizeof(sent_info));
+    std::strncpy(sent_info.city_name, "VC", sizeof(sent_info.city_name) - 1);
+    std::strncpy(sent_info.race_name, "T1", sizeof(sent_info.race_name) - 1);
+    std::strncpy(sent_info.map_file_path, "maps/t1", sizeof(sent_info.map_file_path) - 1);
+    sent_info.total_laps = 1;
+    sent_info.race_number = 1;
+    sent_info.total_races = 1;
+    sent_info.total_checkpoints = 5;
+    sent_info.max_time_ms = 60000;  // 1 minuto
+
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+
+        ServerProtocol server_protocol(client_conn);
+        bool success = server_protocol.send_race_info(sent_info);
+        EXPECT_TRUE(success);
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        ClientProtocol protocol(kHost, kPort);
+        RaceInfoDTO received_info = protocol.receive_race_info();
+
+        EXPECT_STREQ(received_info.city_name, "VC");
+        EXPECT_STREQ(received_info.race_name, "T1");
+        EXPECT_EQ(received_info.total_laps, 1);
+        EXPECT_EQ(received_info.total_checkpoints, 5);
+        EXPECT_EQ(received_info.max_time_ms, 60000);
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+TEST(RaceInfoProtocolTest, SendMultipleRaceInfoSequentially) {
+    // Simular envío de info de múltiples carreras consecutivas
+    std::vector<std::pair<std::string, std::string>> races = {
+        {"Vice City", "Playa"},
+        {"Liberty City", "Centro"},
+        {"San Andreas", "Desierto"}
+    };
+
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+
+        ServerProtocol server_protocol(client_conn);
+
+        for (size_t i = 0; i < races.size(); ++i) {
+            RaceInfoDTO info;
+            std::memset(&info, 0, sizeof(info));
+            std::strncpy(info.city_name, races[i].first.c_str(), sizeof(info.city_name) - 1);
+            std::strncpy(info.race_name, races[i].second.c_str(), sizeof(info.race_name) - 1);
+            info.total_laps = 3;
+            info.race_number = static_cast<uint8_t>(i + 1);
+            info.total_races = static_cast<uint8_t>(races.size());
+            info.total_checkpoints = 10 + (i * 5);
+            info.max_time_ms = 600000;
+
+            bool success = server_protocol.send_race_info(info);
+            EXPECT_TRUE(success);
+        }
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        ClientProtocol protocol(kHost, kPort);
+
+        for (size_t i = 0; i < races.size(); ++i) {
+            RaceInfoDTO received_info = protocol.receive_race_info();
+
+            EXPECT_STREQ(received_info.city_name, races[i].first.c_str());
+            EXPECT_STREQ(received_info.race_name, races[i].second.c_str());
+            EXPECT_EQ(received_info.race_number, static_cast<uint8_t>(i + 1));
+            EXPECT_EQ(received_info.total_races, static_cast<uint8_t>(races.size()));
+            EXPECT_EQ(received_info.total_checkpoints, 10 + (i * 5));
+        }
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
