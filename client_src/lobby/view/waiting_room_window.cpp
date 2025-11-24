@@ -268,7 +268,7 @@ void WaitingRoomWindow::updateStartButtonState() {
 }
 
 void WaitingRoomWindow::addPlayer(const QString& name, const QString& car, bool isLocal) {
-    PlayerInfo player{name, car, false, isLocal};
+    PlayerCardData player{name, car, false, isLocal};
     players.push_back(player);
     updatePlayerDisplay();
 }
@@ -308,7 +308,7 @@ void WaitingRoomWindow::updatePlayerDisplay() {
     for (int i = 0; i < getCardsPerPage(); i++) {
         int playerIdx = startIdx + i;
         if (playerIdx < static_cast<int>(players.size())) {
-            const PlayerInfo& player = players[playerIdx];
+            const PlayerCardData& player = players[playerIdx];
             PlayerCardWidgets& card = playerCardWidgets[i];
             card.container->show();
             QString bgColor = player.isLocal ? "rgba(0,50,100,200)" : "rgba(0,0,0,180)";

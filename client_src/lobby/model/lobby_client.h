@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "client_src/client_protocol.h"
 #include "client_src/lobby/view/common_types.h"
 #include "common_src/lobby_protocol.h"
 #include "common_src/socket.h"
@@ -17,7 +18,8 @@ class LobbyClient : public QObject {
     Q_OBJECT
 
 private:
-    Socket socket;
+    // Socket socket;
+    ClientProtocol protocol;
     std::string username;
     bool connected;
 
@@ -25,17 +27,13 @@ private:
     std::thread notification_thread;
 
     // Helpers de lectura
-    uint8_t read_message_type();
-    std::string read_string();
-    uint16_t read_uint16();
-    uint8_t read_uint8();
-    void send_string(const std::string& str);
+
     void receive_room_snapshot();
 
     void notification_listener();
 
 public:
-    LobbyClient(const std::string& host, const std::string& port);
+    LobbyClient(const char* host, const char* port);
     ~LobbyClient();
 
     // === LOBBY ===

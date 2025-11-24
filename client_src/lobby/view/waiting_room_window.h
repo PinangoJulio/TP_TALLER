@@ -13,7 +13,8 @@
 
 #include "base_lobby.h"
 
-struct PlayerInfo {
+// Estructura específica para la UI de Qt (no confundir con PlayerInfoLobby de game_state.h)
+struct PlayerCardData {
     QString name;
     QString carName;
     bool isReady;
@@ -73,7 +74,7 @@ private:
 
     QPixmap backgroundImage;
 
-    std::vector<PlayerInfo> players;
+    std::vector<PlayerCardData> players;
     std::map<QString, int> player_name_to_index;
     std::vector<PlayerCardWidgets> playerCardWidgets;
     bool localPlayerReady;

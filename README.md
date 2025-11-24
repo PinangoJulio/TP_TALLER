@@ -13,8 +13,6 @@ Implementación del clásico Need for Speed en versión 2D multijugador (hasta 8
 
 El instalador automatizado cumple con todos los requisitos del TP:
 
-### ✅ Qué hace el instalador:
-
 1. **Descarga e instala todas las dependencias** (SDL2, Qt6, Box2D, etc.)
 2. **Compila el proyecto completo**
 3. **Ejecuta los tests unitarios** automáticamente
@@ -139,12 +137,12 @@ Si es la **primera vez** que trabajas con este proyecto:
 
 Este script automáticamente:
 
-1. ✅ Instala `pre-commit` (si no está instalado)
-2. ✅ Instala `clang-format` (para formateo de C++)
-3. ✅ Instala `cppcheck` (para análisis estático)
-4. ✅ Instala `cmake-format` (para formateo de CMakeLists.txt)
-5. ✅ Instala los hooks en el repositorio Git
-6. ❓ Te pregunta si quieres ejecutar los hooks en todos los archivos
+1. Instala `pre-commit` (si no está instalado)
+2. Instala `clang-format` (para formateo de C++)
+3. Instala `cppcheck` (para análisis estático)
+4. Instala `cmake-format` (para formateo de CMakeLists.txt)
+5. Instala los hooks en el repositorio Git
+6. Te pregunta si quieres ejecutar los hooks en todos los archivos
 
 ### Requisitos previos
 

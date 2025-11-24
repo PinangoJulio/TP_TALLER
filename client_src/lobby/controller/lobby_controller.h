@@ -30,8 +30,8 @@ class LobbyController : public QObject {
     Q_OBJECT
 
 private:
-    QString serverHost;
-    QString serverPort;
+    const char* serverHost;
+    const char* serverPort;
 
     std::unique_ptr<LobbyClient> lobbyClient;
 
@@ -51,7 +51,7 @@ private:
     std::map<QString, QString> pendingCars;
 
 public:
-    explicit LobbyController(const QString& host, const QString& port, QObject* parent = nullptr);
+    explicit LobbyController(const char* host, const char* port, QObject* parent = nullptr);
     ~LobbyController();
 
     // Iniciar el flujo (mostrar lobby principal)

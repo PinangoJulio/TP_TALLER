@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Conectando a " << host.toStdString() << ":" << port.toStdString() << std::endl;
 
         // Crear controlador (se conecta al servidor)
-        LobbyController controller(host, port);
+        LobbyController controller(host.toStdString().c_str(), port.toStdString().c_str());
 
         // Iniciar el flujo (muestra ventana de nombre)
         controller.start();

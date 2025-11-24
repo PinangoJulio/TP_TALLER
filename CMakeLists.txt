@@ -161,7 +161,16 @@ set_project_warnings(taller_lobby ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 if(TALLER_CLIENT)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-  add_executable(client)
+  add_executable(
+    client
+    client_src/client_sender.h
+    client_src/client_sender.cpp
+    client_src/client_receiver.h
+    client_src/client_receiver.cpp
+    client_src/client_protocol.h
+    client_src/client_protocol.cpp
+    client_src/client_protocol.cpp
+    client_src/client_protocol.cpp)
 
   add_subdirectory(client_src) # PRIMERO el subdirectorio
 
@@ -265,6 +274,7 @@ if(TALLER_TESTS)
             server_src/server_protocol.cpp
             server_src/lobby/lobby_manager.cpp
             server_src/lobby/game_room.cpp
+            client_src/client_protocol.cpp
             client_src/lobby/model/lobby_client.cpp)
 
   # Añadir las rutas de los headers de GoogleTest/Mock

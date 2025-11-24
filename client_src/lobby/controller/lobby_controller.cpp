@@ -4,13 +4,12 @@
 #include <string>
 #include <utility>
 
-LobbyController::LobbyController(const QString& host, const QString& port, QObject* parent)
+LobbyController::LobbyController(const char* host, const char* port, QObject* parent)
     : QObject(parent), serverHost(host), serverPort(port), lobbyWindow(nullptr),
       nameInputWindow(nullptr), matchSelectionWindow(nullptr), createMatchWindow(nullptr),
       garageWindow(nullptr), waitingRoomWindow(nullptr), currentGameId(0), selectedCarIndex(-1) {
     std::cout << "[Controller] Controlador creado (sin conectar al servidor todavía)" << std::endl;
-    std::cout << "[Controller] Servidor configurado: " << host.toStdString() << ":"
-              << port.toStdString() << std::endl;
+    std::cout << "[Controller] Servidor configurado: " << host << ":" << port << std::endl;
 }
 
 LobbyController::~LobbyController() {
@@ -50,10 +49,10 @@ void LobbyController::onPlayClicked() {
 }
 
 void LobbyController::connectToServer() {
-    std::cout << "[Controller] Conectando al servidor " << serverHost.toStdString() << ":"
-              << serverPort.toStdString() << "..." << std::endl;
+    std::cout << "[Controller] Conectando al servidor " << serverHost << ":" << serverPort << "..."
+              << std::endl;
 
-    lobbyClient = std::make_unique<LobbyClient>(serverHost.toStdString(), serverPort.toStdString());
+    lobbyClient = std::make_unique<LobbyClient>(serverHost, serverPort);
 
     std::cout << "[Controller] Conectado exitosamente" << std::endl;
 }
@@ -318,9 +317,7 @@ void LobbyController::onJoinMatchRequested(const QString& matchId) {
         std::cout << "[Controller] Snapshot recibido: " << pendingPlayers.size() << " jugadores"
                   << std::endl;
 
-        if (matchSelectionWindow) {
-            matchSelectionWindow->hide();
-        }
+        matchSelectionWindow->hide();
 
         if (!lobbyClient->is_listening()) {
             std::cout << "[Controller] Conectando señales de notificaciones..." << std::endl;

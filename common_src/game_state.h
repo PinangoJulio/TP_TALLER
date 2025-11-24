@@ -24,7 +24,7 @@ struct ServerRaceConfig {
 };
 
 // Información de jugador en el lobby
-struct PlayerInfo {
+struct PlayerInfoLobby {
     int32_t player_id = 0;
     std::string username;
     std::string car_name;
@@ -36,7 +36,7 @@ struct MatchConfig {
     std::string match_name;               // Nombre de la partida
     uint8_t max_players = 8;              // Máximo 8 jugadores
     std::vector<ServerRaceConfig> races;  // Lista de carreras
-    std::vector<PlayerInfo> players_cfg;
+    std::vector<PlayerInfoLobby> players_cfg;
 };
 
 // SNAPSHOT DEL JUEGO (enviado continuamente del servidor a los clientes)
@@ -169,7 +169,6 @@ struct GameState {
     // ---- Buscar jugador por ID ----
     InfoPlayer* findPlayer(int id) {
         for (auto& p : players) {
-            // cppcheck-suppress useStlAlgorithm
             if (p.player_id == id)
                 return &p;
         }
