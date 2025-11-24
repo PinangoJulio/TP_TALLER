@@ -9,40 +9,94 @@ Race::Race(Queue<ComandMatchDTO>& cmdQueue,
       broadcaster(brdcstr),
       gameLoop(nullptr),
       map_path(yaml_mapa),
-      running(false) {
+      running(false),
+      adapter_running(false) {
     
     std::cout << "[Race] Created race for map: " << yaml_mapa << std::endl;
-    
-    // TODO: Cuando GameLoop esté adaptado para usar ComandMatchDTO:
-    // Configuracion config("config.yaml");
-    // Monitor monitor;  // Crear un monitor temporal
-    // Queue<Command> temp_queue;  // Convertir ComandMatchDTO a Command
-    // gameLoop = std::make_unique<GameLoop>(monitor, temp_queue, config);
 }
 
 void Race::start() {
-    if (gameLoop) {
+    if (running) {
+        std::cout << "[Race] Already running!" << std::endl;
+        return;
+    }
+    
+    try {
+        // Crear GameLoop
+        Configuracion config("config.yaml");
+        Monitor monitor;
+        
+        // Crear queue adaptadora
+        game_command_queue = std::make_unique<Queue<Command>>();
+        gameLoop = std::make_unique<GameLoop>(monitor, *game_command_queue, config);
+        gameLoop->load_map(map_path);
+
+        // Iniciar thread adaptador de comandos
+        adapter_running = true;
+        adapter_thread = std::thread([this]() {
+            std::cout << "[Race] Command adapter thread started" << std::endl;
+            while (adapter_running) {
+                try {
+                    ComandMatchDTO match_cmd = commandQueue.pop();
+                
+                    Command game_cmd;
+                    game_cmd.player_id = match_cmd.player_id;
+                    game_cmd.action = match_cmd.command;
+                
+                    game_command_queue->push(game_cmd);
+                
+                } catch (const ClosedQueue&) {
+                    std::cout << "[Race] Command queue closed" << std::endl;
+                    break;
+                } catch (const std::exception& e) {
+                    std::cerr << "[Race] Adapter error: " << e.what() << std::endl;
+                }
+            }
+            std::cout << "[Race] Command adapter thread stopped" << std::endl;
+        });
+    
+        // Iniciar GameLoop
         gameLoop->start();
         running = true;
-        std::cout << "[Race] Race started" << std::endl;
-    } else {
-        std::cout << "[Race] GameLoop not initialized, cannot start" << std::endl;
+    
+        std::cout << "[Race] Race started successfully" << std::endl;
+    
+    } catch (const std::exception& e) {
+        std::cerr << "[Race] Failed to start: " << e.what() << std::endl;
+        running = false;
     }
 }
 
 void Race::stop() {
+    if (!running) return;
+    std::cout << "[Race] Stopping race..." << std::endl;
+
+    adapter_running = false;
+
     if (gameLoop) {
         gameLoop->stop();
-        running = false;
-        std::cout << "[Race] Race stopped" << std::endl;
     }
+
+    if (game_command_queue) {
+        game_command_queue->close();
+    }
+
+    running = false;
+
+    std::cout << "[Race] Race stopped" << std::endl;
 }
 
 void Race::join() {
     if (gameLoop) {
         gameLoop->join();
-        std::cout << "[Race] Race joined (thread finished)" << std::endl;
+        std::cout << "[Race] GameLoop joined" << std::endl;
     }
+    
+    if (adapter_thread.joinable()) {
+        adapter_thread.join();
+        std::cout << "[Race] Adapter thread joined" << std::endl;
+    }
+
 }
 
 bool Race::isRunning() const {
@@ -53,7 +107,6 @@ Race::~Race() {
     if (running) {
         stop();
     }
-    if (gameLoop) {
-        join();
-    }
+    join();
 }
+

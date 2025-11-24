@@ -3,12 +3,12 @@
 #include <atomic>
 #include <memory>
 #include <string>
+#include <thread>
 
 #include "../../common_src/queue.h"
 #include "../network/client_monitor.h"
 #include "../../common_src/dtos.h"
 
-// Forward declaration (no incluir game_loop.h para evitar dependencias circulares)
 class GameLoop;
 
 class Race {
@@ -18,6 +18,11 @@ private:
     std::unique_ptr<GameLoop> gameLoop;
     std::string map_path;
     std::atomic<bool> running;
+    
+    // Adaptador de comandos
+    std::unique_ptr<Queue<Command>> game_command_queue;
+    std::thread adapter_thread;
+    std::atomic<bool> adapter_running;
 
 public:
     Race(Queue<ComandMatchDTO>& cmdQueue,

@@ -10,19 +10,17 @@
 class Monitor {
 private:
     std::mutex mtx;
-    // std::list<Queue<struct ServerMsg>*> message_queue;
+    std::list<Queue<struct ServerMsg>*> message_queue;
 
 public:
-    Monitor();  // ← Constructor declarado
+    Monitor();
 
-    // Métodos comentados por ahora (implementar cuando sea necesario)
-    // void broadcast(const ServerMsg& server_msg);
-    // void add_client_to_queue(Queue<struct ServerMsg>& client_queue);
-    // void clean_queue();
+    void broadcast(const ServerMsg& server_msg);
+    void add_client_to_queue(Queue<struct ServerMsg>& client_queue);
+    void clean_queue();
 
-    // No se hacen copias
     Monitor(const Monitor&) = delete;
     Monitor& operator=(const Monitor&) = delete;
 };
 
-#endif  // SERVER_MONITOR_H
+#endif

@@ -36,7 +36,7 @@ bool Car::simulate_tick() {
 void Car::apply_collision_damage(float impact_force) {
     if (is_destroyed) return;
     
-    int damage = static_cast<int>(impact_force * 0.5f); // 50% de la fuerza = daño
+    int damage = static_cast<int>(impact_force * 0.5f);
     
     if (impact_force > 50.0f) {
         std::cout << "[Car " << client_id << "] SEVERE collision! Force: " 
@@ -57,6 +57,11 @@ void Car::apply_collision_damage(float impact_force) {
         b2Vec2 vel = b2Body_GetLinearVelocity(body);
         float current_speed = std::sqrt(vel.x * vel.x + vel.y * vel.y);
         float new_speed = current_speed * (1.0f - speed_reduction);
+        
+        float health_factor = static_cast<float>(health) / 100.0f;
+        if (health_factor < 0.5f) {
+            new_speed *= (0.5f + health_factor);
+        }
         
         if (current_speed > 0.01f) {
             float factor = new_speed / current_speed;

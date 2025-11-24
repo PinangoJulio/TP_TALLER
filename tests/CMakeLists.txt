@@ -5,6 +5,7 @@ target_sources(taller_tests
     physics_tests.cpp
     collision_tests.cpp
     map_loader_tests.cpp
+    physics_advanced_tests.cpp  # ← NUEVO
     
     ${CMAKE_SOURCE_DIR}/server_src/game/game_loop.cpp
     ${CMAKE_SOURCE_DIR}/server_src/game/car.cpp

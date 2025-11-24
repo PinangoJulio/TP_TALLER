@@ -35,6 +35,7 @@ void CollisionHandler::process_contact_event(b2ContactEvents events) {
                                       relative_vel.y * relative_vel.y);
         
         if (userDataA && userDataB) {
+            // Colisión auto-auto
             int player_id_a = *static_cast<int*>(userDataA);
             int player_id_b = *static_cast<int*>(userDataB);
             
@@ -52,6 +53,7 @@ void CollisionHandler::process_contact_event(b2ContactEvents events) {
                       << " | Force: " << impact_force << std::endl;
         }
         else if (userDataA && !userDataB && obstacle_manager) {
+            // Auto A choca con obstáculo
             if (obstacle_manager->is_obstacle(bodyB)) {
                 int player_id = *static_cast<int*>(userDataA);
                 float damage_mult = obstacle_manager->get_damage_multiplier(bodyB);
@@ -71,6 +73,7 @@ void CollisionHandler::process_contact_event(b2ContactEvents events) {
             }
         }
         else if (!userDataA && userDataB && obstacle_manager) {
+            // Auto B choca con obstáculo
             if (obstacle_manager->is_obstacle(bodyA)) {
                 int player_id = *static_cast<int*>(userDataB);
                 float damage_mult = obstacle_manager->get_damage_multiplier(bodyA);
@@ -101,9 +104,16 @@ void CollisionHandler::apply_pending_collisions() {
                 float adjusted_force = collision.impact_force * collision.damage_multiplier;
                 it_a->second->apply_collision_damage(adjusted_force);
                 
+                if (B2_IS_NON_NULL(it_a->second->body)) {
+                    b2Vec2 vel = b2Body_GetLinearVelocity(it_a->second->body);
+                    b2Vec2 bounce = {-vel.x * 0.5f, -vel.y * 0.5f};
+                    b2Body_ApplyLinearImpulseToCenter(it_a->second->body, bounce, true);
+                }
+                
                 std::cout << "[CollisionHandler] Applied obstacle damage to Car " 
                           << collision.car_id_a 
-                          << " | Force: " << adjusted_force << std::endl;
+                          << " | Force: " << adjusted_force 
+                          << " | Health: " << it_a->second->health << std::endl;
             }
         } else {
             auto it_b = car_map.find(collision.car_id_b);
@@ -114,6 +124,22 @@ void CollisionHandler::apply_pending_collisions() {
             
             if (it_b != car_map.end() && it_b->second->is_alive()) {
                 it_b->second->apply_collision_damage(collision.impact_force);
+            }
+            
+            if (it_a != car_map.end() && it_b != car_map.end() &&
+                B2_IS_NON_NULL(it_a->second->body) && 
+                B2_IS_NON_NULL(it_b->second->body)) {
+                
+                b2Vec2 vel_a = b2Body_GetLinearVelocity(it_a->second->body);
+                b2Vec2 vel_b = b2Body_GetLinearVelocity(it_b->second->body);
+                
+                b2Body_SetLinearVelocity(it_a->second->body, 
+                    {vel_a.x * 0.3f + vel_b.x * 0.7f, 
+                     vel_a.y * 0.3f + vel_b.y * 0.7f});
+                
+                b2Body_SetLinearVelocity(it_b->second->body, 
+                    {vel_b.x * 0.3f + vel_a.x * 0.7f, 
+                     vel_b.y * 0.3f + vel_a.y * 0.7f});
             }
         }
     }
