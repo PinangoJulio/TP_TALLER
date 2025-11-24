@@ -9,6 +9,7 @@
 #include <memory>
 #include <vector>
 
+#include "../../client_protocol.h"
 #include "../model/lobby_client.h"
 #include "../view/common_types.h"
 #include "../view/create_match_window.h"
@@ -30,9 +31,10 @@ class LobbyController : public QObject {
     Q_OBJECT
 
 private:
-    const char* serverHost;
-    const char* serverPort;
+    //const char* serverHost;
+    //const char* serverPort;
 
+    ClientProtocol& protocol;
     std::unique_ptr<LobbyClient> lobbyClient;
 
     // Vistas
@@ -50,12 +52,24 @@ private:
     std::vector<QString> pendingPlayers;
     std::map<QString, QString> pendingCars;
 
+    // Estado del ciclo de lobby
+    bool lobbyCompleted = false;
+    bool lobbySuccess = false;
+
 public:
-    explicit LobbyController(const char* host, const char* port, QObject* parent = nullptr);
+    explicit LobbyController(ClientProtocol& protocol, QObject* parent = nullptr);
     ~LobbyController();
 
     // Iniciar el flujo (mostrar lobby principal)
     void start();
+
+    // Cerrar todas las ventanas de Qt (llamar DESPUÉS de que QEventLoop termine)
+    void closeAllWindows();
+
+    bool isLobbySuccessful() const { return lobbyCompleted && lobbySuccess; }
+
+signals:
+    void lobbyFinished(bool success);
 
 private slots:
     // usuario presiona "Jugar" en el lobby
@@ -96,6 +110,14 @@ private:
     void openGarage();
     void openWaitingRoom();
     void connectNotificationSignals();
+
+    void finishLobby(bool success) {
+        if (!lobbyCompleted) {
+            lobbyCompleted = true;
+            lobbySuccess = success;
+            emit lobbyFinished(success);
+        }
+    }
 };
 
 #endif  // LOBBY_CONTROLLER_H

@@ -1,7 +1,9 @@
 #include "client_protocol.h"
 
+#include <arpa/inet.h>  // ntohl
 #include <netinet/in.h>
 
+#include <cstring>      // memset, strncpy
 #include <iostream>
 #include <stdexcept>
 #include <utility>
@@ -9,11 +11,36 @@
 #include "common_src/lobby_protocol.h"
 
 ClientProtocol::ClientProtocol(const char* host, const char* servname)
-    : socket(Socket(host, servname)) {
+    : socket(Socket(host, servname)), host(host), port(servname) {
     std::cout << "[ClientProtocol] Connected to server " << host << ":" << servname << std::endl;
 }
 
-ClientProtocol::~ClientProtocol() {}
+ClientProtocol::~ClientProtocol() {
+    if (!socket_shutdown_done) {
+        try {
+            shutdown_socket();
+        } catch (...) {
+            // Ignorar errores en el destructor
+        }
+    }
+}
+
+void ClientProtocol::shutdown_socket() {
+    if (!socket_shutdown_done) {
+        try {
+            socket.shutdown(2);  // SHUT_RDWR
+            socket_shutdown_done = true;
+            std::cout << "[ClientProtocol] Socket shutdown completed" << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "[ClientProtocol] Error in shutdown: " << e.what() << std::endl;
+        }
+    }
+}
+
+void ClientProtocol::disconnect() {
+    shutdown_socket();
+    std::cout << "[ClientProtocol] Disconnected from server" << std::endl;
+}
 
 uint8_t ClientProtocol::read_message_type() {
     uint8_t type;
@@ -253,8 +280,22 @@ void ClientProtocol::push_back_uint16(std::vector<uint8_t>& message, std::uint16
 }
 
 GameState ClientProtocol::receive_snapshot() {
-    // TODO: Implementar deserialización del snapshot
-    std::cout << "[ClientProtocol] receive_snapshot() - not implemented yet" << std::endl;
+    // TODO: Implementar deserialización completa del snapshot
+    // Por ahora, bloqueamos esperando un byte para evitar loop infinito
+    try {
+        uint8_t msg_type;
+        socket.recvall(&msg_type, sizeof(msg_type));
+
+        // TODO: Aquí debería ir la deserialización completa del GameState
+        // Por ahora retornamos un snapshot vacío pero al menos bloqueamos
+        std::cout << "[ClientProtocol] Received snapshot message type: "
+                  << static_cast<int>(msg_type) << std::endl;
+
+    } catch (const std::exception& e) {
+        std::cerr << "[ClientProtocol] Error receiving snapshot: " << e.what() << std::endl;
+        throw;
+    }
+
     GameState snapshot;
     return snapshot;
 }
@@ -265,3 +306,51 @@ int ClientProtocol::receive_client_id() {
     std::cout << "[ClientProtocol] Received client ID: " << client_id << std::endl;
     return static_cast<int>(client_id);
 }
+
+// ============================================================================
+// RECEPCIÓN DE INFORMACIÓN DE CARRERA
+// ============================================================================
+
+RaceInfoDTO ClientProtocol::receive_race_info() {
+    RaceInfoDTO race_info;
+    std::memset(&race_info, 0, sizeof(race_info));
+
+    // 1. Leer tipo de mensaje (debe ser RACE_INFO)
+    uint8_t msg_type = read_message_type();
+    if (msg_type != static_cast<uint8_t>(ServerMessageType::RACE_INFO)) {
+        throw std::runtime_error("Expected RACE_INFO message, got " + std::to_string(msg_type));
+    }
+
+    // 2. Leer ciudad
+    std::string city = read_string();
+    std::strncpy(race_info.city_name, city.c_str(), sizeof(race_info.city_name) - 1);
+
+    // 3. Leer nombre de carrera
+    std::string race = read_string();
+    std::strncpy(race_info.race_name, race.c_str(), sizeof(race_info.race_name) - 1);
+
+    // 4. Leer ruta del mapa
+    std::string map_path = read_string();
+    std::strncpy(race_info.map_file_path, map_path.c_str(), sizeof(race_info.map_file_path) - 1);
+
+    // 5. Leer datos numéricos
+    race_info.total_laps = read_uint8();
+    race_info.race_number = read_uint8();
+    race_info.total_races = read_uint8();
+    race_info.total_checkpoints = read_uint16();
+
+    uint32_t max_time_net;
+    socket.recvall(&max_time_net, sizeof(max_time_net));
+    race_info.max_time_ms = ntohl(max_time_net);
+
+    std::cout << "[ClientProtocol] ✅ Race info received:" << std::endl;
+    std::cout << "[ClientProtocol]   City: " << race_info.city_name << std::endl;
+    std::cout << "[ClientProtocol]   Race: " << race_info.race_name << std::endl;
+    std::cout << "[ClientProtocol]   Map: " << race_info.map_file_path << std::endl;
+    std::cout << "[ClientProtocol]   Lap " << static_cast<int>(race_info.race_number) << "/"
+              << static_cast<int>(race_info.total_races) << std::endl;
+
+    return race_info;
+}
+
+

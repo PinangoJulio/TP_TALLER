@@ -13,6 +13,9 @@
 class ClientProtocol {
 private:
     Socket socket;
+    std::string host;
+    std::string port;
+    bool socket_shutdown_done = false;
     void push_back_uint16(std::vector<uint8_t>& message, std::uint16_t value);
     void serialize_command(const ComandMatchDTO& command, std::vector<uint8_t>& message);
 
@@ -48,6 +51,15 @@ public:
     void send_command_client(const ComandMatchDTO& command);
     GameState receive_snapshot();
     int receive_client_id();
+
+    // Recibir información inicial de la carrera
+    RaceInfoDTO receive_race_info();
+
+    // Utilidades
+    std::string get_host() const { return host; }
+    std::string get_port() const { return port; }
+    void disconnect();
+    void shutdown_socket();  // Desbloquear lecturas pendientes
 
     ClientProtocol(const ClientProtocol&) = delete;
     ClientProtocol& operator=(const ClientProtocol&) = delete;

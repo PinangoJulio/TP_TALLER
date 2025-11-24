@@ -19,7 +19,7 @@ class LobbyClient : public QObject {
 
 private:
     // Socket socket;
-    ClientProtocol protocol;
+    ClientProtocol& protocol;
     std::string username;
     bool connected;
 
@@ -33,7 +33,7 @@ private:
     void notification_listener();
 
 public:
-    LobbyClient(const char* host, const char* port);
+    LobbyClient(ClientProtocol& protocol);
     ~LobbyClient();
 
     // === LOBBY ===

@@ -4,16 +4,59 @@
 #include <string>
 #include <utility>
 
-LobbyController::LobbyController(const char* host, const char* port, QObject* parent)
-    : QObject(parent), serverHost(host), serverPort(port), lobbyWindow(nullptr),
-      nameInputWindow(nullptr), matchSelectionWindow(nullptr), createMatchWindow(nullptr),
-      garageWindow(nullptr), waitingRoomWindow(nullptr), currentGameId(0), selectedCarIndex(-1) {
+LobbyController::LobbyController(ClientProtocol& protocol, QObject* parent)
+    : QObject(parent),
+      protocol(protocol),
+      lobbyWindow(nullptr),
+      nameInputWindow(nullptr),
+      matchSelectionWindow(nullptr),
+      createMatchWindow(nullptr),
+      garageWindow(nullptr),
+      waitingRoomWindow(nullptr),
+      currentGameId(0),
+      selectedCarIndex(-1) {
     std::cout << "[Controller] Controlador creado (sin conectar al servidor todavía)" << std::endl;
-    std::cout << "[Controller] Servidor configurado: " << host << ":" << port << std::endl;
 }
 
 LobbyController::~LobbyController() {
     std::cout << "[Controller] Destructor llamado" << std::endl;
+}
+
+void LobbyController::closeAllWindows() {
+    std::cout << "[Controller] Cerrando ventanas de Qt para iniciar el juego..." << std::endl;
+
+    if (waitingRoomWindow) {
+        waitingRoomWindow->close();
+        waitingRoomWindow->deleteLater();
+        waitingRoomWindow = nullptr;
+    }
+    if (garageWindow) {
+        garageWindow->close();
+        garageWindow->deleteLater();
+        garageWindow = nullptr;
+    }
+    if (matchSelectionWindow) {
+        matchSelectionWindow->close();
+        matchSelectionWindow->deleteLater();
+        matchSelectionWindow = nullptr;
+    }
+    if (createMatchWindow) {
+        createMatchWindow->close();
+        createMatchWindow->deleteLater();
+        createMatchWindow = nullptr;
+    }
+    if (nameInputWindow) {
+        nameInputWindow->close();
+        nameInputWindow->deleteLater();
+        nameInputWindow = nullptr;
+    }
+    if (lobbyWindow) {
+        lobbyWindow->close();
+        lobbyWindow->deleteLater();
+        lobbyWindow = nullptr;
+    }
+
+    std::cout << "[Controller] Todas las ventanas Qt cerradas" << std::endl;
 }
 
 void LobbyController::start() {
@@ -49,11 +92,8 @@ void LobbyController::onPlayClicked() {
 }
 
 void LobbyController::connectToServer() {
-    std::cout << "[Controller] Conectando al servidor " << serverHost << ":" << serverPort << "..."
-              << std::endl;
-
-    lobbyClient = std::make_unique<LobbyClient>(serverHost, serverPort);
-
+    // Crear cliente de lobby usando el protocolo existente
+    lobbyClient = std::make_unique<LobbyClient>(protocol);
     std::cout << "[Controller] Conectado exitosamente" << std::endl;
 }
 
@@ -585,15 +625,33 @@ void LobbyController::onPlayerReadyToggled(bool isReady) {
 }
 
 void LobbyController::onStartGameRequested() {
-    std::cout << "[Controller] Solicitando inicio de partida..." << std::endl;
-
+    std::cout << "[Controller] Usuario solicitó iniciar partida" << std::endl;
     try {
+        if (!lobbyClient) {
+            throw std::runtime_error("LobbyClient no inicializado");
+        }
         lobbyClient->start_game(currentGameId);
+        std::cout << "[Controller] Señal de inicio enviada" << std::endl;
+
+        // ⚠️ IMPORTANTE: Detener el listener ANTES de emitir la señal
+        std::cout << "[Controller] 🛑 Deteniendo listener de lobby..." << std::endl;
+        if (lobbyClient) {
+            lobbyClient->stop_listening();
+        }
+        std::cout << "[Controller] ✅ Listener detenido" << std::endl;
+
+        // NO cerrar ventanas aquí - se hará después de que QEventLoop termine
+        // Para evitar bloqueo del event loop de Qt
+
+        // Marcar lobby finalizado con éxito
+        finishLobby(true);
     } catch (const std::exception& e) {
         handleNetworkError(e);
+        finishLobby(false);
     }
 }
 
+// En cualquier flujo de salida manual del lobby (volver) marcar como no exitoso
 void LobbyController::onBackFromWaitingRoom() {
     std::cout << "[Controller] Usuario salió de la sala de espera" << std::endl;
 
@@ -603,41 +661,6 @@ void LobbyController::onBackFromWaitingRoom() {
         waitingRoomWindow = nullptr;
     }
 
-    if (lobbyClient && currentGameId > 0) {
-        try {
-            std::cout << "[Controller] Enviando leave_game para partida " << currentGameId
-                      << std::endl;
-            lobbyClient->leave_game(currentGameId);
-            std::cout << "[Controller] Leave game enviado" << std::endl;
-
-        } catch (const std::exception& e) {
-            std::cerr << "[Controller] ⚠️ Error al enviar leave_game: " << e.what() << std::endl;
-        }
-    }
-
-    if (lobbyClient) {
-        std::cout << "[Controller] Esperando a que el listener se detenga..." << std::endl;
-
-        int timeout = 30;
-        while (lobbyClient->is_listening() && timeout > 0) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            timeout--;
-        }
-
-        if (timeout == 0) {
-            std::cerr << "[Controller] ⚠️ Timeout esperando listener" << std::endl;
-        }
-
-        lobbyClient->stop_listening();
-        std::cout << "[Controller] Listener detenido completamente" << std::endl;
-    }
-
-    currentGameId = 0;
-    selectedCarIndex = -1;
-
-    if (matchSelectionWindow) {
-        matchSelectionWindow->show();
-    }
-
-    std::cout << "[Controller] Flujo de salida completado" << std::endl;
+    finishLobby(false);
+    cleanupAndReturnToLobby();
 }

@@ -6,9 +6,9 @@
 #include <map>
 #include <utility>
 
-LobbyClient::LobbyClient(const char* host, const char* port)
-    : protocol(host, port), connected(true) {
-    std::cout << "[LobbyClient] Connected to server " << host << ":" << port << std::endl;
+LobbyClient::LobbyClient(ClientProtocol& protocol)
+    : protocol(protocol), connected(true) {
+    std::cout << "[LobbyClient] Connected to server " << std::endl;
 }
 
 void LobbyClient::send_username(const std::string& user) {
@@ -214,10 +214,18 @@ void LobbyClient::start_listening() {
 void LobbyClient::stop_listening() {
     std::cout << "[LobbyClient] Stopping notification listener..." << std::endl;
 
-    // Siempre marcar como detenido
+    // Marcar como detenido
     listening.store(false);
 
-    // Siempre intentar join si está joinable (aunque ya estuviera detenido)
+    // Hacer shutdown del socket para desbloquear cualquier recv() pendiente
+    try {
+        protocol.shutdown_socket();
+        std::cout << "[LobbyClient] Socket shutdown to unblock listener" << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "[LobbyClient] Error shutting down socket: " << e.what() << std::endl;
+    }
+
+    // Ahora sí hacer join (el thread debería terminar rápido)
     if (notification_thread.joinable()) {
         try {
             std::cout << "[LobbyClient] Joining listener thread..." << std::endl;

@@ -170,7 +170,9 @@ if(TALLER_CLIENT)
     client_src/client_protocol.h
     client_src/client_protocol.cpp
     client_src/client_protocol.cpp
-    client_src/client_protocol.cpp)
+    client_src/client_protocol.cpp
+          client_src/client.h
+          client_src/client.cpp)
 
   add_subdirectory(client_src) # PRIMERO el subdirectorio
 

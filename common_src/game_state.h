@@ -167,10 +167,10 @@ struct GameState {
               const std::string& map_path, int laps, bool running);
 
     // ---- Buscar jugador por ID ----
-    InfoPlayer* findPlayer(int id) {
+    InfoPlayer* findPlayer(int id) const {
         for (auto& p : players) {
             if (p.player_id == id)
-                return &p;
+                return const_cast<InfoPlayer*>(&p);
         }
         return nullptr;
     }
