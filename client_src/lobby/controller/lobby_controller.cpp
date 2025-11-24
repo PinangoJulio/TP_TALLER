@@ -5,16 +5,9 @@
 #include <utility>
 
 LobbyController::LobbyController(ClientProtocol& protocol, QObject* parent)
-    : QObject(parent),
-      protocol(protocol),
-      lobbyWindow(nullptr),
-      nameInputWindow(nullptr),
-      matchSelectionWindow(nullptr),
-      createMatchWindow(nullptr),
-      garageWindow(nullptr),
-      waitingRoomWindow(nullptr),
-      currentGameId(0),
-      selectedCarIndex(-1) {
+    : QObject(parent), protocol(protocol), lobbyWindow(nullptr), nameInputWindow(nullptr),
+      matchSelectionWindow(nullptr), createMatchWindow(nullptr), garageWindow(nullptr),
+      waitingRoomWindow(nullptr), currentGameId(0), selectedCarIndex(-1) {
     std::cout << "[Controller] Controlador creado (sin conectar al servidor todavía)" << std::endl;
 }
 

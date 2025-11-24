@@ -3,7 +3,7 @@
 #include <arpa/inet.h>  // ntohl
 #include <netinet/in.h>
 
-#include <cstring>      // memset, strncpy
+#include <cstring>  // memset, strncpy
 #include <iostream>
 #include <stdexcept>
 #include <utility>
@@ -352,5 +352,3 @@ RaceInfoDTO ClientProtocol::receive_race_info() {
 
     return race_info;
 }
-
-

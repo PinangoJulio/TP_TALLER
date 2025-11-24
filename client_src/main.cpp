@@ -17,8 +17,7 @@ int main(int argc, char* argv[]) {
         QString port = "8080";
 
         std::cout << "=== Need for Speed 2D - Cliente ===" << std::endl;
-        std::cout << "Conectando a " << host.toStdString() << ":" << port.toStdString()
-                  << std::endl;
+        std::cout << "Conectando a " << host.toStdString() << ":" << port.toStdString() << std::endl;
 
         Client client(host.toStdString().c_str(), port.toStdString().c_str());
         client.start();

@@ -31,8 +31,8 @@ class LobbyController : public QObject {
     Q_OBJECT
 
 private:
-    //const char* serverHost;
-    //const char* serverPort;
+    // const char* serverHost;
+    // const char* serverPort;
 
     ClientProtocol& protocol;
     std::unique_ptr<LobbyClient> lobbyClient;

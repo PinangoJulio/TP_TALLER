@@ -1,12 +1,12 @@
 #include "client.h"
 
 #include <SDL2/SDL.h>
-#include <SDL2pp/SDL2pp.hh>
 
 #include <QApplication>
 #include <QCoreApplication>
 #include <QEventLoop>
 #include <QObject>
+#include <SDL2pp/SDL2pp.hh>
 #include <chrono>
 #include <iostream>
 #include <thread>
@@ -14,26 +14,20 @@
 // #include "game/game_renderer.h"  // TODO: Implementar GameRenderer
 #include "lobby/controller/lobby_controller.h"
 
-#define NFS_TITLE "Need for Speed 2D"
-#define DEFAULT_WIDTH 1280
+#define NFS_TITLE      "Need for Speed 2D"
+#define DEFAULT_WIDTH  1280
 #define DEFAULT_HEIGHT 720
-#define FPS 60
+#define FPS            60
 
 using namespace SDL2pp;
 
 Client::Client(const char* hostname, const char* servname)
-    : protocol(hostname, servname),
-      username("Player"),  // Obtener del lobby Qt
-      player_id(-1),
-      active(true),
-      command_queue(),
-      snapshot_queue(),
-      sender(protocol, command_queue),
-      receiver(protocol, snapshot_queue),
-      threads_started(false) {
+    : protocol(hostname, servname), username("Player"),  // Obtener del lobby Qt
+      player_id(-1), active(true), command_queue(), snapshot_queue(),
+      sender(protocol, command_queue), receiver(protocol, snapshot_queue), threads_started(false) {
     std::cout << "[Client] Cliente inicializado para " << username << std::endl;
-        player_id = protocol.receive_client_id();
-        receiver.set_id(player_id);
+    player_id = protocol.receive_client_id();
+    receiver.set_id(player_id);
 }
 
 void Client::start() {
@@ -45,14 +39,13 @@ void Client::start() {
 
     // Event loop temporal para esperar fin del lobby
     QEventLoop lobbyLoop;
-    QObject::connect(&controller, &LobbyController::lobbyFinished, &lobbyLoop,
-                     [&](bool success) {
-                         std::cout << "[Client] Lobby terminado (success=" << success << ")" << std::endl;
-                         if (!success) {
-                             active = false;  // abortar cliente si lobby falla
-                         }
-                         lobbyLoop.quit();
-                     });
+    QObject::connect(&controller, &LobbyController::lobbyFinished, &lobbyLoop, [&](bool success) {
+        std::cout << "[Client] Lobby terminado (success=" << success << ")" << std::endl;
+        if (!success) {
+            active = false;  // abortar cliente si lobby falla
+        }
+        lobbyLoop.quit();
+    });
 
     controller.start();
     lobbyLoop.exec();  // Bloquea hasta que el lobby emite lobbyFinished
@@ -76,7 +69,6 @@ void Client::start() {
     std::cout << "╚════════════════════════════════════════════════════════════╝" << std::endl;
     std::cout << "\n";
 
-
     // FASE 2: INICIAR THREADS DE COMUNICACIÓN
 
     std::cout << "[Client] Iniciando threads de comunicación..." << std::endl;
@@ -86,8 +78,8 @@ void Client::start() {
     // receiver.start();
     threads_started = true;
 
-    std::cout << "[Client] ✅ Thread sender iniciado (receiver desactivado temporalmente)" << std::endl;
-
+    std::cout << "[Client] ✅ Thread sender iniciado (receiver desactivado temporalmente)"
+              << std::endl;
 
     // FASE 3: INICIALIZAR SDL Y CARGAR CONFIG
 
@@ -222,61 +214,60 @@ void Client::start() {
                 active = false;
             } else if (event.type == SDL_KEYDOWN) {
                 switch (event.key.keysym.sym) {
-                    case SDLK_ESCAPE:
-                        active = false;
-                        break;
-                    case SDLK_UP:
-                    case SDLK_w: {
-                        // Enviar comando ACCELERATE
-                        ComandMatchDTO cmd;
-                        cmd.player_id = player_id;
-                        cmd.command = GameCommand::ACCELERATE;
-                        command_queue.push(cmd);
-                        break;
-                    }
-                    case SDLK_DOWN:
-                    case SDLK_s: {
-                        // Enviar comando BRAKE
-                        ComandMatchDTO cmd;
-                        cmd.player_id = player_id;
-                        cmd.command = GameCommand::BRAKE;
-                        command_queue.push(cmd);
-                        break;
-                    }
-                    case SDLK_LEFT:
-                    case SDLK_a: {
-                        // Enviar comando TURN_LEFT
-                        ComandMatchDTO cmd;
-                        cmd.player_id = player_id;
-                        cmd.command = GameCommand::TURN_LEFT;
-                        command_queue.push(cmd);
-                        break;
-                    }
-                    case SDLK_RIGHT:
-                    case SDLK_d: {
-                        // Enviar comando TURN_RIGHT
-                        ComandMatchDTO cmd;
-                        cmd.player_id = player_id;
-                        cmd.command = GameCommand::TURN_RIGHT;
-                        command_queue.push(cmd);
-                        break;
-                    }
-                    case SDLK_SPACE: {
-                        // Enviar comando USE_NITRO
-                        ComandMatchDTO cmd;
-                        cmd.player_id = player_id;
-                        cmd.command = GameCommand::USE_NITRO;
-                        command_queue.push(cmd);
-                        break;
-                    }
+                case SDLK_ESCAPE:
+                    active = false;
+                    break;
+                case SDLK_UP:
+                case SDLK_w: {
+                    // Enviar comando ACCELERATE
+                    ComandMatchDTO cmd;
+                    cmd.player_id = player_id;
+                    cmd.command = GameCommand::ACCELERATE;
+                    command_queue.push(cmd);
+                    break;
+                }
+                case SDLK_DOWN:
+                case SDLK_s: {
+                    // Enviar comando BRAKE
+                    ComandMatchDTO cmd;
+                    cmd.player_id = player_id;
+                    cmd.command = GameCommand::BRAKE;
+                    command_queue.push(cmd);
+                    break;
+                }
+                case SDLK_LEFT:
+                case SDLK_a: {
+                    // Enviar comando TURN_LEFT
+                    ComandMatchDTO cmd;
+                    cmd.player_id = player_id;
+                    cmd.command = GameCommand::TURN_LEFT;
+                    command_queue.push(cmd);
+                    break;
+                }
+                case SDLK_RIGHT:
+                case SDLK_d: {
+                    // Enviar comando TURN_RIGHT
+                    ComandMatchDTO cmd;
+                    cmd.player_id = player_id;
+                    cmd.command = GameCommand::TURN_RIGHT;
+                    command_queue.push(cmd);
+                    break;
+                }
+                case SDLK_SPACE: {
+                    // Enviar comando USE_NITRO
+                    ComandMatchDTO cmd;
+                    cmd.player_id = player_id;
+                    cmd.command = GameCommand::USE_NITRO;
+                    command_queue.push(cmd);
+                    break;
+                }
                 }
             }
         }
 
         // 4. Control de FPS
         auto t2 = std::chrono::steady_clock::now();
-        auto elapsed =
-                std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
 
         if (elapsed < ms_per_frame) {
             std::this_thread::sleep_for(std::chrono::milliseconds(ms_per_frame - elapsed));
@@ -342,4 +333,3 @@ Client::~Client() {
 
     std::cout << "[Client] Destructor completado" << std::endl;
 }
-

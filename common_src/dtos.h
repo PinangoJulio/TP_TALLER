@@ -120,18 +120,19 @@ enum class GameCommand : uint8_t {
 
 // Tipos de mensajes que el servidor envía a los clientes
 enum class ServerMessageType : uint8_t {
-    GAME_STATE_UPDATE = 0x01,   // Estado completo del juego
-    RACE_STARTED = 0x02,        // La carrera comenzó
-    RACE_FINISHED = 0x03,       // La carrera terminó
-    CHECKPOINT_CROSSED = 0x04,  // Jugador cruzó un checkpoint
-    COLLISION_EVENT = 0x05,     // Hubo una colisión
-    CAR_DESTROYED = 0x06,       // Un auto fue destruido
-    NITRO_ACTIVATED = 0x07,     // Nitro activado
-    NITRO_DEACTIVATED = 0x08,   // Nitro desactivado
-    POSITION_UPDATE = 0x09,     // Actualización de posiciones en carrera
-    LAP_COMPLETED = 0x0A,       // Vuelta completada
-    COUNTDOWN = 0x0B,           // Countdown antes de iniciar
-    RACE_TIMEOUT = 0x0C         // Carrera terminó por timeout
+    GAME_STATE_UPDATE = 0x01,   // Estado completo del juego (snapshot)
+    RACE_INFO = 0x02,           // Información inicial de la carrera (mapa, vueltas, etc.)
+    RACE_STARTED = 0x03,        // La carrera comenzó (después de countdown)
+    RACE_FINISHED = 0x04,       // La carrera terminó
+    CHECKPOINT_CROSSED = 0x05,  // Jugador cruzó un checkpoint
+    COLLISION_EVENT = 0x06,     // Hubo una colisión
+    CAR_DESTROYED = 0x07,       // Un auto fue destruido
+    NITRO_ACTIVATED = 0x08,     // Nitro activado
+    NITRO_DEACTIVATED = 0x09,   // Nitro desactivado
+    POSITION_UPDATE = 0x0A,     // Actualización de posiciones en carrera
+    LAP_COMPLETED = 0x0B,       // Vuelta completada
+    COUNTDOWN = 0x0C,           // Countdown antes de iniciar (3, 2, 1, GO!)
+    RACE_TIMEOUT = 0x0D         // Carrera terminó por timeout (10 min)
 };
 
 // Tipo de colisión
@@ -156,6 +157,18 @@ enum class UpgradeType : uint8_t {
     HANDLING = 0x03,
     DURABILITY = 0x04
 };
+
+// DTO para información inicial de la carrera (enviado al comenzar cada race)
+struct RaceInfoDTO {
+    char city_name[64];       // "Vice City", "Liberty City", "San Andreas"
+    char race_name[64];       // "Playa", "Centro", "Desierto"
+    char map_file_path[256];  // Ruta al archivo YAML del mapa
+    uint8_t total_laps;       // Vueltas totales (ej: 3)
+    uint8_t race_number;      // Carrera actual (1, 2, 3...)
+    uint8_t total_races;      // Total de carreras en la partida (ej: 3)
+    uint16_t total_checkpoints;  // Cantidad de checkpoints en el circuito
+    uint32_t max_time_ms;     // Tiempo máximo en ms (10 min = 600000)
+} __attribute__((packed));
 
 // DTO principal para comandos del juego
 // Los campos se llenan según el comando recibido

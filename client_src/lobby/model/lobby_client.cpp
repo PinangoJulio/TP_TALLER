@@ -6,8 +6,7 @@
 #include <map>
 #include <utility>
 
-LobbyClient::LobbyClient(ClientProtocol& protocol)
-    : protocol(protocol), connected(true) {
+LobbyClient::LobbyClient(ClientProtocol& protocol) : protocol(protocol), connected(true) {
     std::cout << "[LobbyClient] Connected to server " << std::endl;
 }
 
