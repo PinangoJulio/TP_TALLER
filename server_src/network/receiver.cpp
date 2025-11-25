@@ -266,9 +266,9 @@ void Receiver::handle_lobby() {
             // ------------------------------------------------------------
             case MSG_LEAVE_GAME: {
                 uint16_t game_id = protocol.read_uint16();
-
+            
                 std::cout << "[Receiver] " << username << " leaving game " << game_id << "\n";
-
+            
                 // Validar que esté en esa partida
                 if (current_match_id != game_id) {
                     std::cout << "[Receiver] ERROR: " << username << " is not in game " << game_id
@@ -277,24 +277,28 @@ void Receiver::handle_lobby() {
                                                                         "You are not in that game"));
                     break;
                 }
-
+            
+                // ✅ ENVIAR NOTIFICACIÓN DE SALIDA **ANTES** DE ELIMINAR
+                auto left_notif = LobbyProtocol::serialize_player_left_notification(username);
+                monitor.broadcast_to_match(game_id, left_notif, username);
+            
                 // Eliminar del monitor
                 monitor.leave_match(username);
-
+            
                 current_match_id = -1;
                 this->match_id = -1;
-
+            
                 std::cout << "[Receiver] " << username << " successfully left game " << game_id
                           << std::endl;
-
+            
                 // Enviar lista de partidas actualizada
                 std::vector<GameInfo> games = monitor.list_available_matches();
                 auto buffer = LobbyProtocol::serialize_games_list(games);
                 protocol.send_buffer(buffer);
-
+            
                 std::cout << "[Receiver] Sent updated games list (" << games.size() << " games)"
                           << std::endl;
-
+            
                 break;
             }
             // ------------------------------------------------------------
