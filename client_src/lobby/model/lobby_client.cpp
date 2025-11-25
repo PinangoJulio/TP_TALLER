@@ -30,12 +30,10 @@ std::string LobbyClient::receive_welcome() {
     return message;
 }
 
-// esta
 void LobbyClient::request_games_list() {
     protocol.request_games_list();
 }
 
-// esta
 std::vector<GameInfo> LobbyClient::receive_games_list() {
     uint8_t type = protocol.read_message_type();
     if (type != MSG_GAMES_LIST) {
@@ -49,13 +47,11 @@ std::vector<GameInfo> LobbyClient::receive_games_list() {
     return games;
 }
 
-// esta
 void LobbyClient::create_game(const std::string& game_name, uint8_t max_players,
                               const std::vector<std::pair<std::string, std::string>>& races) {
     protocol.create_game(game_name, max_players, races);
 }
 
-// esta
 uint16_t LobbyClient::receive_game_created() {
     uint8_t type = protocol.read_message_type();
     if (type != MSG_GAME_CREATED) {
@@ -67,14 +63,20 @@ uint16_t LobbyClient::receive_game_created() {
     return game_id;
 }
 
-// esta
 void LobbyClient::join_game(uint16_t game_id) {
     protocol.join_game(game_id);
 }
 
-// esta
 uint16_t LobbyClient::receive_game_joined() {
     uint8_t type = protocol.read_message_type();
+    
+    // [FIX] Manejo explícito de error si la sala está llena
+    if (type == MSG_ERROR) {
+        std::string error_msg;
+        read_error_details(error_msg);
+        throw std::runtime_error(error_msg);
+    }
+
     if (type != MSG_GAME_JOINED) {
         throw std::runtime_error("Expected GAME_JOINED message");
     }
@@ -123,12 +125,10 @@ uint8_t LobbyClient::peek_message_type() {
     return protocol.read_message_type();
 }
 
-// esta
 void LobbyClient::read_error_details(std::string& error_message) {
     protocol.read_error_details(error_message);
 }
 
-// esta
 std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::string>>>>
 LobbyClient::receive_city_maps() {
     uint8_t type = protocol.read_message_type();
@@ -156,13 +156,11 @@ LobbyClient::receive_city_maps() {
     return result;
 }
 
-// esta
 void LobbyClient::send_selected_races(
     const std::vector<std::pair<std::string, std::string>>& races) {
     protocol.send_selected_races(races);
 }
 
-// esta
 void LobbyClient::select_car(const std::string& car_name, const std::string& car_type) {
     protocol.select_car(car_name, car_type);
 }
@@ -180,14 +178,16 @@ std::string LobbyClient::receive_car_confirmation() {
     return car_name;
 }
 
-// esta
 void LobbyClient::start_game(uint16_t game_id) {
     protocol.start_game(game_id);
 }
 
-// esta
 void LobbyClient::leave_game(uint16_t game_id) {
     protocol.leave_game(game_id);
+}
+
+void LobbyClient::set_ready(bool is_ready) {
+    protocol.set_ready(is_ready);
 }
 
 void LobbyClient::start_listening() {
@@ -210,21 +210,26 @@ void LobbyClient::start_listening() {
     std::cout << "[LobbyClient] Notification listener started" << std::endl;
 }
 
-void LobbyClient::stop_listening() {
+// [FIX] Modificado para no matar el socket si no es necesario
+void LobbyClient::stop_listening(bool shutdown_connection) {
     std::cout << "[LobbyClient] Stopping notification listener..." << std::endl;
 
-    // Marcar como detenido
+    // 1. Marcar como detenido
     listening.store(false);
 
-    // Hacer shutdown del socket para desbloquear cualquier recv() pendiente
-    try {
-        protocol.shutdown_socket();
-        std::cout << "[LobbyClient] Socket shutdown to unblock listener" << std::endl;
-    } catch (const std::exception& e) {
-        std::cerr << "[LobbyClient] Error shutting down socket: " << e.what() << std::endl;
+    // 2. Solo apagar el socket si es una destrucción total o error fatal
+    if (shutdown_connection) {
+        try {
+            protocol.shutdown_socket();
+            std::cout << "[LobbyClient] Socket shutdown forced" << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "[LobbyClient] Error shutting down socket: " << e.what() << std::endl;
+        }
     }
 
-    // Ahora sí hacer join (el thread debería terminar rápido)
+    // 3. Esperar al thread.
+    // NOTA: Si no cerramos el socket, confiamos en que el servidor envíe un mensaje 
+    // (como la respuesta a leave_game, MSG_GAMES_LIST) que desbloquee el recv().
     if (notification_thread.joinable()) {
         try {
             std::cout << "[LobbyClient] Joining listener thread..." << std::endl;
@@ -242,6 +247,7 @@ void LobbyClient::notification_listener() {
     std::cout << "[LobbyClient] Notification listener running..." << std::endl;
 
     try {
+        // El chequeo de listening se hace al principio de cada iteración
         while (listening.load() && connected) {
             uint8_t msg_type;
 
@@ -249,18 +255,23 @@ void LobbyClient::notification_listener() {
                 msg_type = protocol.read_message_type();
             } catch (const std::exception& e) {
                 if (!listening.load()) {
-                    std::cout << "[LobbyClient] Listener stopped gracefully" << std::endl;
+                    std::cout << "[LobbyClient] Listener stopped gracefully (socket closed)" << std::endl;
                     break;
                 }
                 throw;
             }
 
-            // Si estamos cerrando, ignorar todos los mensajes
+            // [FIX] ELIMINADO EL CHEQUEO PREMATURO DE !listening.load()
+            // Si ya leímos el tipo de mensaje, DEBEMOS procesarlo completo para vaciar el socket,
+            // incluso si nos pidieron detenernos. El loop terminará en la siguiente vuelta.
+            
+            /* BLOQUE ELIMINADO QUE CAUSABA EL ERROR:
             if (!listening.load()) {
                 std::cout << "[LobbyClient] Listener stopped, ignoring message type "
                           << static_cast<int>(msg_type) << std::endl;
-                break;
+                break; 
             }
+            */
 
             std::cout << "[LobbyClient] Received notification type: " << static_cast<int>(msg_type)
                       << std::endl;
@@ -316,7 +327,7 @@ void LobbyClient::notification_listener() {
                 std::cout << "[LobbyClient] MSG_GAMES_LIST fully consumed, exiting listener"
                           << std::endl;
 
-                // Salir del listener
+                // Salir del listener explícitamente porque este mensaje marca el fin del ciclo de lobby
                 listening.store(false);
                 return;
             }
@@ -333,10 +344,13 @@ void LobbyClient::notification_listener() {
             default:
                 std::cerr << "[LobbyClient] Unknown notification type: "
                           << static_cast<int>(msg_type) << std::endl;
+                // Si leemos un tipo desconocido, probablemente el protocolo ya se desincronizó
+                // o es basura, así que aquí sí es seguro salir o lanzar excepción.
                 break;
             }
         }
     } catch (const std::exception& e) {
+        // Solo loguear error si se suponía que debíamos seguir escuchando
         if (listening.load()) {
             std::cerr << "[LobbyClient] Notification listener error: " << e.what() << std::endl;
         }
@@ -344,11 +358,6 @@ void LobbyClient::notification_listener() {
     }
 
     std::cout << "[LobbyClient] Notification listener exited" << std::endl;
-}
-
-// esta
-void LobbyClient::set_ready(bool is_ready) {
-    protocol.set_ready(is_ready);
 }
 
 void LobbyClient::read_room_snapshot(std::vector<QString>& players,
@@ -404,8 +413,9 @@ void LobbyClient::read_room_snapshot(std::vector<QString>& players,
 
 // Destructor actualizado
 LobbyClient::~LobbyClient() {
-    // Asegurar join antes de destruir el objeto para evitar std::terminate
-    stop_listening();
+    // Asegurar join antes de destruir el objeto para evitar std::terminate.
+    // Aquí SÍ forzamos el cierre del socket porque el objeto se muere.
+    stop_listening(true);
 }
 
 // ========================================================================================================================================================================

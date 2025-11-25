@@ -450,6 +450,12 @@ void LobbyController::onCarSelected(const CarInfo& car) {
 }
 
 void LobbyController::connectNotificationSignals() {
+    if (lobbyClient) {
+        // Usamos el global disconnect de Qt porque lobbyClient es unique_ptr
+        // y queremos desconectar todas las señales que vienen de ese objeto hacia 'this'
+        disconnect(lobbyClient.get(), nullptr, this, nullptr);
+    }
+
     // Conectar señales de notificaciones
     connect(lobbyClient.get(), &LobbyClient::playerJoinedNotification, this,
             [this](QString username) {
@@ -654,6 +660,34 @@ void LobbyController::onBackFromWaitingRoom() {
         waitingRoomWindow = nullptr;
     }
 
-    finishLobby(false);
-    cleanupAndReturnToLobby();
+    if (lobbyClient && currentGameId > 0) {
+        try {
+            std::cout << "[Controller] Enviando leave_game para partida " << currentGameId
+                      << std::endl;
+            lobbyClient->leave_game(currentGameId);
+        } catch (const std::exception& e) {
+            std::cerr << "[Controller] ⚠️ Error al enviar leave_game: " << e.what() << std::endl;
+        }
+    }
+
+    if (lobbyClient) {
+        std::cout << "[Controller] Deteniendo listener (preservando conexión)..." << std::endl;
+        // [FIX] Pasar false para NO cerrar el socket.
+        // El thread del listener saldrá solo cuando reciba la lista de juegos actualizada del servidor.
+        lobbyClient->stop_listening(false);
+    }
+
+    currentGameId = 0;
+    selectedCarIndex = -1;
+    pendingPlayers.clear();
+    pendingCars.clear();
+
+    if (matchSelectionWindow) {
+        matchSelectionWindow->show();
+        refreshGamesList();
+    } else {
+        openMatchSelection();
+    }
+    
+    std::cout << "[Controller] Regreso a selección de partidas completado" << std::endl;
 }

@@ -1,82 +1,11 @@
 Terminal 1: Server
-julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL/TP_TALLER$ ./server config.yaml
-[Acceptor] Socket created on port 8080
-==================================================
-    NEED FOR SPEED 2D - SERVER
-==================================================
-Port: 8080
-Press 'q' + Enter to stop
-==================================================
-[Server] Starting acceptor thread...
-[Server] Waiting for connections...
-==================================================
-[Acceptor] New connection accepted
-           Client ID: 1
-           Total clients: 1
-==================================================
-[Receiver] Player connected: julio1
-[Receiver] julio1 requested games list
-[Receiver] Sending 0 games to julio1
-[Receiver] julio1 creating game: sala 1 (max: 2, races: 3)
-[GameRoom 1] Created by 'julio1'
-[LobbyManager] Game 'sala 1' created with ID 1 by 'julio1'
-[LobbyManager] Registered socket for player 'julio1' in game 1
-[Receiver]   Race 1: Liberty City - Circuito Centro
-[Receiver]   Race 2: San Andreas - Desierto
-[Receiver]   Race 3: Vice City - Playa
-[Receiver] Game created with ID: 1
-[Receiver] julio1 selected car: Leyenda Urbana (classic)
-[GameRoom] ✅ Player 'julio1' car saved: Leyenda Urbana (classic)
-[Receiver] ✅ ACK sent to julio1
-[LobbyManager] Broadcasting to game 1 (excluding: julio1)
-[LobbyManager] ⏭️  Skipping julio1 (sender)
-[Receiver] ✅ Broadcast triggered (excluding julio1)
-[Receiver] julio1 leaving game 1
-[LobbyManager] Unregistered socket for player 'julio1' in game 1
-[GameRoom 1] Player 'julio1' left
-[LobbyManager] No sockets registered for game 1
-[LobbyManager] Game 1 is empty, deleting...
-[Receiver] julio1 successfully left game 1
-[Receiver] Sent updated games list (0 games)
-[Receiver] julio1 creating game: sala 2 (max: 2, races: 3)
-[GameRoom 2] Created by 'julio1'
-[LobbyManager] Game 'sala 2' created with ID 2 by 'julio1'
-[LobbyManager] Registered socket for player 'julio1' in game 2
-[Receiver]   Race 1: Liberty City - Circuito Centro
-[Receiver]   Race 2: Liberty City - Circuito Centro
-[Receiver]   Race 3: Liberty City - Circuito Centro
-[Receiver] Game created with ID: 2
-[Receiver] julio1 selected car: Nómada (truck)
-[GameRoom] ✅ Player 'julio1' car saved: Nómada (truck)
-[Receiver] ✅ ACK sent to julio1
-[LobbyManager] Broadcasting to game 2 (excluding: julio1)
-[LobbyManager] ⏭️  Skipping julio1 (sender)
-[Receiver] ✅ Broadcast triggered (excluding julio1)
-[Receiver] Player julio1 disconnected
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Terminal 2: Cliente 1:
-julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL/TP_TALLER$ ./client
+julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL 2/TP_TALLER$ ./client
 === Need for Speed 2D - Cliente ===
 Conectando a localhost:8080
 [Controller] Controlador creado (sin conectar al servidor todavía)
 [Controller] Servidor configurado: localhost:8080
 [Controller] Mostrando lobby principal
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 Fuente cargada: ArcadeClassic
 Imagen de fondo cargada correctamente
 SDL Audio inicializado correctamente
@@ -88,6 +17,7 @@ QWidget::setLayout: Cannot set layout to 0
 [LobbyClient] Connected to server localhost:8080
 [Controller] Conectado exitosamente
 [Controller] Mostrando ventana de ingreso de nombre
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 Nombre de jugador confirmado: julio1
 [Controller] Usuario confirmó nombre: julio1
 [LobbyClient] DEBUG: Username: 'julio1' (length: 6)
@@ -103,6 +33,7 @@ Nombre de jugador confirmado: julio1
 [LobbyClient] Received welcome: Welcome to Need for Speed 2D, julio1!
 [Controller] Bienvenida recibida: Welcome to Need for Speed 2D, julio1!
 [Controller] Abriendo ventana de selección de partidas
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 [Controller] Solicitando lista de partidas al servidor...
 [LobbyClient] Requested games list
 [LobbyClient] Received 0 games
@@ -110,6 +41,7 @@ Nombre de jugador confirmado: julio1
 [MatchSelectionWindow] Actualizando lista con 0 partidas
 Creando nueva partida...
 [Controller] Usuario quiere crear nueva partida
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 Carrera 1 configurada: Liberty City - Circuito Centro
 Carrera 2 configurada: San Andreas - Desierto
 Carrera 3 configurada: Vice City - Playa
@@ -133,78 +65,363 @@ Confirmando creación de partida:
 [Controller] Conectando señales de notificaciones...
 [Controller] Abriendo garage...
 [Controller] Abriendo ventana de garage...
-Auto seleccionado: Leyenda Urbana (classic)
-[Controller] Auto seleccionado: Leyenda Urbana
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+Auto seleccionado: Cavallo V8 (sport)
+[Controller] Auto seleccionado: Cavallo V8
 [Controller] DEBUG: Enviando selección de auto...
-[LobbyClient] Selected car: Leyenda Urbana (classic)
+[LobbyClient] Selected car: Cavallo V8 (sport)
 [Controller] DEBUG: Esperando ACK...
-[LobbyClient] Server confirmed car: Leyenda Urbana (classic)
-[Controller] ✅ CAR confirmed: Leyenda Urbana
-[Controller] Conectando señales de notificaciones...
-[Controller] Iniciando listener de notificaciones...
+[LobbyClient] Server confirmed car: Cavallo V8 (sport)
+[Controller] ✅ CAR confirmed: Cavallo V8
+[Controller] 🚀 Starting listener NOW...
 [LobbyClient] Notification listener started
+[Controller] Listener status: RUNNING
 [Controller] Abriendo sala de espera...
 [Controller] Abriendo sala de espera...
 [LobbyClient] Notification listener running...
-[Controller] Agregando jugador local: julio1
-[WaitingRoom] Adding player: julio1
-[WaitingRoom] Player 'julio1' added at slot 0
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+[Controller] Adding local player: julio1
 [Controller] Sala de espera inicializada
-[Controller] Actualizando auto del jugador local: Leyenda Urbana
-[WaitingRoom] Player 'julio1' selected car: Leyenda Urbana
-[WaitingRoom] Usuario confirmó salir de la sala
+[Controller] Actualizando auto del jugador local: Cavallo V8
+[LobbyClient] Received notification type: 32
+[LobbyClient] Player joined: julio2
+[Controller] Notification: Player joined: julio2
+[LobbyClient] Received notification type: 35
+[LobbyClient] Player julio2 selected Leyenda Urbana
+[Controller] Notification: Player julio2 selected Leyenda Urbana
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio2 is now READY
+[Controller] 🔔 Notification: Player julio2 ready: 1 (local player: julio1)
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio2 is now NOT READY
+[Controller] 🔔 Notification: Player julio2 ready: 0 (local player: julio1)
+[Controller] Jugador marcado como: LISTO
+[Controller] ✅ Local ready state updated for julio1
+[LobbyClient] Set ready: YES
+Estado listo: SI
+[Controller] Jugador marcado como: NO LISTO
+[Controller] ✅ Local ready state updated for julio1
+[LobbyClient] Set ready: NO
+Estado listo: NO
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio2 is now READY
+[Controller] 🔔 Notification: Player julio2 ready: 1 (local player: julio1)
+[Controller] Jugador marcado como: LISTO
+[Controller] ✅ Local ready state updated for julio1
+[LobbyClient] Set ready: YES
+Estado listo: SI
+[Controller] Jugador marcado como: NO LISTO
+[Controller] ✅ Local ready state updated for julio1
+[LobbyClient] Set ready: NO
+Estado listo: NO
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio2 is now NOT READY
+[Controller] 🔔 Notification: Player julio2 ready: 0 (local player: julio1)
 [Controller] Usuario salió de la sala de espera
 [Controller] Enviando leave_game para partida 1
 [LobbyClient] Leave game request sent for ID: 1
-[Controller] ✅ Leave game enviado
+[Controller] Leave game enviado
 [Controller] Esperando a que el listener se detenga...
 [LobbyClient] Received notification type: 17
 [LobbyClient] Received MSG_GAMES_LIST in listener (consuming fully)
-[LobbyClient] Games list has 0 games
+[LobbyClient] Games list has 1 games
+[LobbyClient]   Game 1: sala 1
 [LobbyClient] MSG_GAMES_LIST fully consumed, exiting listener
-[LobbyClient] Listener already stopped
+[LobbyClient] Stopping notification listener...
+[LobbyClient] Joining listener thread...
+[LobbyClient] Listener thread joined
 [Controller] Listener detenido completamente
 [Controller] Flujo de salida completado
-[Controller] Received games list update (0 games)
-[MatchSelectionWindow] Actualizando lista con 0 partidas
-[Controller] Received games list update (0 games)
-[MatchSelectionWindow] Actualizando lista con 0 partidas
-Creando nueva partida...
-[Controller] Usuario quiere crear nueva partida
-Carrera 1 configurada: Liberty City - Circuito Centro
-Carrera 2 configurada: Liberty City - Circuito Centro
-Carrera 3 configurada: Liberty City - Circuito Centro
-Confirmando creación de partida:
-  Nombre: sala 2
-  Jugadores: 2
-  Carreras: 3
-  Carrera 1: Liberty City - Circuito Centro
-  Carrera 2: Liberty City - Circuito Centro
-  Carrera 3: Liberty City - Circuito Centro
-[Controller] Usuario confirmó creación de partida:
-  Nombre: sala 2
-  Jugadores máximos: 2
-  Número de carreras: 3
-  Carrera: Liberty City - Circuito Centro
-  Carrera: Liberty City - Circuito Centro
-  Carrera: Liberty City - Circuito Centro
-[LobbyClient] Requested to create game: sala 2 (max players: 2, races: 3)
-[LobbyClient] Game created with ID: 2
-[Controller] Partida creada con ID: 2
+[Controller] Received games list update (1 games)
+[MatchSelectionWindow] Actualizando lista con 1 partidas
+[MatchSelectionWindow] Partida seleccionada ID: 1
+[MatchSelectionWindow] Emitiendo señal de unirse a: 1
+[Controller] Usuario quiere unirse a partida con matchId: 1
+[Controller] Intentando unirse a game_id (de UserRole): 1
+[LobbyClient] Requested to join game: 1
+[LobbyClient] Joined game: 1
+[Controller] Unido exitosamente a partida ID: 1
+[LobbyClient] Reading room snapshot manually...
+[LobbyClient] Snapshot msg type: 32
+[LobbyClient]   Snapshot player: julio2
+[LobbyClient] Snapshot msg type: 35
+[LobbyClient]   Snapshot car: julio2 -> Leyenda Urbana
+[LobbyClient] Snapshot msg type: 37
+[LobbyClient] ✅ END OF SNAPSHOT detected
+[LobbyClient] Snapshot read complete: 1 players
+[Controller] Snapshot recibido: 1 jugadores
 [Controller] Conectando señales de notificaciones...
 [Controller] Abriendo garage...
 [Controller] Abriendo ventana de garage...
-Auto seleccionado: Nómada (truck)
-[Controller] Auto seleccionado: Nómada
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+Auto seleccionado: Senator (classic)
+[Controller] Auto seleccionado: Senator
 [Controller] DEBUG: Enviando selección de auto...
-[LobbyClient] Selected car: Nómada (truck)
+[LobbyClient] Selected car: Senator (classic)
 [Controller] DEBUG: Esperando ACK...
-[LobbyClient] Server confirmed car: Nómada (truck)
-[Controller] ✅ CAR confirmed: Nómada
+[LobbyClient] Server confirmed car: Senator (classic)
+[Controller] ✅ CAR confirmed: Senator
+[Controller] 🚀 Starting listener NOW...
+[LobbyClient] Notification listener started
+[Controller] Listener status: RUNNING
+[Controller] Abriendo sala de espera...
+[Controller] Abriendo sala de espera...
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+[LobbyClient] Notification listener running...
+[Controller] Procesando jugador pendiente: julio2
+[Controller] Procesando auto pendiente: Leyenda Urbana
+[Controller] Adding local player: julio1
+[Controller] Sala de espera inicializada
+[Controller] Actualizando auto del jugador local: Senator
+[LobbyClient] Received notification type: 33
+[LobbyClient] Player left: julio2
+[Controller] Notification: Player left: julio2
+[Controller] Notification: Player left: julio2
+[LobbyClient] Received notification type: 32
+[LobbyClient] Player joined: julio2
+[Controller] Notification: Player joined: julio2
+[Controller] Notification: Player joined: julio2
+[LobbyClient] Received notification type: 35
+[LobbyClient] Player julio2 selected Stallion GT
+[Controller] Notification: Player julio2 selected Stallion GT
+[Controller] Notification: Player julio2 selected Stallion GT
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio2 is now READY
+[Controller] 🔔 Notification: Player julio2 ready: 1 (local player: julio1)
+[Controller] 🔔 Notification: Player julio2 ready: 1 (local player: julio1)
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio2 is now NOT READY
+[Controller] 🔔 Notification: Player julio2 ready: 0 (local player: julio1)
+[Controller] 🔔 Notification: Player julio2 ready: 0 (local player: julio1)
+[Controller] Jugador marcado como: LISTO
+[Controller] ✅ Local ready state updated for julio1
+[LobbyClient] Set ready: YES
+Estado listo: SI
+[Controller] Jugador marcado como: NO LISTO
+[Controller] ✅ Local ready state updated for julio1
+[LobbyClient] Set ready: NO
+Estado listo: NO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Terminal 2: Cliente 1:
+julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL 2/TP_TALLER$ ./client
+=== Need for Speed 2D - Cliente ===
+Conectando a localhost:8080
+[Controller] Controlador creado (sin conectar al servidor todavía)
+[Controller] Servidor configurado: localhost:8080
+[Controller] Mostrando lobby principal
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+Fuente cargada: ArcadeClassic
+Imagen de fondo cargada correctamente
+SDL Audio inicializado correctamente
+Música de fondo iniciada en loop
+QWidget::setLayout: Cannot set layout to 0
+[LobbyWindow] Botón Jugar presionado
+[Controller] Usuario presionó 'Jugar'
+[Controller] Conectando al servidor localhost:8080...
+[LobbyClient] Connected to server localhost:8080
+[Controller] Conectado exitosamente
+[Controller] Mostrando ventana de ingreso de nombre
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+Nombre de jugador confirmado: julio1
+[Controller] Usuario confirmó nombre: julio1
+[LobbyClient] DEBUG: Username: 'julio1' (length: 6)
+[LobbyClient] DEBUG: Buffer size: 9 bytes
+[LobbyClient] DEBUG: Buffer content: 01 00 06 6A 75 6C 69 6F 31 
+[LobbyClient] DEBUG: Length encoded in buffer: 6
+[LobbyClient] Sent username: julio1
+[Controller] Nombre enviado al servidor
+[Controller] Esperando mensaje de bienvenida...
+[LobbyClient] DEBUG: Waiting for welcome message...
+[LobbyClient] DEBUG: Received type: 16
+[LobbyClient] DEBUG: Reading welcome string...
+[LobbyClient] Received welcome: Welcome to Need for Speed 2D, julio1!
+[Controller] Bienvenida recibida: Welcome to Need for Speed 2D, julio1!
+[Controller] Abriendo ventana de selección de partidas
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+[Controller] Solicitando lista de partidas al servidor...
+[LobbyClient] Requested games list
+[LobbyClient] Received 0 games
+[Controller] Recibidas 0 partidas
+[MatchSelectionWindow] Actualizando lista con 0 partidas
+Creando nueva partida...
+[Controller] Usuario quiere crear nueva partida
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+Carrera 1 configurada: Liberty City - Circuito Centro
+Carrera 2 configurada: San Andreas - Desierto
+Carrera 3 configurada: Vice City - Playa
+Confirmando creación de partida:
+  Nombre: sala 1
+  Jugadores: 2
+  Carreras: 3
+  Carrera 1: Liberty City - Circuito Centro
+  Carrera 2: San Andreas - Desierto
+  Carrera 3: Vice City - Playa
+[Controller] Usuario confirmó creación de partida:
+  Nombre: sala 1
+  Jugadores máximos: 2
+  Número de carreras: 3
+  Carrera: Liberty City - Circuito Centro
+  Carrera: San Andreas - Desierto
+  Carrera: Vice City - Playa
+[LobbyClient] Requested to create game: sala 1 (max players: 2, races: 3)
+[LobbyClient] Game created with ID: 1
+[Controller] Partida creada con ID: 1
 [Controller] Conectando señales de notificaciones...
-[Controller] Iniciando listener de notificaciones...
-terminate called without an active exception
-Abortado (`core' generado)
+[Controller] Abriendo garage...
+[Controller] Abriendo ventana de garage...
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+Auto seleccionado: Cavallo V8 (sport)
+[Controller] Auto seleccionado: Cavallo V8
+[Controller] DEBUG: Enviando selección de auto...
+[LobbyClient] Selected car: Cavallo V8 (sport)
+[Controller] DEBUG: Esperando ACK...
+[LobbyClient] Server confirmed car: Cavallo V8 (sport)
+[Controller] ✅ CAR confirmed: Cavallo V8
+[Controller] 🚀 Starting listener NOW...
+[LobbyClient] Notification listener started
+[Controller] Listener status: RUNNING
+[Controller] Abriendo sala de espera...
+[Controller] Abriendo sala de espera...
+[LobbyClient] Notification listener running...
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+[Controller] Adding local player: julio1
+[Controller] Sala de espera inicializada
+[Controller] Actualizando auto del jugador local: Cavallo V8
+[LobbyClient] Received notification type: 32
+[LobbyClient] Player joined: julio2
+[Controller] Notification: Player joined: julio2
+[LobbyClient] Received notification type: 35
+[LobbyClient] Player julio2 selected Leyenda Urbana
+[Controller] Notification: Player julio2 selected Leyenda Urbana
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio2 is now READY
+[Controller] 🔔 Notification: Player julio2 ready: 1 (local player: julio1)
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio2 is now NOT READY
+[Controller] 🔔 Notification: Player julio2 ready: 0 (local player: julio1)
+[Controller] Jugador marcado como: LISTO
+[Controller] ✅ Local ready state updated for julio1
+[LobbyClient] Set ready: YES
+Estado listo: SI
+[Controller] Jugador marcado como: NO LISTO
+[Controller] ✅ Local ready state updated for julio1
+[LobbyClient] Set ready: NO
+Estado listo: NO
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio2 is now READY
+[Controller] 🔔 Notification: Player julio2 ready: 1 (local player: julio1)
+[Controller] Jugador marcado como: LISTO
+[Controller] ✅ Local ready state updated for julio1
+[LobbyClient] Set ready: YES
+Estado listo: SI
+[Controller] Jugador marcado como: NO LISTO
+[Controller] ✅ Local ready state updated for julio1
+[LobbyClient] Set ready: NO
+Estado listo: NO
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio2 is now NOT READY
+[Controller] 🔔 Notification: Player julio2 ready: 0 (local player: julio1)
+[Controller] Usuario salió de la sala de espera
+[Controller] Enviando leave_game para partida 1
+[LobbyClient] Leave game request sent for ID: 1
+[Controller] Leave game enviado
+[Controller] Esperando a que el listener se detenga...
+[LobbyClient] Received notification type: 17
+[LobbyClient] Received MSG_GAMES_LIST in listener (consuming fully)
+[LobbyClient] Games list has 1 games
+[LobbyClient]   Game 1: sala 1
+[LobbyClient] MSG_GAMES_LIST fully consumed, exiting listener
+[LobbyClient] Stopping notification listener...
+[LobbyClient] Joining listener thread...
+[LobbyClient] Listener thread joined
+[Controller] Listener detenido completamente
+[Controller] Flujo de salida completado
+[Controller] Received games list update (1 games)
+[MatchSelectionWindow] Actualizando lista con 1 partidas
+[MatchSelectionWindow] Partida seleccionada ID: 1
+[MatchSelectionWindow] Emitiendo señal de unirse a: 1
+[Controller] Usuario quiere unirse a partida con matchId: 1
+[Controller] Intentando unirse a game_id (de UserRole): 1
+[LobbyClient] Requested to join game: 1
+[LobbyClient] Joined game: 1
+[Controller] Unido exitosamente a partida ID: 1
+[LobbyClient] Reading room snapshot manually...
+[LobbyClient] Snapshot msg type: 32
+[LobbyClient]   Snapshot player: julio2
+[LobbyClient] Snapshot msg type: 35
+[LobbyClient]   Snapshot car: julio2 -> Leyenda Urbana
+[LobbyClient] Snapshot msg type: 37
+[LobbyClient] ✅ END OF SNAPSHOT detected
+[LobbyClient] Snapshot read complete: 1 players
+[Controller] Snapshot recibido: 1 jugadores
+[Controller] Conectando señales de notificaciones...
+[Controller] Abriendo garage...
+[Controller] Abriendo ventana de garage...
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+Auto seleccionado: Senator (classic)
+[Controller] Auto seleccionado: Senator
+[Controller] DEBUG: Enviando selección de auto...
+[LobbyClient] Selected car: Senator (classic)
+[Controller] DEBUG: Esperando ACK...
+[LobbyClient] Server confirmed car: Senator (classic)
+[Controller] ✅ CAR confirmed: Senator
+[Controller] 🚀 Starting listener NOW...
+[LobbyClient] Notification listener started
+[Controller] Listener status: RUNNING
+[Controller] Abriendo sala de espera...
+[Controller] Abriendo sala de espera...
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+[LobbyClient] Notification listener running...
+[Controller] Procesando jugador pendiente: julio2
+[Controller] Procesando auto pendiente: Leyenda Urbana
+[Controller] Adding local player: julio1
+[Controller] Sala de espera inicializada
+[Controller] Actualizando auto del jugador local: Senator
+[LobbyClient] Received notification type: 33
+[LobbyClient] Player left: julio2
+[Controller] Notification: Player left: julio2
+[Controller] Notification: Player left: julio2
+[LobbyClient] Received notification type: 32
+[LobbyClient] Player joined: julio2
+[Controller] Notification: Player joined: julio2
+[Controller] Notification: Player joined: julio2
+[LobbyClient] Received notification type: 35
+[LobbyClient] Player julio2 selected Stallion GT
+[Controller] Notification: Player julio2 selected Stallion GT
+[Controller] Notification: Player julio2 selected Stallion GT
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio2 is now READY
+[Controller] 🔔 Notification: Player julio2 ready: 1 (local player: julio1)
+[Controller] 🔔 Notification: Player julio2 ready: 1 (local player: julio1)
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio2 is now NOT READY
+[Controller] 🔔 Notification: Player julio2 ready: 0 (local player: julio1)
+[Controller] 🔔 Notification: Player julio2 ready: 0 (local player: julio1)
+[Controller] Jugador marcado como: LISTO
+[Controller] ✅ Local ready state updated for julio1
+[LobbyClient] Set ready: YES
+Estado listo: SI
+[Controller] Jugador marcado como: NO LISTO
+[Controller] ✅ Local ready state updated for julio1
+[LobbyClient] Set ready: NO
+Estado listo: NO
+
 
 
 
@@ -224,12 +441,13 @@ Abortado (`core' generado)
 
 
 Terminal 3: Cliente 2:
-julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL/TP_TALLER$ ./client
+julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL 2/TP_TALLER$ ./client
 === Need for Speed 2D - Cliente ===
 Conectando a localhost:8080
 [Controller] Controlador creado (sin conectar al servidor todavía)
 [Controller] Servidor configurado: localhost:8080
 [Controller] Mostrando lobby principal
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 Fuente cargada: ArcadeClassic
 Imagen de fondo cargada correctamente
 SDL Audio inicializado correctamente
@@ -241,6 +459,7 @@ QWidget::setLayout: Cannot set layout to 0
 [LobbyClient] Connected to server localhost:8080
 [Controller] Conectado exitosamente
 [Controller] Mostrando ventana de ingreso de nombre
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 Nombre de jugador confirmado: julio2
 [Controller] Usuario confirmó nombre: julio2
 [LobbyClient] DEBUG: Username: 'julio2' (length: 6)
@@ -256,6 +475,7 @@ Nombre de jugador confirmado: julio2
 [LobbyClient] Received welcome: Welcome to Need for Speed 2D, julio2!
 [Controller] Bienvenida recibida: Welcome to Need for Speed 2D, julio2!
 [Controller] Abriendo ventana de selección de partidas
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 [Controller] Solicitando lista de partidas al servidor...
 [LobbyClient] Requested games list
 [LobbyClient] Received 1 games
@@ -272,7 +492,144 @@ Nombre de jugador confirmado: julio2
 [LobbyClient] Snapshot msg type: 32
 [LobbyClient]   Snapshot player: julio1
 [LobbyClient] Snapshot msg type: 35
-[LobbyClient]   Snapshot car: julio1 -> Leyenda Urbana
+[LobbyClient]   Snapshot car: julio1 -> Cavallo V8
+[LobbyClient] Snapshot msg type: 37
+[LobbyClient] ✅ END OF SNAPSHOT detected
+[LobbyClient] Snapshot read complete: 1 players
+[Controller] Snapshot recibido: 1 jugadores
+[Controller] Conectando señales de notificaciones...
+[Controller] Abriendo garage...
+[Controller] Abriendo ventana de garage...
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+Auto seleccionado: Leyenda Urbana (classic)
+[Controller] Auto seleccionado: Leyenda Urbana
+[Controller] DEBUG: Enviando selección de auto...
+[LobbyClient] Selected car: Leyenda Urbana (classic)
+[Controller] DEBUG: Esperando ACK...
+[LobbyClient] Server confirmed car: Leyenda Urbana (classic)
+[Controller] ✅ CAR confirmed: Leyenda Urbana
+[Controller] 🚀 Starting listener NOW...
+[LobbyClient] Notification listener started
+[Controller] Listener status: RUNNING
+[Controller] Abriendo sala de espera...
+[Controller] Abriendo sala de espera...
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+[LobbyClient] Notification listener running...
+[Controller] Procesando jugador pendiente: julio1
+[Controller] Procesando auto pendiente: Cavallo V8
+[Controller] Adding local player: julio2
+[Controller] Sala de espera inicializada
+[Controller] Actualizando auto del jugador local: Leyenda Urbana
+[Controller] Jugador marcado como: LISTO
+[Controller] ✅ Local ready state updated for julio2
+[LobbyClient] Set ready: YES
+Estado listo: SI
+[Controller] Jugador marcado como: NO LISTO
+[Controller] ✅ Local ready state updated for julio2
+[LobbyClient] Set ready: NO
+Estado listo: NO
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio1 is now READY
+[Controller] 🔔 Notification: Player julio1 ready: 1 (local player: julio2)
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio1 is now NOT READY
+[Controller] 🔔 Notification: Player julio1 ready: 0 (local player: julio2)
+[Controller] Jugador marcado como: LISTO
+[Controller] ✅ Local ready state updated for julio2
+[LobbyClient] Set ready: YES
+Estado listo: SI
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio1 is now READY
+[Controller] 🔔 Notification: Player julio1 ready: 1 (local player: julio2)
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio1 is now NOT READY
+[Controller] 🔔 Notification: Player julio1 ready: 0 (local player: julio2)
+[Controller] Jugador marcado como: NO LISTO
+[Controller] ✅ Local ready state updated for julio2
+[LobbyClient] Set ready: NO
+Estado listo: NO
+[LobbyClient] Received notification type: 33
+[LobbyClient] Player left: julio1
+[Controller] Notification: Player left: julio1
+[LobbyClient] Received notification type: 32
+[LobbyClient] Player joined: julio1
+[Controller] Notification: Player joined: julio1
+[LobbyClient] Received notification type: 35
+[LobbyClient] Player julio1 selected Senator
+[Controller] Notification: Player julio1 selected Senator
+[Controller] Usuario salió de la sala de espera
+[Controller] Enviando leave_game para partida 1
+[LobbyClient] Leave game request sent for ID: 1
+[Controller] Leave game enviado
+[Controller] Esperando a que el listener se detenga...
+[LobbyClient] Received notification type: 17
+[LobbyClient] Received MSG_GAMES_LIST in listener (consuming fully)
+[LobbyClient] Games list has 1 games
+[LobbyClient]   Game 1: sala 1
+[LobbyClient] MSG_GAMES_LIST fully consumed, exiting listener
+[LobbyClient] Stopping notification listener...
+[LobbyClient] Joining listener thread...
+[LobbyClient] Listener thread joined
+[Controller] Listener detenido completamente
+[Controller] Flujo de salida completado
+[Controller] Received games list update (1 games)
+[MatchSelectionWindow] Actualizando lista con 1 partidas
+[MatchSelectionWindow] Partida seleccionada ID: 1
+[MatchSelectionWindow] Emitiendo señal de unirse a: 1
+[Controller] Usuario quiere unirse a partida con matchId: 1
+[Controller] Intentando unirse a game_id (de UserRole): 1
+[LobbyClient] Requested to join game: 1
+[LobbyClient] Joined game: 1
+[Controller] Unido exitosamente a partida ID: 1
+[LobbyClient] Reading room snapshot manually...
+[LobbyClient] Snapshot msg type: 32
+[LobbyClient]   Snapshot player: julio1
+[LobbyClient] Snapshot msg type: 35
+[LobbyClient]   Snapshot car: julio1 -> Senator
+[LobbyClient] Snapshot msg type: 37
+[LobbyClient] ✅ END OF SNAPSHOT detected
+[LobbyClient] Snapshot read complete: 1 players
+[Controller] Snapshot recibido: 1 jugadores
+[Controller] Conectando señales de notificaciones...
+[Controller] Abriendo garage...
+[Controller] Abriendo ventana de garage...
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+Auto seleccionado: Stallion GT (sport)
+[Controller] Auto seleccionado: Stallion GT
+[Controller] DEBUG: Enviando selección de auto...
+[LobbyClient] Selected car: Stallion GT (sport)
+[Controller] DEBUG: Esperando ACK...
+[LobbyClient] Server confirmed car: Stallion GT (sport)
+[Controller] ✅ CAR confirmed: Stallion GT
+[Controller] 🚀 Starting listener NOW...
+[LobbyClient] Notification listener started
+[Controller] Listener status: RUNNING
+[Controller] Abriendo sala de espera...
+[Controller] Abriendo sala de espera...
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+[LobbyClient] Notification listener running...
+[Controller] Procesando jugador pendiente: julio1
+[Controller] Procesando auto pendiente: Senator
+[Controller] Adding local player: julio2
+[Controller] Sala de espera inicializada
+[Controller] Actualizando auto del jugador local: Stallion GT
+[Controller] Jugador marcado como: LISTO
+[Controller] ✅ Local ready state updated for julio2
+[LobbyClient] Set ready: YES
+Estado listo: SI
+[Controller] Jugador marcado como: NO LISTO
+[Controller] ✅ Local ready state updated for julio2
+[LobbyClient] Set ready: NO
+Estado listo: NO
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio1 is now READY
+[Controller] 🔔 Notification: Player julio1 ready: 1 (local player: julio2)
+[Controller] 🔔 Notification: Player julio1 ready: 1 (local player: julio2)
+[LobbyClient] Received notification type: 34
+[LobbyClient] Player julio1 is now NOT READY
+[Controller] 🔔 Notification: Player julio1 ready: 0 (local player: julio2)
+[Controller] 🔔 Notification: Player julio1 ready: 0 (local player: julio2)
+
 
 
 

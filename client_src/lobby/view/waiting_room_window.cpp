@@ -10,10 +10,8 @@ WaitingRoomWindow::WaitingRoomWindow(uint8_t maxPlayers, QWidget* parent)
     setWindowTitle("Need for Speed 2D - Sala de Espera");
     setFixedSize(700, 700);
 
-    // Fuente
     customFontId = QFontDatabase::addApplicationFont("assets/fonts/arcade-classic.ttf");
 
-    // Fondo (uso la ruta del branch principal)
     backgroundImage.load("assets/img/lobby/window_covers/waiting.jpeg");
     if (!backgroundImage.isNull()) {
         backgroundImage =
@@ -22,17 +20,17 @@ WaitingRoomWindow::WaitingRoomWindow(uint8_t maxPlayers, QWidget* parent)
 
     setupUI();
 
-    // Timer para animación
     animationTimer = new QTimer(this);
     connect(animationTimer, &QTimer::timeout, this, &WaitingRoomWindow::updateReadyAnimation);
     animationTimer->start(500);
 
-    // Inicializo slots vacíos con max_players (lobby_aux) manteniendo el local si luego se setea
     for (int i = 0; i < max_players; i++) {
-        addPlayer("Esperando...", "", false);
+        PlayerCardData player{"Esperando...", "", false, false};
+        players.push_back(player);
     }
 
     updatePaginationButtons();
+    updatePlayerDisplay(); 
 }
 
 int WaitingRoomWindow::getCardsPerPage() const {
@@ -192,12 +190,19 @@ void WaitingRoomWindow::createPlayerCards() {
 }
 
 void WaitingRoomWindow::addPlayerByName(const QString& name) {
+    if (player_name_to_index.count(name)) {
+        int idx = player_name_to_index[name];
+        players[idx].name = name; 
+        updatePlayerDisplay();
+        return;
+    }
+
     for (size_t i = 0; i < players.size(); i++) {
         if (players[i].name == "Esperando...") {
             players[i].name = name;
             players[i].carName = "Sin seleccionar";
             players[i].isReady = false;
-            players[i].isLocal = false;
+
             player_name_to_index[name] = i;
             updatePlayerDisplay();
             updateStartButtonState();
@@ -210,11 +215,21 @@ void WaitingRoomWindow::removePlayerByName(const QString& name) {
     auto it = player_name_to_index.find(name);
     if (it == player_name_to_index.end())
         return;
-    int index = it->second;
-    players[index].name = "Esperando...";
-    players[index].carName = "";
-    players[index].isReady = false;
-    player_name_to_index.erase(it);
+    
+    int indexToRemove = it->second;
+
+    players.erase(players.begin() + indexToRemove);
+
+    PlayerCardData emptyPlayer{"Esperando...", "", false, false};
+    players.push_back(emptyPlayer);
+
+    player_name_to_index.clear();
+    for (size_t i = 0; i < players.size(); ++i) {
+        if (players[i].name != "Esperando...") {
+            player_name_to_index[players[i].name] = i;
+        }
+    }
+
     updatePlayerDisplay();
     updateStartButtonState();
 }
@@ -268,8 +283,10 @@ void WaitingRoomWindow::updateStartButtonState() {
 }
 
 void WaitingRoomWindow::addPlayer(const QString& name, const QString& car, bool isLocal) {
-    PlayerCardData player{name, car, false, isLocal};
-    players.push_back(player);
+    if (players.size() < max_players) {
+        PlayerCardData player{name, car, false, isLocal};
+        players.push_back(player);
+    }
     updatePlayerDisplay();
 }
 
@@ -282,24 +299,12 @@ void WaitingRoomWindow::setPlayerReady(int playerIndex, bool ready) {
 }
 
 void WaitingRoomWindow::setLocalPlayerInfo(const QString& name, const QString& car) {
-    // Buscar primer slot "Esperando..." y asignar local
-    for (size_t i = 0; i < players.size(); i++) {
-        if (players[i].isLocal) {  // ya hay uno
-            players[i].name = name + " (Tu)";
-            players[i].carName = car;
-            updatePlayerDisplay();
-            return;
-        }
-    }
-    for (size_t i = 0; i < players.size(); i++) {
-        if (players[i].name == "Esperando...") {
-            players[i].name = name + " (Tu)";
-            players[i].carName = car;
-            players[i].isLocal = true;
-            player_name_to_index[name] = i;  // map sin sufijo
-            updatePlayerDisplay();
-            return;
-        }
+    addPlayerByName(name);
+    setPlayerCarByName(name, car);
+
+    if (player_name_to_index.count(name)) {
+        players[player_name_to_index[name]].isLocal = true;
+        updatePlayerDisplay();
     }
 }
 
@@ -311,11 +316,15 @@ void WaitingRoomWindow::updatePlayerDisplay() {
             const PlayerCardData& player = players[playerIdx];
             PlayerCardWidgets& card = playerCardWidgets[i];
             card.container->show();
-            QString bgColor = player.isLocal ? "rgba(0,50,100,200)" : "rgba(0,0,0,180)";
+
+            QString bgColor = player.isLocal ? "rgba(0, 80, 150, 220)" : "rgba(0,0,0,180)";
             QString borderColor = player.isReady ? "rgb(0,255,0)" : "rgb(255,255,255)";
+            if (player.isLocal) borderColor = "rgb(0, 255, 255)";
+
             card.container->setStyleSheet(
                 QString("background-color:%1; border:2px solid %2; border-radius:5px;")
                     .arg(bgColor, borderColor));
+            
             if (player.isReady) {
                 int pulseSize = 15 + (animationFrame % 2) * 3;
                 card.statusCircle->setStyleSheet(
@@ -330,31 +339,40 @@ void WaitingRoomWindow::updatePlayerDisplay() {
                     "background-color: rgb(100,100,100); border-radius:8px;");
                 card.statusCircle->setGeometry(12, 32, 16, 16);
             }
+            
             card.nameLabel->setText(player.name);
-            if (!player.carName.isEmpty()) {
-                card.carLabel->setText("Auto: " + player.carName);
-                card.carLabel->setStyleSheet(
-                    "color: rgb(255,215,0); background-color: transparent;");
+
+            if (player.name != "Esperando...") {
+                if (!player.carName.isEmpty()) {
+                    card.carLabel->setText("Auto: " + player.carName);
+                    card.carLabel->setStyleSheet(
+                        "color: rgb(255,215,0); background-color: transparent;");
+                } else {
+                    card.carLabel->setText("Seleccionando...");
+                    card.carLabel->setStyleSheet(
+                        "color: rgb(150,150,150); background-color: transparent;");
+                }
+                QString status = player.isReady ? "LISTO" : "No listo";
+                card.statusLabel->setText(status);
+                if (player.isReady) {
+                    card.statusLabel->setStyleSheet(
+                        "color: rgb(0,255,0); background-color: transparent; font-weight: bold;");
+                } else {
+                    card.statusLabel->setStyleSheet(
+                        "color: rgb(255,255,0); background-color: transparent; font-weight: bold;");
+                }
             } else {
+                // Slot vacío
                 card.carLabel->setText("Esperando jugador...");
-                card.carLabel->setStyleSheet(
-                    "color: rgb(150,150,150); background-color: transparent;");
-            }
-            QString status =
-                player.isReady ? "LISTO" : (player.name.contains("Esperando") ? "" : "No listo");
-            card.statusLabel->setText(status);
-            if (player.isReady) {
-                card.statusLabel->setStyleSheet(
-                    "color: rgb(0,255,0); background-color: transparent; font-weight: bold;");
-            } else {
-                card.statusLabel->setStyleSheet(
-                    "color: rgb(255,255,0); background-color: transparent; font-weight: bold;");
+                card.carLabel->setStyleSheet("color: rgb(100,100,100); background-color: transparent;");
+                card.statusLabel->setText("");
             }
         } else {
             playerCardWidgets[i].container->hide();
         }
     }
     updatePaginationButtons();
+    this->update(); // Forzar repintado
 }
 
 void WaitingRoomWindow::updatePaginationButtons() {
