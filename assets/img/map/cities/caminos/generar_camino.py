@@ -1,113 +1,138 @@
 import cv2
 import numpy as np
 import yaml
-import sys
+from collections import deque
 
 # --- CONFIGURACIÓN ---
-IMAGE_PATH = 'camino-1-vice-city.jpg' # Cambia esto por tu mapa
-HEX_COLOR = '#ff006f' 
+IMAGE_PATH = 'vice-city/camino-2-vice-city.png' 
+OUTPUT_YAML = 'recorrido_final.yaml'
+OUTPUT_IMG = 'debug_resultado_v5.jpg'
+OUTPUT_MASK = 'debug_mascara_v5.jpg'
+
 TILE_SIZE = 1          
-SAMPLE_RATE = 40       
-OUTPUT_FILE = 'recorrido.yaml'
+SAMPLE_RATE = 50        # Cada cuantos pasos guardamos un checkpoint
+DONDE_EMPIEZA = 'IZQUIERDA' 
 
-# IMPORTANTE: Define aquí dónde está el inicio de este trazado
-# Opciones: 'ABAJO', 'ARRIBA', 'IZQUIERDA', 'DERECHA'
-DONDE_EMPIEZA = 'ABAJO' 
-
-SEARCH_RADIUS = 3      
-
-def hex_to_bgr(hex_color):
-    hex_color = hex_color.lstrip('#')
-    rgb = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-    return rgb[::-1]
+def get_start_point(coords, orientation):
+    # coords es un array de [y, x]
+    if orientation == 'ABAJO':     return coords[np.argmax(coords[:, 0])]
+    elif orientation == 'ARRIBA':   return coords[np.argmin(coords[:, 0])]
+    elif orientation == 'IZQUIERDA': return coords[np.argmin(coords[:, 1])]
+    elif orientation == 'DERECHA':   return coords[np.argmax(coords[:, 1])]
+    return coords[0]
 
 def procesar_mapa():
-    print(f"Procesando {IMAGE_PATH}...")
+    print(f"--- Iniciando V5 (Inundación) para {IMAGE_PATH} ---")
+    
+    # 1. Carga y Máscara
     img = cv2.imread(IMAGE_PATH)
     if img is None:
-        print(f"Error: No se encontró '{IMAGE_PATH}'")
+        print("Error: No imagen.")
         return
 
-    # 1. Crear máscara
-    target_bgr = hex_to_bgr(HEX_COLOR)
-    lower = np.array([max(0, c-20) for c in target_bgr])
-    upper = np.array([min(255, c+20) for c in target_bgr])
-    mask = cv2.inRange(img, lower, upper)
+    # Usamos HSV para detectar el rosa
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lower_pink = np.array([140, 50, 50])
+    upper_pink = np.array([175, 255, 255])
+    mask = cv2.inRange(hsv, lower_pink, upper_pink)
 
-    # 2. Encontrar píxeles (y, x)
-    points = np.argwhere(mask > 0)
-    if len(points) == 0:
-        print("No se encontró el color especificado.")
-        return
-
-    print(f"Píxeles encontrados: {len(points)}. Buscando inicio en: {DONDE_EMPIEZA}...")
-
-    # --- LÓGICA DE INICIO FLEXIBLE ---
-    # points[:, 0] son las Y (filas)
-    # points[:, 1] son las X (columnas)
+    # 2. Asegurar CONEXIÓN (Clave para que no se corte)
+    # Dilatamos (engordamos) el camino para cerrar cualquier hueco pequeño
+    kernel = np.ones((5,5), np.uint8)
+    mask = cv2.dilate(mask, kernel, iterations=2)
+    mask = cv2.erode(mask, kernel, iterations=1) # Restauramos un poco el borde
     
-    if DONDE_EMPIEZA == 'ABAJO':
-        # Mayor Y es abajo
-        start_idx = np.argmax(points[:, 0])
-    elif DONDE_EMPIEZA == 'ARRIBA':
-        # Menor Y es arriba
-        start_idx = np.argmin(points[:, 0])
-    elif DONDE_EMPIEZA == 'IZQUIERDA':
-        # Menor X es izquierda
-        start_idx = np.argmin(points[:, 1])
-    elif DONDE_EMPIEZA == 'DERECHA':
-        # Mayor X es derecha
-        start_idx = np.argmax(points[:, 1])
-    else:
-        print("Error: Configuración DONDE_EMPIEZA inválida.")
-        return
-
-    start_y, start_x = points[start_idx]
+    # Quedarse solo con el camino más grande
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not contours: return
+    largest_contour = max(contours, key=cv2.contourArea)
+    clean_mask = np.zeros_like(mask)
+    cv2.drawContours(clean_mask, [largest_contour], -1, 255, thickness=cv2.FILLED)
     
-    # Preparar grilla para búsqueda rápida
-    grid = np.pad(mask > 0, pad_width=SEARCH_RADIUS, mode='constant', constant_values=0)
-    cy, cx = start_y + SEARCH_RADIUS, start_x + SEARCH_RADIUS
+    cv2.imwrite(OUTPUT_MASK, clean_mask)
+
+    # 3. Algoritmo de INUNDACIÓN (BFS)
+    # Convertimos la máscara en puntos navegables
+    # y_idxs, x_idxs
+    points = np.argwhere(clean_mask > 0)
+    start_y, start_x = get_start_point(points, DONDE_EMPIEZA)
     
-    ordered_path = []
+    print(f"Inicio detectado en: {start_x}, {start_y}")
+    print("Calculando distancias (Inundando el mapa)...")
+
+    # Mapa de distancias (-1 significa no visitado)
+    h, w = clean_mask.shape
+    dist_map = np.full((h, w), -1, dtype=np.int32)
+    parent_map = np.zeros((h, w, 2), dtype=np.int32) # Para recordar de dónde vinimos
+
+    queue = deque([(start_y, start_x)])
+    dist_map[start_y, start_x] = 0
     
-    # Bucle de recorrido (Pathfinding rápido)
-    while True:
-        ordered_path.append((cx - SEARCH_RADIUS, cy - SEARCH_RADIUS))
-        
-        # "Borrar" zona visitada
-        grid[cy-1:cy+2, cx-1:cx+2] = False 
-        
-        found_next = False
-        y_min, y_max = cy - SEARCH_RADIUS, cy + SEARCH_RADIUS + 1
-        x_min, x_max = cx - SEARCH_RADIUS, cx + SEARCH_RADIUS + 1
-        
-        window = grid[y_min:y_max, x_min:x_max]
-        local_hits = np.argwhere(window)
-        
-        if len(local_hits) > 0:
-            center = np.array([SEARCH_RADIUS, SEARCH_RADIUS])
-            dists = np.sum((local_hits - center)**2, axis=1)
-            nearest_idx = np.argmin(dists)
-            dy, dx = local_hits[nearest_idx]
-            cy = y_min + dy
-            cx = x_min + dx
-            found_next = True
-        
-        if not found_next:
-            break
+    max_dist = 0
+    end_node = (start_y, start_x)
 
-    # Muestreo final
-    final_checkpoints = ordered_path[::SAMPLE_RATE]
-    if ordered_path[-1] != final_checkpoints[-1]:
-        final_checkpoints.append(ordered_path[-1])
+    # Direcciones: Arriba, Abajo, Izq, Der
+    neighbors = [(-1,0), (1,0), (0,-1), (0,1)]
 
-    # Generar YAML
-    data = {
-        'mapa': IMAGE_PATH, # Guardo referencia de qué imagen se usó
-        'checkpoints': []
-    }
+    while queue:
+        cy, cx = queue.popleft()
+        
+        # Si encontramos un punto más lejos, actualizamos el final
+        if dist_map[cy, cx] > max_dist:
+            max_dist = dist_map[cy, cx]
+            end_node = (cy, cx)
 
-    for i, (y, x) in enumerate(final_checkpoints):
+        for dy, dx in neighbors:
+            ny, nx = cy + dy, cx + dx
+            
+            # Verificar limites y si es parte del camino rosa (clean_mask)
+            if 0 <= ny < h and 0 <= nx < w:
+                if clean_mask[ny, nx] > 0 and dist_map[ny, nx] == -1:
+                    dist_map[ny, nx] = dist_map[cy, cx] + 1
+                    parent_map[ny, nx] = [cy, cx]
+                    queue.append((ny, nx))
+
+    print(f"Camino inundado. Distancia máxima encontrada: {max_dist} pasos.")
+
+    # 4. BACKTRACKING (Recuperar el camino desde el final hasta el inicio)
+    path = []
+    curr_y, curr_x = end_node
+    
+    print("Reconstruyendo ruta óptima...")
+    while (curr_y, curr_x) != (start_y, start_x):
+        path.append((curr_x, curr_y))
+        # Moverse al padre (hacia atrás)
+        py, px = parent_map[curr_y, curr_x]
+        curr_y, curr_x = py, px
+    
+    path.append((start_x, start_y))
+    path.reverse() # Ahora va de Inicio -> Fin
+
+    # 5. MUESTREO Y SALIDA
+    # Al hacer BFS, el camino va pixel a pixel. Muestreamos.
+    final_checkpoints = path[::SAMPLE_RATE]
+    if path[-1] != final_checkpoints[-1]:
+        final_checkpoints.append(path[-1])
+
+    # Visualización
+    debug_img = img.copy()
+    debug_img = (debug_img * 0.4).astype(np.uint8)
+
+    for i in range(len(final_checkpoints) - 1):
+        pt1 = tuple(map(int, final_checkpoints[i]))
+        pt2 = tuple(map(int, final_checkpoints[i+1]))
+        cv2.line(debug_img, pt1, pt2, (0, 255, 255), 2)
+        if i % 2 == 0:
+             cv2.arrowedLine(debug_img, pt1, pt2, (255, 255, 255), 2, tipLength=0.5)
+
+    cv2.circle(debug_img, tuple(map(int, final_checkpoints[0])), 8, (0, 255, 0), -1)
+    cv2.circle(debug_img, tuple(map(int, final_checkpoints[-1])), 8, (0, 0, 255), -1)
+
+    cv2.imwrite(OUTPUT_IMG, debug_img)
+
+    # YAML
+    data = {'mapa': IMAGE_PATH, 'checkpoints': []}
+    for i, (x, y) in enumerate(final_checkpoints):
         data['checkpoints'].append({
             'id': i,
             'x': float(x) / TILE_SIZE, 
@@ -115,10 +140,10 @@ def procesar_mapa():
             'type': 'START' if i == 0 else ('FINISH' if i == len(final_checkpoints)-1 else 'CHECKPOINT')
         })
 
-    with open(OUTPUT_FILE, 'w') as file:
+    with open(OUTPUT_YAML, 'w') as file:
         yaml.dump(data, file, sort_keys=False)
 
-    print(f"¡Listo! {len(final_checkpoints)} checkpoints generados empezando desde {DONDE_EMPIEZA}.")
+    print(f"¡HECHO! Revisa {OUTPUT_IMG}. Debería ser perfecto.")
 
 if __name__ == "__main__":
     procesar_mapa()
