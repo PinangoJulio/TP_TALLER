@@ -54,7 +54,8 @@ void Client::start() {
         std::cout << "[Client] Abortando inicio de juego por fallo en lobby" << std::endl;
         return;
     }
-
+    username = controller.getPlayerName().toStdString();
+    std::cout << "[Client] Usuario listo: " << username << std::endl;
     // Cerrar ventanas Qt DESPUÉS de que el QEventLoop termine
     std::cout << "[Client] Cerrando ventanas Qt..." << std::endl;
     controller.closeAllWindows();

@@ -67,7 +67,7 @@ public:
     void closeAllWindows();
 
     bool isLobbySuccessful() const { return lobbyCompleted && lobbySuccess; }
-
+    QString getPlayerName() const { return playerName; }
 signals:
     void lobbyFinished(bool success);
 
