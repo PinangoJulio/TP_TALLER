@@ -50,16 +50,20 @@ private:
     std::string yaml_path;  // Ruta al YAML del mapa
     std::string city_name;  // Nombre de la ciudad
     int total_laps;         // Vueltas totales de la carrera
-    // Mapa mapa;                            // TODO: Mapa construido desde YAML
+    // Mapa mapa;
 
     // ---- TIEMPOS ----
     std::chrono::steady_clock::time_point race_start_time;
 
-    // ---- MÉTODOS PRIVADOS ----
+
+    void reset_players_spawn_positions();  // Resetea posiciones de spawn (al iniciar carrera)
+    void execute_player_movement(Player *player, const ComandMatchDTO& comando);
     void procesar_comandos();
     void actualizar_fisica();
     void detectar_colisiones();
     void actualizar_estado_carrera();
+    bool check_crossed_finish_line(Player* player);
+    bool check_match_ended();
     void enviar_estado_a_jugadores();
     void verificar_ganadores();
 
@@ -70,12 +74,13 @@ public:
     GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues, const std::string& yaml_path);
 
     // ---- AGREGAR JUGADORES ----
-    // Se llama desde Match antes de iniciar la carrera
     void add_player(int player_id, const std::string& name, const std::string& car_name,
                     const std::string& car_type);
+    void delete_player_from_match(const int player_id);
 
     // ---- ESTADO DE JUGADORES ----
     void set_player_ready(int player_id, bool ready);
+
 
     // ---- CONFIGURACIÓN ----
     void set_total_laps(int laps) { total_laps = laps; }

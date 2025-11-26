@@ -1,5 +1,5 @@
 #include "game_loop.h"
-
+z:<
 #include <chrono>
 #include <iomanip>
 #include <iostream>
@@ -24,12 +24,7 @@ GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues,
 
 GameLoop::~GameLoop() {
     is_running = false;
-
-    // ✅ unique_ptr libera automáticamente la memoria
-    // Al limpiar players, también se liberan sus Cars automáticamente
     players.clear();
-
-    std::cout << "[GameLoop] Destructor: recursos liberados automáticamente" << std::endl;
 }
 
 // ==========================================================
@@ -62,13 +57,9 @@ void GameLoop::add_player(int player_id, const std::string& name, const std::str
                           const std::string& car_type) {
     std::cout << "\n\n\n";
     std::cout << "***************************************************************" << std::endl;
-    std::cout << "█                                                              █" << std::endl;
     std::cout << "█   GAMELOOP::ADD_PLAYER() LLAMADO                            █" << std::endl;
-    std::cout << "█                                                              █" << std::endl;
     std::cout << "***************************************************************" << std::endl;
     std::cout << std::endl;
-
-    std::cout << "[GameLoop] ══════════════════════════════════════════" << std::endl;
     std::cout << "[GameLoop] Registrando jugador..." << std::endl;
     std::cout << "[GameLoop]   • ID: " << player_id << std::endl;
     std::cout << "[GameLoop]   • Nombre: " << name << std::endl;
@@ -93,19 +84,16 @@ void GameLoop::add_player(int player_id, const std::string& name, const std::str
             std::string yaml_car_name = car_node["name"].as<std::string>();
 
             if (yaml_car_name == car_name) {
-                // Auto encontrado en YAML, cargar estadísticas
                 float speed = car_node["speed"].as<float>();
                 float acceleration = car_node["acceleration"].as<float>();
                 float handling = car_node["handling"].as<float>();
                 float durability = car_node["durability"].as<float>();
 
-                // Leer health (si existe), sino usar durability como fallback
                 float health = durability;  // Default: usar durability
                 if (car_node["health"]) {
                     health = car_node["health"].as<float>();
                 }
 
-                // Conversión a parámetros físicos del juego
                 float max_speed = speed * 1.5f;              // 60-90 → 90-135 km/h
                 float accel_power = acceleration * 0.8f;     // 50-85 → 40-68
                 float turn_rate = handling * 1.0f / 100.0f;  // 55-70 → 0.55-0.70
@@ -131,8 +119,6 @@ void GameLoop::add_player(int player_id, const std::string& name, const std::str
         }
 
         if (!car_found) {
-            std::cerr << "[GameLoop]  Auto '" << car_name << "' no encontrado en config.yaml. "
-                      << "Usando valores por defecto." << std::endl;
             car->load_stats(100.0f, 50.0f, 1.0f, 100.0f, 2.0f, 1000.0f);
         }
 
@@ -142,24 +128,23 @@ void GameLoop::add_player(int player_id, const std::string& name, const std::str
         car->load_stats(100.0f, 50.0f, 1.0f, 100.0f, 2.0f, 1000.0f);
     }
 
-    // ✅ 3. Crear Player y asignarle el Car
+    // Crear Player y asignarle el Car
     auto player = std::make_unique<Player>(player_id, name);
-    player->setCar(car.get());  // Player mantiene un puntero al Car
+    player->setCar(car.get());
     player->resetForNewRace();
 
-    // ✅ 4. Transferir ownership del Car al Player
+    //  Transferir ownership del Car al Player
     // IMPORTANTE: El Player ahora es dueño del Car (gestión automática)
     player->setCarOwnership(std::move(car));
 
     std::cout << "[GameLoop] ✅ Jugador registrado exitosamente" << std::endl;
     std::cout << "[GameLoop]   • Total jugadores: " << (players.size() + 1) << std::endl;
-    std::cout << "[GameLoop] ══════════════════════════════════════════" << std::endl;
 
-    // ✅ 5. Registrar en el mapa de jugadores
-    // Ahora players[player_id] contiene TODO (Player + Car)
+    // 5. Registrar en el mapa de jugadores
+    // Ahora players[player_id] contiene (Player + Car)
     players[player_id] = std::move(player);
 
-    // ✅ 6. Imprimir TODOS los datos del jugador registrado
+    // Imprimir TODOS los datos del jugador registrado
     Player* registered_player = players[player_id].get();
     Car* registered_car = registered_player->getCar();
 
@@ -239,10 +224,7 @@ void GameLoop::add_player(int player_id, const std::string& name, const std::str
     std::cout << "[GameLoop]   ├─ Total jugadores registrados: " << players.size() << std::endl;
     std::cout << "[GameLoop]   └─ Carrera iniciada: " << (is_running.load() ? "Sí" : "No")
               << std::endl;
-    std::cout << "\n";
-    std::cout << "[GameLoop] ══════════════════════════════════════════" << std::endl;
-    std::cout << "\n";
-    std::cout << std::flush;  // ✅ Forzar flush del buffer
+    std::cout << std::flush;
 }
 
 // ==========================================================
@@ -258,9 +240,6 @@ void GameLoop::set_player_ready(int player_id, bool ready) {
 
     Player* player = it->second.get();
     player->setReady(ready);
-
-    std::cout << "[GameLoop] Jugador " << player->getName() << " marcado como "
-              << (ready ? "LISTO ✓" : "NO LISTO ✗") << std::endl;
 }
 
 // ==========================================================
@@ -289,9 +268,6 @@ void GameLoop::print_race_info() const {
             std::cout << " ║\n";
         }
     }
-
-    std::cout << "╚════════════════════════════════════════════════════════════╝\n";
-    std::cout << std::endl;
 }
 
 // ==========================================================
@@ -313,7 +289,7 @@ void GameLoop::run() {
     race_start_time = std::chrono::steady_clock::now();
 
     std::cout << "[GameLoop] ═══════════════════════════════════════════════" << std::endl;
-    std::cout << "[GameLoop] 🏁 CARRERA INICIADA 🏁" << std::endl;
+    std::cout << "[GameLoop] CARRERA INICIADA " << std::endl;
     std::cout << "[GameLoop] ═══════════════════════════════════════════════" << std::endl;
 
     print_race_info();
@@ -354,7 +330,6 @@ void GameLoop::procesar_comandos() {
     float delta_time = SLEEP / 1000.0f;
 
     while (comandos.try_pop(comando)) {
-        // ✅ Buscar el jugador por su ID (que es el client_id)
         auto player_it = players.find(comando.player_id);
         if (player_it == players.end()) {
             std::cerr << "[GameLoop]   Comando ignorado: player_id " << comando.player_id
@@ -362,7 +337,7 @@ void GameLoop::procesar_comandos() {
             continue;
         }
 
-        // ✅ Obtener el Player y su Car
+        // Obtener el Player y su Car
         Player* player = player_it->second.get();
         Car* car = player->getCar();
 
@@ -372,7 +347,6 @@ void GameLoop::procesar_comandos() {
             continue;
         }
 
-        // ✅ Aplicar comando al auto del jugador
         switch (comando.command) {
         case GameCommand::ACCELERATE:
             // Usar speed_boost si está configurado
@@ -417,16 +391,13 @@ void GameLoop::procesar_comandos() {
             }
         } break;
 
-        case GameCommand::CHEAT_MAX_SPEED:
+        case GameCommand::CHEAT_MAX_SPEED: // cheat opcional no obligatorio, no lo pide enunciado
             car->setCurrentSpeed(car->getMaxSpeed());
             std::cout << "[GameLoop] CHEAT: Velocidad máxima para player " << comando.player_id
                       << std::endl;
             break;
 
-        case GameCommand::CHEAT_TELEPORT_CHECKPOINT:
-            // TODO: Implementar teleport a checkpoint
-            std::cout << "[GameLoop] CHEAT: Teleport a checkpoint " << comando.checkpoint_id
-                      << std::endl;
+        case GameCommand::CHEAT_TELEPORT_CHECKPOINT: // cheat opcional no obligatorio, no lo pide enunciado
             break;
 
         // === UPGRADES ===
@@ -459,42 +430,7 @@ void GameLoop::procesar_comandos() {
 }
 
 void GameLoop::actualizar_fisica() {
-    // Delta time aproximado
-    float delta_time = SLEEP / 1000.0f;
-
-    // ✅ Actualizar posición de cada auto según su velocidad
-    for (auto& [player_id, player_ptr] : players) {
-        (void)player_id;  // Unused
-        Player* player = player_ptr.get();
-        Car* car = player->getCar();
-
-        if (!car || car->isDestroyed())
-            continue;
-
-        // Actualizar posición basado en velocidad
-        float new_x = car->getX() + (car->getVelocityX() * delta_time);
-        float new_y = car->getY() + (car->getVelocityY() * delta_time);
-
-        car->setPosition(new_x, new_y);
-
-        // Aplicar fricción para desacelerar gradualmente
-        float current_speed = car->getCurrentSpeed();
-        if (current_speed > 0) {
-            float friction = 0.98f;  // Factor de fricción
-            car->setCurrentSpeed(current_speed * friction);
-            car->setVelocity(car->getVelocityX() * friction, car->getVelocityY() * friction);
-        }
-    }
-
-    // TODO: Cuando se implemente Box2D:
-    // world->Step(timeStep, velocityIterations, positionIterations);
-    // for (auto& [player_id, player_ptr] : players) {
-    //     Player* player = player_ptr.get();
-    //     Car* car = player->getCar();
-    //     auto pos = car->getBody()->GetPosition();
-    //     car->setPosition(pos.x, pos.y);
-    //     car->setAngle(car->getBody()->GetAngle());
-    // }
+    //aca iria lo de Box2D ???
 }
 
 void GameLoop::detectar_colisiones() {
@@ -513,6 +449,7 @@ void GameLoop::actualizar_estado_carrera() {
 
 void GameLoop::verificar_ganadores() {
     // Verificar si algún jugador completó todas las vueltas  --> sin implementar
+    // algo asi ?
     // for (auto& [id, player] : players) {
     //     if (player->getCompletedLaps() >= total_laps && !player->isFinished()) {
     //         player->markAsFinished();
@@ -532,7 +469,6 @@ void GameLoop::verificar_ganadores() {
 void GameLoop::enviar_estado_a_jugadores() {
     // Crear snapshot del estado actual
     GameState snapshot = create_snapshot();
-
     // Broadcast a todos los jugadores a través del ClientMonitor
     queues_players.broadcast(snapshot);
 }
@@ -551,7 +487,7 @@ GameState GameLoop::create_snapshot() {
     // Crear snapshot usando el constructor
     GameState snapshot(player_list, city_name, yaml_path, total_laps, is_running.load());
 
-    // TODO: Cuando se implementen, agregar:
+    // Cuando se implementen, agregar:
     // - checkpoints
     // - hints
     // - NPCs
