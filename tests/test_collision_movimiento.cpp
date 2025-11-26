@@ -20,7 +20,7 @@ const int MINIMAP_SCOPE = 1000; // lo que se muestra
 
 struct Player
 {
-    float x = 2320.0f; // Posicion inicial de mentiritas
+    float x = 2355.0f; // Posicion inicial de mentiritas
     float y = 2336.0f;
     float speed = 5.0f;
     int dir_x = 0;
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
             throw std::runtime_error("SDL_image no pudo inicializarse: " + std::string(IMG_GetError()));
         }
 
-        SDL2pp::Window window("Test de Colisión - Vice City (Con Rampas)",
+        SDL2pp::Window window("Test de Colisión - Vice City ",
                               SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                               SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
         SDL2pp::Renderer renderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -73,9 +73,9 @@ int main(int argc, char *argv[])
         std::cout << "Cargando máscaras de colisión..." << std::endl;
 
         CollisionManager collisionManager(
-            "assets/img/map/layers/vice-city/vice-city.png",
-            "assets/img/map/layers/vice-city/puentes-transitables.png",
-            "assets/img/map/layers/vice-city/rampas.png");
+            "assets/img/map/layers/vice-city/camino-vice-city.png",
+            "assets/img/map/layers/vice-city/puentes-vice-city.png",
+            "assets/img/map/layers/vice-city/rampas-vice-city.png");
 
         const int MAP_WIDTH = collisionManager.GetWidth();
         const int MAP_HEIGHT = collisionManager.GetHeight();
@@ -94,6 +94,8 @@ int main(int argc, char *argv[])
             throw std::runtime_error("Error cargando mapa: " + std::string(IMG_GetError()));
         }
         SDL2pp::Texture mapTexture(renderer, SDL2pp::Surface(mapSurface));
+        SDL_Surface *minimapSurface = IMG_Load("assets/img/map/cities/vice-city.png");//caminos/camino-1-vice-city.png");
+        SDL2pp::Texture minimapTexture(renderer, SDL2pp::Surface(minimapSurface));
 
         std::cout << "Cargando sprites de carros..." << std::endl;
         SDL_Surface *carSurface = IMG_Load("assets/img/map/cars/spriteshit-cars.png");
@@ -109,11 +111,11 @@ int main(int argc, char *argv[])
         SDL_SetColorKey(carSurface, SDL_TRUE, SDL_MapRGB(carSurface->format, 0, 0, 0));
         SDL2pp::Texture carTexture(renderer, SDL2pp::Surface(carSurface));
 
-        SDL_Surface *puentesSurf = IMG_Load("assets/img/map/layers/vice-city/vice-city-puentes.png");
+        SDL_Surface *puentesSurf = IMG_Load("assets/img/map/layers/vice-city/puentes-top-vice-city.png");
         SDL2pp::Texture puentesTexture(renderer, SDL2pp::Surface(puentesSurf ? puentesSurf : SDL_CreateRGBSurface(0, 1, 1, 32, 0, 0, 0, 0)));
         bool hasPuentes = (puentesSurf != nullptr);
 
-        SDL_Surface *topSurface = IMG_Load("assets/img/map/layers/vice-city/vice-city-top.png");
+        SDL_Surface *topSurface = IMG_Load("assets/img/map/layers/vice-city/top-vice-city.png");
         SDL2pp::Texture topTexture(renderer, SDL2pp::Surface(topSurface ? topSurface : SDL_CreateRGBSurface(0, 1, 1, 32, 0, 0, 0, 0)));
         bool hasTop = (topSurface != nullptr);
 
@@ -358,7 +360,7 @@ int main(int argc, char *argv[])
             renderer.FillRect(minimapDest);
 
             // Dibujar el mapa original dentro del cuadrado
-            renderer.Copy(mapTexture, minimapSrc, minimapDest);
+            renderer.Copy(minimapTexture, minimapSrc, minimapDest);
 
             // Dibujar el borde del minimapa
             renderer.SetDrawColor(255, 255, 255, 255); // Borde blanco

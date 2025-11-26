@@ -14,6 +14,8 @@
 #include "base_lobby.h"
 #include <QComboBox>       
 #include <SDL_mixer.h>
+#include <QTimer>         
+#include <QMouseEvent>
 struct CityInfo {
     QString name;
     QString imagePath;
@@ -30,6 +32,9 @@ public:
 
 protected:
     void paintEvent(QPaintEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override; 
+    void leaveEvent(QEvent* event) override;        
+    void enterEvent(QEnterEvent *event) override;
 
 signals:
     void matchCreated(const QString& matchName, int maxPlayers, const std::vector<RaceConfig>& races);
@@ -53,6 +58,7 @@ private slots:
     void onNextTrack();
     void onConfirmSelection();
     void onBackFromSelector();
+    void hideButtons();
 
 private:
     void setupStep1UI();
@@ -63,6 +69,8 @@ private:
     void updateTrackDisplay();
     void updateRaceList();
     void validateStep1();
+    QTimer* hideTimer;
+    bool isSelectingTrack; // Para saber si estamos en modo selección de track
     
     QPixmap backgroundImage;
     int customFontId;
@@ -119,4 +127,3 @@ private:
 };
 
 #endif // CREATE_MATCH_WINDOW_H
-
