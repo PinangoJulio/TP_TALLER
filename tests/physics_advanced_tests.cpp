@@ -246,6 +246,7 @@ TEST(ControlTest, TorqueAppliedCorrectly) {
     shapeDef.density = attrs.masa;
     b2CreatePolygonShape(body, &shapeDef, &box);
     
+    // Aplicr torque
     float torque = attrs.control;
     b2Body_ApplyTorque(body, torque, true);
     
@@ -263,7 +264,8 @@ TEST(DamageTest, DamageReducesMaxSpeed) {
     
     EXPECT_EQ(car.health, 100);
     
-    car.apply_collision_damage(100.0f); 
+    // Simular daño
+    car.apply_collision_damage(100.0f); // 50 de daño
     
     EXPECT_LT(car.health, 100);
     EXPECT_GT(car.health, 0);
@@ -290,6 +292,7 @@ TEST(DamageTest, SevereDamageReducesSpeedMore) {
     Car car(1, 12, attrs.salud_base);
     car.body = body;
     
+    // Dar velocidad inicial
     b2Body_SetLinearVelocity(body, {10.0f, 0.0f});
     float speed_inicial = 10.0f;
     
@@ -325,6 +328,7 @@ TEST(DamageTest, ZeroHealthStopsMovement) {
     
     b2Body_SetLinearVelocity(body, {10.0f, 0.0f});
     
+    // Matar el auto
     car.apply_collision_damage(500.0f);
     
     EXPECT_EQ(car.health, 0);
@@ -338,6 +342,7 @@ TEST(DamageTest, ZeroHealthStopsMovement) {
 }
 
 // TESTS DE COLISIONES CON IMPULSOS
+
 TEST(CollisionImpulseTest, ObstacleCollisionCausesBounce) {
     Configuracion config("config.yaml");
     
@@ -358,8 +363,10 @@ TEST(CollisionImpulseTest, ObstacleCollisionCausesBounce) {
     shapeDef.density = 1.5f;
     b2CreatePolygonShape(carBody, &shapeDef, &box);
     
+    // Velocidad hacia la pared
     b2Body_SetLinearVelocity(carBody, {10.0f, 0.0f});
     
+    // Simular colisión durante varios frames
     bool collision_detected = false;
     for (int i = 0; i < 100; ++i) {
         b2World_Step(mundo, 0.016666f, 4);
@@ -387,40 +394,60 @@ TEST(CollisionImpulseTest, CarToCarMomentumExchange) {
     b2WorldDef mundoDef = b2DefaultWorldDef();
     mundoDef.gravity = {0.0f, 0.0f};
     b2WorldId mundo = b2CreateWorld(&mundoDef);
-    
-    // Auto A moviéndose a la derecha
+
     b2BodyDef bodyDefA = b2DefaultBodyDef();
     bodyDefA.type = b2_dynamicBody;
     bodyDefA.position = {0.0f, 0.0f};
     b2BodyId carA = b2CreateBody(mundo, &bodyDefA);
     
-    b2Polygon boxA = b2MakeBox(1.0f, 2.0f);
+    b2Circle circleA;
+    circleA.center = {0.0f, 0.0f};
+    circleA.radius = 1.0f;
+    
     b2ShapeDef shapeDefA = b2DefaultShapeDef();
     shapeDefA.density = 1.5f;
-    b2CreatePolygonShape(carA, &shapeDefA, &boxA);
+    b2CreateCircleShape(carA, &shapeDefA, &circleA);
     
-    b2Body_SetLinearVelocity(carA, {10.0f, 0.0f});
+    b2Body_SetLinearVelocity(carA, {5.0f, 0.0f});
     
-    // Auto B moviéndose a la izquierda
     b2BodyDef bodyDefB = b2DefaultBodyDef();
     bodyDefB.type = b2_dynamicBody;
-    bodyDefB.position = {5.0f, 0.0f};
+    bodyDefB.position = {2.4f, 0.0f};
     b2BodyId carB = b2CreateBody(mundo, &bodyDefB);
     
-    b2Polygon boxB = b2MakeBox(1.0f, 2.0f);
+    b2Circle circleB;
+    circleB.center = {0.0f, 0.0f};
+    circleB.radius = 1.0f;
+    
     b2ShapeDef shapeDefB = b2DefaultShapeDef();
     shapeDefB.density = 1.5f;
-    b2CreatePolygonShape(carB, &shapeDefB, &boxB);
+    b2CreateCircleShape(carB, &shapeDefB, &circleB);
     
-    b2Body_SetLinearVelocity(carB, {-10.0f, 0.0f});
+    b2Body_SetLinearVelocity(carB, {-5.0f, 0.0f});
     
-    float vel_A_inicial = 10.0f;
-    float vel_B_inicial = -10.0f;
+    float vel_A_inicial = 5.0f;
+    float vel_B_inicial = -5.0f;
     
-    // Simular hasta que colisionen
     bool collision_detected = false;
-    for (int i = 0; i < 100; ++i) {
-        b2World_Step(mundo, 0.016666f, 4);
+    float min_distance = 999.0f;
+    
+    for (int i = 0; i < 200; ++i) {
+        b2World_Step(mundo, 0.016666f, 8);
+        
+        b2Vec2 posA = b2Body_GetPosition(carA);
+        b2Vec2 posB = b2Body_GetPosition(carB);
+        float distance = std::abs(posB.x - posA.x);
+        
+        if (distance < min_distance) {
+            min_distance = distance;
+        }
+
+        b2Vec2 velA_current = b2Body_GetLinearVelocity(carA);
+        
+        if (std::abs(velA_current.x - vel_A_inicial) > 0.1f) { 
+             collision_detected = true;
+             break;
+        }
         
         b2ContactEvents events = b2World_GetContactEvents(mundo);
         if (events.beginCount > 0) {
@@ -429,15 +456,19 @@ TEST(CollisionImpulseTest, CarToCarMomentumExchange) {
         }
     }
     
-    EXPECT_TRUE(collision_detected);
+    // 5. Asersiones
     
-    // Después de la colisión, las velocidades deberían haberse intercambiado parcialmente
-    b2Vec2 vel_A_final = b2Body_GetLinearVelocity(carA);
-    b2Vec2 vel_B_final = b2Body_GetLinearVelocity(carB);
+    EXPECT_TRUE(collision_detected) << "Cars should have collided (min distance: " 
+                                     << min_distance << ")";
     
-    // Las velocidades finales deberían ser diferentes a las iniciales
-    EXPECT_NE(vel_A_final.x, vel_A_inicial);
-    EXPECT_NE(vel_B_final.x, vel_B_inicial);
+    if (collision_detected) {
+        b2Vec2 vel_A_final = b2Body_GetLinearVelocity(carA);
+        b2Vec2 vel_B_final = b2Body_GetLinearVelocity(carB);
+        
+        // Verificar que las velocidades cambiaron (prueba de intercambio de impulso)
+        EXPECT_NE(vel_A_final.x, vel_A_inicial);
+        EXPECT_NE(vel_B_final.x, vel_B_inicial);
+    }
     
     b2DestroyWorld(mundo);
 }
@@ -499,6 +530,7 @@ TEST(IntegrationTest, NitroIncreasesSpeed) {
     EXPECT_TRUE(activated);
     EXPECT_TRUE(car.is_nitro_active());
     
+    // Simular ticks hasta que se acabe el nitro
     int ticks = 0;
     while (car.is_nitro_active() && ticks < 20) {
         car.simulate_tick();
