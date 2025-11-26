@@ -8,13 +8,16 @@
 
 CreateMatchWindow::CreateMatchWindow(QWidget *parent)
     : BaseLobby(parent),
-      customFontId(-1),
-      currentCityIndex(0),
-      currentTrackIndex(0),
-      currentEditingSlot(-1),
-      totalRaces(0)
+      hideTimer(nullptr),          
+      isSelectingTrack(false),     
+      backgroundImage(),           
+      customFontId(-1),            
+      currentCityIndex(0),         
+      currentTrackIndex(0),        
+      currentEditingSlot(-1),      
+      totalRaces(0)                
 {
-
+    setMouseTracking(true);
     setWindowTitle("Need for Speed 2D - Crear Partida");
     setFixedSize(700, 700);
 
@@ -35,6 +38,9 @@ CreateMatchWindow::CreateMatchWindow(QWidget *parent)
     setupStep2UI();
     setupStep3UI();
 
+    hideTimer = new QTimer(this);
+    hideTimer->setInterval(3000); 
+    connect(hideTimer, &QTimer::timeout, this, &CreateMatchWindow::hideButtons);
     stepsStack->setCurrentIndex(0);
 }
 
@@ -44,7 +50,7 @@ void CreateMatchWindow::loadCities()
     CityInfo liberty;
     liberty.name = "Liberty City";
     liberty.imagePath = "assets/img/lobby/cities/liberty-city.png";
-    liberty.trackNames = {"Circuito Centro", "Ruta Costera", "Autopista Norte"};
+    liberty.trackNames = {"Montline Parkway", "Upper West Side", "Lower East Side"};
     liberty.trackImagePaths = {
         "assets/img/map/cities/caminos/liberty-city/ruta-1/debug_resultado_v5.jpg",
         "assets/img/map/cities/caminos/liberty-city/ruta-2/debug_resultado_v5.png",
@@ -54,7 +60,7 @@ void CreateMatchWindow::loadCities()
     CityInfo sanAndreas;
     sanAndreas.name = "San Andreas";
     sanAndreas.imagePath = "assets/img/lobby/cities/san-andreas.png";
-    sanAndreas.trackNames = {"Desierto", "Ciudad", "Montaña"};
+    sanAndreas.trackNames = {"Southshore District", "Vinecrest Heights", "Sunset Diagonal"};
     sanAndreas.trackImagePaths = {
         "assets/img/map/cities/caminos/san-andreas/ruta-1/debug_resultado_v5.png",
         "assets/img/map/cities/caminos/san-andreas/ruta-2/debug_resultado_v5.png",
@@ -64,12 +70,87 @@ void CreateMatchWindow::loadCities()
     CityInfo viceCity;
     viceCity.name = "Vice City";
     viceCity.imagePath = "assets/img/lobby/cities/vice-city.png";
-    viceCity.trackNames = {"Centro", "Puente", "PLaya"};
+    viceCity.trackNames = {"North Grove Ribbon", "Tropical U", "Coral Serpent Way"};
     viceCity.trackImagePaths = {
         "assets/img/map/cities/caminos/vice-city/ruta-1/debug_resultado_v5.jpg",
         "assets/img/map/cities/caminos/vice-city/ruta-2/debug_resultado_v5.jpg",
         "assets/img/map/cities/caminos/vice-city/ruta-3/debug_resultado_v5.jpg"};
     cities.push_back(viceCity);
+}
+
+void CreateMatchWindow::hideButtons() {
+   
+   if (stepsStack->currentIndex() == 2) {
+        prevCityButton->hide();
+        nextCityButton->hide();
+        
+        editingLabel->hide();      
+        cityNameLabel->hide();     
+        confirmSelectionButton->hide();
+        backButtonStep3->hide();   
+        
+        hideTimer->stop(); 
+    }
+}
+
+
+void CreateMatchWindow::mouseMoveEvent(QMouseEvent *event) {
+    if (stepsStack->currentIndex() == 2) {
+        
+       
+        prevCityButton->show();
+        nextCityButton->show();
+        
+        editingLabel->show();      
+        cityNameLabel->show();     
+        confirmSelectionButton->show(); 
+        backButtonStep3->show();   
+
+      
+        hideTimer->stop();
+        if (isSelectingTrack) {
+            hideTimer->setInterval(5000); // 5 segundos para camino
+        
+        } else {
+            hideTimer->setInterval(3000); // 3 segundos para ciudad
+        }
+        hideTimer->start();
+    }
+    QWidget::mouseMoveEvent(event);
+}
+
+void CreateMatchWindow::leaveEvent(QEvent *event) {
+
+    if (stepsStack->currentIndex() == 2) {
+        hideTimer->stop();
+        hideTimer->start(1500); // 
+    }
+    QWidget::leaveEvent(event);
+}
+
+
+
+void CreateMatchWindow::enterEvent(QEnterEvent *event) { 
+    if (stepsStack->currentIndex() == 2) {
+        // Mostrar todos los elementos inmediatamente
+        prevCityButton->show();
+        nextCityButton->show();
+        
+        editingLabel->show();      
+        cityNameLabel->show();     
+        confirmSelectionButton->show(); 
+        backButtonStep3->show();   
+        
+        // Reiniciar el timer 
+        hideTimer->stop();
+        if (isSelectingTrack) {
+            hideTimer->setInterval(5000); // 5 segundos para camino
+        } else {
+            hideTimer->setInterval(3000); // 3 segundos para ciudad
+        }
+        hideTimer->start(); 
+    }
+    QWidget::enterEvent(event);
 }
 
 void CreateMatchWindow::setupStep1UI()
@@ -521,6 +602,14 @@ void CreateMatchWindow::setupStep3UI()
     nextTrackButton = nullptr;
     setupMusicControl(); 
 
+    step3Widget->setMouseTracking(true);
+    editingLabel->setMouseTracking(true);
+    cityNameLabel->setMouseTracking(true);
+    prevCityButton->setMouseTracking(true);
+    nextCityButton->setMouseTracking(true);
+    confirmSelectionButton->setMouseTracking(true);
+    backButtonStep3->setMouseTracking(true);
+
     stepsStack->addWidget(step3Widget);
 }
 
@@ -622,6 +711,9 @@ void CreateMatchWindow::onRaceSlotClicked(QListWidgetItem *item)
         currentTrackIndex = 0;
     }
 
+    // Estamos en modo selección de ciudad
+    isSelectingTrack = false;
+
     editingLabel->setText(QString("Configurando: Carrera %1 - Selecciona Ciudad").arg(currentEditingSlot + 1));
 
     // Cambiar texto del botón para seleccionar ciudad
@@ -631,6 +723,19 @@ void CreateMatchWindow::onRaceSlotClicked(QListWidgetItem *item)
 
     updateCityDisplay();
     stepsStack->setCurrentIndex(2);
+    
+    // Mostrar todos los botones inicialmente
+    prevCityButton->show();
+    nextCityButton->show();
+    editingLabel->show();      
+    cityNameLabel->show();     
+    confirmSelectionButton->show(); 
+    backButtonStep3->show();   
+    
+    // Iniciar el temporizador con intervalo para ciudad (3 segundos)
+    hideTimer->stop();
+    hideTimer->setInterval(3000);
+    hideTimer->start();
 }
 
 void CreateMatchWindow::updateCityDisplay()
@@ -670,7 +775,7 @@ void CreateMatchWindow::updateTrackDisplay()
     if (currentTrackIndex < 0 || currentTrackIndex >= static_cast<int>(city.trackNames.size()))
         return;
 
-    // Cargar imagen del track como fondo
+    // Cargar imagen del camino como fondo
     QPixmap trackImage(city.trackImagePaths[currentTrackIndex]);
     if (!trackImage.isNull())
     {
@@ -723,6 +828,9 @@ void CreateMatchWindow::onCitySelected()
 
     currentTrackIndex = 0;
 
+    // Ahora estamos en modo selección de camino
+    isSelectingTrack = true;
+
     editingLabel->setText(QString("Configurando: Carrera %1 - Selecciona Recorrido").arg(currentEditingSlot + 1));
 
     confirmSelectionButton->setText("Confirmar");
@@ -735,6 +843,18 @@ void CreateMatchWindow::onCitySelected()
     connect(nextCityButton, &QPushButton::clicked, this, &CreateMatchWindow::onNextTrack);
 
     updateTrackDisplay();
+    
+    // Mostrar botones y reiniciar timer con intervalo para cmino (5 segundos)
+    prevCityButton->show();
+    nextCityButton->show();
+    editingLabel->show();      
+    cityNameLabel->show();     
+    confirmSelectionButton->show(); 
+    backButtonStep3->show();
+    
+    hideTimer->stop();
+    hideTimer->setInterval(5000); // 5 segundos para mirar el mapa
+    hideTimer->start();
 }
 
 void CreateMatchWindow::onPreviousTrack()
@@ -789,6 +909,8 @@ void CreateMatchWindow::onConfirmSelection()
               << race.cityName.toStdString() << " - " << race.trackName.toStdString() << std::endl;
 
     // Restaurar estado inicial para próxima selección
+    isSelectingTrack = false;
+    
     prevCityButton->disconnect();
     nextCityButton->disconnect();
     connect(prevCityButton, &QPushButton::clicked, this, &CreateMatchWindow::onPreviousCity);
@@ -806,6 +928,8 @@ void CreateMatchWindow::onConfirmSelection()
 
 void CreateMatchWindow::onBackFromSelector()
 {
+    // Restaurar estado
+    isSelectingTrack = false;
 
     prevCityButton->disconnect();
     nextCityButton->disconnect();
