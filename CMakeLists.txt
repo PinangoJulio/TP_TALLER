@@ -172,7 +172,9 @@ if(TALLER_CLIENT)
     client_src/client_protocol.cpp
     client_src/client_protocol.cpp
     client_src/client.h
-    client_src/client.cpp)
+    client_src/client.cpp
+          client_src/client_event_handler.h
+          client_src/client_event_handler.cpp)
 
   add_subdirectory(client_src) # PRIMERO el subdirectorio
 
@@ -300,3 +302,20 @@ if(TALLER_TESTS)
             Qt6::Network
             Qt6::Core)
 endif()
+
+# Añadir ejecutable de prueba movimiento_auto
+add_executable(movimiento_auto
+  server_src/tests/movimiento_auto.cpp
+  server_src/game/game_loop.cpp
+  server_src/game/car.cpp
+  server_src/game/player.h
+  server_src/network/client_monitor.cpp
+  server_src/network/client_monitor.h
+  common_src/game_state.cpp
+  common_src/game_state.h
+  common_src/queue.h
+  common_src/dtos.h)
+
+target_include_directories(movimiento_auto PRIVATE ${CMAKE_SOURCE_DIR})
+
+target_link_libraries(movimiento_auto PRIVATE taller_common yaml-cpp)

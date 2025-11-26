@@ -18,6 +18,7 @@ target_sources(client
 
     #game
     game/collision_manager.cpp
+    client_event_handler.cpp
 
     #threads/protocol
     client_receiver.cpp
@@ -42,10 +43,10 @@ target_sources(client
 
     #game
     game/collision_manager.h
+    client_event_handler.h
 
     #threads/protocol
     client_receiver.h
     client_sender.h
     
 )
-

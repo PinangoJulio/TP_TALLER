@@ -15,9 +15,7 @@ constexpr const char* kHost = "127.0.0.1";
 constexpr const char* kPort = "8085";
 constexpr int kDelay = 100;
 
-// ============================================================
 // TESTS DE INTEGRACIÓN: CLIENTE ↔ SERVIDOR REALES
-// ============================================================
 
 TEST(ServerClientProtocolTest, UsernameSerializationAndReception) {
     std::string username = "Lourdes";

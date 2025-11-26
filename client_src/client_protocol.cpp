@@ -280,24 +280,83 @@ void ClientProtocol::push_back_uint16(std::vector<uint8_t>& message, std::uint16
 }
 
 GameState ClientProtocol::receive_snapshot() {
-    // TODO: Implementar deserialización completa del snapshot
-    // Por ahora, bloqueamos esperando un byte para evitar loop infinito
     try {
         uint8_t msg_type;
         socket.recvall(&msg_type, sizeof(msg_type));
 
-        // TODO: Aquí debería ir la deserialización completa del GameState
-        // Por ahora retornamos un snapshot vacío pero al menos bloqueamos
-        std::cout << "[ClientProtocol] Received snapshot message type: "
-                  << static_cast<int>(msg_type) << std::endl;
+        std::cout << "[ClientProtocol]  Recibiendo snapshot (tipo: "
+                  << static_cast<int>(msg_type) << ")..." << std::endl;
+
+        GameState snapshot;
+
+        // Leer número de jugadores
+        uint8_t num_players;
+        socket.recvall(&num_players, sizeof(num_players));
+        std::cout << "[ClientProtocol]   → " << static_cast<int>(num_players)
+                  << " jugadores en el snapshot" << std::endl;
+
+        // Leer datos de cada jugador
+        for (uint8_t i = 0; i < num_players; i++) {
+            InfoPlayer player;
+
+            // ID del jugador
+            uint16_t player_id_net;
+            socket.recvall(&player_id_net, sizeof(player_id_net));
+            player.player_id = ntohs(player_id_net);
+
+            // Posición X (float como uint32)
+            uint32_t pos_x_net;
+            socket.recvall(&pos_x_net, sizeof(pos_x_net));
+            player.pos_x = static_cast<float>(ntohl(pos_x_net)) / 100.0f;
+
+            // Posición Y (float como uint32)
+            uint32_t pos_y_net;
+            socket.recvall(&pos_y_net, sizeof(pos_y_net));
+            player.pos_y = static_cast<float>(ntohl(pos_y_net)) / 100.0f;
+
+            // Ángulo (float como uint16)
+            uint16_t angle_net;
+            socket.recvall(&angle_net, sizeof(angle_net));
+            player.angle = static_cast<float>(ntohs(angle_net)) / 100.0f;
+
+            // Velocidad (float como uint16)
+            uint16_t velocity_net;
+            socket.recvall(&velocity_net, sizeof(velocity_net));
+            player.speed = static_cast<float>(ntohs(velocity_net)) / 10.0f;
+
+            // Salud
+            socket.recvall(&player.health, sizeof(player.health));
+
+            // Flags (nitro_active, is_drifting, etc.)
+            uint8_t flags;
+            socket.recvall(&flags, sizeof(flags));
+            player.nitro_active = (flags & 0x01) != 0;
+            player.is_drifting = (flags & 0x02) != 0;
+            player.race_finished = (flags & 0x04) != 0;
+            player.is_alive = (flags & 0x08) != 0;
+
+            snapshot.players.push_back(player);
+
+            // Log del jugador recibido
+            std::cout << "[ClientProtocol]   🏎️  Player " << player.player_id
+                      << ": pos=(" << player.pos_x << "," << player.pos_y << ") "
+                      << "vel=" << player.speed << " km/h "
+                      << "angle=" << player.angle << "° "
+                      << "hp=" << static_cast<int>(player.health)
+                      << (player.nitro_active ? " ⚡" : "")
+                      << (player.is_drifting ? " 💨" : "")
+                      << (player.race_finished ? " 🏁" : "")
+                      << (!player.is_alive ? " ☠️" : "") << std::endl;
+        }
+
+        // TODO: Leer checkpoints, power-ups, etc.
+
+        return snapshot;
 
     } catch (const std::exception& e) {
-        std::cerr << "[ClientProtocol] Error receiving snapshot: " << e.what() << std::endl;
+        std::cerr << "[ClientProtocol] ❌ Error receiving snapshot: " << e.what() << std::endl;
         throw;
     }
-
-    GameState snapshot;
-    return snapshot;
 }
 
 int ClientProtocol::receive_client_id() {

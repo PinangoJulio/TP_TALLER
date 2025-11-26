@@ -4,6 +4,7 @@
 #include <QMessageBox>
 #include <QObject>
 #include <QString>
+#include <QTimer>
 #include <iostream>
 #include <map>
 #include <memory>

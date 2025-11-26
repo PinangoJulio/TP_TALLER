@@ -11,7 +11,7 @@
 #include <iostream>
 #include <thread>
 
-// #include "game/game_renderer.h"  // TODO: Implementar GameRenderer
+#include "client_event_handler.h"
 #include "lobby/controller/lobby_controller.h"
 
 #define NFS_TITLE      "Need for Speed 2D"
@@ -56,6 +56,7 @@ void Client::start() {
     }
     username = controller.getPlayerName().toStdString();
     std::cout << "[Client] Usuario listo: " << username << std::endl;
+
     // Cerrar ventanas Qt DESPUÉS de que el QEventLoop termine
     std::cout << "[Client] Cerrando ventanas Qt..." << std::endl;
     controller.closeAllWindows();
@@ -63,10 +64,13 @@ void Client::start() {
     // Procesar eventos pendientes de Qt para que se cierren las ventanas
     QCoreApplication::processEvents();
 
+    // Pequeña espera para asegurar que Qt termine de cerrar las ventanas
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
     std::cout << "\n";
     std::cout << "╔════════════════════════════════════════════════════════════╗" << std::endl;
-    std::cout << "║  LOBBY COMPLETADO EXITOSAMENTE                        ║" << std::endl;
-    std::cout << "║   Iniciando fase de juego SDL...                       ║" << std::endl;
+    std::cout << "║  ✅ LOBBY COMPLETADO EXITOSAMENTE                        ║" << std::endl;
+    std::cout << "║  🎮 Iniciando fase de juego SDL...                       ║" << std::endl;
     std::cout << "╚════════════════════════════════════════════════════════════╝" << std::endl;
     std::cout << "\n";
 
@@ -75,12 +79,11 @@ void Client::start() {
     std::cout << "[Client] Iniciando threads de comunicación..." << std::endl;
 
     sender.start();
-    // TODO: Descomentar cuando el servidor envíe snapshots correctamente
-    // receiver.start();
+    receiver.start();
     threads_started = true;
 
-    std::cout << "[Client] ✅ Thread sender iniciado (receiver desactivado temporalmente)"
-              << std::endl;
+    std::cout << "[Client] ✅ Thread sender iniciado" << std::endl;
+    std::cout << "[Client] ✅ Thread receiver iniciado" << std::endl;
 
     // FASE 3: INICIALIZAR SDL Y CARGAR CONFIG
 
@@ -131,8 +134,8 @@ void Client::start() {
     // Implementar GameRenderer
     // GameRenderer game_renderer(renderer, player_id, window_width, window_height);
 
-    //  Implementar EventHandler para teclado
-    // EventHandler event_handler(command_queue, player_id);
+    // Crear EventHandler para manejar inputs del jugador
+    ClientEventHandler event_handler(command_queue, player_id, active);
 
     // Implementar sistema de sonido
     // SoundManager sound_manager(player_id);
@@ -143,14 +146,20 @@ void Client::start() {
     bool race_finished = false;
 
     std::cout << "\n";
-    std::cout << "[Client]Entrando al game loop..." << std::endl;
+    std::cout << "[Client] 🏁 Entrando al game loop..." << std::endl;
     std::cout << "[Client]  Controles:" << std::endl;
-    std::cout << "[Client]    ↑/W: Acelerar" << std::endl;
-    std::cout << "[Client]    ↓/S: Frenar" << std::endl;
-    std::cout << "[Client]    ←/A: Girar izquierda" << std::endl;
-    std::cout << "[Client]    →/D: Girar derecha" << std::endl;
+    std::cout << "[Client]    W: Acelerar" << std::endl;
+    std::cout << "[Client]    S: Frenar" << std::endl;
+    std::cout << "[Client]    A: Girar izquierda" << std::endl;
+    std::cout << "[Client]    D: Girar derecha" << std::endl;
     std::cout << "[Client]    ESPACIO: Usar nitro" << std::endl;
     std::cout << "[Client]    ESC: Salir del juego" << std::endl;
+    std::cout << "[Client]" << std::endl;
+    std::cout << "[Client]  Cheats:" << std::endl;
+    std::cout << "[Client]    F1: Invencibilidad" << std::endl;
+    std::cout << "[Client]    F2: Ganar carrera automáticamente" << std::endl;
+    std::cout << "[Client]    F3: Perder carrera" << std::endl;
+    std::cout << "[Client]    F4: Velocidad máxima" << std::endl;
     std::cout << "\n";
 
     // FASE 5: GAME LOOP PRINCIPAL
@@ -205,66 +214,8 @@ void Client::start() {
             // game_renderer.render(final_snapshot);
         }
 
-        // 3. Manejar eventos del jugador (teclado)
-        //  event_handler.handle_events(active);
-
-        // Manejo básico de eventos SDL
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                active = false;
-            } else if (event.type == SDL_KEYDOWN) {
-                switch (event.key.keysym.sym) {
-                case SDLK_ESCAPE:
-                    active = false;
-                    break;
-                case SDLK_UP:
-                case SDLK_w: {
-                    // Enviar comando ACCELERATE
-                    ComandMatchDTO cmd;
-                    cmd.player_id = player_id;
-                    cmd.command = GameCommand::ACCELERATE;
-                    command_queue.push(cmd);
-                    break;
-                }
-                case SDLK_DOWN:
-                case SDLK_s: {
-                    // Enviar comando BRAKE
-                    ComandMatchDTO cmd;
-                    cmd.player_id = player_id;
-                    cmd.command = GameCommand::BRAKE;
-                    command_queue.push(cmd);
-                    break;
-                }
-                case SDLK_LEFT:
-                case SDLK_a: {
-                    // Enviar comando TURN_LEFT
-                    ComandMatchDTO cmd;
-                    cmd.player_id = player_id;
-                    cmd.command = GameCommand::TURN_LEFT;
-                    command_queue.push(cmd);
-                    break;
-                }
-                case SDLK_RIGHT:
-                case SDLK_d: {
-                    // Enviar comando TURN_RIGHT
-                    ComandMatchDTO cmd;
-                    cmd.player_id = player_id;
-                    cmd.command = GameCommand::TURN_RIGHT;
-                    command_queue.push(cmd);
-                    break;
-                }
-                case SDLK_SPACE: {
-                    // Enviar comando USE_NITRO
-                    ComandMatchDTO cmd;
-                    cmd.player_id = player_id;
-                    cmd.command = GameCommand::USE_NITRO;
-                    command_queue.push(cmd);
-                    break;
-                }
-                }
-            }
-        }
+        // 3. Manejar eventos del jugador (teclado) usando EventHandler
+        event_handler.handle_events();
 
         // 4. Control de FPS
         auto t2 = std::chrono::steady_clock::now();
@@ -314,23 +265,27 @@ Client::~Client() {
 
     // Solo cerrar threads si no fueron cerrados en start()
     if (threads_started) {
-        std::cout << "[Client] Threads aún activos, cerrando desde destructor..." << std::endl;
+        std::cout << "[Client] ℹ️  Threads aún activos, cerrando desde destructor..." << std::endl;
 
-        sender.stop();
-        // TODO: Descomentar cuando receiver esté activo
-        // receiver.stop();
+        try {
+            sender.stop();
+            receiver.stop();
 
-        command_queue.close();
-        snapshot_queue.close();
+            command_queue.close();
+            snapshot_queue.close();
 
-        sender.join();
-        // TODO: Descomentar cuando receiver esté activo
-        // receiver.join();
 
-        std::cout << "[Client] ✅ Threads finalizados desde destructor" << std::endl;
+            sender.join();
+
+            receiver.join();
+
+            std::cout << "[Client] ✅ Threads finalizados desde destructor" << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "[Client] ⚠️  Error en destructor: " << e.what() << std::endl;
+        }
     } else {
-        std::cout << "[Client] Threads ya fueron cerrados previamente" << std::endl;
+        std::cout << "[Client] ℹ️  Threads ya fueron cerrados previamente" << std::endl;
     }
 
-    std::cout << "[Client] Destructor completado" << std::endl;
+    std::cout << "[Client] 👋 Destructor completado" << std::endl;
 }

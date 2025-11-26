@@ -69,6 +69,7 @@ signals:
     void playerLeftNotification(QString username);
     void playerReadyNotification(QString username, bool isReady);
     void carSelectedNotification(QString username, QString carName, QString carType);
+    void gameStarted(uint16_t game_id);  // Señal cuando la partida comienza
     void gameStartedNotification();
     void errorOccurred(QString message);
     void gamesListReceived(std::vector<GameInfo> games);
