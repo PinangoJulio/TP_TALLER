@@ -4,6 +4,7 @@
 #include <cstring>      // memset, strncpy
 #include <iomanip>
 #include <utility>
+#include <algorithm>    // remove_if
 
 #include "common_src/config.h"
 #include "common_src/dtos.h"  // RaceInfoDTO, ServerMessageType
@@ -277,16 +278,18 @@ const std::map<int, PlayerLobbyInfo>& Match::get_players() const {
 }
 
 // ============================================
-// CARRERAS
+// CARRERAS (LÓGICA ACTUALIZADA)
 // ============================================
 
 void Match::set_race_configs(const std::vector<ServerRaceConfig>& configs) {
     std::lock_guard<std::mutex> lock(mtx);
-    race_configs = configs;
+    race_configs = configs; // Guardar la configuración de secuencia
 
     // Crear las races
+    races.clear();
     for (const auto& config : configs) {
-        std::string yaml_path = "server_src/city_maps/" + config.city + "/" + config.race_name;
+        // Se asume la ruta: "server_src/city_maps/Vice City/Centro.yaml"
+        std::string yaml_path = "server_src/city_maps/" + config.city + "/" + config.race_name + ".yaml";
         add_race(yaml_path, config.city);
     }
 
@@ -313,43 +316,43 @@ void Match::add_race(const std::string& yaml_path, const std::string& city_name)
 // ENVÍO DE INFORMACIÓN DE CARRERA
 // ============================================
 
-void Match::send_race_info_to_all_players() {
-    if (races.empty() || race_configs.empty()) {
-        std::cerr << "[Match] ❌ No hay carreras configuradas para enviar info" << std::endl;
+void Match::send_race_info_to_all_players(int race_idx) {
+    if (race_idx < 0 || race_idx >= static_cast<int>(race_configs.size())) {
+        std::cerr << "[Match] ❌ Índice de carrera inválido para enviar info: " << race_idx << std::endl;
         return;
     }
 
-    // Obtener información de la primera carrera (current_race_index debería ser 0)
-    const auto& first_race_config = race_configs[0];
-    const auto& first_race = races[0];
+    // Obtener información de la carrera específica usando el índice
+    const auto& config = race_configs[race_idx];
+    const auto& race = races[race_idx];
 
     // Crear el DTO con la información de la carrera
     RaceInfoDTO race_info;
     std::memset(&race_info, 0, sizeof(race_info));
 
     // Copiar ciudad
-    std::strncpy(race_info.city_name, first_race_config.city.c_str(),
+    std::strncpy(race_info.city_name, config.city.c_str(),
                  sizeof(race_info.city_name) - 1);
 
     // Copiar nombre de carrera
-    std::strncpy(race_info.race_name, first_race_config.race_name.c_str(),
+    std::strncpy(race_info.race_name, config.race_name.c_str(),
                  sizeof(race_info.race_name) - 1);
 
     // Copiar ruta del mapa
-    std::string map_path = first_race->get_map_path();
+    std::string map_path = race->get_map_path();
     std::strncpy(race_info.map_file_path, map_path.c_str(), sizeof(race_info.map_file_path) - 1);
 
     // Configuración numérica
-    race_info.total_laps = 3;  // TODO: Obtener de config
-    race_info.race_number = 1;
+    race_info.total_laps = config.laps;  // <-- USAR LAPS DE LA CONFIGURACIÓN (1 para Sprint)
+    race_info.race_number = race_idx + 1;
     race_info.total_races = static_cast<uint8_t>(races.size());
     race_info.total_checkpoints = 0;  // TODO: Obtener del mapa parseado
     race_info.max_time_ms = 600000;   // 10 minutos en ms
 
-    std::cout << "[Match] 📨 Enviando info de carrera a todos los jugadores..." << std::endl;
+    std::cout << "[Match] 📨 Enviando info de carrera #" << (race_idx + 1) << " a todos..." << std::endl;
     std::cout << "[Match]   Ciudad: " << race_info.city_name << std::endl;
     std::cout << "[Match]   Carrera: " << race_info.race_name << std::endl;
-    std::cout << "[Match]   Mapa: " << race_info.map_file_path << std::endl;
+    std::cout << "[Match]   Laps: " << (int)race_info.total_laps << std::endl;
 
     if (!broadcast_callback) {
         std::cerr << "[Match] ❌ No hay broadcast_callback configurado" << std::endl;
@@ -411,7 +414,7 @@ void Match::send_race_info_to_all_players() {
 
 void Match::start_match() {
     std::cout << "[Match] ════════════════════════════════════════════" << std::endl;
-    std::cout << "[Match] 🏁 INICIANDO PARTIDA CODE " << match_code << std::endl;
+    std::cout << "[Match] 🏁 INICIANDO CAMPEONATO CODE " << match_code << std::endl;
     std::cout << "[Match] ════════════════════════════════════════════" << std::endl;
 
     std::lock_guard<std::mutex> lock(mtx);
@@ -427,15 +430,13 @@ void Match::start_match() {
     }
 
     state = MatchState::STARTED;
+    current_race_index = 0; // Reiniciar índice
+
     std::cout << "[Match]  Partida iniciada con " << players_info.size() << " jugadores"
               << std::endl;
     std::cout << "[Match]  Carreras configuradas: " << races.size() << std::endl;
 
-    // ✅ Enviar información de la primera carrera a todos los clientes
-    send_race_info_to_all_players();
-
-    // Los jugadores se registran en start_next_race() para cada carrera
-    // Iniciar primera carrera
+    // Arrancar la secuencia llamando a start_next_race()
     std::cout << "[Match] >>> Llamando a start_next_race()..." << std::endl;
     start_next_race();
     std::cout << "[Match] <<< start_next_race() completado" << std::endl;
@@ -446,39 +447,38 @@ void Match::start_next_race() {
         std::cerr << "[Match] No hay carreras configuradas.\n";
         return;
     }
+    
+    // Verificar si ya terminamos todas las carreras
     if (current_race_index >= static_cast<int>(races.size())) {
-        std::cout << "[Match] Todas las carreras finalizadas.\n";
+        std::cout << "[Match] 🏆 CAMPEONATO FINALIZADO (Todas las carreras completadas).\n";
         is_active.store(false);
+        state = MatchState::FINISHED;
         return;
     }
 
     is_active.store(true);
+    
+    // Obtener la instancia de carrera y su configuración
     auto& current_race = races[current_race_index];
+    const auto& current_config = race_configs[current_race_index];
+    
     std::string yaml = current_race->get_map_path();
-    std::cout << "[Match] Iniciando carrera #" << current_race_index + 1 << " en mapa " << yaml
-              << "\n";
+    
+    std::cout << "[Match] Iniciando carrera #" << (current_race_index + 1) << " en " 
+              << current_config.city << " - " << current_config.race_name 
+              << " (" << current_config.laps << " laps)\n";
 
-    // ✅ Los jugadores ya fueron registrados cuando seleccionaron auto
-    // Solo necesitamos iniciar la carrera
-    std::cout << "[Match] ══════════════════════════════════════════════════════════" << std::endl;
-    std::cout << "[Match]  INICIANDO CARRERA CON " << players_info.size() << " JUGADORES"
-              << std::endl;
-    std::cout << "[Match] ══════════════════════════════════════════════════════════" << std::endl;
+    // ✅ Enviar info de ESTA carrera a los clientes
+    send_race_info_to_all_players(current_race_index);
 
-    // Verificar que todos los jugadores estén registrados (solo para debug)
-    for (const auto& [id, info] : players_info) {
-        std::cout << "[Match]   ✓ Jugador: " << info.name << " (" << info.car_name << " - "
-                  << info.car_type << ")" << std::endl;
-    }
-
-    std::cout << "[Match] ══════════════════════════════════════════════════════════" << std::endl;
-
-    // ✅ Configurar parámetros de la carrera
-    current_race->set_total_laps(3);  // TODO: Obtener de configuración
-    current_race->set_city(current_race->get_city_name());
+    // ✅ Configurar parámetros de la carrera en el GameLoop
+    current_race->set_total_laps(current_config.laps); 
+    current_race->set_city(current_config.city);
 
     // Iniciar la carrera
     current_race->start();
+    
+    // Preparar índice para la próxima (cuando esta termine)
     current_race_index++;
 }
 

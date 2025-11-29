@@ -57,7 +57,7 @@ private:
     std::chrono::steady_clock::time_point race_start_time;
 
     // ---- Manager de colidiones----
-    //CollisionManager collision_manager;
+    CollisionManager collision_manager;
 
 
     void reset_players_spawn_positions();  // Resetea posiciones de spawn (al iniciar carrera)
@@ -78,8 +78,8 @@ private:
     std::string to_kebab_case(std::string str);
     
 public:
-    GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues, const std::string& yaml_path);
-
+    GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues, 
+             const std::string& yaml_path, const std::string& city);
     // ---- AGREGAR JUGADORES ----
     void add_player(int player_id, const std::string& name, const std::string& car_name,
                     const std::string& car_type);

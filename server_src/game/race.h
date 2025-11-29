@@ -22,13 +22,15 @@ public:
     Race(Queue<ComandMatchDTO>& cmdQueue, ClientMonitor& brdcstr, const std::string& city,
          const std::string& yaml_mapa)
         : commandQueue(cmdQueue), broadcaster(brdcstr), city_name(city), map_yaml_path(yaml_mapa) {
-        gameLoop = std::make_unique<GameLoop>(commandQueue, broadcaster, map_yaml_path);
+        
+        // CORRECCIÓN AQUÍ: Se agrega 'city_name' como 4to argumento
+        gameLoop = std::make_unique<GameLoop>(commandQueue, broadcaster, map_yaml_path, city_name);
     }
 
     void start() {
         std::cout << "[Race] Iniciando carrera en " << city_name << " (mapa: " << map_yaml_path
                   << ")\n";
-        // gameLoop->start();  // Descomentarás esto cuando quieras activar el GameLoop
+       // gameLoop->start();  
     }
 
     void stop() {
@@ -50,17 +52,18 @@ public:
 
     // ✅ Configurar parámetros de la carrera
     void set_total_laps(int laps) { gameLoop->set_total_laps(laps); }
-    void set_city(const std::string& city) { gameLoop->set_city_name(city); }
+    void set_city(const std::string& city) { 
+        city_name = city;
+        gameLoop->set_city_name(city); 
+    }
 
     const std::string& get_city_name() const { return city_name; }
     const std::string& get_map_path() const { return map_yaml_path; }
 
-    /* Cuando la carrera termina, detener y limpiar el GameLoop en el destructor de Race,
-     * para evitar hilos colgando*/
+    /* Cuando la carrera termina, detener y limpiar el GameLoop en el destructor de Race */
     ~Race() {
-        if (gameLoop &&
-            gameLoop->is_alive()) {  // <-- Asegurarse de que solo se hace stop/join si es necesario
-            gameLoop->stop();
+        if (gameLoop && gameLoop->is_alive()) { 
+            gameLoop->stop_race();
             gameLoop->join();
         }
     }

@@ -30,7 +30,8 @@ struct PlayerLobbyInfo {
 enum class MatchState : uint8_t {
     WAITING,  // Esperando jugadores
     READY,    // >= 2 jugadores, puede iniciarse
-    STARTED   // Juego en curso
+    STARTED,   // Juego en curso
+    FINISHED
 };
 
 class Match {
@@ -56,7 +57,7 @@ private:
     std::function<void(const std::vector<uint8_t>&, int exclude_player_id)> broadcast_callback;
 
     // Helper para enviar info del mapa a todos los jugadores
-    void send_race_info_to_all_players();
+    void send_race_info_to_all_players(int race_idx);
 
 public:
     Match(std::string host_name, int code, int max_players);

@@ -1,4 +1,5 @@
 #include "game_loop.h"
+
 #include <chrono>
 #include <iomanip>
 #include <iostream>
@@ -13,17 +14,28 @@
 // ==========================================================
 
 GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues,
-                   const std::string& yaml_path)
+                   const std::string& yaml_path, const std::string& city)
     : is_running(false), race_finished(false), comandos(comandos), queues_players(queues),
-      yaml_path(yaml_path), total_laps(3)  // Por defecto 3 vueltas
-{
-    std::cout << "[GameLoop] Constructor compilado OK. Simulación lista para iniciar." << std::endl;
-    std::cout << "[GameLoop] Mapa: " << yaml_path << std::endl;
+      yaml_path(yaml_path), city_name(city), total_laps(1),
+      // Cargar mapas de colisión dinámicamente según la ciudad
+      collision_manager("assets/img/map/layers/" + to_kebab_case(city) + "/" + to_kebab_case(city) +
+                            ".png",  // Camino (Suelo)
+                        "assets/img/map/layers/" + to_kebab_case(city) + "/" + to_kebab_case(city) +
+                            "-puentes.png",                                             // Puentes
+                        "assets/img/map/layers/" + to_kebab_case(city) + "/rampas.png"  // Rampas
+      ) {
+    std::cout << "[GameLoop] Iniciado en " << city_name << ". Mapa físico cargado." << std::endl;
 }
 
 GameLoop::~GameLoop() {
     is_running = false;
     players.clear();
+}
+
+std::string GameLoop::to_kebab_case(std::string str) {
+    std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+    std::replace(str.begin(), str.end(), ' ', '-');
+    return str;
 }
 
 // ==========================================================
@@ -390,13 +402,14 @@ void GameLoop::procesar_comandos() {
             }
         } break;
 
-        case GameCommand::CHEAT_MAX_SPEED: // cheat opcional no obligatorio, no lo pide enunciado
+        case GameCommand::CHEAT_MAX_SPEED:  // cheat opcional no obligatorio, no lo pide enunciado
             car->setCurrentSpeed(car->getMaxSpeed());
             std::cout << "[GameLoop] CHEAT: Velocidad máxima para player " << comando.player_id
                       << std::endl;
             break;
 
-        case GameCommand::CHEAT_TELEPORT_CHECKPOINT: // cheat opcional no obligatorio, no lo pide enunciado
+        case GameCommand::CHEAT_TELEPORT_CHECKPOINT:  // cheat opcional no obligatorio, no lo pide
+                                                      // enunciado
             break;
 
         // === UPGRADES ===
@@ -429,7 +442,94 @@ void GameLoop::procesar_comandos() {
 }
 
 void GameLoop::actualizar_fisica() {
-    //aca iria lo de Box2D ???
+    float dt = SLEEP / 1000.0f;  // Delta time en segundos
+
+    for (auto& [id, player] : players) {
+        Car* car = player->getCar();
+        if (!car)
+            continue;
+
+        // 1. Estado actual
+        float current_x = car->getX();
+        float current_y = car->getY();
+        int current_level = car->getLevel();
+
+        // 2. Calcular nueva posición propuesta
+        float speed = car->getCurrentSpeed();
+        float angle = car->getAngle();
+
+        float vel_x = speed * std::cos(angle);
+        float vel_y = speed * std::sin(angle);
+        car->setVelocity(vel_x, vel_y);
+
+        float next_x = current_x + vel_x * dt;
+        float next_y = current_y + vel_y * dt;
+
+        // Limites del mapa
+        int map_w = collision_manager.GetWidth();
+        int map_h = collision_manager.GetHeight();
+        if (map_w > 0) {
+            if (next_x < 0)
+                next_x = 0;
+            if (next_y < 0)
+                next_y = 0;
+            if (next_x >= map_w)
+                next_x = map_w - 1;
+            if (next_y >= map_h)
+                next_y = map_h - 1;
+        }
+
+        // 3. Lógica de Niveles (Ground vs Bridge)
+        bool nextHasGround = collision_manager.hasGroundLevel(next_x, next_y);
+        bool nextHasBridge = collision_manager.hasBridgeLevel(next_x, next_y);
+        bool didTransition = false;
+
+        // Caso A: Estamos abajo (Nivel 0) y vemos un puente
+        if (current_level == 0 && nextHasBridge) {
+            if (!nextHasGround) {
+                // Solo puente -> Intentar subir (Rampa de subida)
+                if (collision_manager.canTransition(next_x, next_y, 0, 1)) {
+                    car->setPosition(next_x, next_y);
+                    car->setLevel(1);
+                    didTransition = true;
+                }
+            } else if (nextHasGround && nextHasBridge) {
+                // Hay ambos (zona de rampa visual) -> Moverse libremente
+                if (!collision_manager.isWall(next_x, next_y, current_level)) {
+                    car->setPosition(next_x, next_y);
+                    didTransition = true;
+                }
+            }
+        }
+        // Caso B: Estamos arriba (Nivel 1) y vemos suelo
+        else if (current_level == 1 && nextHasGround) {
+            if (!nextHasBridge) {
+                // Solo suelo -> Intentar bajar (Rampa de bajada)
+                if (collision_manager.canTransition(next_x, next_y, 1, 0)) {
+                    car->setPosition(next_x, next_y);
+                    car->setLevel(0);
+                    didTransition = true;
+                }
+            } else if (nextHasBridge && nextHasGround) {
+                // Zona mixta
+                if (!collision_manager.isWall(next_x, next_y, current_level)) {
+                    car->setPosition(next_x, next_y);
+                    didTransition = true;
+                }
+            }
+        }
+
+        // Caso C: Movimiento normal (sin cambio de nivel)
+        if (!didTransition) {
+            if (!collision_manager.isWall(next_x, next_y, current_level)) {
+                car->setPosition(next_x, next_y);
+            } else {
+                // Choque con pared -> Frenar
+                car->setCurrentSpeed(0);
+                // Opcional: car->takeDamage(5);
+            }
+        }
+    }
 }
 
 void GameLoop::detectar_colisiones() {
@@ -477,20 +577,41 @@ void GameLoop::enviar_estado_a_jugadores() {
 // ==========================================================
 
 GameState GameLoop::create_snapshot() {
-    // Convertir map<int, unique_ptr<Player>> a vector<Player*>
-    std::vector<Player*> player_list;
+    std::vector<InfoPlayer> players_info;
     for (const auto& [id, player_ptr] : players) {
-        player_list.push_back(player_ptr.get());
+        InfoPlayer info;
+        info.player_id = player_ptr->getId();
+
+        Car* car = player_ptr->getCar();
+        if (car) {
+            info.pos_x = car->getX();
+            info.pos_y = car->getY();
+            info.angle = car->getAngle();
+            info.speed = car->getCurrentSpeed();
+            info.health = car->getHealth();
+            info.level = car->getLevel();  // <--- IMPORTANTE: Enviar nivel
+        }
+        players_info.push_back(info);
     }
 
-    // Crear snapshot usando el constructor
-    GameState snapshot(player_list, city_name, yaml_path, total_laps, is_running.load());
+    GameState state;
+    state.players = players_info;
+    return state;
 
-    // Cuando se implementen, agregar:
-    // - checkpoints
-    // - hints
-    // - NPCs
-    // - eventos
+    // // Convertir map<int, unique_ptr<Player>> a vector<Player*>
+    // std::vector<Player*> player_list;
+    // for (const auto& [id, player_ptr] : players) {
+    //     player_list.push_back(player_ptr.get());
+    // }
 
-    return snapshot;
+    // // Crear snapshot usando el constructor
+    // GameState snapshot(player_list, city_name, yaml_path, total_laps, is_running.load());
+
+    // // Cuando se implementen, agregar:
+    // // - checkpoints
+    // // - hints
+    // // - NPCs
+    // // - eventos
+
+    // return snapshot;
 }

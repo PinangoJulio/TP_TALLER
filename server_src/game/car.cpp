@@ -9,10 +9,26 @@
 // ==========================================================
 
 Car::Car(const std::string& model, const std::string& type)
-    : model_name(model), car_type(type), max_speed(100.0f), acceleration(50.0f), handling(1.0f),
-      max_durability(100.0f), nitro_boost(1.5f), weight(1000.0f), current_speed(0.0f),
-      current_health(100.0f), nitro_amount(100.0f), nitro_active(false), x(0.0f), y(0.0f),
-      angle(0.0f), velocity_x(0.0f), velocity_y(0.0f), is_drifting(false), is_colliding(false),level(0),
+    : model_name(model), 
+      car_type(type), 
+      max_speed(100.0f), 
+      acceleration(50.0f), 
+      handling(1.0f),
+      max_durability(100.0f), 
+      nitro_boost(1.5f), 
+      weight(1000.0f), 
+      current_speed(0.0f),
+      current_health(100.0f), 
+      nitro_amount(100.0f), 
+      nitro_active(false), 
+      level(0), // <--- CORRECCIÓN: Movido aquí (coincide con car.h)
+      x(0.0f), 
+      y(0.0f),
+      angle(0.0f), 
+      velocity_x(0.0f), 
+      velocity_y(0.0f), 
+      is_drifting(false), 
+      is_colliding(false),
       is_destroyed(false) {
     std::cout << "[Car] Creado: " << model << " (" << type << ")" << std::endl;
 }
@@ -144,6 +160,7 @@ void Car::reset() {
     current_health = max_durability;
     nitro_amount = 100.0f;
     nitro_active = false;
+    level = 0;
     x = 0.0f;
     y = 0.0f;
     angle = 0.0f;

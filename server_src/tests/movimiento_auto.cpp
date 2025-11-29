@@ -26,7 +26,7 @@ int main() {
     monitor.add_client_queue(snapshots, 1);
 
     // Crear GameLoop
-    GameLoop loop(comandos, monitor, mapa_yaml);
+    GameLoop loop(comandos, monitor, mapa_yaml, "vice city");
 
     // Agregar jugador de prueba
     loop.add_player(1, "tester", "Brisa", "sport");
