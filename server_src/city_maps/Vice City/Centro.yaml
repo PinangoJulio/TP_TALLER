@@ -1,61 +1,148 @@
 # Configuración del Circuito: Centro
 # Ciudad: Vice City
 
-race:
-  name: "Centro"
+# race:
+#   name: "Centro"
+#   city: "Vice City"
+#   description: "Circuito urbano entre rascacielos y calles estrechas"
+#   max_time_seconds: 600
+#   total_laps: 3
+#   difficulty: "hard"
+
+# spawn_points:
+#   - { x: 150.0, y: 250.0, angle: 0.0 }
+#   - { x: 160.0, y: 250.0, angle: 0.0 }
+#   - { x: 170.0, y: 250.0, angle: 0.0 }
+#   - { x: 180.0, y: 250.0, angle: 0.0 }
+#   - { x: 150.0, y: 260.0, angle: 0.0 }
+#   - { x: 160.0, y: 260.0, angle: 0.0 }
+#   - { x: 170.0, y: 260.0, angle: 0.0 }
+#   - { x: 180.0, y: 260.0, angle: 0.0 }
+
+# checkpoints:
+#   - { id: 0, type: "start", x: 200.0, y: 300.0, width: 60.0, height: 25.0, angle: 90.0 }
+#   - { id: 1, type: "normal", x: 250.0, y: 450.0, width: 50.0, height: 20.0, angle: 90.0 }
+#   - { id: 2, type: "normal", x: 400.0, y: 500.0, width: 50.0, height: 20.0, angle: 0.0 }
+#   - { id: 3, type: "normal", x: 600.0, y: 450.0, width: 50.0, height: 20.0, angle: 270.0 }
+#   - { id: 4, type: "normal", x: 750.0, y: 300.0, width: 50.0, height: 20.0, angle: 180.0 }
+#   - { id: 5, type: "normal", x: 700.0, y: 150.0, width: 50.0, height: 20.0, angle: 225.0 }
+#   - { id: 6, type: "normal", x: 500.0, y: 100.0, width: 50.0, height: 20.0, angle: 180.0 }
+#   - { id: 7, type: "normal", x: 300.0, y: 150.0, width: 50.0, height: 20.0, angle: 135.0 }
+#   - { id: 8, type: "finish", x: 200.0, y: 300.0, width: 60.0, height: 25.0, angle: 90.0 }
+
+# hints:
+#   - { checkpoint_target: 1, x: 225.0, y: 375.0, direction: "forward" }
+#   - { checkpoint_target: 2, x: 325.0, y: 475.0, direction: "right" }
+#   - { checkpoint_target: 3, x: 500.0, y: 475.0, direction: "forward" }
+#   - { checkpoint_target: 4, x: 675.0, y: 375.0, direction: "left" }
+#   - { checkpoint_target: 5, x: 725.0, y: 225.0, direction: "forward" }
+#   - { checkpoint_target: 6, x: 600.0, y: 125.0, direction: "left" }
+#   - { checkpoint_target: 7, x: 400.0, y: 125.0, direction: "left" }
+#   - { checkpoint_target: 8, x: 250.0, y: 225.0, direction: "forward" }
+
+# obstacles:
+#   - { id: 1, type: "building", x: 350.0, y: 300.0, width: 100.0, height: 150.0 }
+#   - { id: 2, type: "building", x: 550.0, y: 250.0, width: 120.0, height: 180.0 }
+#   - { id: 3, type: "wall", x: 450.0, y: 400.0, width: 80.0, height: 10.0 }
+
+# npcs:
+#   - { id: 1, car_type: "sedan", spawn_x: 300.0, spawn_y: 350.0, spawn_angle: 0.0, speed: 25.0 }
+#   - { id: 2, car_type: "classic", spawn_x: 600.0, spawn_y: 350.0, spawn_angle: 180.0, speed: 20.0 }
+
+# map:
+#   width: 1024
+#   height: 768
+#   background: "Centro.png"
+
+# metadata:
+#   author: "Need for Speed 2D Team"
+#   version: "1.0"
+#   created_date: "2025-01-24"
+
+# Configuración de la carrera Centro en Vice City
+
+race_info:
   city: "Vice City"
-  description: "Circuito urbano entre rascacielos y calles estrechas"
-  max_time_seconds: 600
-  total_laps: 3
-  difficulty: "hard"
+  name: "Centro"
+  laps: 3
 
-spawn_points:
-  - { x: 150.0, y: 250.0, angle: 0.0 }
-  - { x: 160.0, y: 250.0, angle: 0.0 }
-  - { x: 170.0, y: 250.0, angle: 0.0 }
-  - { x: 180.0, y: 250.0, angle: 0.0 }
-  - { x: 150.0, y: 260.0, angle: 0.0 }
-  - { x: 160.0, y: 260.0, angle: 0.0 }
-  - { x: 170.0, y: 260.0, angle: 0.0 }
-  - { x: 180.0, y: 260.0, angle: 0.0 }
+# 🎯 Posiciones iniciales (x, y, ángulo_en_grados)
+# Estas son posiciones de ejemplo basadas en tu test (2320, 2336)
+# Están en formación de parrilla 2x4
+spawn_positions:
+  - [2280, 2320, 90]   # Jugador 1 - Fila 1, Izquierda
+  - [2280, 2352, 90]   # Jugador 2 - Fila 1, Derecha
+  - [2312, 2320, 90]   # Jugador 3 - Fila 2, Izquierda
+  - [2312, 2352, 90]   # Jugador 4 - Fila 2, Derecha
+  - [2344, 2320, 90]   # Jugador 5 - Fila 3, Izquierda
+  - [2344, 2352, 90]   # Jugador 6 - Fila 3, Derecha
+  - [2376, 2320, 90]   # Jugador 7 - Fila 4, Izquierda
+  - [2376, 2352, 90]   # Jugador 8 - Fila 4, Derecha
 
+# 🏁 Checkpoints del circuito
 checkpoints:
-  - { id: 0, type: "start", x: 200.0, y: 300.0, width: 60.0, height: 25.0, angle: 90.0 }
-  - { id: 1, type: "normal", x: 250.0, y: 450.0, width: 50.0, height: 20.0, angle: 90.0 }
-  - { id: 2, type: "normal", x: 400.0, y: 500.0, width: 50.0, height: 20.0, angle: 0.0 }
-  - { id: 3, type: "normal", x: 600.0, y: 450.0, width: 50.0, height: 20.0, angle: 270.0 }
-  - { id: 4, type: "normal", x: 750.0, y: 300.0, width: 50.0, height: 20.0, angle: 180.0 }
-  - { id: 5, type: "normal", x: 700.0, y: 150.0, width: 50.0, height: 20.0, angle: 225.0 }
-  - { id: 6, type: "normal", x: 500.0, y: 100.0, width: 50.0, height: 20.0, angle: 180.0 }
-  - { id: 7, type: "normal", x: 300.0, y: 150.0, width: 50.0, height: 20.0, angle: 135.0 }
-  - { id: 8, type: "finish", x: 200.0, y: 300.0, width: 60.0, height: 25.0, angle: 90.0 }
+  # Punto de inicio/meta
+  - id: 0
+    x: 2300
+    y: 2336
+    width: 100
+    angle: 0
+    is_start: true
+    is_finish: true
+    
+  # Checkpoint 1 - Primera curva
+  - id: 1
+    x: 2500
+    y: 2400
+    width: 80
+    angle: 45
+    is_start: false
+    is_finish: false
+    
+  # Checkpoint 2 - Zona intermedia
+  - id: 2
+    x: 2700
+    y: 2300
+    width: 80
+    angle: 90
+    is_start: false
+    is_finish: false
+    
+  # Checkpoint 3 - Última curva antes de meta
+  - id: 3
+    x: 2400
+    y: 2200
+    width: 80
+    angle: 180
+    is_start: false
+    is_finish: false
 
+# 🎯 Hints/Flechas direccionales
 hints:
-  - { checkpoint_target: 1, x: 225.0, y: 375.0, direction: "forward" }
-  - { checkpoint_target: 2, x: 325.0, y: 475.0, direction: "right" }
-  - { checkpoint_target: 3, x: 500.0, y: 475.0, direction: "forward" }
-  - { checkpoint_target: 4, x: 675.0, y: 375.0, direction: "left" }
-  - { checkpoint_target: 5, x: 725.0, y: 225.0, direction: "forward" }
-  - { checkpoint_target: 6, x: 600.0, y: 125.0, direction: "left" }
-  - { checkpoint_target: 7, x: 400.0, y: 125.0, direction: "left" }
-  - { checkpoint_target: 8, x: 250.0, y: 225.0, direction: "forward" }
-
-obstacles:
-  - { id: 1, type: "building", x: 350.0, y: 300.0, width: 100.0, height: 150.0 }
-  - { id: 2, type: "building", x: 550.0, y: 250.0, width: 120.0, height: 180.0 }
-  - { id: 3, type: "wall", x: 450.0, y: 400.0, width: 80.0, height: 10.0 }
-
-npcs:
-  - { id: 1, car_type: "sedan", spawn_x: 300.0, spawn_y: 350.0, spawn_angle: 0.0, speed: 25.0 }
-  - { id: 2, car_type: "classic", spawn_x: 600.0, spawn_y: 350.0, spawn_angle: 180.0, speed: 20.0 }
-
-map:
-  width: 1024
-  height: 768
-  background: "Centro.png"
-
-metadata:
-  author: "Need for Speed 2D Team"
-  version: "1.0"
-  created_date: "2025-01-24"
-
+  # Desde start hacia checkpoint 1
+  - id: 0
+    x: 2400
+    y: 2336
+    direction_angle: 45
+    for_checkpoint: 1
+    
+  # Desde checkpoint 1 hacia checkpoint 2
+  - id: 1
+    x: 2600
+    y: 2350
+    direction_angle: 90
+    for_checkpoint: 2
+    
+  # Desde checkpoint 2 hacia checkpoint 3
+  - id: 2
+    x: 2700
+    y: 2250
+    direction_angle: 180
+    for_checkpoint: 3
+    
+  # Desde checkpoint 3 hacia meta
+  - id: 3
+    x: 2350
+    y: 2200
+    direction_angle: 270
+    for_checkpoint: 0

@@ -13,19 +13,47 @@
 // CONSTRUCTOR Y DESTRUCTOR
 // ==========================================================
 
+// GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues,
+//                    const std::string& yaml_path, const std::string& city)
+//     : is_running(false), race_finished(false), comandos(comandos), queues_players(queues),
+//       yaml_path(yaml_path), city_name(city), total_laps(1),
+//       // Cargar mapas de colisión dinámicamente según la ciudad
+//       collision_manager("assets/img/map/layers/" + to_kebab_case(city) + "/" + to_kebab_case(city) +
+//                             ".png",  // Camino (Suelo)
+//                         "assets/img/map/layers/" + to_kebab_case(city) + "/" + to_kebab_case(city) +
+//                             "-puentes.png",                                             // Puentes
+//                         "assets/img/map/layers/" + to_kebab_case(city) + "/rampas.png"  // Rampas
+//       ) {
+//     std::cout << "[GameLoop] Iniciado en " << city_name << ". Mapa físico cargado." << std::endl;
+// }
 GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues,
                    const std::string& yaml_path, const std::string& city)
     : is_running(false), race_finished(false), comandos(comandos), queues_players(queues),
       yaml_path(yaml_path), city_name(city), total_laps(1),
-      // Cargar mapas de colisión dinámicamente según la ciudad
       collision_manager("assets/img/map/layers/" + to_kebab_case(city) + "/" + to_kebab_case(city) +
-                            ".png",  // Camino (Suelo)
-                        "assets/img/map/layers/" + to_kebab_case(city) + "/" + to_kebab_case(city) +
-                            "-puentes.png",                                             // Puentes
-                        "assets/img/map/layers/" + to_kebab_case(city) + "/rampas.png"  // Rampas
+                            ".png",
+                        "assets/img/map/layers/" + to_kebab_case(city) + "/puentes-" + to_kebab_case(city) +
+                            ".png",
+                        "assets/img/map/layers/" + to_kebab_case(city) + "/rampas-" + to_kebab_case(city) +".png"
       ) {
+    
     std::cout << "[GameLoop] Iniciado en " << city_name << ". Mapa físico cargado." << std::endl;
+    
+    // ✅ NUEVO: Cargar configuración del mapa (spawn positions, checkpoints)
+    try {
+        map_config = std::make_unique<MapConfig>(yaml_path);
+        std::cout << "[GameLoop] ✅ Configuración del mapa cargada: " 
+                  << map_config->get_spawn_positions().size() 
+                  << " spawn positions disponibles" << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "[GameLoop] ⚠️ Error cargando configuración del mapa: " 
+                  << e.what() << std::endl;
+        std::cerr << "[GameLoop]    Se usarán posiciones por defecto" << std::endl;
+        // Crear config vacía con valores por defecto
+        map_config = nullptr;
+    }
 }
+
 
 GameLoop::~GameLoop() {
     is_running = false;
@@ -253,6 +281,63 @@ void GameLoop::set_player_ready(int player_id, bool ready) {
     player->setReady(ready);
 }
 
+void GameLoop::reset_players_spawn_positions() {
+    std::cout << "\n[GameLoop] 🏁 Colocando jugadores en spawn positions..." << std::endl;
+    
+    if (!map_config) {
+        std::cerr << "[GameLoop] ⚠️ No hay map_config, usando posiciones por defecto" 
+                  << std::endl;
+        // Posiciones por defecto en línea
+        float start_x = 100.0f;
+        float start_y = 100.0f;
+        int idx = 0;
+        
+        for (auto& [player_id, player] : players) {
+            Car* car = player->getCar();
+            if (!car) continue;
+            
+            float x = start_x + (idx * 40.0f);  // Separación de 40px
+            float y = start_y;
+            float angle = 0.0f;  // Mirando hacia arriba
+            
+            car->setPosition(x, y);
+            car->setAngle(angle);
+            car->setLevel(0);  // Nivel calle
+            car->reset();  // Resetear velocidad, salud, nitro
+            
+            std::cout << "[GameLoop]   Player " << player_id << " -> (" 
+                      << x << ", " << y << ") angle=" << angle << "°" << std::endl;
+            idx++;
+        }
+        return;
+    }
+    
+    // Usar spawn positions del YAML
+    int player_idx = 0;
+    for (auto& [player_id, player] : players) {
+        Car* car = player->getCar();
+        if (!car) continue;
+        
+        SpawnPosition spawn = map_config->get_spawn_for_player(player_idx);
+        
+        // Convertir ángulo de grados a radianes
+        float angle_rad = spawn.angle_degrees * M_PI / 180.0f;
+        
+        car->setPosition(spawn.x, spawn.y);
+        car->setAngle(angle_rad);
+        car->setLevel(0);  // Todos empiezan en nivel calle
+        car->reset();  // Resetear velocidad, salud, nitro
+        
+        std::cout << "[GameLoop]   Player " << player_id << " (" << player->getName() 
+                  << ") -> (" << spawn.x << ", " << spawn.y << ") "
+                  << "angle=" << spawn.angle_degrees << "°" << std::endl;
+        
+        player_idx++;
+    }
+    
+    std::cout << "[GameLoop] ✅ " << player_idx << " jugadores colocados en el mapa" 
+              << std::endl;
+}
 // ==========================================================
 // MÉTODOS DE DEBUG
 // ==========================================================
@@ -299,11 +384,17 @@ void GameLoop::run() {
     is_running = true;
     race_start_time = std::chrono::steady_clock::now();
 
-    std::cout << "[GameLoop] ═══════════════════════════════════════════════" << std::endl;
-    std::cout << "[GameLoop] CARRERA INICIADA " << std::endl;
-    std::cout << "[GameLoop] ═══════════════════════════════════════════════" << std::endl;
+    std::cout << "[GameLoop] ╔═══════════════════════════════════════════════╗" << std::endl;
+    std::cout << "[GameLoop] ║          CARRERA INICIADA                     ║" << std::endl;
+    std::cout << "[GameLoop] ╚═══════════════════════════════════════════════╝" << std::endl;
 
     print_race_info();
+
+    // ✅ NUEVO: Colocar jugadores en spawn positions antes de empezar
+    reset_players_spawn_positions();
+
+    std::cout << "[GameLoop] 🏁 ¡3... 2... 1... GO!" << std::endl;
+    std::cout << std::endl;
 
     while (is_running.load() && !race_finished.load()) {
         // --- FASE 1: Procesar Comandos ---
@@ -328,9 +419,10 @@ void GameLoop::run() {
         std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP));
     }
 
-    std::cout << "[GameLoop]  CARRERA FINALIZADA " << std::endl;
+    std::cout << "[GameLoop] 🏁 CARRERA FINALIZADA " << std::endl;
     std::cout << "[GameLoop] Hilo de simulación detenido correctamente." << std::endl;
 }
+
 
 // MÉTODOS PRIVADOS (LÓGICA DE JUEGO)
 

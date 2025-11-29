@@ -9,6 +9,9 @@
 #include "../common_src/dtos.h"
 #include "common_src/lobby_protocol.h"
 
+// ✅ NO incluir game_protocol.h, solo definir el valor que necesitamos
+#define MSG_GAME_SNAPSHOT 0x30  // Tipo de mensaje para snapshots del juego
+
 ServerProtocol::ServerProtocol(Socket& skt) : socket(skt) {}
 
 // --- Lectura básica de datos ---
@@ -52,25 +55,21 @@ uint8_t ServerProtocol::get_uint8_t() {
     return n;
 }
 
-/** lee comandos que el cliente envia durante la fase de juego. Lee los datos del socket y los
- interpreta segun el codigo de comando recibido **/
 bool ServerProtocol::read_command_client(ComandMatchDTO& command) {
-    // Leer el código de comando (1 byte)
+    // ... (tu código existente sin cambios)
     uint8_t cmd_code;
     int bytes = socket.recvall(&cmd_code, sizeof(cmd_code));
     if (bytes == 0) {
-        return false;  // Connection closed
+        return false;
     }
 
-    // Interpretar según el código y leer datos adicionales si es necesario
     switch (cmd_code) {
-    // ===== COMANDOS SIMPLES (solo 1 byte) =====
     case CMD_ACCELERATE:
         command.command = GameCommand::ACCELERATE;
         command.speed_boost = 1.0f;
         break;
 
-    case CMD_BRAKE:  //(frenar)
+    case CMD_BRAKE:
         command.command = GameCommand::BRAKE;
         command.speed_boost = 1.0f;
         break;
@@ -87,7 +86,6 @@ bool ServerProtocol::read_command_client(ComandMatchDTO& command) {
         command.command = GameCommand::DISCONNECT;
         break;
 
-    // ===== CHEATS SIMPLES =====
     case CMD_CHEAT_INVINCIBLE:
         command.command = GameCommand::CHEAT_INVINCIBLE;
         break;
@@ -106,7 +104,6 @@ bool ServerProtocol::read_command_client(ComandMatchDTO& command) {
 
     case CMD_TURN_LEFT: {
         command.command = GameCommand::TURN_LEFT;
-        // Leer intensidad del giro (1 byte: 0-100 = 0.0-1.0)
         uint8_t intensity;
         socket.recvall(&intensity, sizeof(intensity));
         command.turn_intensity = static_cast<float>(intensity) / 100.0f;
@@ -115,7 +112,6 @@ bool ServerProtocol::read_command_client(ComandMatchDTO& command) {
 
     case CMD_TURN_RIGHT: {
         command.command = GameCommand::TURN_RIGHT;
-        // Leer intensidad del giro (1 byte: 0-100 = 0.0-1.0)
         uint8_t intensity;
         socket.recvall(&intensity, sizeof(intensity));
         command.turn_intensity = static_cast<float>(intensity) / 100.0f;
@@ -124,20 +120,16 @@ bool ServerProtocol::read_command_client(ComandMatchDTO& command) {
 
     case CMD_CHEAT_TELEPORT: {
         command.command = GameCommand::CHEAT_TELEPORT_CHECKPOINT;
-        // Leer ID del checkpoint (2 bytes)
         uint16_t checkpoint_id;
         socket.recvall(&checkpoint_id, sizeof(checkpoint_id));
         command.checkpoint_id = ntohs(checkpoint_id);
         break;
     }
 
-    // ===== UPGRADES (código + nivel + costo) =====
     case CMD_UPGRADE_SPEED: {
         command.command = GameCommand::UPGRADE_SPEED;
         command.upgrade_type = UpgradeType::SPEED;
-        // Leer nivel (1 byte)
         socket.recvall(&command.upgrade_level, sizeof(command.upgrade_level));
-        // Leer costo en ms (2 bytes)
         uint16_t cost_net;
         socket.recvall(&cost_net, sizeof(cost_net));
         command.upgrade_cost_ms = ntohs(cost_net);
@@ -203,9 +195,7 @@ static void push_back_uint32_t(std::vector<uint8_t>& buffer, uint32_t value) {
 }
 
 static void push_back_string(std::vector<uint8_t>& buffer, const std::string& str) {
-    // Enviar longitud (uint16_t)
     push_back_uint16_t(buffer, static_cast<uint16_t>(str.size()));
-    // Enviar contenido
     buffer.insert(buffer.end(), str.begin(), str.end());
 }
 
@@ -215,13 +205,12 @@ bool ServerProtocol::send_client_id(int client_id) {
     return true;
 }
 
-
 // ============================================================================
-// SERIALIZACIÓN DEL GAMESTATE (SNAPSHOT)
+// SERIALIZACIÓN SIMPLIFICADA DEL GAMESTATE (SNAPSHOT)
+// Coincide EXACTAMENTE con client_protocol.cpp::receive_snapshot()
 // ============================================================================
 
 bool ServerProtocol::send_snapshot(const GameState& snapshot) {
-    // Verificar que haya jugadores
     if (snapshot.players.empty()) {
         std::cerr << "[ServerProtocol] Warning: Empty snapshot, nothing to send." << std::endl;
         return false;
@@ -229,115 +218,64 @@ bool ServerProtocol::send_snapshot(const GameState& snapshot) {
 
     std::vector<uint8_t> buffer;
 
-    // 1. JUGADORES
-    push_back_uint16_t(buffer, static_cast<uint16_t>(snapshot.players.size()));
+    // ✅ 1. Tipo de mensaje (1 byte) - 0x30 = MSG_GAME_SNAPSHOT
+    buffer.push_back(MSG_GAME_SNAPSHOT);
 
+    // 2. Número de jugadores (1 byte)
+    buffer.push_back(static_cast<uint8_t>(snapshot.players.size()));
+
+    // 3. Datos de cada jugador (FORMATO SIMPLIFICADO)
     for (const InfoPlayer& player : snapshot.players) {
-        // ID del jugador (4 bytes)
-        push_back_uint32_t(buffer, static_cast<uint32_t>(player.player_id));
+        // player_id (2 bytes - uint16_t)
+        uint16_t player_id_net = htons(static_cast<uint16_t>(player.player_id));
+        buffer.push_back(reinterpret_cast<uint8_t*>(&player_id_net)[0]);
+        buffer.push_back(reinterpret_cast<uint8_t*>(&player_id_net)[1]);
 
-        // Nombre (string con longitud)
-        push_back_string(buffer, player.username);
+        // pos_x (4 bytes - uint32_t, multiplicado por 100)
+        uint32_t pos_x_net = htonl(static_cast<uint32_t>(player.pos_x * 100.0f));
+        buffer.push_back(reinterpret_cast<uint8_t*>(&pos_x_net)[0]);
+        buffer.push_back(reinterpret_cast<uint8_t*>(&pos_x_net)[1]);
+        buffer.push_back(reinterpret_cast<uint8_t*>(&pos_x_net)[2]);
+        buffer.push_back(reinterpret_cast<uint8_t*>(&pos_x_net)[3]);
 
-        // Auto (nombre y tipo)
-        push_back_string(buffer, player.car_name);
-        push_back_string(buffer, player.car_type);
+        // pos_y (4 bytes - uint32_t, multiplicado por 100)
+        uint32_t pos_y_net = htonl(static_cast<uint32_t>(player.pos_y * 100.0f));
+        buffer.push_back(reinterpret_cast<uint8_t*>(&pos_y_net)[0]);
+        buffer.push_back(reinterpret_cast<uint8_t*>(&pos_y_net)[1]);
+        buffer.push_back(reinterpret_cast<uint8_t*>(&pos_y_net)[2]);
+        buffer.push_back(reinterpret_cast<uint8_t*>(&pos_y_net)[3]);
 
-        // Posición y física (multiplicar por 100 para enviar como enteros)
-        push_back_uint32_t(buffer, static_cast<uint32_t>(player.pos_x * 100.0f));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(player.pos_y * 100.0f));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(player.angle * 100.0f));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(player.speed * 100.0f));
+        // angle (2 bytes - uint16_t, multiplicado por 100)
+        uint16_t angle_net = htons(static_cast<uint16_t>(player.angle * 100.0f));
+        buffer.push_back(reinterpret_cast<uint8_t*>(&angle_net)[0]);
+        buffer.push_back(reinterpret_cast<uint8_t*>(&angle_net)[1]);
 
-        // Velocidad (componentes X e Y, pueden ser negativos, usar int16_t)
-        int16_t vel_x = static_cast<int16_t>(player.velocity_x * 100.0f);
-        int16_t vel_y = static_cast<int16_t>(player.velocity_y * 100.0f);
-        push_back_uint16_t(buffer, static_cast<uint16_t>(vel_x));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(vel_y));
+        // speed (2 bytes - uint16_t, multiplicado por 10)
+        uint16_t speed_net = htons(static_cast<uint16_t>(player.speed * 10.0f));
+        buffer.push_back(reinterpret_cast<uint8_t*>(&speed_net)[0]);
+        buffer.push_back(reinterpret_cast<uint8_t*>(&speed_net)[1]);
 
-        // Estado del auto
+        // health (1 byte)
         buffer.push_back(static_cast<uint8_t>(player.health));
-        buffer.push_back(static_cast<uint8_t>(player.nitro_amount));
-        buffer.push_back(player.nitro_active ? 0x01 : 0x00);
-        buffer.push_back(player.is_drifting ? 0x01 : 0x00);
-        buffer.push_back(player.is_colliding ? 0x01 : 0x00);
 
-        // Progreso en la carrera
-        push_back_uint16_t(buffer, static_cast<uint16_t>(player.completed_laps));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(player.current_checkpoint));
-        buffer.push_back(static_cast<uint8_t>(player.position_in_race));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(player.race_time_ms));
+        // ✅ level (1 byte) - CRÍTICO PARA RENDERIZAR PUENTES
+        buffer.push_back(static_cast<uint8_t>(player.level));
 
-        // Estado del jugador
-        buffer.push_back(player.race_finished ? 0x01 : 0x00);
-        buffer.push_back(player.is_alive ? 0x01 : 0x00);
-        buffer.push_back(player.disconnected ? 0x01 : 0x00);
+        // flags (1 byte combinado)
+        uint8_t flags = 0;
+        if (player.nitro_active)   flags |= 0x01;
+        if (player.is_drifting)    flags |= 0x02;
+        if (player.race_finished)  flags |= 0x04;
+        if (player.is_alive)       flags |= 0x08;
+        buffer.push_back(flags);
     }
 
-    // 2. CHECKPOINTS
-    push_back_uint16_t(buffer, static_cast<uint16_t>(snapshot.checkpoints.size()));
-
-    for (const CheckpointInfo& cp : snapshot.checkpoints) {
-        push_back_uint32_t(buffer, static_cast<uint32_t>(cp.id));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(cp.pos_x * 100.0f));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(cp.pos_y * 100.0f));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(cp.width * 100.0f));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(cp.angle * 100.0f));
-        buffer.push_back(cp.is_start ? 0x01 : 0x00);
-        buffer.push_back(cp.is_finish ? 0x01 : 0x00);
-    }
-
-    // 3. HINTS (FLECHAS DIRECCIONALES)
-    push_back_uint16_t(buffer, static_cast<uint16_t>(snapshot.hints.size()));
-
-    for (const HintInfo& hint : snapshot.hints) {
-        push_back_uint32_t(buffer, static_cast<uint32_t>(hint.id));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(hint.pos_x * 100.0f));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(hint.pos_y * 100.0f));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(hint.direction_angle * 100.0f));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(hint.for_checkpoint));
-    }
-
-    // 4. NPCs
-    push_back_uint16_t(buffer, static_cast<uint16_t>(snapshot.npcs.size()));
-
-    for (const NPCCarInfo& npc : snapshot.npcs) {
-        push_back_uint32_t(buffer, static_cast<uint32_t>(npc.npc_id));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(npc.pos_x * 100.0f));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(npc.pos_y * 100.0f));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(npc.angle * 100.0f));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(npc.speed * 100.0f));
-        push_back_string(buffer, npc.car_model);
-        buffer.push_back(npc.is_parked ? 0x01 : 0x00);
-    }
-
-    // 5. RACE CURRENT INFO
-    push_back_string(buffer, snapshot.race_current_info.city);
-    push_back_string(buffer, snapshot.race_current_info.race_name);
-    push_back_uint16_t(buffer, static_cast<uint16_t>(snapshot.race_current_info.total_laps));
-    push_back_uint16_t(buffer, static_cast<uint16_t>(snapshot.race_current_info.total_checkpoints));
-
-    // 6. RACE INFO
-    buffer.push_back(static_cast<uint8_t>(snapshot.race_info.status));
-    buffer.push_back(static_cast<uint8_t>(snapshot.race_info.race_number));
-    buffer.push_back(static_cast<uint8_t>(snapshot.race_info.total_races));
-    push_back_uint32_t(buffer, static_cast<uint32_t>(snapshot.race_info.remaining_time_ms));
-    buffer.push_back(static_cast<uint8_t>(snapshot.race_info.players_finished));
-    buffer.push_back(static_cast<uint8_t>(snapshot.race_info.total_players));
-    push_back_string(buffer, snapshot.race_info.winner_name);
-
-    // 7. EVENTOS
-    push_back_uint16_t(buffer, static_cast<uint16_t>(snapshot.events.size()));
-
-    for (const GameEvent& event : snapshot.events) {
-        buffer.push_back(static_cast<uint8_t>(event.type));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(event.player_id));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(event.pos_x * 100.0f));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(event.pos_y * 100.0f));
-    }
-
-    // ENVIAR BUFFER
+    // ENVIAR TODO EL BUFFER
     socket.sendall(buffer.data(), buffer.size());
+
+    std::cout << "[ServerProtocol] 📤 Snapshot enviado: " 
+              << snapshot.players.size() << " jugadores, "
+              << buffer.size() << " bytes" << std::endl;
 
     return true;
 }
@@ -377,4 +315,3 @@ bool ServerProtocol::send_race_info(const RaceInfoDTO& race_info) {
 
     return true;
 }
-

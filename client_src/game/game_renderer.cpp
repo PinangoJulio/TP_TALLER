@@ -64,7 +64,7 @@ void GameRenderer::load_textures() {
         // Cargar resto de autos...
 
         // Capas extra (Puentes/Top)
-        std::string bridges_path = "assets/img/map/layers/vice-city/vice-city-puentes.png";
+        std::string bridges_path = "assets/img/map/layers/vice-city/puentes-vice-city.png";
         std::string top_path = "assets/img/map/layers/vice-city/vice-city-top.png";
 
         if (std::string(race_info.city_name) == "Vice City") {

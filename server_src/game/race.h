@@ -23,18 +23,19 @@ public:
          const std::string& yaml_mapa)
         : commandQueue(cmdQueue), broadcaster(brdcstr), city_name(city), map_yaml_path(yaml_mapa) {
         
-        // CORRECCIÓN AQUÍ: Se agrega 'city_name' como 4to argumento
         gameLoop = std::make_unique<GameLoop>(commandQueue, broadcaster, map_yaml_path, city_name);
     }
 
     void start() {
-        std::cout << "[Race] Iniciando carrera en " << city_name << " (mapa: " << map_yaml_path
+        std::cout << "[Race] 🏁 Iniciando carrera en " << city_name << " (mapa: " << map_yaml_path
                   << ")\n";
-       // gameLoop->start();  
+        
+        // ✅ DESCOMENTAR: Iniciar el thread del GameLoop
+        gameLoop->start();
     }
 
     void stop() {
-        std::cout << "[Race] Deteniendo carrera en " << city_name << "\n";
+        std::cout << "[Race] 🛑 Deteniendo carrera en " << city_name << "\n";
         gameLoop->stop_race();
         gameLoop->join();
     }
@@ -60,7 +61,6 @@ public:
     const std::string& get_city_name() const { return city_name; }
     const std::string& get_map_path() const { return map_yaml_path; }
 
-    /* Cuando la carrera termina, detener y limpiar el GameLoop en el destructor de Race */
     ~Race() {
         if (gameLoop && gameLoop->is_alive()) { 
             gameLoop->stop_race();

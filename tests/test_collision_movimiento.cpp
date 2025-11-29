@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
         SDL_SetColorKey(carSurface, SDL_TRUE, SDL_MapRGB(carSurface->format, 0, 0, 0));
         SDL2pp::Texture carTexture(renderer, SDL2pp::Surface(carSurface));
 
-        SDL_Surface* puentesSurf = IMG_Load("assets/img/map/layers/vice-city/vice-city-puentes.png");
+        SDL_Surface* puentesSurf = IMG_Load("assets/img/map/layers/vice-city/puentes-vice-city.png");
         SDL2pp::Texture puentesTexture(
             renderer, SDL2pp::Surface(puentesSurf ? puentesSurf
                                                   : SDL_CreateRGBSurface(0, 1, 1, 32, 0, 0, 0, 0)));

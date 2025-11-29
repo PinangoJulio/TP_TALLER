@@ -9,6 +9,7 @@ target_sources(taller_common
     lobby_protocol.cpp
     game_state.cpp
     collision_manager.cpp
+    map_config.cpp
 
     PUBLIC
     # .h files
@@ -24,5 +25,6 @@ target_sources(taller_common
     game_protocol.h
     game_state.h
     collision_manager.h
+    map_config.h
     #common_types.h
 )
