@@ -1,0 +1,65 @@
+# Posiciones de spawn (hasta 8 jugadores)
+spawn_points:
+  - x: 0.0
+    y: 0.0
+    angle: 0.0
+  - x: -2.0
+    y: 0.0
+    angle: 0.0
+  - x: 2.0
+    y: 0.0
+    angle: 0.0
+
+# Checkpoints (deben cruzarse en orden)
+checkpoints:
+  - id: 0
+    x: 0.0
+    y: 10.0
+    width: 10.0
+    height: 2.0
+    angle: 0.0
+  - id: 1
+    x: 20.0
+    y: 20.0
+    width: 10.0
+    height: 2.0
+    angle: 0.0
+  - id: 2
+    x: 20.0
+    y: -10.0
+    width: 10.0
+    height: 2.0
+    angle: 0.0
+  - id: 3
+    x: 0.0
+    y: -10.0
+    width: 10.0
+    height: 2.0
+    angle: 0.0
+
+# Paredes del circuito
+walls:
+  - x: -25.0
+    y: 0.0
+    width: 2.0
+    height: 50.0
+  - x: 25.0
+    y: 0.0
+    width: 2.0
+    height: 50.0
+  - x: 0.0
+    y: -25.0
+    width: 50.0
+    height: 2.0
+  - x: 0.0
+    y: 25.0
+    width: 50.0
+    height: 2.0
+
+# Edificios
+buildings:
+  - x: 10.0
+    y: 10.0
+    width: 5.0
+    height: 5.0
+    
