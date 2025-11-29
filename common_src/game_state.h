@@ -21,6 +21,7 @@ enum class MatchStatus : uint8_t {
 struct ServerRaceConfig {
     std::string city;       // "Vice City", "Liberty City", "San Andreas"
     std::string race_name;  // "Playa", "Centro", "Desierto"
+    int laps = 1;
 };
 
 // Información de jugador en el lobby
@@ -55,6 +56,8 @@ struct InfoPlayer {
     float speed = 0.0f;       // Velocidad actual
     float velocity_x = 0.0f;  // Componente X de velocidad
     float velocity_y = 0.0f;  // Componente Y de velocidad
+
+    int32_t level = 0; // 0 = calle, 1 = puente
 
     // Estado del auto
     float health = 100.0f;        // Salud actual
