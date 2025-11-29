@@ -30,6 +30,7 @@ private:
     float current_health;  // Salud actual
     float nitro_amount;    // Cantidad de nitro restante (0-100)
     bool nitro_active;     // Si está usando nitro
+    int level;
 
     // ---- FÍSICA Y POSICIÓN ----
     float x;           // Posición X
@@ -103,6 +104,9 @@ public:
     // ---- ESTADO ----
     void setDrifting(bool drifting) { is_drifting = drifting; }
     bool isDrifting() const { return is_drifting; }
+
+    int getLevel() const { return level; }
+    void setLevel(int l) { level = l; }
 
     void setColliding(bool colliding) { is_colliding = colliding; }
     bool isColliding() const { return is_colliding; }
