@@ -1,5 +1,4 @@
 #include "game_loop.h"
-z:<
 #include <chrono>
 #include <iomanip>
 #include <iostream>
