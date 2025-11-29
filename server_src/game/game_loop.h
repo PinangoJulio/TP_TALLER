@@ -16,6 +16,7 @@
 #include "../../common_src/queue.h"
 #include "../../common_src/thread.h"
 #include "../network/client_monitor.h"
+#include "../../common_src/collision_manager.h"
 #include "car.h"
 #include "player.h"
 
@@ -55,6 +56,9 @@ private:
     // ---- TIEMPOS ----
     std::chrono::steady_clock::time_point race_start_time;
 
+    // ---- Manager de colidiones----
+    //CollisionManager collision_manager;
+
 
     void reset_players_spawn_positions();  // Resetea posiciones de spawn (al iniciar carrera)
     void execute_player_movement(Player *player, const ComandMatchDTO& comando);
@@ -70,6 +74,9 @@ private:
     // Crear snapshot del estado actual
     GameState create_snapshot();
 
+    // Auxiliar
+    std::string to_kebab_case(std::string str);
+    
 public:
     GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues, const std::string& yaml_path);
 
