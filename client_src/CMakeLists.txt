@@ -17,9 +17,10 @@ target_sources(client
     lobby/controller/lobby_controller.cpp
 
     #game
-    game/collision_manager.cpp
+    #game/collision_manager.cpp
+    game/game_renderer.cpp
     client_event_handler.cpp
-
+    
     #threads/protocol
     client_receiver.cpp
     client_sender.cpp
@@ -27,7 +28,7 @@ target_sources(client
     PUBLIC
     # .h files
     lobby/model/lobby_client.h
-
+    
     #view
     lobby/view/lobby_window.h
     lobby/view/base_lobby.h
@@ -40,11 +41,12 @@ target_sources(client
     
     # controller
     lobby/controller/lobby_controller.h
-
+    
     #game
-    game/collision_manager.h
+    game/game_renderer.h
+    #game/collision_manager.h
     client_event_handler.h
-
+    
     #threads/protocol
     client_receiver.h
     client_sender.h
