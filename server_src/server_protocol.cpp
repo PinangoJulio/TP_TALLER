@@ -206,11 +206,11 @@ static void push_back_uint32_t(std::vector<uint8_t>& buffer, uint32_t value) {
 }
 
 static void push_back_int32_t(std::vector<uint8_t>& buffer, int32_t value) {
-    uint32_t net = htonl(static_cast<uint32_t>(value));
-    buffer.push_back(reinterpret_cast<uint8_t*>(&net)[0]);
-    buffer.push_back(reinterpret_cast<uint8_t*>(&net)[1]);
-    buffer.push_back(reinterpret_cast<uint8_t*>(&net)[2]);
-    buffer.push_back(reinterpret_cast<uint8_t*>(&net)[3]);
+    uint32_t net_value = htonl(static_cast<uint32_t>(value));
+    buffer.push_back(reinterpret_cast<uint8_t*>(&net_value)[0]);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&net_value)[1]);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&net_value)[2]);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&net_value)[3]);
 }
 
 static void push_back_string(std::vector<uint8_t>& buffer, const std::string& str) {
@@ -225,11 +225,7 @@ bool ServerProtocol::send_client_id(int client_id) {
     socket.sendall(&id, sizeof(id));
     return true;
 }
-static void push_back_int16_t(std::vector<uint8_t>& buffer, int16_t value) {
-    uint16_t net = htons(static_cast<uint16_t>(value));
-    buffer.push_back((net >> 8) & 0xFF);
-    buffer.push_back(net & 0xFF);
-}
+
 
 
 // ============================================================================
@@ -265,8 +261,9 @@ bool ServerProtocol::send_snapshot(const GameState& snapshot) {
         push_back_uint16_t(buffer, static_cast<uint16_t>(p.speed * 100.0f));
 
         // velocity_x / velocity_y (int16 scaled)
-        push_back_int16_t(buffer, static_cast<int16_t>(p.velocity_x * 100.0f));
-        push_back_int16_t(buffer, static_cast<int16_t>(p.velocity_y * 100.0f));
+        push_back_int32_t(buffer, static_cast<int32_t>(p.velocity_x * 100.0f));
+        push_back_int32_t(buffer, static_cast<int32_t>(p.velocity_y * 100.0f));
+
 
         // health, nitro (uint8)
         buffer.push_back((uint8_t)p.health);

@@ -30,6 +30,7 @@ public:
     uint8_t read_uint8();
     uint32_t read_uint32();
     int16_t read_int16();
+    int32_t read_int32();
 
 
 

@@ -325,14 +325,19 @@ int16_t ClientProtocol::read_int16() {
     return (int16_t) ntohs(raw);   // Convierte preservando el signo
 }
 
+int32_t ClientProtocol::read_int32() {
+    uint32_t net;
+    socket.recvall(&net, sizeof(net));
+    net = ntohl(net);
+    return static_cast<int32_t>(net);
+}
 
 // (tu función está perfecta, no hace falta tocarla)
 GameState ClientProtocol::receive_snapshot() {
     uint8_t type = read_message_type();
     if (type != (uint8_t)ServerMessageType::GAME_STATE_UPDATE)
-        //throw std::runtime_error("Expected SNAPSHOT message");
-            std::cout<< "[ClientProtocol] Warning: Expected GAME_STATE_UPDATE message, got "
-                      << static_cast<int>(type) << std::endl;
+        std::cout<< "[ClientProtocol] Warning: Expected GAME_STATE_UPDATE message, got "
+                  << static_cast<int>(type) << std::endl;
 
     GameState state;
 
@@ -349,75 +354,76 @@ GameState ClientProtocol::receive_snapshot() {
 
         p.player_id = read_uint16();
 
-        p.pos_x = (int32_t)read_uint32() / 100.0f;
-        p.pos_y = (int32_t)read_uint32() / 100.0f;
+        p.pos_x = static_cast<float>(read_int32()) / 100.0f;
+        p.pos_y = static_cast<float>(read_int32()) / 100.0f;
 
-        p.angle = read_uint16() / 100.0f;
-        p.speed = read_uint16() / 100.0f;
+        p.angle = static_cast<float>(read_uint16()) / 100.0f;
+        p.speed = static_cast<float>(read_uint16()) / 100.0f;
 
-        p.velocity_x = read_int16() / 100.0f;
-        p.velocity_y = read_int16() / 100.0f;
+        p.velocity_x = static_cast<float>(read_int32()) / 100.0f;
+        p.velocity_y = static_cast<float>(read_int32()) / 100.0f;
 
-        p.health      = read_uint8();
-        p.nitro_amount= read_uint8();
+        p.health       = read_uint8();
+        p.nitro_amount = read_uint8();
 
         uint8_t flags = read_uint8();
-        p.nitro_active = flags & 0x01;
-        p.is_drifting  = flags & 0x02;
-        p.is_colliding = flags & 0x04;
+        p.nitro_active = (flags & 0x01) != 0;
+        p.is_drifting  = (flags & 0x02) != 0;
+        p.is_colliding = (flags & 0x04) != 0;
 
-        p.completed_laps    = read_uint16();
-        p.current_checkpoint= read_uint16();
-        p.position_in_race  = read_uint8();
+        p.completed_laps     = read_uint16();
+        p.current_checkpoint = read_uint16();
+        p.position_in_race   = read_uint8();
 
         p.race_time_ms = read_uint32();
 
-        p.race_finished = read_uint8();
-        p.is_alive      = read_uint8();
-        p.disconnected  = read_uint8();
+        p.race_finished = read_uint8() != 0;
+        p.is_alive      = read_uint8() != 0;
+        p.disconnected  = read_uint8() != 0;
 
         std::cout << "[ClientProtocol]   🏎️  Player " << p.player_id
-       << ": pos=(" << p.pos_x << "," << p.pos_y << ") "
-       << "vel=" << p.speed << " km/h "
-       << "angle=" << p.angle << "° "
-       << "hp=" << static_cast<int>(p.health)
-       << (p.nitro_active ? " ⚡" : "")
-       << (p.is_drifting ? " y" : "")
-       << (p.race_finished ? " y" : "")
-       << (!p.is_alive ? " ☠n" : "") << std::endl;
+                  << ": pos=(" << p.pos_x << "," << p.pos_y << ") "
+                  << "vel=" << p.speed << " km/h "
+                  << "angle=" << p.angle << "° "
+                  << "hp=" << static_cast<int>(p.health)
+                  << (p.nitro_active ? " ⚡" : "") << std::endl;
     }
 
-    // 2. CHECKPOINTS
+    // 2. CHECKPOINTS  -- CORRECCIÓN: no hacer resize + push_back (evitaba duplicados)
     uint16_t checkpointCount = read_uint16();
-    state.checkpoints.resize(checkpointCount);
+    state.checkpoints.clear();
+    state.checkpoints.reserve(checkpointCount);
 
-    for (auto& c : state.checkpoints) {
+    for (uint16_t i = 0; i < checkpointCount; ++i) {
+        CheckpointInfo c;
         c.id    = read_uint32();
-        c.pos_x = read_uint32() / 100.0f;
-        c.pos_y = read_uint32() / 100.0f;
-        c.width = read_uint16() / 100.0f;
-        c.angle = read_uint16() / 100.0f;
-
-        c.is_start  = read_uint8();
-        c.is_finish = read_uint8();
+        c.pos_x = static_cast<float>(read_int32()) / 100.0f;
+        c.pos_y = static_cast<float>(read_int32()) / 100.0f;
+        c.width = static_cast<float>(read_uint16()) / 100.0f;
+        c.angle = static_cast<float>(read_uint16()) / 100.0f;
+        c.is_start  = read_uint8() != 0;
+        c.is_finish = read_uint8() != 0;
+        state.checkpoints.push_back(std::move(c));
     }
 
     // 3. NPCs
     uint16_t npcCount = read_uint16();
-    state.npcs.resize(npcCount);
+    state.npcs.clear();
+    state.npcs.reserve(npcCount);
 
-    for (auto& n : state.npcs) {
+    for (uint16_t i = 0; i < npcCount; ++i) {
+        NPCCarInfo n;
         n.npc_id = read_uint32();
-        n.pos_x  = read_uint32() / 100.0f;
-        n.pos_y  = read_uint32() / 100.0f;
-        n.angle  = read_uint16() / 100.0f;
-        n.speed  = read_uint16() / 100.0f;
-
-        n.is_parked = read_uint8();
+        n.pos_x = static_cast<float>(read_int32()) / 100.0f;
+        n.pos_y = static_cast<float>(read_int32()) / 100.0f;
+        n.angle = static_cast<float>(read_uint16()) / 100.0f;
+        n.speed = static_cast<float>(read_uint16()) / 100.0f;
+        n.is_parked = read_uint8() != 0;
+        state.npcs.push_back(std::move(n));
     }
 
     // 4. RACE INFO
-    state.race_info.status            = (MatchStatus)read_uint8();
+    state.race_info.status = static_cast<MatchStatus>(read_uint8());
     state.race_info.race_number       = read_uint8();
     state.race_info.total_races       = read_uint8();
     state.race_info.remaining_time_ms = read_uint32();
@@ -426,13 +432,16 @@ GameState ClientProtocol::receive_snapshot() {
 
     // 5. EVENTS
     uint16_t eventCount = read_uint16();
-    state.events.resize(eventCount);
+    state.events.clear();
+    state.events.reserve(eventCount);
 
-    for (auto& e : state.events) {
+    for (uint16_t i = 0; i < eventCount; ++i) {
+        GameEvent e;
         e.type      = (GameEvent::EventType)read_uint8();
         e.player_id = read_uint32();
-        e.pos_x     = read_uint32() / 100.0f;
-        e.pos_y     = read_uint32() / 100.0f;
+        e.pos_x = static_cast<float>(read_int32()) / 100.0f;
+        e.pos_y = static_cast<float>(read_int32()) / 100.0f;
+        state.events.push_back(std::move(e));
     }
 
     return state;

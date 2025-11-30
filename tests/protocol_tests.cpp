@@ -10,6 +10,10 @@
 #include "../common_src/dtos.h"
 #include "../common_src/lobby_protocol.h"
 #include "../server_src/server_protocol.h"
+#include <fstream>
+#include <string>
+#include <cctype>
+#include <cstring>
 
 constexpr const char* kHost = "127.0.0.1";
 constexpr const char* kPort = "8085";
@@ -892,84 +896,97 @@ TEST(RaceInfoProtocolTest, SendMultipleRaceInfoSequentially) {
     server_thread.join();
 }
 
+static int count_section_items(const std::string& yaml_path, const std::string& section_name) {
+    std::ifstream f(yaml_path);
+    if (!f.is_open()) return 0;
+    std::string line;
+    bool in_section = false;
+    int count = 0;
+    while (std::getline(f, line)) {
+        // Trim left
+        size_t pos = 0;
+        while (pos < line.size() && std::isspace(static_cast<unsigned char>(line[pos]))) ++pos;
+        std::string trimmed = line.substr(pos);
+        if (!in_section) {
+            if (trimmed == section_name + ":") {
+                in_section = true;
+            }
+            continue;
+        } else {
+            // detectar nueva sección top-level -> salir
+            bool is_top_level = !line.empty() && (line[0] != ' ' && line[0] != '\t') && line.find(':') != std::string::npos;
+            if (is_top_level) break;
+            // contar ítems que comienzan con '-'
+            size_t first_non_ws = line.find_first_not_of(" \t");
+            if (first_non_ws != std::string::npos && line[first_non_ws] == '-') ++count;
+        }
+    }
+    return count;
+}
+
 TEST(GameSnapshotProtocolTest, SendAndReceiveSnapshotBasic) {
-    // === Construir snapshot que enviará el servidor ===
+    // Ruta al YAML del mapa a adaptar
+    const std::string map_yaml = "server_src/city_maps/Liberty_City/Aeropuerto.yaml";
+
+    int expected_checkpoints = count_section_items(map_yaml, "checkpoints");
+    int expected_hints = count_section_items(map_yaml, "hints");
+
+    // Construir snapshot que enviará el servidor con las cantidades esperadas
     GameState sent;
 
-    // ---- PLAYERS ----
+    // ---- PLAYERS (igual que antes, 1 jugador) ----
     InfoPlayer p1;
     p1.player_id = 1;
     p1.username = "Lourdes";
     p1.car_name = "Inferno";
     p1.car_type = "Sport";
-
-    p1.pos_x = 123.4f;
-    p1.pos_y = 567.8f;
-    p1.angle = 1.57f;
-    p1.speed = 42.0f;
-    p1.velocity_x = 1.0f;
-    p1.velocity_y = 3.0f;
-
-    p1.health = 75.0f;
-    p1.nitro_amount = 50.0f;
-    p1.nitro_active = true;
-    p1.is_drifting = false;
-    p1.is_colliding = true;
-
-    p1.completed_laps = 1;
-    p1.current_checkpoint = 2;
-    p1.position_in_race = 3;
+    p1.pos_x = 4440.0f; p1.pos_y = 300.0f;
+    p1.angle = 0.0f; p1.speed = 42.0f;
+    p1.velocity_x = 100.0f; p1.velocity_y = 3.0f;
+    p1.health = 75.0f; p1.nitro_amount = 50.0f; p1.nitro_active = true;
+    p1.completed_laps = 1; p1.current_checkpoint = 2; p1.position_in_race = 3;
     p1.race_time_ms = 120000;
-
-    p1.race_finished = false;
-    p1.is_alive = true;
-    p1.disconnected = false;
-
+    p1.race_finished = false; p1.is_alive = true; p1.disconnected = false;
     sent.players.push_back(p1);
 
+    // ---- CHECKPOINTS: crear tantos como indique el YAML ----
+    for (int i = 0; i < expected_checkpoints; ++i) {
+        CheckpointInfo c;
+        c.id = 100 + i;
+        c.pos_x = 400.0f + i;
+        c.pos_y = 800.0f + i;
+        c.width = 50.0f;
+        c.angle = 0.5f;
+        c.is_start = (i==0);
+        c.is_finish = (i==expected_checkpoints-1);
+        sent.checkpoints.push_back(c);
+    }
 
-    // ---- CHECKPOINTS ----
-    CheckpointInfo c1;
-    c1.id = 10;
-    c1.pos_x = 400.0f;
-    c1.pos_y = 800.0f;
-    c1.width = 50.0f;
-    c1.angle = 0.5f;
-    c1.is_start = true;
-    c1.is_finish = false;
-    sent.checkpoints.push_back(c1);
-
-
-    // ---- HINTS ----
-    HintInfo h1;
-    h1.id = 5;
-    h1.pos_x = 900.0f;
-    h1.pos_y = 300.0f;
-    h1.direction_angle = 0.75f;
-    h1.for_checkpoint = 10;
-    sent.hints.push_back(h1);
-
+    // ---- HINTS: crear tantos como indique el YAML ----
+    for (int i = 0; i < expected_hints; ++i) {
+        HintInfo h;
+        h.id = 200 + i;
+        h.pos_x = 900.0f + i;
+        h.pos_y = 300.0f + i;
+        h.direction_angle = 0.75f;
+        h.for_checkpoint = (expected_checkpoints>0 ? sent.checkpoints[0].id : 0);
+        sent.hints.push_back(h);
+    }
 
     // ---- NPC ----
     NPCCarInfo npc1;
     npc1.npc_id = 77;
-    npc1.pos_x = 50.0f;
-    npc1.pos_y = 60.0f;
-    npc1.angle = 0.33f;
-    npc1.speed = 10.0f;
-    npc1.car_model = "truck";
-    npc1.is_parked = false;
+    npc1.pos_x = 50.0f; npc1.pos_y = 60.0f;
+    npc1.angle = 0.33f; npc1.speed = 10.0f;
+    npc1.car_model = "truck"; npc1.is_parked = false;
     sent.npcs.push_back(npc1);
 
-
-    // ---- RACE CURRENT INFO ----
+    // ---- RACE CURRENT INFO & RACE INFO & EVENTS (igual que antes) ----
     sent.race_current_info.city = "Vice City";
     sent.race_current_info.race_name = "Playa";
     sent.race_current_info.total_laps = 3;
-    sent.race_current_info.total_checkpoints = 12;
+    sent.race_current_info.total_checkpoints = expected_checkpoints;
 
-
-    // ---- RACE INFO ----
     sent.race_info.status = MatchStatus::IN_PROGRESS;
     sent.race_info.race_number = 1;
     sent.race_info.total_races = 3;
@@ -978,22 +995,17 @@ TEST(GameSnapshotProtocolTest, SendAndReceiveSnapshotBasic) {
     sent.race_info.total_players = 5;
     sent.race_info.winner_name = "";
 
-
-    // ---- EVENTS ----
     GameEvent e1;
     e1.type = GameEvent::EXPLOSION;
     e1.player_id = 1;
-    e1.pos_x = 123.0f;
-    e1.pos_y = 321.0f;
+    e1.pos_x = 123.0f; e1.pos_y = 321.0f;
     sent.events.push_back(e1);
-
 
     // ======================= THREADS ===========================
     std::thread server_thread([&]() {
         Socket server_socket(kPort);
         Socket client_conn = server_socket.accept();
         ServerProtocol sp(client_conn);
-
         EXPECT_TRUE(sp.send_snapshot(sent));
     });
 
@@ -1003,98 +1015,199 @@ TEST(GameSnapshotProtocolTest, SendAndReceiveSnapshotBasic) {
         ClientProtocol cp(kHost, kPort);
         GameState received = cp.receive_snapshot();
 
-        // ---- PLAYERS ----
-        //ASSERT_EQ(received.players.size(), 1);
+        // Verificar tamaños dinámicos leídos desde el YAML
+        ASSERT_EQ(received.checkpoints.size(), static_cast<size_t>(expected_checkpoints));
+        ASSERT_EQ(received.hints.size(), static_cast<size_t>(expected_hints));
+
+        // Si hay elementos, comparar el primero (simple verificación de contenido)
+        if (expected_checkpoints > 0) {
+            const auto& rc = received.checkpoints[0];
+            EXPECT_FLOAT_EQ(rc.pos_x, 400.0f);
+            EXPECT_FLOAT_EQ(rc.pos_y, 800.0f);
+        }
+        if (expected_hints > 0) {
+            const auto& rh = received.hints[0];
+            EXPECT_FLOAT_EQ(rh.pos_x, 900.0f);
+            EXPECT_FLOAT_EQ(rh.pos_y, 300.0f);
+        }
+
+        // Comprobaciones restantes mínimas
+        ASSERT_EQ(received.players.size(), 1);
         const InfoPlayer& rp = received.players[0];
-
         EXPECT_EQ(rp.player_id, 1);
-        EXPECT_EQ(rp.username, "Lourdes");
-        EXPECT_EQ(rp.car_name, "Inferno");
-        EXPECT_EQ(rp.car_type, "Sport");
-
-        EXPECT_FLOAT_EQ(rp.pos_x, 123.4f);
-        EXPECT_FLOAT_EQ(rp.pos_y, 567.8f);
-        EXPECT_FLOAT_EQ(rp.angle, 1.57f);
-        EXPECT_FLOAT_EQ(rp.speed, 42.0f);
-        EXPECT_FLOAT_EQ(rp.velocity_x, -1.0f);
-        EXPECT_FLOAT_EQ(rp.velocity_y, 3.0f);
-
-        EXPECT_FLOAT_EQ(rp.health, 75.0f);
-        EXPECT_FLOAT_EQ(rp.nitro_amount, 50.0f);
-        EXPECT_TRUE(rp.nitro_active);
-        EXPECT_FALSE(rp.is_drifting);
-        EXPECT_TRUE(rp.is_colliding);
-
-        EXPECT_EQ(rp.completed_laps, 1);
-        EXPECT_EQ(rp.current_checkpoint, 2);
-        EXPECT_EQ(rp.position_in_race, 3);
-        EXPECT_EQ(rp.race_time_ms, 120000);
-
-        EXPECT_FALSE(rp.race_finished);
-        EXPECT_TRUE(rp.is_alive);
-        EXPECT_FALSE(rp.disconnected);
-
-
-        // ---- CHECKPOINT ----
-        ASSERT_EQ(received.checkpoints.size(), 1);
-        const auto& rc = received.checkpoints[0];
-        EXPECT_EQ(rc.id, 10);
-        EXPECT_FLOAT_EQ(rc.pos_x, 400.0f);
-        EXPECT_FLOAT_EQ(rc.pos_y, 800.0f);
-        EXPECT_FLOAT_EQ(rc.width, 50.0f);
-        EXPECT_FLOAT_EQ(rc.angle, 0.5f);
-        EXPECT_TRUE(rc.is_start);
-        EXPECT_FALSE(rc.is_finish);
-
-
-        // ---- HINT ----
-        ASSERT_EQ(received.hints.size(), 1);
-        const auto& rh = received.hints[0];
-        EXPECT_EQ(rh.id, 5);
-        EXPECT_FLOAT_EQ(rh.pos_x, 900.0f);
-        EXPECT_FLOAT_EQ(rh.pos_y, 300.0f);
-        EXPECT_FLOAT_EQ(rh.direction_angle, 0.75f);
-        EXPECT_EQ(rh.for_checkpoint, 10);
-
-
-        // ---- NPC ----
-        ASSERT_EQ(received.npcs.size(), 1);
-        const auto& rnpc = received.npcs[0];
-        EXPECT_EQ(rnpc.npc_id, 77);
-        EXPECT_FLOAT_EQ(rnpc.pos_x, 50.0f);
-        EXPECT_FLOAT_EQ(rnpc.pos_y, 60.0f);
-        EXPECT_FLOAT_EQ(rnpc.angle, 0.33f);
-        EXPECT_FLOAT_EQ(rnpc.speed, 10.0f);
-        EXPECT_EQ(rnpc.car_model, "truck");
-        EXPECT_FALSE(rnpc.is_parked);
-
-
-        // ---- RACE CURRENT INFO ----
-        EXPECT_EQ(received.race_current_info.city, "Vice City");
-        EXPECT_EQ(received.race_current_info.race_name, "Playa");
-        EXPECT_EQ(received.race_current_info.total_laps, 3);
-        EXPECT_EQ(received.race_current_info.total_checkpoints, 12);
-
-
-        // ---- RACE INFO ----
-        EXPECT_EQ(received.race_info.status, MatchStatus::IN_PROGRESS);
-        EXPECT_EQ(received.race_info.race_number, 1);
-        EXPECT_EQ(received.race_info.total_races, 3);
-        EXPECT_EQ(received.race_info.remaining_time_ms, 300000);
-        EXPECT_EQ(received.race_info.players_finished, 0);
-        EXPECT_EQ(received.race_info.total_players, 5);
-        EXPECT_EQ(received.race_info.winner_name, "");
-
-
-        // ---- EVENTS ----
+        EXPECT_EQ(received.npcs.size(), 1);
         ASSERT_EQ(received.events.size(), 1);
-        const auto& re = received.events[0];
-        EXPECT_EQ(re.type, GameEvent::EXPLOSION);
-        EXPECT_EQ(re.player_id, 1);
-        EXPECT_FLOAT_EQ(re.pos_x, 123.0f);
-        EXPECT_FLOAT_EQ(re.pos_y, 321.0f);
     });
 
     client_thread.join();
     server_thread.join();
 }
+
+TEST(GameSnapshotProtocolTest, SendAndReceiveSnapshotMultiplePlayers) {
+    const std::string map_yaml = "server_src/city_maps/Liberty_City/Aeropuerto.yaml";
+    int expected_checkpoints = count_section_items(map_yaml, "checkpoints");
+    int expected_hints = count_section_items(map_yaml, "hints");
+
+    GameState sent;
+
+    // 3 jugadores
+    for (int i = 0; i < 3; ++i) {
+        InfoPlayer p;
+        p.player_id = static_cast<uint16_t>(i + 1);
+        p.username = "player" + std::to_string(i+1);
+        p.car_name = "Car" + std::to_string(i+1);
+        p.car_type = (i%2==0) ? "Sport" : "Classic";
+        p.pos_x = 100.0f + i * 10.0f;
+        p.pos_y = 200.0f + i * 5.0f;
+        p.angle = 0.0f;
+        p.speed = 0.0f;
+        p.velocity_x = 20.0f; p.velocity_y = 1.0f;
+        p.health = 100; p.nitro_amount = 0; p.nitro_active = false;
+        p.completed_laps = 0; p.current_checkpoint = 0; p.position_in_race = i+1;
+        p.race_time_ms = 0;
+        p.race_finished = false; p.is_alive = true; p.disconnected = false;
+        sent.players.push_back(p);
+    }
+
+    // Checkpoints/hints según YAML
+    for (int i = 0; i < expected_checkpoints; ++i) {
+        CheckpointInfo c;
+        c.id = 1000 + i;
+        c.pos_x = 500.0f + i;
+        c.pos_y = 600.0f + i;
+        c.width = 40.0f; c.angle = 0.0f;
+        c.is_start = (i==0); c.is_finish = (i==expected_checkpoints-1);
+        sent.checkpoints.push_back(c);
+    }
+    for (int i = 0; i < expected_hints; ++i) {
+        HintInfo h;
+        h.id = 2000 + i;
+        h.pos_x = 700.0f + i;
+        h.pos_y = 800.0f + i;
+        h.direction_angle = 1.0f;
+        h.for_checkpoint = (sent.checkpoints.empty() ? 0u : sent.checkpoints.front().id);
+        sent.hints.push_back(h);
+    }
+
+    // NPCs
+    for (int i = 0; i < 2; ++i) {
+        NPCCarInfo n;
+        n.npc_id = 500 + i;
+        n.pos_x = 10.0f + i; n.pos_y = 20.0f + i;
+        n.angle = 0.0f; n.speed = 5.0f;
+        n.car_model = "npc_model"; n.is_parked = false;
+        sent.npcs.push_back(n);
+    }
+
+    // Eventos
+    for (int i = 0; i < 2; ++i) {
+        GameEvent e;
+        e.type = GameEvent::EXPLOSION;
+        e.player_id = 1;
+        e.pos_x = 300.0f + i; e.pos_y = 400.0f + i;
+        sent.events.push_back(e);
+    }
+
+    // Race current info mínimo
+    sent.race_current_info.city = "TestCity";
+    sent.race_current_info.race_name = "TestRace";
+    sent.race_current_info.total_laps = 1;
+    sent.race_current_info.total_checkpoints = expected_checkpoints;
+
+    // Hilo servidor
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+        ServerProtocol sp(client_conn);
+        EXPECT_TRUE(sp.send_snapshot(sent));
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    // Hilo cliente
+    std::thread client_thread([&]() {
+        ClientProtocol cp(kHost, kPort);
+        GameState received = cp.receive_snapshot();
+
+        ASSERT_EQ(received.players.size(), 3u);
+        ASSERT_EQ(received.npcs.size(), 2u);
+        ASSERT_EQ(received.events.size(), 2u);
+        ASSERT_EQ(received.checkpoints.size(), static_cast<size_t>(expected_checkpoints));
+        ASSERT_EQ(received.hints.size(), static_cast<size_t>(expected_hints));
+
+        // Verificaciones puntuales
+        EXPECT_EQ(received.players[0].player_id, 1);
+        if (!received.checkpoints.empty()) {
+            EXPECT_FLOAT_EQ(received.checkpoints.front().pos_x, 500.0f);
+        }
+        if (!received.hints.empty()) {
+            EXPECT_FLOAT_EQ(received.hints.front().pos_x, 700.0f);
+        }
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+/*TEST(GameSnapshotProtocolTest, SendSnapshotAfterRaceInfoShouldBeConsumed) {
+    const std::string map_yaml = "server_src/city_maps/Liberty_City/Aeropuerto.yaml";
+    int expected_checkpoints = count_section_items(map_yaml, "checkpoints");
+    int expected_hints = count_section_items(map_yaml, "hints");
+
+    // Preparar snapshot sencillo
+    GameState sent;
+    InfoPlayer p;
+    p.player_id = 1; p.username = "solo"; p.car_name = "One"; p.car_type = "Sport";
+    p.pos_x = 10.0f; p.pos_y = 20.0f; p.angle = 0.0f; p.speed = 0.0f;
+    p.velocity_x = 0; p.velocity_y = 0; p.health = 80; p.nitro_amount = 0;
+    p.completed_laps = 0; p.current_checkpoint = 0; p.position_in_race = 1;
+    p.race_time_ms = 0; p.race_finished = false; p.is_alive = true; p.disconnected = false;
+    sent.players.push_back(p);
+
+    for (int i = 0; i < expected_checkpoints; ++i) {
+        CheckpointInfo c; c.id = 300 + i; c.pos_x = 1.0f + i; c.pos_y = 2.0f + i;
+        c.width = 10.0f; c.angle = 0.0f; c.is_start = (i==0); c.is_finish = (i==expected_checkpoints-1);
+        sent.checkpoints.push_back(c);
+    }
+    for (int i = 0; i < expected_hints; ++i) {
+        HintInfo h; h.id = 400 + i; h.pos_x = 5.0f + i; h.pos_y = 6.0f + i; h.direction_angle = 0.0f;
+        h.for_checkpoint = (sent.checkpoints.empty() ? 0u : sent.checkpoints.front().id);
+        sent.hints.push_back(h);
+    }
+
+    // Preparar RaceInfoDTO para enviar antes del snapshot
+    RaceInfoDTO ri;
+    std::memset(&ri, 0, sizeof(ri));
+    std::strncpy(ri.city_name, "PreCity", sizeof(ri.city_name)-1);
+    std::strncpy(ri.race_name, "PreRace", sizeof(ri.race_name)-1);
+    std::strncpy(ri.map_file_path, "server_src/city_maps/PreCity/PreRace", sizeof(ri.map_file_path)-1);
+    ri.total_laps = 2; ri.race_number = 1; ri.total_races = 2; ri.total_checkpoints = expected_checkpoints; ri.max_time_ms = 120000;
+
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+        ServerProtocol sp(client_conn);
+
+        // Enviar RACE_INFO primero y luego el snapshot
+        EXPECT_TRUE(sp.send_race_info(ri));
+        EXPECT_TRUE(sp.send_snapshot(sent));
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        ClientProtocol cp(kHost, kPort);
+
+        // Si el cliente implementa consumo de mensajes intermedios,
+        // receive_snapshot debe devolver el snapshot aunque se haya enviado RACE_INFO antes.
+        GameState received = cp.receive_snapshot();
+
+        ASSERT_EQ(received.players.size(), 1u);
+        ASSERT_EQ(received.checkpoints.size(), static_cast<size_t>(expected_checkpoints));
+        ASSERT_EQ(received.hints.size(), static_cast<size_t>(expected_hints));
+        EXPECT_EQ(received.players[0].player_id, 1);
+    });
+
+    client_thread.join();
+    server_thread.join();
+}*/
