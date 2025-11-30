@@ -1,56 +1,240 @@
-# Configuración del Circuito: Circuito Centro
-# Ciudad: Liberty City
 race:
-  name: "Circuito Centro"
-  city: "Liberty City"
-  description: "Circuito técnico en el corazón de la ciudad"
+  name: "Ruta2"
+  city: "Liberty_City"
+  description: "Circuito Ruta2 en Liberty_City"
   max_time_seconds: 600
   total_laps: 3
-  difficulty: "medium"
+
 spawn_points:
-  - { x: 120.0, y: 220.0, angle: 0.0 }
-  - { x: 130.0, y: 220.0, angle: 0.0 }
-  - { x: 140.0, y: 220.0, angle: 0.0 }
-  - { x: 150.0, y: 220.0, angle: 0.0 }
-  - { x: 120.0, y: 230.0, angle: 0.0 }
-  - { x: 130.0, y: 230.0, angle: 0.0 }
-  - { x: 140.0, y: 230.0, angle: 0.0 }
-  - { x: 150.0, y: 230.0, angle: 0.0 }
+  - { x: 4525.0, y: 871.0, angle: 0.0 }
+  - { x: 4525.0, y: 836.0, angle: 0.0 }
+  - { x: 4505.0, y: 796.0, angle: 0.0 }
+  - { x: 4530.0, y: 796.0, angle: 0.0 }
+  - { x: 4530.0, y: 756.0, angle: 0.0 }
+  - { x: 4510.0, y: 756.0, angle: 0.0 }
+  - { x: 4510.0, y: 696.0, angle: 0.0 }
+  - { x: 4525.0, y: 646.0, angle: 0.0 }
+
 checkpoints:
-  - { id: 0, type: "start", x: 170.0, y: 270.0, width: 60.0, height: 25.0, angle: 90.0 }
-  - { id: 1, type: "normal", x: 280.0, y: 400.0, width: 50.0, height: 20.0, angle: 60.0 }
-  - { id: 2, type: "normal", x: 450.0, y: 550.0, width: 50.0, height: 20.0, angle: 30.0 }
-  - { id: 3, type: "normal", x: 650.0, y: 600.0, width: 50.0, height: 20.0, angle: 0.0 }
-  - { id: 4, type: "normal", x: 850.0, y: 550.0, width: 50.0, height: 20.0, angle: 315.0 }
-  - { id: 5, type: "normal", x: 920.0, y: 350.0, width: 50.0, height: 20.0, angle: 270.0 }
-  - { id: 6, type: "normal", x: 850.0, y: 180.0, width: 50.0, height: 20.0, angle: 225.0 }
-  - { id: 7, type: "normal", x: 650.0, y: 130.0, width: 50.0, height: 20.0, angle: 180.0 }
-  - { id: 8, type: "normal", x: 450.0, y: 180.0, width: 50.0, height: 20.0, angle: 135.0 }
-  - { id: 9, type: "normal", x: 280.0, y: 240.0, width: 50.0, height: 20.0, angle: 100.0 }
-  - { id: 10, type: "finish", x: 170.0, y: 270.0, width: 60.0, height: 25.0, angle: 90.0 }
-hints:
-  - { checkpoint_target: 1, x: 225.0, y: 335.0, direction: "forward" }
-  - { checkpoint_target: 2, x: 365.0, y: 475.0, direction: "right" }
-  - { checkpoint_target: 3, x: 550.0, y: 575.0, direction: "forward" }
-  - { checkpoint_target: 4, x: 750.0, y: 575.0, direction: "forward" }
-  - { checkpoint_target: 5, x: 885.0, y: 450.0, direction: "left" }
-  - { checkpoint_target: 6, x: 885.0, y: 265.0, direction: "forward" }
-  - { checkpoint_target: 7, x: 750.0, y: 155.0, direction: "left" }
-  - { checkpoint_target: 8, x: 550.0, y: 155.0, direction: "left" }
-  - { checkpoint_target: 9, x: 365.0, y: 210.0, direction: "left" }
-  - { checkpoint_target: 10, x: 220.0, y: 255.0, direction: "forward" }
-obstacles:
-  - { id: 1, type: "building", x: 500.0, y: 350.0, width: 150.0, height: 200.0 }
-  - { id: 2, type: "building", x: 350.0, y: 300.0, width: 100.0, height: 120.0 }
-  - { id: 3, type: "wall", x: 700.0, y: 400.0, width: 120.0, height: 15.0 }
-npcs:
-  - { id: 1, car_type: "sedan", spawn_x: 400.0, spawn_y: 350.0, spawn_angle: 90.0, speed: 35.0 }
-  - { id: 2, car_type: "classic", spawn_x: 700.0, spawn_y: 350.0, spawn_angle: 270.0, speed: 28.0 }
-map:
-  width: 1024
-  height: 768
-  background: "Centro.png"
-metadata:
-  author: "Need for Speed 2D Team"
-  version: "1.0"
-  created_date: "2025-01-24"
+  - { id: 0, type: "start", x: 4535.0, y: 941.0, width: 60.0, height: 25.0, angle: 0.0 }
+  - { id: 1, type: "normal", x: 4475.0, y: 941.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 2, type: "normal", x: 4410.0, y: 941.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 3, type: "normal", x: 4345.0, y: 941.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 4, type: "normal", x: 4295.0, y: 941.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 5, type: "normal", x: 4265.0, y: 941.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 6, type: "normal", x: 4170.0, y: 941.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 7, type: "normal", x: 4095.0, y: 941.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 8, type: "normal", x: 4015.0, y: 941.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 9, type: "normal", x: 3955.0, y: 941.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 10, type: "normal", x: 3905.0, y: 941.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 11, type: "normal", x: 3835.0, y: 941.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 12, type: "normal", x: 3790.0, y: 941.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 13, type: "normal", x: 3790.0, y: 876.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 14, type: "normal", x: 3790.0, y: 846.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 15, type: "normal", x: 3725.0, y: 846.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 16, type: "normal", x: 3670.0, y: 846.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 17, type: "normal", x: 3595.0, y: 846.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 18, type: "normal", x: 3550.0, y: 846.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 19, type: "normal", x: 3515.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 20, type: "normal", x: 3470.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 21, type: "normal", x: 3420.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 22, type: "normal", x: 3385.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 23, type: "normal", x: 3350.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 24, type: "normal", x: 3340.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 25, type: "normal", x: 3340.0, y: 796.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 26, type: "normal", x: 3340.0, y: 761.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 27, type: "normal", x: 3340.0, y: 736.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 28, type: "normal", x: 3405.0, y: 736.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 29, type: "normal", x: 3405.0, y: 686.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 30, type: "normal", x: 3405.0, y: 641.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 31, type: "normal", x: 3325.0, y: 641.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 32, type: "normal", x: 3250.0, y: 641.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 33, type: "normal", x: 3205.0, y: 641.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 34, type: "normal", x: 3205.0, y: 696.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 35, type: "normal", x: 3205.0, y: 746.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 36, type: "normal", x: 3205.0, y: 781.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 37, type: "normal", x: 3205.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 38, type: "normal", x: 3140.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 39, type: "normal", x: 3060.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 40, type: "normal", x: 2995.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 41, type: "normal", x: 2945.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 42, type: "normal", x: 2910.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 43, type: "normal", x: 2830.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 44, type: "normal", x: 2765.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 45, type: "normal", x: 2710.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 46, type: "normal", x: 2650.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 47, type: "normal", x: 2590.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 48, type: "normal", x: 2535.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 49, type: "normal", x: 2470.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 50, type: "normal", x: 2405.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 51, type: "normal", x: 2345.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 52, type: "normal", x: 2295.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 53, type: "normal", x: 2265.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 54, type: "normal", x: 2240.0, y: 836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 55, type: "normal", x: 2240.0, y: 766.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 56, type: "normal", x: 2240.0, y: 736.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 57, type: "normal", x: 2240.0, y: 651.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 58, type: "normal", x: 2240.0, y: 536.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 59, type: "normal", x: 2350.0, y: 536.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 60, type: "normal", x: 2430.0, y: 536.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 61, type: "normal", x: 2535.0, y: 536.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 62, type: "normal", x: 2605.0, y: 536.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 63, type: "normal", x: 2605.0, y: 471.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 64, type: "normal", x: 2605.0, y: 396.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 65, type: "normal", x: 2655.0, y: 376.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 66, type: "normal", x: 2715.0, y: 376.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 67, type: "normal", x: 2725.0, y: 346.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 68, type: "normal", x: 2725.0, y: 281.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 69, type: "normal", x: 2785.0, y: 281.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 70, type: "normal", x: 2825.0, y: 281.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 71, type: "normal", x: 2835.0, y: 251.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 72, type: "normal", x: 2835.0, y: 201.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 73, type: "normal", x: 2835.0, y: 166.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 74, type: "normal", x: 2780.0, y: 166.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 75, type: "normal", x: 2715.0, y: 166.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 76, type: "normal", x: 2650.0, y: 166.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 77, type: "normal", x: 2590.0, y: 166.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 78, type: "normal", x: 2590.0, y: 910.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 79, type: "normal", x: 2525.0, y: 910.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 80, type: "normal", x: 2440.0, y: 910.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 81, type: "normal", x: 2380.0, y: 910.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 82, type: "normal", x: 2315.0, y: 910.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 83, type: "normal", x: 2235.0, y: 910.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 84, type: "normal", x: 2235.0, y: 156.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 85, type: "normal", x: 2235.0, y: 211.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 86, type: "normal", x: 2235.0, y: 261.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 87, type: "normal", x: 2235.0, y: 306.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 88, type: "normal", x: 2235.0, y: 426.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 89, type: "normal", x: 2195.0, y: 426.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 90, type: "normal", x: 2135.0, y: 426.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 91, type: "normal", x: 2060.0, y: 426.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 92, type: "normal", x: 1980.0, y: 426.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 93, type: "normal", x: 1940.0, y: 426.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 94, type: "normal", x: 1870.0, y: 391.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 95, type: "normal", x: 1775.0, y: 391.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 96, type: "normal", x: 1725.0, y: 366.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 97, type: "normal", x: 1645.0, y: 366.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 98, type: "normal", x: 1615.0, y: 831.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 99, type: "normal", x: 1700.0, y: 831.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 100, type: "normal", x: 1770.0, y: 831.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 101, type: "normal", x: 1845.0, y: 831.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 102, type: "normal", x: 1955.0, y: 831.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 103, type: "normal", x: 1955.0, y: 921.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 104, type: "normal", x: 1955.0, y: 991.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 105, type: "normal", x: 1955.0, y: 881.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 106, type: "normal", x: 1955.0, y: 956.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 107, type: "normal", x: 1955, y: 1011.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 108, type: "normal", x: 1955, y: 1121.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 109, type: "normal", x: 1955, y: 1146.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 110, type: "normal", x: 1825, y: 1161.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 111, type: "normal", x: 1825, y: 1206.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 112, type: "normal", x: 1825, y: 1291.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 113, type: "normal", x: 1825, y: 1321.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 114, type: "normal", x: 1735, y: 1331.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 115, type: "normal", x: 1670, y: 1331.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 116, type: "normal", x: 1670, y: 1281.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 117, type: "normal", x: 1670, y: 1211.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 118, type: "normal", x: 1625, y: 1206.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 119, type: "normal", x: 1555, y: 1206.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 120, type: "normal", x: 1485, y: 1196.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 121, type: "normal", x: 1485, y: 1146.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 122, type: "normal", x: 1485, y: 1081.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 123, type: "normal", x: 1485, y: 986.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 124, type: "normal", x: 1450, y: 976.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 125, type: "normal", x: 1450, y: 901.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 126, type: "normal", x: 1450, y: 851.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 127, type: "normal", x: 1450, y: 801.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 128, type: "normal", x: 1450, y: 721.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 129, type: "normal", x: 1450, y: 691.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 130, type: "normal", x: 1450, y: 626.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 131, type: "normal", x: 1450, y: 566.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 132, type: "normal", x: 1450, y: 501.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 133, type: "normal", x: 1450, y: 426.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 134, type: "normal", x: 1450, y: 321.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 135, type: "normal", x: 1400, y: 311.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 136, type: "normal", x: 1325, y: 311.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 137, type: "normal", x: 1225, y: 311.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 138, type: "normal", x: 1110, y: 311.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 139, type: "normal", x: 1110, y: 241.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 140, type: "normal", x: 1110, y: 106.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 141, type: "normal", x: 1110, y: 96.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 142, type: "normal", x: 995, y: 96.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 143, type: "normal", x: 910, y: 96.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 144, type: "normal", x: 910, y: 206.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 145, type: "normal", x: 910, y: 296.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 146, type: "normal", x: 820, y: 296.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 147, type: "normal", x: 745, y: 311.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 148, type: "normal", x: 725, y: 356.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 149, type: "normal", x: 725, y: 571.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 150, type: "normal", x: 840, y: 571.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 151, type: "normal", x: 915, y: 571.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 152, type: "normal", x: 905, y: 716.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 153, type: "normal", x: 905, y: 826.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 154, type: "normal", x: 805, y: 826.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 155, type: "normal", x: 685, y: 826.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 156, type: "normal", x: 550, y: 826.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 157, type: "normal", x: 230, y: 826.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 158, type: "normal", x: 70, y: 826.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 159, type: "normal", x: 70, y: 931.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 160, type: "normal", x: 70, y: 1061.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 161, type: "normal", x: 70, y: 1206.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 162, type: "normal", x: 70, y: 1321.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 163, type: "normal", x: 70, y: 1461.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 164, type: "normal", x: 160, y: 1506.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 165, type: "normal", x: 530, y: 1506.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 166, type: "normal", x: 625, y: 1601.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 167, type: "normal", x: 585, y: 1656.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 168, type: "normal", x: 585, y: 1741.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 169, type: "normal", x: 585, y: 1831.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 170, type: "normal", x: 585, y: 1951.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 171, type: "normal", x: 670, y: 2011.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 172, type: "normal", x: 715, y: 2106.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 173, type: "normal", x: 715, y: 2191.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 174, type: "normal", x: 570, y: 2211.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 175, type: "normal", x: 395, y: 2211.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 176, type: "normal", x: 355, y: 2311.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 177, type: "normal", x: 355, y: 2416.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 178, type: "normal", x: 355, y: 2496.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 179, type: "normal", x: 355, y: 2596.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 180, type: "normal", x: 240, y: 2626.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 181, type: "normal", x: 180, y: 2571.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 182, type: "normal", x: 180, y: 2471.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 183, type: "normal", x: 180, y: 2421.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 184, type: "normal", x: 90, y: 2406.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 185, type: "normal", x: 85, y: 2491.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 186, type: "normal", x: 85, y: 2561.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 187, type: "normal", x: 85, y: 2646.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 188, type: "normal", x: 85, y: 2706.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 189, type: "normal", x: 85, y: 2761.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 190, type: "normal", x: 85, y: 2821.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 191, type: "normal", x: 85, y: 2891.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 192, type: "normal", x: 150, y: 2896.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 193, type: "normal", x: 200, y: 2896.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 194, type: "normal", x: 265, y: 2896.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 195, type: "normal", x: 330, y: 2896.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 196, type: "normal", x: 330, y: 2931.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 197, type: "normal", x: 330, y: 2976.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 198, type: "normal", x: 330, y: 3021.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 199, type: "normal", x: 330, y: 3091.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 200, type: "normal", x: 330, y: 3161.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 201, type: "normal", x: 285, y: 3166.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 202, type: "normal", x: 230, y: 3166.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 203, type: "normal", x: 170, y: 3166.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 204, type: "normal", x: 85, y: 3166.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 205, type: "normal", x: 85, y: 3221.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 206, type: "normal", x: 85, y: 3276.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 207, type: "normal", x: 85, y: 3391.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 208, type: "normal", x: 145, y: 3391.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 209, type: "normal", x: 220, y: 3391.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 210, type: "normal", x: 230, y: 3466.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 211, type: "normal", x: 230, y: 3521.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 212, type: "normal", x: 230, y: 3581.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 213, type: "normal", x: 195, y: 3601.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 214, type: "normal", x: 145, y: 3601.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 215, type: "normal", x: 145, y: 3641.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 216, type: "normal", x: 145, y: 3691.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 217, type: "normal", x: 145, y: 3786.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 218, type: "normal", x: 75, y: 3786.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 219, type: "normal", x: 75, y: 3836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 220, type: "normal", x: 75, y: 3951.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 221, type: "finish", x: 115, y: 3951.0, width: 60.0, height: 25.0, angle: 0.0 }
