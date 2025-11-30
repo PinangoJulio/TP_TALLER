@@ -71,6 +71,8 @@ public:
     QString getPlayerName() const { return playerName; }
 signals:
     void lobbyFinished(bool success);
+    void raceInfoReceived(RaceInfoDTO info); 
+
 
 private slots:
     // usuario presiona "Jugar" en el lobby
@@ -111,6 +113,7 @@ private:
     void openGarage();
     void openWaitingRoom();
     void connectNotificationSignals();
+    bool waiting_for_race_info = false;
 
     void finishLobby(bool success) {
         if (!lobbyCompleted) {

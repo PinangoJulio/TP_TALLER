@@ -1,5 +1,9 @@
 #include "lobby_controller.h"
 
+#include <QCoreApplication>  
+#include <QMessageBox>
+#include <chrono>
+#include <thread>
 #include <map>
 #include <string>
 #include <utility>
@@ -530,6 +534,12 @@ void LobbyController::connectNotificationSignals() {
                     matchSelectionWindow->updateGamesList(games);
                 }
             });
+            connect(lobbyClient.get(), &LobbyClient::raceInfoReceived, this,
+            [this](RaceInfoDTO info) {
+                std::cout << "[Controller] 🎮 RACE_INFO received: " 
+                          << info.city_name << " - " << info.race_name << std::endl;
+                waiting_for_race_info = false; // Liberar el flag
+            });
 }
 
 void LobbyController::onBackFromGarage() {
@@ -625,25 +635,43 @@ void LobbyController::onPlayerReadyToggled(bool isReady) {
 
 void LobbyController::onStartGameRequested() {
     std::cout << "[Controller] Usuario solicitó iniciar partida" << std::endl;
+    
     try {
         if (!lobbyClient) {
             throw std::runtime_error("LobbyClient no inicializado");
         }
+        
+        // ✅ ENVIAR start_game
         lobbyClient->start_game(currentGameId);
         std::cout << "[Controller] Señal de inicio enviada" << std::endl;
-
-        // ⚠️ IMPORTANTE: Detener el listener ANTES de emitir la señal
-        std::cout << "[Controller] 🛑 Deteniendo listener de lobby..." << std::endl;
+        
+        // ✅ IMPORTANTE: Esperar a que llegue RACE_INFO
+        std::cout << "[Controller] ⏳ Esperando RACE_INFO del servidor..." << std::endl;
+        waiting_for_race_info = true;
+        
+        // Esperar máximo 5 segundos
+        auto start_time = std::chrono::steady_clock::now();
+        while (waiting_for_race_info) {
+            QCoreApplication::processEvents(); // Permitir que Qt procese eventos
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            
+            auto elapsed = std::chrono::steady_clock::now() - start_time;
+            if (elapsed > std::chrono::seconds(5)) {
+                throw std::runtime_error("Timeout esperando RACE_INFO");
+            }
+        }
+        
+        std::cout << "[Controller] ✅ RACE_INFO recibido, deteniendo listener..." << std::endl;
+        
+        // ✅ AHORA SÍ: Detener el listener DESPUÉS de recibir RACE_INFO
         if (lobbyClient) {
             lobbyClient->stop_listening();
         }
         std::cout << "[Controller] ✅ Listener detenido" << std::endl;
 
-        // NO cerrar ventanas aquí - se hará después de que QEventLoop termine
-        // Para evitar bloqueo del event loop de Qt
-
         // Marcar lobby finalizado con éxito
         finishLobby(true);
+        
     } catch (const std::exception& e) {
         handleNetworkError(e);
         finishLobby(false);

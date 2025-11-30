@@ -73,6 +73,7 @@ signals:
     void gameStartedNotification();
     void errorOccurred(QString message);
     void gamesListReceived(std::vector<GameInfo> games);
+    void raceInfoReceived(RaceInfoDTO info); 
 };
 
 #endif // LOBBY_CLIENT_H

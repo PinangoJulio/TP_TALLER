@@ -6,6 +6,9 @@
 #include <utility>
 #include <algorithm>    // remove_if
 
+#include <thread>  
+#include <chrono>  
+
 #include "common_src/config.h"
 #include "common_src/dtos.h"  // RaceInfoDTO, ServerMessageType
 
@@ -468,15 +471,22 @@ void Match::start_next_race() {
               << current_config.city << " - " << current_config.race_name 
               << " (" << current_config.laps << " laps)\n";
 
-    // ✅ Enviar info de ESTA carrera a los clientes
+    // ✅ CRÍTICO: Enviar info de ESTA carrera a los clientes PRIMERO
+    std::cout << "[Match] >>> Enviando RACE_INFO a todos los jugadores..." << std::endl;
     send_race_info_to_all_players(current_race_index);
+    std::cout << "[Match] <<< RACE_INFO enviado" << std::endl;
+
+    // Pequeña espera para asegurar que el mensaje llegue
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // ✅ Configurar parámetros de la carrera en el GameLoop
     current_race->set_total_laps(current_config.laps); 
     current_race->set_city(current_config.city);
 
     // Iniciar la carrera
+    std::cout << "[Match] >>> Iniciando GameLoop..." << std::endl;
     current_race->start();
+    std::cout << "[Match] <<< GameLoop iniciado" << std::endl;
     
     // Preparar índice para la próxima (cuando esta termine)
     current_race_index++;

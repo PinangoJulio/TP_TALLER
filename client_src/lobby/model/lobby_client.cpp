@@ -254,26 +254,24 @@ void LobbyClient::notification_listener() {
                 msg_type = protocol.read_message_type();
             } catch (const std::exception& e) {
                 if (!listening.load()) {
-                    std::cout << "[LobbyClient] Listener stopped gracefully (socket closed)" << std::endl;
+                    std::cout << "[LobbyClient] Listener stopped gracefully" << std::endl;
                     break;
                 }
-                throw; // Si fue un error real y no un cierre esperado
+                throw;
             }
 
-            std::cout << "[LobbyClient] Received notification type: " << static_cast<int>(msg_type)
-                      << std::endl;
+            std::cout << "[LobbyClient] Received notification type: " 
+                      << static_cast<int>(msg_type) << std::endl;
 
             switch (msg_type) {
             case MSG_PLAYER_JOINED_NOTIFICATION: {
                 std::string user = protocol.read_string();
-                std::cout << "[LobbyClient] Player joined: " << user << std::endl;
                 emit playerJoinedNotification(QString::fromStdString(user));
                 break;
             }
 
             case MSG_PLAYER_LEFT_NOTIFICATION: {
                 std::string user = protocol.read_string();
-                std::cout << "[LobbyClient] Player left: " << user << std::endl;
                 emit playerLeftNotification(QString::fromStdString(user));
                 break;
             }
@@ -281,8 +279,6 @@ void LobbyClient::notification_listener() {
             case MSG_PLAYER_READY_NOTIFICATION: {
                 std::string user = protocol.read_string();
                 uint8_t is_ready = protocol.read_uint8();
-                std::cout << "[LobbyClient] Player " << user << " is now "
-                          << (is_ready ? "READY" : "NOT READY") << std::endl;
                 emit playerReadyNotification(QString::fromStdString(user), is_ready != 0);
                 break;
             }
@@ -291,8 +287,6 @@ void LobbyClient::notification_listener() {
                 std::string user = protocol.read_string();
                 std::string car_name = protocol.read_string();
                 std::string car_type = protocol.read_string();
-                std::cout << "[LobbyClient] Player " << user << " selected " << car_name
-                          << std::endl;
                 emit carSelectedNotification(QString::fromStdString(user),
                                              QString::fromStdString(car_name),
                                              QString::fromStdString(car_type));
@@ -300,11 +294,10 @@ void LobbyClient::notification_listener() {
             }
 
             case MSG_GAMES_LIST: {
-                std::cout << "[LobbyClient] Received MSG_GAMES_LIST in listener" << std::endl;
                 uint16_t count = protocol.read_uint16();
                 std::vector<GameInfo> games = protocol.read_games_list_from_socket(count);
                 emit gamesListReceived(games);
-                listening.store(false); // Salir tras recibir lista (comportamiento legacy si aplica)
+                listening.store(false);
                 return;
             }
 
@@ -317,23 +310,49 @@ void LobbyClient::notification_listener() {
                 break;
             }
 
-            // --- NUEVO: DETECCIÓN DE INICIO DE JUEGO ---
+            // ✅ NUEVO: Detectar RACE_INFO (0x02)
+            case 0x02: { // ServerMessageType::RACE_INFO
+                std::cout << "[LobbyClient] 🎮 RACE_INFO detected, reading..." << std::endl;
+                
+                try {
+                    // Leer la info de la carrera
+                    RaceInfoDTO race_info = protocol.receive_race_info();
+                    
+                    std::cout << "[LobbyClient] ✅ RACE_INFO parsed: " 
+                              << race_info.city_name << " - " << race_info.race_name 
+                              << std::endl;
+                    
+                    // Emitir señal
+                    emit raceInfoReceived(race_info);
+                    
+                    // Salir del listener (transición a juego)
+                    std::cout << "[LobbyClient] 🏁 Transitioning to game mode..." << std::endl;
+                    listening.store(false);
+                    return;
+                    
+                } catch (const std::exception& e) {
+                    std::cerr << "[LobbyClient] ❌ Error parsing RACE_INFO: " 
+                              << e.what() << std::endl;
+                    listening.store(false);
+                    return;
+                }
+            }
+
             default: {
-                std::cout << "[LobbyClient] 🚀 Mensaje desconocido (Type " 
-                          << static_cast<int>(msg_type) << "). Asumiendo inicio de juego." << std::endl;
+                std::cout << "[LobbyClient] ⚠️ Unknown message type: " 
+                          << static_cast<int>(msg_type) << std::endl;
                 
-                // 1. Devolvemos el byte al protocolo para que lo lea el GameLoop
+                // FALLBACK: Devolver byte y salir
                 protocol.unread_message_type(msg_type);
-                
-                // 2. Detenemos el listener limpiamente
                 listening.store(false);
-                return; // Salimos del thread inmediatamente
+                return;
             }
             }
         }
     } catch (const std::exception& e) {
         if (listening.load()) {
-            std::cerr << "[LobbyClient] Notification listener error: " << e.what() << std::endl;
+            std::cerr << "[LobbyClient] Notification listener error: " 
+                      << e.what() << std::endl;
         }
         connected = false;
     }
