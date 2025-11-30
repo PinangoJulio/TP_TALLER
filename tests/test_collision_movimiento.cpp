@@ -73,9 +73,9 @@ int main(int argc, char *argv[])
         std::cout << "Cargando máscaras de colisión..." << std::endl;
 
         CollisionManager collisionManager(
-            "assets/img/map/layers/vice-city/vice-city.png",
-            "assets/img/map/layers/vice-city/puentes-vice-city.png",
-            "assets/img/map/layers/vice-city/rampas-vice-city.png");
+            "assets/img/map/layers/liberty-city/camino-liberty-city.png",
+            "assets/img/map/layers/liberty-city/puentes-liberty-city.png",
+            "assets/img/map/layers/liberty-city/rampas-liberty-city.png");
 
         const int MAP_WIDTH = collisionManager.GetWidth();
         const int MAP_HEIGHT = collisionManager.GetHeight();
@@ -88,13 +88,13 @@ int main(int argc, char *argv[])
 
         // Cargo texturas visuales
         std::cout << "Cargando mapa de Vice City..." << std::endl;
-        SDL_Surface *mapSurface = IMG_Load("assets/img/map/cities/vice-city.png");
+        SDL_Surface *mapSurface = IMG_Load("assets/img/map/cities/liberty-city.png");
         if (!mapSurface)
         {
             throw std::runtime_error("Error cargando mapa: " + std::string(IMG_GetError()));
         }
         SDL2pp::Texture mapTexture(renderer, SDL2pp::Surface(mapSurface));
-        SDL_Surface *minimapSurface = IMG_Load("assets/img/map/cities/vice-city.png");//caminos/camino-1-vice-city.png");
+        SDL_Surface *minimapSurface = IMG_Load("assets/img/map/cities/caminos/liberty-city/ruta-3/debug_resultado_v5.png");
         SDL2pp::Texture minimapTexture(renderer, SDL2pp::Surface(minimapSurface));
 
         std::cout << "Cargando sprites de carros..." << std::endl;
@@ -111,11 +111,11 @@ int main(int argc, char *argv[])
         SDL_SetColorKey(carSurface, SDL_TRUE, SDL_MapRGB(carSurface->format, 0, 0, 0));
         SDL2pp::Texture carTexture(renderer, SDL2pp::Surface(carSurface));
 
-        SDL_Surface *puentesSurf = IMG_Load("assets/img/map/layers/vice-city/puentes-top-vice-city.png");
+        SDL_Surface *puentesSurf = IMG_Load("assets/img/map/layers/liberty-city/puentes-top-liberty-city.png");
         SDL2pp::Texture puentesTexture(renderer, SDL2pp::Surface(puentesSurf ? puentesSurf : SDL_CreateRGBSurface(0, 1, 1, 32, 0, 0, 0, 0)));
         bool hasPuentes = (puentesSurf != nullptr);
 
-        SDL_Surface *topSurface = IMG_Load("assets/img/map/layers/vice-city/top-vice-city.png");
+        SDL_Surface *topSurface = IMG_Load("assets/img/map/layers/liberty-city/top-liberty-city.png");
         SDL2pp::Texture topTexture(renderer, SDL2pp::Surface(topSurface ? topSurface : SDL_CreateRGBSurface(0, 1, 1, 32, 0, 0, 0, 0)));
         bool hasTop = (topSurface != nullptr);
 
