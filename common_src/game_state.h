@@ -164,7 +164,7 @@ struct GameState {
     // Constructor que llena el snapshot desde el servidor
     // La implementación está en common_src/game_state.cpp
     GameState(const std::vector<Player*>& players, const std::string& city,
-              const std::string& map_path, int laps, bool running);
+              const std::string& map_path, bool running);
 
     // ---- Buscar jugador por ID ----
     InfoPlayer* findPlayer(int id) const {

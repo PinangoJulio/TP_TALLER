@@ -135,10 +135,8 @@ void Client::start() {
     std::cout << "[Client]    ESC: Salir del juego" << std::endl;
     std::cout << "[Client]" << std::endl;
     std::cout << "[Client]  Cheats:" << std::endl;
-    std::cout << "[Client]    F1: Invencibilidad" << std::endl;
-    std::cout << "[Client]    F2: Ganar carrera automáticamente" << std::endl;
-    std::cout << "[Client]    F3: Perder carrera" << std::endl;
-    std::cout << "[Client]    F4: Velocidad máxima" << std::endl;
+    std::cout << "[Client]    F1: Ganar carrera automáticamente" << std::endl;
+    std::cout << "[Client]    P: Perder carrera" << std::endl;
     std::cout << "\n";
 
     // FASE 5: GAME LOOP PRINCIPAL

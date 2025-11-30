@@ -926,7 +926,7 @@ static int count_section_items(const std::string& yaml_path, const std::string& 
 
 TEST(GameSnapshotProtocolTest, SendAndReceiveSnapshotBasic) {
     // Ruta al YAML del mapa a adaptar
-    const std::string map_yaml = "server_src/city_maps/Liberty_City/Aeropuerto.yaml";
+    const std::string map_yaml = "server_src/city_maps/Liberty City/Aeropuerto.yaml";
 
     int expected_checkpoints = count_section_items(map_yaml, "checkpoints");
     int expected_hints = count_section_items(map_yaml, "hints");
@@ -1044,7 +1044,7 @@ TEST(GameSnapshotProtocolTest, SendAndReceiveSnapshotBasic) {
 }
 
 TEST(GameSnapshotProtocolTest, SendAndReceiveSnapshotMultiplePlayers) {
-    const std::string map_yaml = "server_src/city_maps/Liberty_City/Aeropuerto.yaml";
+    const std::string map_yaml = "server_src/city_maps/Liberty City/Aeropuerto.yaml";
     int expected_checkpoints = count_section_items(map_yaml, "checkpoints");
     int expected_hints = count_section_items(map_yaml, "hints");
 
@@ -1150,7 +1150,7 @@ TEST(GameSnapshotProtocolTest, SendAndReceiveSnapshotMultiplePlayers) {
 }
 
 /*TEST(GameSnapshotProtocolTest, SendSnapshotAfterRaceInfoShouldBeConsumed) {
-    const std::string map_yaml = "server_src/city_maps/Liberty_City/Aeropuerto.yaml";
+    const std::string map_yaml = "server_src/city_maps/Liberty City/Aeropuerto.yaml";
     int expected_checkpoints = count_section_items(map_yaml, "checkpoints");
     int expected_hints = count_section_items(map_yaml, "hints");
 

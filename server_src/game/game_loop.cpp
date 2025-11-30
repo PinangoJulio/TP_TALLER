@@ -15,7 +15,7 @@
 
 GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues)
     : is_running(false), match_finished(false), comandos(comandos), queues_players(queues),
-      current_race_index(0), current_race_finished(false), current_total_laps(3), spawns_loaded(false)
+      current_race_index(0), current_race_finished(false), spawns_loaded(false)
 {
     std::cout << "[GameLoop] Constructor OK. Listo para gestionar múltiples carreras.\n";
 }
@@ -128,18 +128,13 @@ void GameLoop::add_player(int player_id, const std::string& name, const std::str
     player->setCar(car.get());
     player->resetForNewRace();
 
-    //  Transferir ownership del Car al Player
-    // IMPORTANTE: El Player ahora es dueño del Car (gestión automática)
     player->setCarOwnership(std::move(car));
 
     std::cout << "[GameLoop] ✅ Jugador registrado exitosamente" << std::endl;
     std::cout << "[GameLoop]   • Total jugadores: " << (players.size() + 1) << std::endl;
 
-    // 5. Registrar en el mapa de jugadores
-    // Ahora players[player_id] contiene (Player + Car)
     players[player_id] = std::move(player);
 
-    // Imprimir TODOS los datos del jugador registrado
     Player* registered_player = players[player_id].get();
     Car* registered_car = registered_player->getCar();
 
@@ -439,7 +434,7 @@ GameState GameLoop::create_snapshot() {
     }
 
     // Crear snapshot usando el constructor
-    GameState snapshot(player_list, current_city_name, current_map_yaml, current_total_laps, is_running.load());
+    GameState snapshot(player_list, current_city_name, current_map_yaml, is_running.load());
 
     // TODO: Cuando se implementen, agregar:
     // - checkpoints
@@ -454,9 +449,9 @@ GameState GameLoop::create_snapshot() {
 // GESTIÓN DE MÚLTIPLES CARRERAS
 // ==========================================================
 
-void GameLoop::add_race(const std::string& city, const std::string& yaml_path, int laps) {
+void GameLoop::add_race(const std::string& city, const std::string& yaml_path) {
     int race_number = static_cast<int>(races.size()) + 1;
-    auto race = std::make_unique<Race>(city, yaml_path, laps, race_number);
+    auto race = std::make_unique<Race>(city, yaml_path, race_number);
     races.push_back(std::move(race));
     std::cout << "[GameLoop] Carrera " << race_number << " agregada: " << city << "\n";
 }
@@ -477,6 +472,7 @@ void GameLoop::load_spawn_points_for_current_race() {
     }
 
     try {
+        std::cout << "[GameLoop] Cargando spawn points desde " << current_map_yaml << "...\n";
         YAML::Node map_yaml = YAML::LoadFile(current_map_yaml);
         YAML::Node spawns = map_yaml["spawn_points"];
 
@@ -549,7 +545,6 @@ void GameLoop::start_current_race() {
     const auto& race = races[current_race_index];
     current_map_yaml = race->get_map_path();
     current_city_name = race->get_city_name();
-    current_total_laps = race->get_total_laps();
     current_race_finished = false;
 
     std::cout << "\n╔════════════════════════════════════════════════════════════╗\n";
@@ -557,7 +552,6 @@ void GameLoop::start_current_race() {
               << " - " << current_city_name << std::string(30 - current_city_name.size(), ' ') << "║\n";
     std::cout << "╠════════════════════════════════════════════════════════════╣\n";
     std::cout << "║  Mapa: " << current_map_yaml.substr(0, 50) << std::string(50 - std::min(50UL, current_map_yaml.size()), ' ') << "║\n";
-    std::cout << "║  Vueltas: " << current_total_laps << std::string(47, ' ') << "║\n";
     std::cout << "╚════════════════════════════════════════════════════════════╝\n\n";
 
     reset_players_for_race();
@@ -730,6 +724,7 @@ void GameLoop::run() {
     // Bucle principal: iterar sobre todas las carreras
     while (is_running.load() && !match_finished.load() && current_race_index < races.size()) {
         // Iniciar carrera actual
+        reset_players_for_race();
         start_current_race();
 
         // Bucle de la carrera actual

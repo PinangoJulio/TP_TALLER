@@ -17,6 +17,7 @@ Receiver::Receiver(ServerProtocol& protocol, int id, Queue<GameState>& sender_me
       is_running(is_running), monitor(monitor), commands_queue(),
       sender(protocol, sender_messages_queue, is_running, id) {}
 
+
 std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::string>>>>
 Receiver::get_city_maps() {
     namespace fs = std::filesystem;

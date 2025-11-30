@@ -58,7 +58,6 @@ private:
     // ---- CONFIGURACIÓN CARRERA ACTUAL ----
     std::string current_map_yaml;
     std::string current_city_name;
-    int current_total_laps;
     std::vector<std::tuple<float, float, float>> spawn_points;  // (x, y, angle)
     bool spawns_loaded;
 
@@ -95,7 +94,7 @@ public:
     GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues);
 
     // ---- CONFIGURACIÓN DE CARRERAS ----
-    void add_race(const std::string& city, const std::string& yaml_path, int laps = 3);
+    void add_race(const std::string& city, const std::string& yaml_path);
     void set_races(std::vector<std::unique_ptr<Race>> race_configs);
 
     // ---- AGREGAR JUGADORES ----

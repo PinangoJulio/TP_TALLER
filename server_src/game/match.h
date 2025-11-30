@@ -43,7 +43,7 @@ private:
 
     std::vector<ServerRaceConfig> race_configs;  // Solo configs, las races están en GameLoop
 
-    // ✅ ÚNICO GameLoop que gestiona TODAS las carreras
+    //ÚNICO GameLoop que gestiona TODAS las carreras
     std::unique_ptr<GameLoop> gameloop;
 
     ClientMonitor players_queues;

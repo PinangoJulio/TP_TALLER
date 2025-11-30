@@ -6,7 +6,7 @@
 
 // Constructor que convierte Player* a InfoPlayer
 GameState::GameState(const std::vector<Player*>& player_list, const std::string& city,
-                     const std::string& map_path, int laps, bool running) {
+                     const std::string& map_path, bool running) {
     // Llenar información de todos los jugadores
     for (const auto& player_ptr : player_list) {
         if (!player_ptr)
@@ -55,7 +55,7 @@ GameState::GameState(const std::vector<Player*>& player_list, const std::string&
     // Llenar race current info
     race_current_info.city = city;
     race_current_info.race_name = map_path;
-    race_current_info.total_laps = laps;
+    race_current_info.total_laps = 0;
     race_current_info.total_checkpoints = 0;  // Contar checkpoints del mapa
 
     // Llenar race info

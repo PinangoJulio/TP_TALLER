@@ -9,7 +9,9 @@ ClientEventHandler::ClientEventHandler(Queue<ComandMatchDTO>& cmd_queue, int p_i
                   SDL_SCANCODE_A,      // Girar izquierda
                   SDL_SCANCODE_D,      // Girar derecha
                   SDL_SCANCODE_SPACE,  // Nitro
-                  SDL_SCANCODE_ESCAPE  // Salir
+                  SDL_SCANCODE_ESCAPE,
+                  SDL_SCANCODE_F1, // Cheats
+                  SDL_SCANCODE_P
       }) {
     std::cout << "[EventHandler] Inicializado para player " << player_id << std::endl;
 }
@@ -110,21 +112,21 @@ void ClientEventHandler::process_cheats(const SDL_Event& event) {
     cmd.player_id = player_id;
 
     switch (event.key.keysym.scancode) {
-    case SDL_SCANCODE_F1:
+    case SDL_SCANCODE_F2:
         // Invencibilidad
         cmd.command = GameCommand::CHEAT_INVINCIBLE;
         command_queue.try_push(cmd);
         std::cout << "[EventHandler] CHEAT: Invencibilidad activada" << std::endl;
         break;
 
-    case SDL_SCANCODE_F2:
+    case SDL_SCANCODE_F1:
         // Ganar carrera instantáneamente
         cmd.command = GameCommand::CHEAT_WIN_RACE;
         command_queue.try_push(cmd);
         std::cout << "[EventHandler] CHEAT: Ganar carrera" << std::endl;
         break;
 
-    case SDL_SCANCODE_F3:
+    case SDL_SCANCODE_P:
         // Perder carrera (auto destruido)
         cmd.command = GameCommand::CHEAT_LOSE_RACE;
         command_queue.try_push(cmd);

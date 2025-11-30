@@ -17,10 +17,9 @@ private:
     int race_number;  // Número de carrera en la secuencia (1, 2, 3...)
 
 public:
-    Race(const std::string& city, const std::string& yaml_path, int laps = 3, int number = 1)
-        : city_name(city), map_yaml_path(yaml_path), total_laps(laps), race_number(number) {
-        std::cout << "[Race] Configuración creada: " << city_name << " - " << yaml_path
-                  << " (" << total_laps << " vueltas)\n";
+    Race(const std::string& city, const std::string& yaml_path, int number = 1)
+        : city_name(city), map_yaml_path(yaml_path), race_number(number) {
+        std::cout << "[Race] Configuración creada: " << city_name << " - " << yaml_path;
     }
 
     // ---- GETTERS ----

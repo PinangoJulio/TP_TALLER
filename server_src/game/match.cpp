@@ -285,10 +285,10 @@ void Match::set_race_configs(const std::vector<ServerRaceConfig>& configs) {
 
     for (size_t i = 0; i < configs.size(); ++i) {
         const auto& config = configs[i];
-        std::string yaml_path = "server_src/city_maps/" + config.city + "/" + config.race_name;
+        std::string yaml_path = "server_src/city_maps/" + config.city + "/" + config.race_name + ".yaml";
 
         int race_number = static_cast<int>(new_races.size()) + 1;
-        auto new_race = std::make_unique<Race>(config.city, yaml_path, 3, race_number);
+        auto new_race = std::make_unique<Race>(config.city, yaml_path, race_number);
         new_races.push_back(std::move(new_race));
 
         std::cout << "[Match] Carrera agregada: " << config.city << " -> " << yaml_path << "\n";

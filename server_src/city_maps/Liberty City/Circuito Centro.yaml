@@ -1,7 +1,7 @@
 race:
   name: "Ruta2"
-  city: "Liberty_City"
-  description: "Circuito Ruta2 en Liberty_City"
+  city: "Liberty City"
+  description: "Circuito Ruta2 en Liberty City"
   max_time_seconds: 600
   total_laps: 3
 
