@@ -7,7 +7,7 @@
 #include "car.h"
 #include "obstacle.h"
 
-struct CollisionEvent {
+struct PhysicsCollisionEvent {
     int car_id_a;
     int car_id_b;
     float impact_force;
@@ -18,7 +18,7 @@ struct CollisionEvent {
 class CollisionHandler {
 private:
     std::map<int, Car*> car_map;
-    std::vector<CollisionEvent> pending_collisions;
+    std::vector<PhysicsCollisionEvent> pending_collisions;
     ObstacleManager* obstacle_manager;
 
 public:

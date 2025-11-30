@@ -1,40 +1,34 @@
 #ifndef OBSTACLE_H
 #define OBSTACLE_H
 
-#include <box2d/box2d.h>
-#include <string>
 #include <vector>
-
-enum class ObstacleType {
-    WALL,
-    BARRIER,
-    BRIDGE_PILLAR
-};
+#include <memory>
+#include <box2d/box2d.h>
 
 struct Obstacle {
-    ObstacleType type;
     b2BodyId body;
     float damage_multiplier;
+    bool is_static;
     
-    Obstacle(ObstacleType t, b2BodyId b, float dmg_mult = 1.0f)
-        : type(t), body(b), damage_multiplier(dmg_mult) {}
+    Obstacle(b2BodyId b, float dmg, bool stat) 
+        : body(b), damage_multiplier(dmg), is_static(stat) {}
 };
 
 class ObstacleManager {
 private:
-    std::vector<Obstacle> obstacles;
-    b2WorldId world;
+    std::vector<std::unique_ptr<Obstacle>> obstacles;
 
 public:
-    explicit ObstacleManager(b2WorldId world_id);
-    
-    void create_wall(float x, float y, float width, float height);
-    void create_barrier(float x, float y, float length);
-    void create_building(float x, float y, float width, float height);
-    
-    bool is_obstacle(b2BodyId body) const;
-    float get_damage_multiplier(b2BodyId body) const;
-    void clear();
+    ObstacleManager() = default;
+
+    // Métodos de creación que reciben el mundo explícitamente
+    void create_wall(b2WorldId world, float x, float y, float width, float height);
+    void create_building(b2WorldId world, float x, float y, float width, float height);
+    void create_barrier(b2WorldId world, float x, float y, float length);
+
+    // Consultas
+    bool is_obstacle(b2BodyId bodyId) const;
+    float get_damage_multiplier(b2BodyId bodyId) const;
     
     ~ObstacleManager();
 };

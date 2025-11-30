@@ -13,6 +13,10 @@ target_sources(server
     # Game
     game/game_loop.cpp
     game/car.cpp
+    game/map_loader.cpp
+    game/collision_handler.cpp
+    game/checkpoint_manager.cpp
+    game/obstacle.cpp
 
     # Network
     network/client_handler.cpp
@@ -29,6 +33,10 @@ target_sources(server
     lobby/game_room.h
     game/game_loop.h
     game/car.h
+    game/map_loader.h
+    game/collision_handler.h
+    game/checkpoint_manager.h
+    game/obstacle.h
     network/client_handler.h
     network/receiver.h
     network/sender.h

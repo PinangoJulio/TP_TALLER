@@ -4,14 +4,23 @@
 #include <vector>
 #include <map>
 #include <box2d/box2d.h>
-#include "map_loader.h"
+
+// MOVIDO: Definimos la estructura aquí para evitar errores de compilación
+struct CheckpointData {
+    int id;
+    float x;
+    float y;
+    float width;
+    float height;
+    float angle;
+};
 
 class CheckpointManager {
 private:
     std::vector<CheckpointData> checkpoints;
-    std::map<int, int> player_current_checkpoint;
-    std::map<int, int> player_laps_completed;
-    
+    std::map<int, int> player_current_checkpoint; // ID Jugador -> Indice Checkpoint
+    std::map<int, int> player_laps_completed;     // ID Jugador -> Vueltas
+
     bool is_point_in_checkpoint(b2Vec2 point, const CheckpointData& cp);
 
 public:
@@ -19,7 +28,9 @@ public:
     
     void load_checkpoints(const std::vector<CheckpointData>& cps);
     void register_player(int player_id);
+    
     bool check_crossing(int player_id, b2Vec2 car_position);
+    
     int get_current_checkpoint(int player_id) const;
     int get_laps_completed(int player_id) const;
     bool has_completed_lap(int player_id) const;

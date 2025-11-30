@@ -24,3 +24,5 @@ target_sources(taller_common
     game_state.h
     #common_types.h
 )
+
+target_link_libraries(taller_common PUBLIC box2d)

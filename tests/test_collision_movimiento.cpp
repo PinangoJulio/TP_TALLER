@@ -1,4 +1,4 @@
-#include <SDL2/SDL_image.h>
+#include <SDL_image.h>
 
 #include <SDL2pp/Rect.hh>
 #include <SDL2pp/Renderer.hh>
@@ -55,16 +55,18 @@ int main(int argc, char* argv[]) {
                                      std::string(IMG_GetError()));
         }
 
-        SDL2pp::Window window("Test de Colisión - Vice City (Con Rampas)", SDL_WINDOWPOS_CENTERED,
+        SDL2pp::Window window("Test de Colisión - liberty City (Con Rampas)", SDL_WINDOWPOS_CENTERED,
                               SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
         SDL2pp::Renderer renderer(window, -1, SDL_RENDERER_ACCELERATED);
 
         // Cargo máscaras de colisión (imágenes blanco nero de la carpeta assets/img/layers)
         std::cout << "Cargando máscaras de colisión..." << std::endl;
 
-        CollisionManager collisionManager("assets/img/map/layers/vice-city/vice-city.png",
-                                          "assets/img/map/layers/vice-city/puentes-transitables.png",
-                                          "assets/img/map/layers/vice-city/rampas.png");
+        CollisionManager collisionManager(
+                                        //  "assets/img/map/cities/caminos/vice-city/ruta-1/debug_resultado_v5.jpg",
+                                         "assets/img/map/layers/vice-city/camino-vice-city.png",
+                                          "assets/img/map/layers/vice-city/puentes-vice-city.png",
+                                          "assets/img/map/layers/vice-city/rampas-vice-city.png");
 
         const int MAP_WIDTH = collisionManager.GetWidth();
         const int MAP_HEIGHT = collisionManager.GetHeight();
@@ -75,8 +77,8 @@ int main(int argc, char* argv[]) {
         std::cout << "Límites del mundo: " << MAP_WIDTH << "x" << MAP_HEIGHT << std::endl;
 
         // Cargo texturas visuales
-        std::cout << "Cargando mapa de Vice City..." << std::endl;
-        SDL_Surface* mapSurface = IMG_Load("assets/img/map/cities/vice-city.png");
+        std::cout << "Cargando mapa de liberty City..." << std::endl;
+        SDL_Surface* mapSurface = IMG_Load("assets/img/map/cities/caminos/vice-city/ruta-3/debug_resultado_v5.jpg");
         if (!mapSurface) {
             throw std::runtime_error("Error cargando mapa: " + std::string(IMG_GetError()));
         }
@@ -94,7 +96,7 @@ int main(int argc, char* argv[]) {
         SDL_SetColorKey(carSurface, SDL_TRUE, SDL_MapRGB(carSurface->format, 0, 0, 0));
         SDL2pp::Texture carTexture(renderer, SDL2pp::Surface(carSurface));
 
-        SDL_Surface* puentesSurf = IMG_Load("assets/img/map/layers/vice-city/vice-city-puentes.png");
+        SDL_Surface* puentesSurf = IMG_Load("assets/img/map/layers/vice-city/puentes-top-vice-city.png");
         SDL2pp::Texture puentesTexture(
             renderer, SDL2pp::Surface(puentesSurf ? puentesSurf
                                                   : SDL_CreateRGBSurface(0, 1, 1, 32, 0, 0, 0, 0)));

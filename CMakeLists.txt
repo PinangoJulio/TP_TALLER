@@ -238,7 +238,6 @@ endif()
 # =======================================================
 # Testing section
 # =======================================================
-# =======================================================
 # Target del Test de Colisión y Movimiento
 # =======================================================
 add_executable(collision_test tests/test_collision_movimiento.cpp
@@ -303,12 +302,17 @@ if(TALLER_TESTS)
             Qt6::Core)
 endif()
 
-# Añadir ejecutable de prueba movimiento_auto
+
 add_executable(movimiento_auto
   server_src/tests/movimiento_auto.cpp
   server_src/game/game_loop.cpp
   server_src/game/car.cpp
   server_src/game/player.h
+  server_src/game/collision_handler.cpp
+  server_src/game/obstacle.cpp
+  server_src/game/map_loader.cpp
+  server_src/game/checkpoint_manager.cpp
+
   server_src/network/client_monitor.cpp
   server_src/network/client_monitor.h
   common_src/game_state.cpp
@@ -318,4 +322,5 @@ add_executable(movimiento_auto
 
 target_include_directories(movimiento_auto PRIVATE ${CMAKE_SOURCE_DIR})
 
+# Asegúrate de que box2d esté aquí (si taller_common ya lo tiene PUBLIC, esto está bien)
 target_link_libraries(movimiento_auto PRIVATE taller_common yaml-cpp)

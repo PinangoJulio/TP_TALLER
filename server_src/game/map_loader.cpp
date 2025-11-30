@@ -3,12 +3,7 @@
 #include <iostream>
 #include <filesystem>
 
-MapLoader::MapLoader(b2WorldId world, ObstacleManager& obstacles)
-    : world(world), obstacle_manager(obstacles) {
-    std::cout << "[MapLoader] Initialized" << std::endl;
-}
-
-void MapLoader::load_map(const std::string& yaml_path) {
+void MapLoader::load_map(b2WorldId world, ObstacleManager& obstacle_manager, const std::string& yaml_path) {
     std::cout << "[MapLoader] Loading map: " << yaml_path << std::endl;
     
     if (!std::filesystem::exists(yaml_path)) {
@@ -25,9 +20,8 @@ void MapLoader::load_map(const std::string& yaml_path) {
             spawn.angle = spawn_node["angle"].as<float>(0.0f);
             
             spawn_points.push_back(spawn);
-            std::cout << "[MapLoader] Spawn point: (" << spawn.x << ", " 
-                      << spawn.y << ") angle: " << spawn.angle << std::endl;
         }
+        std::cout << "[MapLoader] Loaded " << spawn_points.size() << " spawn points." << std::endl;
     }
     
     if (map["checkpoints"]) {
@@ -41,51 +35,48 @@ void MapLoader::load_map(const std::string& yaml_path) {
             cp.angle = cp_node["angle"].as<float>(0.0f);
             
             checkpoints.push_back(cp);
-            std::cout << "[MapLoader] Checkpoint " << cp.id << ": (" 
-                      << cp.x << ", " << cp.y << ")" << std::endl;
         }
+        std::cout << "[MapLoader] Loaded " << checkpoints.size() << " checkpoints." << std::endl;
     }
     
     if (map["walls"]) {
+        int count = 0;
         for (const auto& wall_node : map["walls"]) {
             float x = wall_node["x"].as<float>();
             float y = wall_node["y"].as<float>();
             float width = wall_node["width"].as<float>();
             float height = wall_node["height"].as<float>();
             
-            obstacle_manager.create_wall(x, y, width, height);
-            std::cout << "[MapLoader] Wall created at (" << x << ", " << y << ")" << std::endl;
+            obstacle_manager.create_wall(world, x, y, width, height); 
+            count++;
         }
+        std::cout << "[MapLoader] Created " << count << " walls." << std::endl;
     }
     
     if (map["buildings"]) {
-        for (const auto& building_node : map["buildings"]) {
-            float x = building_node["x"].as<float>();
-            float y = building_node["y"].as<float>();
-            float width = building_node["width"].as<float>();
-            float height = building_node["height"].as<float>();
+        int count = 0;
+        for (const auto& node : map["buildings"]) {
+            float x = node["x"].as<float>();
+            float y = node["y"].as<float>();
+            float width = node["width"].as<float>();
+            float height = node["height"].as<float>();
             
-            obstacle_manager.create_building(x, y, width, height);
-            std::cout << "[MapLoader] Building created at (" << x << ", " << y << ")" << std::endl;
+            obstacle_manager.create_building(world, x, y, width, height);
+            count++;
         }
+        std::cout << "[MapLoader] Created " << count << " buildings." << std::endl;
     }
-    
-    if (map["barriers"]) {
-        for (const auto& barrier_node : map["barriers"]) {
-            float x = barrier_node["x"].as<float>();
-            float y = barrier_node["y"].as<float>();
-            float length = barrier_node["length"].as<float>();
-            
-            obstacle_manager.create_barrier(x, y, length);
-            std::cout << "[MapLoader] Barrier created at (" << x << ", " << y << ")" << std::endl;
-        }
-    }
-    
-    std::cout << "[MapLoader] Map loaded successfully!" << std::endl;
-    std::cout << "  - Spawn points: " << spawn_points.size() << std::endl;
-    std::cout << "  - Checkpoints: " << checkpoints.size() << std::endl;
-}
 
-MapLoader::~MapLoader() {
-    std::cout << "[MapLoader] Destroyed" << std::endl;
+    if (map["barriers"]) {
+        int count = 0;
+        for (const auto& node : map["barriers"]) {
+            float x = node["x"].as<float>();
+            float y = node["y"].as<float>();
+            float length = node["length"].as<float>();
+            
+            obstacle_manager.create_barrier(world, x, y, length);
+            count++;
+        }
+        std::cout << "[MapLoader] Created " << count << " barriers." << std::endl;
+    }
 }

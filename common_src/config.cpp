@@ -1,15 +1,18 @@
 #include "config.h"
-
 #include <sstream>
 
 YAML::Node Configuration::yaml;
 
-// Loads the YAML file and stores it in the static 'yaml' variable
+// Carga el archivo
 void Configuration::load_path(const char* yaml_path) {
-    yaml = YAML::LoadFile(yaml_path);
+    try {
+        yaml = YAML::LoadFile(yaml_path);
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Error loading config file: " + std::string(yaml_path));
+    }
 }
 
-// Generic template method to get any field from the YAML
+// Implementación del getter genérico
 template <typename T>
 T Configuration::get(const std::string& field) {
     try {
@@ -17,6 +20,7 @@ T Configuration::get(const std::string& field) {
         std::stringstream ss(field);
         std::string key;
 
+        // Navegar por la estructura "padre.hijo.nieto"
         while (std::getline(ss, key, '.')) {
             if (!node[key]) {
                 throw std::runtime_error("Field not found: " + field);
@@ -26,11 +30,11 @@ T Configuration::get(const std::string& field) {
 
         return node.as<T>();
     } catch (const std::exception& e) {
-        throw std::runtime_error("Error reading field '" + field + "': " + e.what());
+        throw std::runtime_error("Error reading config field '" + field + "': " + e.what());
     }
 }
 
-// Get YAML node for complex structures (arrays, maps, etc.)
+// Getter de nodo crudo
 YAML::Node Configuration::get_node(const std::string& field) {
     try {
         YAML::Node node = yaml;
@@ -46,11 +50,11 @@ YAML::Node Configuration::get_node(const std::string& field) {
 
         return node;
     } catch (const std::exception& e) {
-        throw std::runtime_error("Error reading field '" + field + "': " + e.what());
+        throw std::runtime_error("Error reading config node '" + field + "': " + e.what());
     }
 }
 
-// ✅ Ahora sí, recién acá las instanciaciones explícitas
+// Instanciaciones explícitas para que el linker no se queje
 template std::string Configuration::get<std::string>(const std::string& field);
 template int Configuration::get<int>(const std::string& field);
 template float Configuration::get<float>(const std::string& field);
