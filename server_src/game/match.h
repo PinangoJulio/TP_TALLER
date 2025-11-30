@@ -87,8 +87,7 @@ public:
     const std::map<int, PlayerLobbyInfo>& get_players() const;  // ✅ Alias para compatibilidad
 
     // ---- LOBBY: Carreras ----
-    void add_race(const std::string& yaml_path, const std::string& city_name);
-    void set_race_configs(const std::vector<ServerRaceConfig>& configs);
+    void add_race(const std::string& map_path, const std::string& race_path, const std::string& city_name);    void set_race_configs(const std::vector<ServerRaceConfig>& configs);
     const std::vector<ServerRaceConfig>& get_race_configs() const { return race_configs; }
 
     // ---- CARRERAS ----

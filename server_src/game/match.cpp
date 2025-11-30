@@ -1,12 +1,34 @@
 #include "match.h"
 
-#include <arpa/inet.h>  // htons, htonl
-#include <cstring>      // memset, strncpy
+#include <arpa/inet.h>
+#include <cstring>
 #include <iomanip>
 #include <utility>
+#include <vector> 
+#include <iostream>
+#include <algorithm> // Necesario para transform
+#include <cctype>    // Necesario para tolower
 
-#include "common_src/config.h"
-#include "common_src/dtos.h"  // RaceInfoDTO, ServerMessageType
+#include "../../common_src/config.h"
+#include "../../common_src/dtos.h"
+
+// ============================================
+// HELPER: Normalizar nombre de archivo
+// Convierte "Vice City" -> "vice-city.yaml"
+// ============================================
+static std::string normalize_map_name(std::string city_name) {
+    std::string filename = city_name;
+    
+    // 1. Convertir a minúsculas
+    std::transform(filename.begin(), filename.end(), filename.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+                   
+    // 2. Reemplazar espacios y guiones bajos por guiones medios
+    std::replace(filename.begin(), filename.end(), ' ', '-');
+    std::replace(filename.begin(), filename.end(), '_', '-');
+    
+    return filename + ".yaml";
+}
 
 Match::Match(std::string host_name, int code, int max_players)
     : host_name(std::move(host_name)), match_code(code), is_active(false),
@@ -25,15 +47,12 @@ bool Match::can_player_join_match() const {
 bool Match::add_player(int id, std::string nombre, Queue<GameState>& queue_enviadora) {
     std::lock_guard<std::mutex> lock(mtx);
 
-    // Validar sin llamar a can_player_join_match() para evitar deadlock
     if (static_cast<int>(players_info.size()) >= max_players || state == MatchState::STARTED) {
         return false;
     }
 
-    // Agregar a la queue de broadcast
     players_queues.add_client_queue(queue_enviadora, id);
 
-    // Crear info de lobby
     PlayerLobbyInfo info;
     info.id = id;
     info.name = nombre;
@@ -43,21 +62,14 @@ bool Match::add_player(int id, std::string nombre, Queue<GameState>& queue_envia
     players_info[id] = info;
     player_name_to_id[nombre] = id;
 
-    // Mantener compatibilidad con vector de players
-    auto player = std::make_unique<Player>(id, nombre);
-    players.push_back(std::move(player));
-
-    // Actualizar estado
     if (static_cast<int>(players_info.size()) >= 2) {
         state = MatchState::READY;
     }
 
     std::cout << "[Match] Jugador agregado: " << nombre << " (id=" << id
               << ", total=" << players_info.size() << ")\n";
-
-    // debug imprimir lista de jgugadores
+    
     print_players_info();
-
     return true;
 }
 
@@ -65,35 +77,20 @@ bool Match::remove_player(int id_jugador) {
     std::lock_guard<std::mutex> lock(mtx);
 
     auto it = players_info.find(id_jugador);
-    if (it == players_info.end())
-        return false;
+    if (it == players_info.end()) return false;
 
     std::string nombre = it->second.name;
 
-    // Eliminar de todas las estructuras
     players_info.erase(it);
     player_name_to_id.erase(nombre);
     players_queues.delete_client_queue(id_jugador);
 
-    // Eliminar del vector de players
-    auto player_it = std::remove_if(
-        players.begin(), players.end(),
-        [id_jugador](const std::unique_ptr<Player>& p) { return p->getId() == id_jugador; });
-    players.erase(player_it, players.end());
-
-    // Actualizar estado
     if (static_cast<int>(players_info.size()) < 2) {
         state = MatchState::WAITING;
     }
 
     std::cout << "[Match] Jugador eliminado: " << nombre << " (id=" << id_jugador
               << ", restantes=" << players_info.size() << ")" << std::endl;
-
-    // Notificar a los demás jugadores si hay callback de broadcast
-    if (broadcast_callback) {
-        // Crear mensaje de notificación (se implementará en el receiver)
-        // broadcast_callback se encargará de enviar el mensaje
-    }
 
     return true;
 }
@@ -132,52 +129,27 @@ bool Match::set_player_car(int player_id, const std::string& car_name, const std
     std::lock_guard<std::mutex> lock(mtx);
 
     auto it = players_info.find(player_id);
-    if (it == players_info.end())
-        return false;
+    if (it == players_info.end()) return false;
 
     it->second.car_name = car_name;
     it->second.car_type = car_type;
 
-    // Actualizar en Player también
-    for (auto& player : players) {
-        if (player->getId() == player_id) {
-            player->setSelectedCar(car_name);
-            // El car_type se establecerá cuando se cree el Car en GameLoop::add_player()
-            break;
-        }
-    }
+    std::cout << "[Match] Jugador " << it->second.name << " eligió auto " << car_name << "\n";
 
-    std::cout << "[Match] Jugador " << it->second.name << " eligió auto " << car_name << " ("
-              << car_type << ")\n";
-
-    // REGISTRAR EN GAMELOOP INMEDIATAMENTE (para todas las carreras configuradas)
     if (!races.empty()) {
-        std::cout << "[Match] >>> Registrando " << it->second.name << " en los GameLoops de las "
-                  << races.size() << " carreras..." << std::endl;
-
         for (auto& race : races) {
             race->add_player_to_gameloop(player_id, it->second.name, car_name, car_type);
         }
-
-        std::cout << "[Match] <<< " << it->second.name << " registrado en todas las carreras"
-                  << std::endl;
-    } else {
-        std::cout
-            << "[Match]   No hay carreras configuradas aún, jugador se agregará cuando se configuren"
-            << std::endl;
     }
 
-    //  IMPRIMIR LISTA DE JUGADORES
     print_players_info();
-
     return true;
 }
 
 bool Match::set_player_car_by_name(const std::string& player_name, const std::string& car_name,
                                    const std::string& car_type) {
     int player_id = get_player_id_by_name(player_name);
-    if (player_id == -1)
-        return false;
+    if (player_id == -1) return false;
     return set_player_car(player_id, car_name, car_type);
 }
 
@@ -190,8 +162,7 @@ std::string Match::get_player_car(int player_id) const {
 bool Match::all_players_selected_car() const {
     std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(mtx));
     for (const auto& [id, info] : players_info) {
-        if (info.car_name.empty())
-            return false;
+        if (info.car_name.empty()) return false;
     }
     return !players_info.empty();
 }
@@ -202,41 +173,28 @@ bool Match::all_players_selected_car() const {
 
 bool Match::set_player_ready(int player_id, bool ready) {
     std::lock_guard<std::mutex> lock(mtx);
-
     auto it = players_info.find(player_id);
-    if (it == players_info.end())
-        return false;
+    if (it == players_info.end()) return false;
 
-    // Validar que tenga auto seleccionado
     if (ready && it->second.car_name.empty()) {
-        std::cout << "[Match] " << it->second.name << " tried to ready without selecting car\n";
+        std::cout << "[Match] No car selected for " << it->second.name << "\n";
         return false;
     }
 
     it->second.is_ready = ready;
-    std::cout << "[Match] " << it->second.name << " is now " << (ready ? "READY" : "NOT READY")
-              << "\n";
 
-    // ✅ PROPAGAR A TODOS LOS GAMELOOPS
     if (!races.empty()) {
-        std::cout << "[Match] >>> Actualizando estado ready en GameLoops..." << std::endl;
         for (auto& race : races) {
             race->set_player_ready(player_id, ready);
         }
-        std::cout << "[Match] <<< Estado ready actualizado en " << races.size() << " carreras"
-                  << std::endl;
     }
-
-    // ✅ IMPRIMIR LISTA DE JUGADORES
     print_players_info();
-
     return true;
 }
 
 bool Match::set_player_ready_by_name(const std::string& player_name, bool ready) {
     int player_id = get_player_id_by_name(player_name);
-    if (player_id == -1)
-        return false;
+    if (player_id == -1) return false;
     return set_player_ready(player_id, ready);
 }
 
@@ -248,12 +206,9 @@ bool Match::is_player_ready(int player_id) const {
 
 bool Match::all_players_ready() const {
     std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(mtx));
-    if (players_info.empty())
-        return false;
-
+    if (players_info.empty()) return false;
     for (const auto& [id, info] : players_info) {
-        if (!info.is_ready)
-            return false;
+        if (!info.is_ready) return false;
     }
     return true;
 }
@@ -262,223 +217,144 @@ bool Match::can_start() const {
     return state == MatchState::READY && all_players_ready() && !race_configs.empty();
 }
 
-// ============================================
-// SNAPSHOT
-// ============================================
-
 std::map<int, PlayerLobbyInfo> Match::get_players_snapshot() const {
     std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(mtx));
     return players_info;
 }
 
 const std::map<int, PlayerLobbyInfo>& Match::get_players() const {
-    // No lock porque es un const reference, el caller debe hacer lock si necesita
     return players_info;
 }
 
 // ============================================
-// CARRERAS
+// CARRERAS (CONFIGURACIÓN CORREGIDA)
 // ============================================
 
 void Match::set_race_configs(const std::vector<ServerRaceConfig>& configs) {
     std::lock_guard<std::mutex> lock(mtx);
     race_configs = configs;
+    races.clear(); 
 
-    // Crear las races
     for (const auto& config : configs) {
-        std::string yaml_path = "server_src/city_maps/" + config.city + "/" + config.race_name;
-        add_race(yaml_path, config.city);
+        // 1. MAPA BASE: Usamos la función para convertir "Vice City" -> "vice-city.yaml"
+        std::string filename = normalize_map_name(config.city);
+        std::string base_map_path = "server_src/city_maps/" + config.city + "/" + filename;
+        
+        // 2. CARRERA: Si la carrera no tiene extension .yaml, se la agregamos
+        std::string race_config_path = "server_src/city_maps/" + config.city + "/" + config.race_name;
+        if (race_config_path.substr(race_config_path.length() - 5) != ".yaml") {
+            race_config_path += ".yaml";
+        }
+
+        add_race(base_map_path, race_config_path, config.city);
     }
 
-    std::cout << "[Match] Configuradas " << race_configs.size() << " carreras\n";
+    std::cout << "[Match] Configuradas " << races.size() << " carreras.\n";
 }
 
-void Match::add_race(const std::string& yaml_path, const std::string& city_name) {
-    auto new_race = std::make_unique<Race>(command_queue, players_queues, city_name, yaml_path);
+void Match::add_race(const std::string& map_path, const std::string& race_path, const std::string& city_name) {
+    auto new_race = std::make_unique<Race>(command_queue, players_queues, city_name, map_path, race_path);
 
-    // ✅ Agregar jugadores que ya seleccionaron auto a esta nueva carrera
     for (const auto& [id, info] : players_info) {
-        if (!info.car_name.empty() && !info.car_type.empty()) {
-            std::cout << "[Match] >>> Agregando " << info.name << " retroactivamente a carrera "
-                      << city_name << std::endl;
+        if (!info.car_name.empty()) {
             new_race->add_player_to_gameloop(id, info.name, info.car_name, info.car_type);
         }
     }
 
     races.push_back(std::move(new_race));
-    std::cout << "[Match] Carrera agregada: " << city_name << " -> " << yaml_path << "\n";
+    std::cout << "[Match] + Carrera: " << city_name << "\n"
+              << "        - Base: " << map_path << "\n"
+              << "        - Config: " << race_path << "\n";
 }
 
 // ============================================
-// ENVÍO DE INFORMACIÓN DE CARRERA
+// ENVÍO DE INFO
 // ============================================
 
 void Match::send_race_info_to_all_players() {
-    if (races.empty() || race_configs.empty()) {
-        std::cerr << "[Match] ❌ No hay carreras configuradas para enviar info" << std::endl;
-        return;
-    }
+    if (races.empty() || race_configs.empty()) return;
 
-    // Obtener información de la primera carrera (current_race_index debería ser 0)
-    const auto& first_race_config = race_configs[0];
-    const auto& first_race = races[0];
-
-    // Crear el DTO con la información de la carrera
+    const auto& first_config = race_configs[0];
+    
     RaceInfoDTO race_info;
     std::memset(&race_info, 0, sizeof(race_info));
 
-    // Copiar ciudad
-    std::strncpy(race_info.city_name, first_race_config.city.c_str(),
-                 sizeof(race_info.city_name) - 1);
-
-    // Copiar nombre de carrera
-    std::strncpy(race_info.race_name, first_race_config.race_name.c_str(),
-                 sizeof(race_info.race_name) - 1);
-
-    // Copiar ruta del mapa
-    std::string map_path = first_race->get_map_path();
+    std::strncpy(race_info.city_name, first_config.city.c_str(), sizeof(race_info.city_name) - 1);
+    std::strncpy(race_info.race_name, first_config.race_name.c_str(), sizeof(race_info.race_name) - 1);
+    
+    // Construimos la ruta normalizada también para enviar al cliente
+    std::string filename = normalize_map_name(first_config.city);
+    std::string map_path = "server_src/city_maps/" + first_config.city + "/" + filename;
+    
     std::strncpy(race_info.map_file_path, map_path.c_str(), sizeof(race_info.map_file_path) - 1);
 
-    // Configuración numérica
-    race_info.total_laps = 3;  // TODO: Obtener de config
+    race_info.total_laps = 3; 
     race_info.race_number = 1;
     race_info.total_races = static_cast<uint8_t>(races.size());
-    race_info.total_checkpoints = 0;  // TODO: Obtener del mapa parseado
-    race_info.max_time_ms = 600000;   // 10 minutos en ms
+    race_info.total_checkpoints = 0; 
+    race_info.max_time_ms = 600000;
 
-    std::cout << "[Match] 📨 Enviando info de carrera a todos los jugadores..." << std::endl;
-    std::cout << "[Match]   Ciudad: " << race_info.city_name << std::endl;
-    std::cout << "[Match]   Carrera: " << race_info.race_name << std::endl;
-    std::cout << "[Match]   Mapa: " << race_info.map_file_path << std::endl;
-
-    if (!broadcast_callback) {
-        std::cerr << "[Match] ❌ No hay broadcast_callback configurado" << std::endl;
-        return;
-    }
-
-    // Serializar RaceInfoDTO manualmente
     std::vector<uint8_t> buffer;
-
-    // 1. Tipo de mensaje
     buffer.push_back(static_cast<uint8_t>(ServerMessageType::RACE_INFO));
 
-    // 2. Ciudad (string con longitud)
-    std::string city_str(race_info.city_name);
-    uint16_t city_len = htons(static_cast<uint16_t>(city_str.size()));
-    buffer.push_back(reinterpret_cast<uint8_t*>(&city_len)[0]);
-    buffer.push_back(reinterpret_cast<uint8_t*>(&city_len)[1]);
-    buffer.insert(buffer.end(), city_str.begin(), city_str.end());
+    auto push_string = [&](const std::string& s) {
+        uint16_t len = htons(s.size());
+        buffer.push_back(reinterpret_cast<uint8_t*>(&len)[0]);
+        buffer.push_back(reinterpret_cast<uint8_t*>(&len)[1]);
+        buffer.insert(buffer.end(), s.begin(), s.end());
+    };
 
-    // 3. Nombre de carrera (string con longitud)
-    std::string race_str(race_info.race_name);
-    uint16_t race_len = htons(static_cast<uint16_t>(race_str.size()));
-    buffer.push_back(reinterpret_cast<uint8_t*>(&race_len)[0]);
-    buffer.push_back(reinterpret_cast<uint8_t*>(&race_len)[1]);
-    buffer.insert(buffer.end(), race_str.begin(), race_str.end());
+    push_string(race_info.city_name);
+    push_string(race_info.race_name);
+    push_string(race_info.map_file_path);
 
-    // 4. Ruta del mapa (string con longitud)
-    std::string map_str(race_info.map_file_path);
-    uint16_t map_len = htons(static_cast<uint16_t>(map_str.size()));
-    buffer.push_back(reinterpret_cast<uint8_t*>(&map_len)[0]);
-    buffer.push_back(reinterpret_cast<uint8_t*>(&map_len)[1]);
-    buffer.insert(buffer.end(), map_str.begin(), map_str.end());
-
-    // 5. Datos numéricos
     buffer.push_back(race_info.total_laps);
     buffer.push_back(race_info.race_number);
     buffer.push_back(race_info.total_races);
+    
+    uint16_t cps = htons(race_info.total_checkpoints);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&cps)[0]);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&cps)[1]);
 
-    uint16_t checkpoints = htons(race_info.total_checkpoints);
-    buffer.push_back(reinterpret_cast<uint8_t*>(&checkpoints)[0]);
-    buffer.push_back(reinterpret_cast<uint8_t*>(&checkpoints)[1]);
+    uint32_t time = htonl(race_info.max_time_ms);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&time)[0]);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&time)[1]);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&time)[2]);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&time)[3]);
 
-    uint32_t max_time = htonl(race_info.max_time_ms);
-    buffer.push_back(reinterpret_cast<uint8_t*>(&max_time)[0]);
-    buffer.push_back(reinterpret_cast<uint8_t*>(&max_time)[1]);
-    buffer.push_back(reinterpret_cast<uint8_t*>(&max_time)[2]);
-    buffer.push_back(reinterpret_cast<uint8_t*>(&max_time)[3]);
-
-    // Enviar a todos los jugadores (sin excluir a nadie)
-    broadcast_callback(buffer, -1);
-
-    std::cout << "[Match] ✅ Información de carrera enviada a " << players_info.size()
-              << " jugadores" << std::endl;
+    if (broadcast_callback) {
+        broadcast_callback(buffer, -1);
+    }
 }
 
 // ============================================
-// INICIO DE PARTIDA
+// INICIO
 // ============================================
 
 void Match::start_match() {
-    std::cout << "[Match] ════════════════════════════════════════════" << std::endl;
-    std::cout << "[Match] 🏁 INICIANDO PARTIDA CODE " << match_code << std::endl;
-    std::cout << "[Match] ════════════════════════════════════════════" << std::endl;
-
     std::lock_guard<std::mutex> lock(mtx);
-
-    if (state == MatchState::STARTED) {
-        std::cout << "[Match]   Ya está iniciada" << std::endl;
-        return;
-    }
-
-    if (!can_start()) {
-        std::cout << "[Match]  No se puede iniciar (no todos listos o sin carreras)" << std::endl;
-        return;
-    }
+    if (state == MatchState::STARTED || !can_start()) return;
 
     state = MatchState::STARTED;
-    std::cout << "[Match]  Partida iniciada con " << players_info.size() << " jugadores"
-              << std::endl;
-    std::cout << "[Match]  Carreras configuradas: " << races.size() << std::endl;
-
-    // ✅ Enviar información de la primera carrera a todos los clientes
     send_race_info_to_all_players();
-
-    // Los jugadores se registran en start_next_race() para cada carrera
-    // Iniciar primera carrera
-    std::cout << "[Match] >>> Llamando a start_next_race()..." << std::endl;
     start_next_race();
-    std::cout << "[Match] <<< start_next_race() completado" << std::endl;
 }
 
 void Match::start_next_race() {
-    if (races.empty()) {
-        std::cerr << "[Match] No hay carreras configuradas.\n";
-        return;
-    }
-    if (current_race_index >= static_cast<int>(races.size())) {
-        std::cout << "[Match] Todas las carreras finalizadas.\n";
+    if (races.empty() || current_race_index >= static_cast<int>(races.size())) {
         is_active.store(false);
+        std::cout << "[Match] Fin de todas las carreras.\n";
         return;
     }
 
     is_active.store(true);
     auto& current_race = races[current_race_index];
-    std::string yaml = current_race->get_map_path();
-    std::cout << "[Match] Iniciando carrera #" << current_race_index + 1 << " en mapa " << yaml
-              << "\n";
-
-    // ✅ Los jugadores ya fueron registrados cuando seleccionaron auto
-    // Solo necesitamos iniciar la carrera
-    std::cout << "[Match] ══════════════════════════════════════════════════════════" << std::endl;
-    std::cout << "[Match]  INICIANDO CARRERA CON " << players_info.size() << " JUGADORES"
-              << std::endl;
-    std::cout << "[Match] ══════════════════════════════════════════════════════════" << std::endl;
-
-    // Verificar que todos los jugadores estén registrados (solo para debug)
-    for (const auto& [id, info] : players_info) {
-        std::cout << "[Match]   ✓ Jugador: " << info.name << " (" << info.car_name << " - "
-                  << info.car_type << ")" << std::endl;
-    }
-
-    std::cout << "[Match] ══════════════════════════════════════════════════════════" << std::endl;
-
-    // ✅ Configurar parámetros de la carrera
-    current_race->set_total_laps(3);  // TODO: Obtener de configuración
-    current_race->set_city(current_race->get_city_name());
-
-    // Iniciar la carrera
+    
+    std::cout << "[Match] Iniciando carrera " << (current_race_index + 1) << "\n";
+    
+    current_race->set_total_laps(3); 
     current_race->start();
+    
     current_race_index++;
 }
 
@@ -487,36 +363,10 @@ Match::~Match() {
     races.clear();
 }
 
-// ============================================
-// DEBUG: IMPRIMIR INFORMACIÓN DE JUGADORES
-// ============================================
-
 void Match::print_players_info() const {
-    std::cout << "\n╔════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  MATCH #" << match_code << " - JUGADORES (" << players_info.size() << "/"
-              << max_players << ")";
-    std::cout << std::string(26, ' ') << "║\n";
-    std::cout << "╠════════════════════════════════════════════════════════════╣\n";
-
-    if (players_info.empty()) {
-        std::cout << "║  [VACÍO] No hay jugadores en esta partida" << std::string(17, ' ') << "║\n";
-    } else {
-        for (const auto& [player_id, info] : players_info) {
-            std::cout << "║ ID: " << std::setw(3) << player_id << " │ ";
-            std::cout << std::setw(15) << std::left << info.name << " │ ";
-
-            if (info.car_name.empty()) {
-                std::cout << std::setw(20) << "[SIN AUTO]";
-            } else {
-                std::string car_info = info.car_name + " (" + info.car_type + ")";
-                std::cout << std::setw(20) << car_info.substr(0, 20);
-            }
-
-            std::cout << " │ " << (info.is_ready ? "✓ READY" : "✗ NOT READY");
-            std::cout << " ║\n";
-        }
+    std::cout << "--- Lista de Jugadores (" << players_info.size() << ") ---\n";
+    for (const auto& [id, info] : players_info) {
+        std::cout << "ID: " << id << " | " << info.name << " | " 
+                  << (info.is_ready ? "READY" : "WAITING") << "\n";
     }
-
-    std::cout << "╚════════════════════════════════════════════════════════════╝\n";
-    std::cout << std::endl;
 }

@@ -14,10 +14,11 @@
 #include "../network/client_monitor.h"
 #include "player.h"
 
+// Módulos
 #include "map_loader.h"       
 #include "collision_handler.h"
 #include "checkpoint_manager.h"
-#include "obstacle.h" 
+#include "obstacle.h"
 
 #define TIME_STEP (1.0f / 60.0f)
 #define SUB_STEPS 4
@@ -34,14 +35,15 @@ private:
     b2WorldId worldId;
 
     // ---- SISTEMAS ----
-    ObstacleManager obstacleManager;     
-    MapLoader mapLoader;                
+    ObstacleManager obstacleManager;
+    MapLoader mapLoader;
     CollisionHandler collisionHandler;   
     CheckpointManager checkpointManager; 
 
     std::map<int, std::unique_ptr<Player>> players;
 
-    std::string yaml_path;
+    std::string yaml_path;      // Mapa base
+    std::string race_yaml_path; // Configuración de carrera
     std::string city_name;
     int total_laps;
 
@@ -52,7 +54,10 @@ private:
     GameState create_snapshot();
 
 public:
-    GameLoop(Queue<ComandMatchDTO>& cmd, ClientMonitor& mon, const std::string& map_path);
+    // CONSTRUCTOR ACTUALIZADO: Recibe map_path Y race_path
+    GameLoop(Queue<ComandMatchDTO>& cmd, ClientMonitor& mon, 
+             const std::string& map_path, const std::string& race_path);
+             
     ~GameLoop();
 
     void start();

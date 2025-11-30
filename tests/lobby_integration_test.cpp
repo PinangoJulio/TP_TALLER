@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
                     client.create_game(game_name, max_players, max_races);
                     uint16_t game_id = client.receive_game_created();
 
-                    std::cout << "\n✅ Game created! ID: " << game_id << std::endl;
+                    std::cout << "\n Game created! ID: " << game_id << std::endl;
                     std::cout << "Waiting for other players to join..." << std::endl;
                     break;
                 }
@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
                         std::cout << "\n  Error: " << error_msg << std::endl;
                     } else if (msg_type == MSG_GAME_JOINED) {
                         uint16_t joined_id = client.read_uint16();
-                        std::cout << "\n✅ Joined game " << joined_id << "!" << std::endl;
+                        std::cout << "\nJoined game " << joined_id << "!" << std::endl;
                     } else {
                         std::cout << "\n  Unexpected message type: "
                                   << static_cast<int>(msg_type) << std::endl;

@@ -3,21 +3,32 @@
 #include <thread>
 #include <chrono>
 
-GameLoop::GameLoop(Queue<ComandMatchDTO>& cmd, ClientMonitor& mon, const std::string& map_path)
-    : is_running(false), race_finished(false), comandos(cmd), queues_players(mon), yaml_path(map_path) {
+// Constructor actualizado
+GameLoop::GameLoop(Queue<ComandMatchDTO>& cmd, ClientMonitor& mon, 
+                   const std::string& map_path, const std::string& race_path)
+    : is_running(false), race_finished(false), comandos(cmd), queues_players(mon), 
+      yaml_path(map_path), race_yaml_path(race_path) {
     
+    // 1. Inicializar mundo Box2D
     b2WorldDef worldDef = b2DefaultWorldDef();
     worldDef.gravity = {0.0f, 0.0f}; 
     this->worldId = b2CreateWorld(&worldDef);
     
+    // 2. Conectar CollisionHandler
     collisionHandler.set_obstacle_manager(&obstacleManager);
 
-    std::cout << "[GameLoop] Cargando mapa desde: " << map_path << std::endl;
-    mapLoader.load_map(worldId, obstacleManager, map_path); 
+    // 3. CARGAR MAPA (Geometría)
+    std::cout << "[GameLoop] Cargando mapa desde: " << yaml_path << std::endl;
+    mapLoader.load_map(worldId, obstacleManager, yaml_path); 
     
-    checkpointManager.load_checkpoints(mapLoader.get_checkpoints()); // <--- Línea corregida
+    // 4. CARGAR CARRERA (Checkpoints)
+    std::cout << "[GameLoop] Cargando carrera desde: " << race_yaml_path << std::endl;
+    mapLoader.load_race_config(race_yaml_path);
 
-    std::cout << "[GameLoop] Mundo y Mapa inicializados." << std::endl;
+    // 5. Inicializar Checkpoints con los datos cargados
+    checkpointManager.load_checkpoints(mapLoader.get_checkpoints());
+
+    std::cout << "[GameLoop] Mundo, Mapa y Carrera inicializados." << std::endl;
 }
 
 GameLoop::~GameLoop() {
@@ -27,8 +38,9 @@ GameLoop::~GameLoop() {
 }
 
 void GameLoop::add_player(int id, const std::string& name, const std::string& car_name, const std::string& car_type) {
+    // Buscar posición de spawn si existe
     const auto& spawns = mapLoader.get_spawn_points();
-    b2Vec2 spawnPos = { 10.0f + (id * 5.0f), 10.0f }; // Default
+    b2Vec2 spawnPos = { 10.0f + (id * 5.0f), 10.0f }; // Default fallback
     float spawnAngle = 0.0f;
 
     if (id < (int)spawns.size()) {
@@ -45,11 +57,12 @@ void GameLoop::add_player(int id, const std::string& name, const std::string& ca
     
     b2BodyId carBodyId = b2CreateBody(worldId, &bodyDef);
     
-    b2Polygon box = b2MakeBox(2.0f, 1.0f);
+    b2Polygon box = b2MakeBox(1.0f, 2.0f); // Tamaño auto aprox (2m x 4m)
     b2ShapeDef shapeDef = b2DefaultShapeDef();
     shapeDef.density = 1.0f;
+    // shapeDef.friction = 0.3f; 
     
-   b2Body_SetUserData(carBodyId, reinterpret_cast<void*>(static_cast<uintptr_t>(id)));
+    b2Body_SetUserData(carBodyId, reinterpret_cast<void*>(static_cast<uintptr_t>(id)));
 
     b2CreatePolygonShape(carBodyId, &shapeDef, &box);
     
@@ -58,7 +71,7 @@ void GameLoop::add_player(int id, const std::string& name, const std::string& ca
     player->setCarOwnership(std::move(car));
     
     collisionHandler.register_car(id, player->getCar());
-    checkpointManager.register_player(id); // <--- Importante para contar vueltas
+    checkpointManager.register_player(id);
     
     players[id] = std::move(player);
 }
@@ -115,11 +128,9 @@ void GameLoop::actualizar_logica_juego() {
         Car* car = player->getCar();
         if (car) {
             b2Vec2 pos = {car->getX(), car->getY()};
-            
             if (checkpointManager.check_crossing(id, pos)) {
                 std::cout << "[GameLoop] Jugador " << id << " completo una vuelta!" << std::endl;
             }
-            
             player->setCompletedLaps(checkpointManager.get_laps_completed(id));
             
             if (player->getCompletedLaps() >= total_laps) {

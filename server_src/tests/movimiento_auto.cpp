@@ -1,80 +1,52 @@
-#include <chrono>
 #include <iostream>
+#include <string>
 #include <thread>
-
-#include "../../common_src/dtos.h"
+#include <chrono>
 #include "../../common_src/queue.h"
-#include "../../common_src/game_state.h"
+#include "../../common_src/dtos.h"
 #include "../game/game_loop.h"
 #include "../network/client_monitor.h"
 
-// Pequeña utilidad para esperar ms
-static void sleep_ms(int ms) { std::this_thread::sleep_for(std::chrono::milliseconds(ms)); }
+// Mock o Stub simple si no quieres instanciar todo el monitor real
+// Pero como ya linkeamos todo, usamos el real.
 
-int main() {
-    std::cout << "==== TEST MOVIMIENTO AUTO & CHEATS ====" << std::endl;
+int main(int argc, char const* argv[]) {
+    try {
+        // Definimos rutas de prueba (Asegúrate de que estos archivos existan)
+        std::string mapa_yaml = "server_src/city_maps/Vice City/Vice City.yaml";
+        std::string carrera_yaml = "server_src/city_maps/Vice City/race_1.yaml";
 
-    // Ruta de mapa simplificada (usar config.yaml para evitar dependencia de archivos específicos)
-    const std::string mapa_yaml = "config.yaml"; // Se usará sólo para intentar leer spawn_points
+        // Si el usuario pasa argumentos, los usamos
+        if (argc > 1) mapa_yaml = argv[1];
+        if (argc > 2) carrera_yaml = argv[2];
 
-    // Queues
-    Queue<ComandMatchDTO> comandos;
-    Queue<GameState> snapshots;
+        // Colas y Monitor
+        Queue<ComandMatchDTO> comandos;
+        ClientMonitor monitor; // Monitor vacío (no enviará nada real a nadie)
 
-    // Monitor y registro de queue del cliente (player_id = 1)
-    ClientMonitor monitor;
-    monitor.add_client_queue(snapshots, 1);
+        std::cout << "Iniciando GameLoop de prueba..." << std::endl;
+        std::cout << "Mapa: " << mapa_yaml << std::endl;
+        std::cout << "Carrera: " << carrera_yaml << std::endl;
 
-    // Crear GameLoop
-    GameLoop loop(comandos, monitor, mapa_yaml);
+        // CORRECCIÓN: Constructor con 4 argumentos
+        GameLoop loop(comandos, monitor, mapa_yaml, carrera_yaml);
 
-    // Agregar jugador de prueba
-    loop.add_player(1, "tester", "Brisa", "sport");
+        // Iniciamos el loop
+        loop.start();
 
-    // Iniciar hilo del loop
-    loop.start();
+        // Simulamos un poco de tiempo (ej: 5 segundos)
+        std::cout << "Simulando 5 segundos..." << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(5));
 
-    // Enviar algunos comandos de movimiento
-    for (int i = 0; i < 5; ++i) {
-        ComandMatchDTO accel; accel.player_id = 1; accel.command = GameCommand::ACCELERATE; accel.speed_boost = 1.0f;
-        comandos.push(accel);
-        sleep_ms(300);
+        // Detenemos
+        loop.stop();
+        loop.join();
+        
+        std::cout << "Test finalizado con éxito." << std::endl;
+
+    } catch (const std::exception& e) {
+        std::cerr << "Excepción en test: " << e.what() << std::endl;
+        return 1;
     }
-
-    // Activar nitro
-    ComandMatchDTO nitro; nitro.player_id = 1; nitro.command = GameCommand::USE_NITRO;
-    comandos.push(nitro);
-    sleep_ms(500);
-
-    // Cheat: velocidad máxima
-    ComandMatchDTO maxspd; maxspd.player_id = 1; maxspd.command = GameCommand::CHEAT_MAX_SPEED;
-    comandos.push(maxspd);
-    sleep_ms(500);
-
-    // Cheat: invencible
-    ComandMatchDTO inv; inv.player_id = 1; inv.command = GameCommand::CHEAT_INVINCIBLE;
-    comandos.push(inv);
-    sleep_ms(300);
-
-    // Cheat: ganar carrera (termina el loop)
-    ComandMatchDTO win; win.player_id = 1; win.command = GameCommand::CHEAT_WIN_RACE;
-    comandos.push(win);
-
-    // Consumir snapshots hasta que el loop termine
-    while (loop.is_alive()) {
-        GameState snap;
-        while (snapshots.try_pop(snap)) {
-            auto* info = snap.findPlayer(1);
-            if (info) {
-                std::cout << "[Snapshot] pos=(" << info->pos_x << "," << info->pos_y << ") speed=" << info->speed
-                          << " health=" << info->health << " nitro=" << info->nitro_amount
-                          << " finished=" << info->race_finished << std::endl;
-            }
-        }
-        sleep_ms(200);
-    }
-
-    loop.join();
-    std::cout << "==== FIN TEST MOVIMIENTO AUTO ====" << std::endl;
     return 0;
 }

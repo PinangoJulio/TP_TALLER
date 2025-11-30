@@ -84,21 +84,22 @@ void Car::setCurrentSpeed(float speed) {
 void Car::accelerate(float delta_time) {
     if (is_destroyed) return;
 
-    float angle = getAngle();
-    b2Vec2 direction = { std::cos(angle), std::sin(angle) };
-
-    float force = acceleration_power;
-    if (nitro_active && nitro_amount > 0) {
-        force *= nitro_boost;
-        nitro_amount -= (15.0f * delta_time);
-        if(nitro_amount <= 0) deactivateNitro();
-    }
-
-    b2Vec2 forceVec = { direction.x * force, direction.y * force };
-    b2Body_ApplyForceToCenter(bodyId, forceVec, true);
-
     float currentSpeed = getCurrentSpeed();
-    if (currentSpeed > max_speed) {
+
+    if (currentSpeed < max_speed) {
+        float angle = getAngle();
+        b2Vec2 direction = { std::cos(angle), std::sin(angle) };
+
+        float force = acceleration_power;
+        if (nitro_active && nitro_amount > 0) {
+            force *= nitro_boost;
+            nitro_amount -= (15.0f * delta_time);
+            if(nitro_amount <= 0) deactivateNitro();
+        }
+
+        b2Vec2 forceVec = { direction.x * force, direction.y * force };
+        b2Body_ApplyForceToCenter(bodyId, forceVec, true);
+    } else {
         b2Vec2 velocity = b2Body_GetLinearVelocity(bodyId);
         float scale = max_speed / currentSpeed;
         b2Vec2 clampedVel = { velocity.x * scale, velocity.y * scale };
