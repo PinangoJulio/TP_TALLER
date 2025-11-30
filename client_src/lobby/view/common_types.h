@@ -11,4 +11,12 @@ struct RaceConfig {
 
 };
 
+struct PlayerResult {
+    QString playerName;
+    int rank;           // 1, 2, 3...
+    QString totalTime;  // Ej: "02:45.33"
+    int score;          // Puntos acumulados (Tenemos puntos???)
+    QString carName;    
+};
+
 #endif // COMMON_TYPES_H

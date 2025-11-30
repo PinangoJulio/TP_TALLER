@@ -80,7 +80,7 @@ void CreateMatchWindow::loadCities()
 
 void CreateMatchWindow::hideButtons() {
    
-   if (stepsStack->currentIndex() == 2) {
+   if (stepsStack->currentIndex() == 2 && isSelectingTrack) {
         prevCityButton->hide();
         nextCityButton->hide();
         
@@ -94,10 +94,8 @@ void CreateMatchWindow::hideButtons() {
 }
 
 
-void CreateMatchWindow::mouseMoveEvent(QMouseEvent *event) {
+void CreateMatchWindow::enterEvent(QEnterEvent *event) { 
     if (stepsStack->currentIndex() == 2) {
-        
-       
         prevCityButton->show();
         nextCityButton->show();
         
@@ -105,53 +103,52 @@ void CreateMatchWindow::mouseMoveEvent(QMouseEvent *event) {
         cityNameLabel->show();     
         confirmSelectionButton->show(); 
         backButtonStep3->show();   
-
-      
-        hideTimer->stop();
-        if (isSelectingTrack) {
-            hideTimer->setInterval(5000); // 5 segundos para camino
         
-        } else {
-            hideTimer->setInterval(3000); // 3 segundos para ciudad
+        hideTimer->stop();
+        
+        // CAMBIO: Solo iniciar si es track
+        if (isSelectingTrack) {
+            hideTimer->setInterval(5000); 
+            hideTimer->start(); 
         }
-        hideTimer->start();
     }
-    QWidget::mouseMoveEvent(event);
+    QWidget::enterEvent(event);
 }
 
 void CreateMatchWindow::leaveEvent(QEvent *event) {
-
     if (stepsStack->currentIndex() == 2) {
         hideTimer->stop();
-        hideTimer->start(1500); // 
+        // CAMBIO: Solo iniciar si es track
+        if (isSelectingTrack) {
+            hideTimer->start(1500); 
+        }
     }
     QWidget::leaveEvent(event);
 }
 
 
-
-void CreateMatchWindow::enterEvent(QEnterEvent *event) { 
-    if (stepsStack->currentIndex() == 2) {
-        // Mostrar todos los elementos inmediatamente
-        prevCityButton->show();
-        nextCityButton->show();
+// void CreateMatchWindow::enterEvent(QEnterEvent *event) { 
+//     if (stepsStack->currentIndex() == 2) {
+//         // Mostrar todos los elementos inmediatamente
+//         prevCityButton->show();
+//         nextCityButton->show();
         
-        editingLabel->show();      
-        cityNameLabel->show();     
-        confirmSelectionButton->show(); 
-        backButtonStep3->show();   
+//         editingLabel->show();      
+//         cityNameLabel->show();     
+//         confirmSelectionButton->show(); 
+//         backButtonStep3->show();   
         
-        // Reiniciar el timer 
-        hideTimer->stop();
-        if (isSelectingTrack) {
-            hideTimer->setInterval(5000); // 5 segundos para camino
-        } else {
-            hideTimer->setInterval(3000); // 3 segundos para ciudad
-        }
-        hideTimer->start(); 
-    }
-    QWidget::enterEvent(event);
-}
+//         // Reiniciar el timer 
+//         hideTimer->stop();
+//         if (isSelectingTrack) {
+//             hideTimer->setInterval(5000); // 5 segundos para camino
+//         } else {
+//             hideTimer->setInterval(3000); // 3 segundos para ciudad
+//         }
+//         hideTimer->start(); 
+//     }
+//     QWidget::enterEvent(event);
+// }
 
 void CreateMatchWindow::setupStep1UI()
 {
@@ -734,8 +731,8 @@ void CreateMatchWindow::onRaceSlotClicked(QListWidgetItem *item)
     
     // Iniciar el temporizador con intervalo para ciudad (3 segundos)
     hideTimer->stop();
-    hideTimer->setInterval(3000);
-    hideTimer->start();
+    //hideTimer->setInterval(3000);
+    //hideTimer->start();
 }
 
 void CreateMatchWindow::updateCityDisplay()
@@ -990,7 +987,30 @@ void CreateMatchWindow::paintEvent(QPaintEvent *event)
 
     QWidget::paintEvent(event);
 }
+void CreateMatchWindow::mouseMoveEvent(QMouseEvent *event) {
+    if (stepsStack->currentIndex() == 2) {
+        
+        // Siempre mostramos los botones al mover el mouse (por si estaban ocultos)
+        prevCityButton->show();
+        nextCityButton->show();
+        
+        editingLabel->show();      
+        cityNameLabel->show();     
+        confirmSelectionButton->show(); 
+        backButtonStep3->show();   
 
+        hideTimer->stop();
+
+        // CAMBIO: Solo iniciamos la cuenta regresiva para esconder
+        // si estamos eligiendo el circuito (mapa)
+        if (isSelectingTrack) {
+            hideTimer->setInterval(5000); // 5 segundos para mirar el mapa
+            hideTimer->start();
+        } 
+        // Si es ciudad (else), el timer se queda detenido y los botones visibles.
+    }
+    QWidget::mouseMoveEvent(event);
+}
 CreateMatchWindow::~CreateMatchWindow()
 {
 }
