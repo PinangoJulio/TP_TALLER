@@ -420,34 +420,35 @@ void Match::start_match() {
     std::cout << "[Match] 🏁 INICIANDO CAMPEONATO CODE " << match_code << std::endl;
     std::cout << "[Match] ════════════════════════════════════════════" << std::endl;
 
-    std::lock_guard<std::mutex> lock(mtx);
+    {
+        std::lock_guard<std::mutex> lock(mtx);
 
-    if (state == MatchState::STARTED) {
-        std::cout << "[Match]   Ya está iniciada" << std::endl;
-        return;
-    }
+        if (state == MatchState::STARTED) {
+            std::cout << "[Match] ⚠️  Ya está iniciada" << std::endl;
+            return;
+        }
 
-    if (!can_start()) {
-        std::cout << "[Match]  No se puede iniciar (no todos listos o sin carreras)" << std::endl;
-        return;
-    }
+        if (!can_start()) {
+            std::cout << "[Match] ❌ No se puede iniciar (no todos listos o sin carreras)" << std::endl;
+            return;
+        }
 
-    state = MatchState::STARTED;
-    current_race_index = 0; // Reiniciar índice
+        state = MatchState::STARTED;
+        current_race_index = 0;
 
-    std::cout << "[Match]  Partida iniciada con " << players_info.size() << " jugadores"
-              << std::endl;
-    std::cout << "[Match]  Carreras configuradas: " << races.size() << std::endl;
+        std::cout << "[Match] ✅ Partida iniciada con " << players_info.size() << " jugadores" << std::endl;
+        std::cout << "[Match]    Carreras configuradas: " << races.size() << std::endl;
+    } // ✅ LIBERAR EL LOCK ANTES DE LLAMAR A start_next_race()
 
-    // Arrancar la secuencia llamando a start_next_race()
-    std::cout << "[Match] >>> Llamando a start_next_race()..." << std::endl;
+    // ✅ CRÍTICO: Llamar FUERA del lock para evitar deadlock
+    std::cout << "[Match] >>> Iniciando primera carrera..." << std::endl;
     start_next_race();
-    std::cout << "[Match] <<< start_next_race() completado" << std::endl;
+    std::cout << "[Match] <<< Primera carrera iniciada correctamente" << std::endl;
 }
 
 void Match::start_next_race() {
     if (races.empty()) {
-        std::cerr << "[Match] No hay carreras configuradas.\n";
+        std::cerr << "[Match] ❌ No hay carreras configuradas.\n";
         return;
     }
     
@@ -467,17 +468,24 @@ void Match::start_next_race() {
     
     std::string yaml = current_race->get_map_path();
     
-    std::cout << "[Match] Iniciando carrera #" << (current_race_index + 1) << " en " 
+    std::cout << "[Match] 🏁 Iniciando carrera #" << (current_race_index + 1) << " en " 
               << current_config.city << " - " << current_config.race_name 
               << " (" << current_config.laps << " laps)\n";
 
-    // ✅ CRÍTICO: Enviar info de ESTA carrera a los clientes PRIMERO
+    // ✅ CRÍTICO: Verificar que broadcast_callback existe
+    if (!broadcast_callback) {
+        std::cerr << "[Match] ❌ ERROR CRÍTICO: No hay broadcast_callback configurado!" << std::endl;
+        std::cerr << "[Match]    El servidor NO puede enviar RACE_INFO sin este callback." << std::endl;
+        return;
+    }
+
+    // ✅ Enviar RACE_INFO ANTES de arrancar el GameLoop
     std::cout << "[Match] >>> Enviando RACE_INFO a todos los jugadores..." << std::endl;
     send_race_info_to_all_players(current_race_index);
     std::cout << "[Match] <<< RACE_INFO enviado" << std::endl;
 
     // Pequeña espera para asegurar que el mensaje llegue
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(200)); // ✅ Aumentado a 200ms
 
     // ✅ Configurar parámetros de la carrera en el GameLoop
     current_race->set_total_laps(current_config.laps); 
@@ -491,6 +499,7 @@ void Match::start_next_race() {
     // Preparar índice para la próxima (cuando esta termine)
     current_race_index++;
 }
+
 
 Match::~Match() {
     is_active = false;

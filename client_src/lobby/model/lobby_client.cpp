@@ -413,9 +413,29 @@ void LobbyClient::read_room_snapshot(std::vector<QString>& players,
 
 // Destructor actualizado
 LobbyClient::~LobbyClient() {
-    // Asegurar join antes de destruir el objeto para evitar std::terminate.
-    // Aquí SÍ forzamos el cierre del socket porque el objeto se muere.
-    stop_listening(true);
+    std::cout << "[LobbyClient] Destructor: Stopping listener..." << std::endl;
+    
+    // Detener el listener (SIN forzar cierre de socket)
+    if (listening.load()) {
+        stop_listening(false);
+    }
+    
+    // Solo hacer join si el thread está joinable
+    if (notification_thread.joinable()) {
+        try {
+            std::cout << "[LobbyClient] Destructor: Joining thread..." << std::endl;
+            notification_thread.join();
+            std::cout << "[LobbyClient] Destructor: Thread joined successfully" << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "[LobbyClient] ⚠️ Error joining thread in destructor: " 
+                      << e.what() << std::endl;
+        }
+    } else {
+        std::cout << "[LobbyClient] Destructor: Thread not joinable (already joined or not started)" 
+                  << std::endl;
+    }
+    
+    std::cout << "[LobbyClient] Destructor completed" << std::endl;
 }
 
 // ========================================================================================================================================================================

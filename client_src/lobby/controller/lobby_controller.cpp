@@ -649,31 +649,42 @@ void LobbyController::onStartGameRequested() {
         std::cout << "[Controller] ⏳ Esperando RACE_INFO del servidor..." << std::endl;
         waiting_for_race_info = true;
         
-        // Esperar máximo 5 segundos
+        // Esperar máximo 10 segundos (era 5, ahora es más)
         auto start_time = std::chrono::steady_clock::now();
         while (waiting_for_race_info) {
             QCoreApplication::processEvents(); // Permitir que Qt procese eventos
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
             
             auto elapsed = std::chrono::steady_clock::now() - start_time;
-            if (elapsed > std::chrono::seconds(5)) {
-                throw std::runtime_error("Timeout esperando RACE_INFO");
+            if (elapsed > std::chrono::seconds(10)) { // ✅ Aumentado a 10 segundos
+                throw std::runtime_error("Timeout esperando RACE_INFO (10s)");
             }
         }
         
         std::cout << "[Controller] ✅ RACE_INFO recibido, deteniendo listener..." << std::endl;
         
         // ✅ AHORA SÍ: Detener el listener DESPUÉS de recibir RACE_INFO
-        if (lobbyClient) {
-            lobbyClient->stop_listening();
+        if (lobbyClient && lobbyClient->is_listening()) {
+            std::cout << "[Controller] 🛑 Deteniendo listener de lobby..." << std::endl;
+            lobbyClient->stop_listening(false); // NO cerrar socket
+            std::cout << "[Controller] ✅ Listener detenido" << std::endl;
         }
-        std::cout << "[Controller] ✅ Listener detenido" << std::endl;
 
         // Marcar lobby finalizado con éxito
         finishLobby(true);
         
     } catch (const std::exception& e) {
-        handleNetworkError(e);
+        std::cerr << "[Controller] ❌ Error: " << e.what() << std::endl;
+        
+        // Limpiar en caso de error
+        if (lobbyClient) {
+            lobbyClient->stop_listening(true); // Ahora SÍ cerrar socket
+        }
+        
+        // Mostrar error al usuario
+        QMessageBox::critical(waitingRoomWindow, "Error", 
+                             QString("No se pudo iniciar la partida:\n%1").arg(e.what()));
+        
         finishLobby(false);
     }
 }
