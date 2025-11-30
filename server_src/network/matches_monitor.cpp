@@ -356,11 +356,21 @@ bool MatchesMonitor::start_match(int match_id) {
 
     auto it = matches.find(match_id);
     if (it == matches.end()) {
-        std::cerr << "[MatchesMonitor] Match " << match_id << " not found\n";
+        std::cerr << "[MatchesMonitor] ❌ Match " << match_id << " not found\n";
         return false;
     }
 
+    // ✅ VERIFICAR que el callback esté configurado
+    const auto& callback = it->second->get_broadcast_callback();
+    if (!callback) {
+        std::cerr << "[MatchesMonitor] ❌ ERROR: Match " << match_id 
+                  << " NO tiene broadcast_callback!\n";
+        return false;
+    }
+
+    std::cout << "[MatchesMonitor] ✅ Broadcast callback OK para match " << match_id << "\n";
     std::cout << "[MatchesMonitor] Starting match " << match_id << "\n";
+    
     it->second->start_match();
     return true;
 }

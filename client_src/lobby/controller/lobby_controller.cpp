@@ -645,45 +645,41 @@ void LobbyController::onStartGameRequested() {
         lobbyClient->start_game(currentGameId);
         std::cout << "[Controller] Señal de inicio enviada" << std::endl;
         
-        // ✅ IMPORTANTE: Esperar a que llegue RACE_INFO
+        // ✅ ESPERAR RACE_INFO con timeout más largo
         std::cout << "[Controller] ⏳ Esperando RACE_INFO del servidor..." << std::endl;
         waiting_for_race_info = true;
         
-        // Esperar máximo 10 segundos (era 5, ahora es más)
+        // ✅ Aumentar timeout a 15 segundos
         auto start_time = std::chrono::steady_clock::now();
         while (waiting_for_race_info) {
-            QCoreApplication::processEvents(); // Permitir que Qt procese eventos
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            QCoreApplication::processEvents(); 
+            std::this_thread::sleep_for(std::chrono::milliseconds(100)); // ✅ Check cada 100ms
             
             auto elapsed = std::chrono::steady_clock::now() - start_time;
-            if (elapsed > std::chrono::seconds(10)) { // ✅ Aumentado a 10 segundos
-                throw std::runtime_error("Timeout esperando RACE_INFO (10s)");
+            if (elapsed > std::chrono::seconds(15)) { // ✅ 15 segundos
+                throw std::runtime_error("Timeout esperando RACE_INFO (15s)");
             }
         }
         
-        std::cout << "[Controller] ✅ RACE_INFO recibido, deteniendo listener..." << std::endl;
+        std::cout << "[Controller] ✅ RACE_INFO recibido!" << std::endl;
         
-        // ✅ AHORA SÍ: Detener el listener DESPUÉS de recibir RACE_INFO
+        // ✅ Detener listener DESPUÉS de recibir RACE_INFO
         if (lobbyClient && lobbyClient->is_listening()) {
-            std::cout << "[Controller] 🛑 Deteniendo listener de lobby..." << std::endl;
-            lobbyClient->stop_listening(false); // NO cerrar socket
-            std::cout << "[Controller] ✅ Listener detenido" << std::endl;
+            std::cout << "[Controller] 🛑 Deteniendo listener..." << std::endl;
+            lobbyClient->stop_listening(false);
         }
 
-        // Marcar lobby finalizado con éxito
         finishLobby(true);
         
     } catch (const std::exception& e) {
         std::cerr << "[Controller] ❌ Error: " << e.what() << std::endl;
         
-        // Limpiar en caso de error
         if (lobbyClient) {
-            lobbyClient->stop_listening(true); // Ahora SÍ cerrar socket
+            lobbyClient->stop_listening(true);
         }
         
-        // Mostrar error al usuario
         QMessageBox::critical(waitingRoomWindow, "Error", 
-                             QString("No se pudo iniciar la partida:\n%1").arg(e.what()));
+                             QString("No se pudo iniciar:\n%1").arg(e.what()));
         
         finishLobby(false);
     }

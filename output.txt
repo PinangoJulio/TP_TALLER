@@ -61,8 +61,8 @@ CollisionManager: Capas cargadas OK.
 [Match] Configuradas 3 carreras
 [MatchesMonitor] Carreras agregadas a match 1
 [Receiver] Game created with ID: 1
-[Receiver] julio1 selected car: Leyenda Urbana (classic)
-[Match] Jugador julio1 eligió auto Leyenda Urbana (classic)
+[Receiver] julio1 selected car: Brisa (sport)
+[Match] Jugador julio1 eligió auto Brisa (sport)
 [Match] >>> Registrando julio1 en los GameLoops de las 3 carreras...
 
 
@@ -74,16 +74,16 @@ CollisionManager: Capas cargadas OK.
 [GameLoop] Registrando jugador...
 [GameLoop]   • ID: 1
 [GameLoop]   • Nombre: julio1
-[GameLoop]   • Auto: Leyenda Urbana (classic)
-[Car] Creado: Leyenda Urbana (classic)
-[Car] Stats cargados para Leyenda Urbana: Max Speed=105 Accel=48 Handling=0.65 HP=100
+[GameLoop]   • Auto: Brisa (sport)
+[Car] Creado: Brisa (sport)
+[Car] Stats cargados para Brisa: Max Speed=135 Accel=68 Handling=0.7 HP=80
 [GameLoop]   Stats cargadas desde YAML:
-[GameLoop]      - Velocidad máxima: 105 km/h
-[GameLoop]      - Aceleración: 48
-[GameLoop]      - Manejo: 0.65
-[GameLoop]      - Salud: 100 HP
-[GameLoop]      - Durabilidad: 80
-[GameLoop]      - Masa: 1400 kg
+[GameLoop]      - Velocidad máxima: 135 km/h
+[GameLoop]      - Aceleración: 68
+[GameLoop]      - Manejo: 0.7
+[GameLoop]      - Salud: 80 HP
+[GameLoop]      - Durabilidad: 60
+[GameLoop]      - Masa: 1300 kg
 [GameLoop] ✅ Jugador registrado exitosamente
 [GameLoop]   • Total jugadores: 1
 
@@ -107,8 +107,8 @@ CollisionManager: Capas cargadas OK.
 [GameLoop]   └─ Vivo: Sí
 
 [GameLoop]  DATOS DEL AUTO:
-[GameLoop]   ├─ Modelo: Leyenda Urbana
-[GameLoop]   ├─ Tipo: classic
+[GameLoop]   ├─ Modelo: Brisa
+[GameLoop]   ├─ Tipo: sport
 [GameLoop]   ├─ Posición: (0, 0)
 [GameLoop]   ├─ Ángulo: 0°
 [GameLoop]   ├─ Velocidad actual: 0 km/h
@@ -116,13 +116,13 @@ CollisionManager: Capas cargadas OK.
 [GameLoop]   ├─ Velocidad Y: 0
 [GameLoop]   │
 [GameLoop]   ├─  ESTADÍSTICAS:
-[GameLoop]   │  ├─ Velocidad máxima: 105 km/h
-[GameLoop]   │  ├─ Aceleración: 48
-[GameLoop]   │  ├─ Manejo (handling): 0.65
-[GameLoop]   │  └─ Peso: 1400 kg
+[GameLoop]   │  ├─ Velocidad máxima: 135 km/h
+[GameLoop]   │  ├─ Aceleración: 68
+[GameLoop]   │  ├─ Manejo (handling): 0.7
+[GameLoop]   │  └─ Peso: 1300 kg
 [GameLoop]   │
 [GameLoop]   ├─  SALUD:
-[GameLoop]   │  ├─ Salud actual: 100 HP
+[GameLoop]   │  ├─ Salud actual: 80 HP
 [GameLoop]   │  └─ Destruido: No
 [GameLoop]   │
 [GameLoop]   ├─  ESTADO:
@@ -144,16 +144,16 @@ CollisionManager: Capas cargadas OK.
 [GameLoop] Registrando jugador...
 [GameLoop]   • ID: 1
 [GameLoop]   • Nombre: julio1
-[GameLoop]   • Auto: Leyenda Urbana (classic)
-[Car] Creado: Leyenda Urbana (classic)
-[Car] Stats cargados para Leyenda Urbana: Max Speed=105 Accel=48 Handling=0.65 HP=100
+[GameLoop]   • Auto: Brisa (sport)
+[Car] Creado: Brisa (sport)
+[Car] Stats cargados para Brisa: Max Speed=135 Accel=68 Handling=0.7 HP=80
 [GameLoop]   Stats cargadas desde YAML:
-[GameLoop]      - Velocidad máxima: 105 km/h
-[GameLoop]      - Aceleración: 48
-[GameLoop]      - Manejo: 0.65
-[GameLoop]      - Salud: 100 HP
-[GameLoop]      - Durabilidad: 80
-[GameLoop]      - Masa: 1400 kg
+[GameLoop]      - Velocidad máxima: 135 km/h
+[GameLoop]      - Aceleración: 68
+[GameLoop]      - Manejo: 0.7
+[GameLoop]      - Salud: 80 HP
+[GameLoop]      - Durabilidad: 60
+[GameLoop]      - Masa: 1300 kg
 [GameLoop] ✅ Jugador registrado exitosamente
 [GameLoop]   • Total jugadores: 1
 
@@ -177,8 +177,8 @@ CollisionManager: Capas cargadas OK.
 [GameLoop]   └─ Vivo: Sí
 
 [GameLoop]  DATOS DEL AUTO:
-[GameLoop]   ├─ Modelo: Leyenda Urbana
-[GameLoop]   ├─ Tipo: classic
+[GameLoop]   ├─ Modelo: Brisa
+[GameLoop]   ├─ Tipo: sport
 [GameLoop]   ├─ Posición: (0, 0)
 [GameLoop]   ├─ Ángulo: 0°
 [GameLoop]   ├─ Velocidad actual: 0 km/h
@@ -186,13 +186,13 @@ CollisionManager: Capas cargadas OK.
 [GameLoop]   ├─ Velocidad Y: 0
 [GameLoop]   │
 [GameLoop]   ├─  ESTADÍSTICAS:
-[GameLoop]   │  ├─ Velocidad máxima: 105 km/h
-[GameLoop]   │  ├─ Aceleración: 48
-[GameLoop]   │  ├─ Manejo (handling): 0.65
-[GameLoop]   │  └─ Peso: 1400 kg
+[GameLoop]   │  ├─ Velocidad máxima: 135 km/h
+[GameLoop]   │  ├─ Aceleración: 68
+[GameLoop]   │  ├─ Manejo (handling): 0.7
+[GameLoop]   │  └─ Peso: 1300 kg
 [GameLoop]   │
 [GameLoop]   ├─  SALUD:
-[GameLoop]   │  ├─ Salud actual: 100 HP
+[GameLoop]   │  ├─ Salud actual: 80 HP
 [GameLoop]   │  └─ Destruido: No
 [GameLoop]   │
 [GameLoop]   ├─  ESTADO:
@@ -214,16 +214,16 @@ CollisionManager: Capas cargadas OK.
 [GameLoop] Registrando jugador...
 [GameLoop]   • ID: 1
 [GameLoop]   • Nombre: julio1
-[GameLoop]   • Auto: Leyenda Urbana (classic)
-[Car] Creado: Leyenda Urbana (classic)
-[Car] Stats cargados para Leyenda Urbana: Max Speed=105 Accel=48 Handling=0.65 HP=100
+[GameLoop]   • Auto: Brisa (sport)
+[Car] Creado: Brisa (sport)
+[Car] Stats cargados para Brisa: Max Speed=135 Accel=68 Handling=0.7 HP=80
 [GameLoop]   Stats cargadas desde YAML:
-[GameLoop]      - Velocidad máxima: 105 km/h
-[GameLoop]      - Aceleración: 48
-[GameLoop]      - Manejo: 0.65
-[GameLoop]      - Salud: 100 HP
-[GameLoop]      - Durabilidad: 80
-[GameLoop]      - Masa: 1400 kg
+[GameLoop]      - Velocidad máxima: 135 km/h
+[GameLoop]      - Aceleración: 68
+[GameLoop]      - Manejo: 0.7
+[GameLoop]      - Salud: 80 HP
+[GameLoop]      - Durabilidad: 60
+[GameLoop]      - Masa: 1300 kg
 [GameLoop] ✅ Jugador registrado exitosamente
 [GameLoop]   • Total jugadores: 1
 
@@ -247,8 +247,8 @@ CollisionManager: Capas cargadas OK.
 [GameLoop]   └─ Vivo: Sí
 
 [GameLoop]  DATOS DEL AUTO:
-[GameLoop]   ├─ Modelo: Leyenda Urbana
-[GameLoop]   ├─ Tipo: classic
+[GameLoop]   ├─ Modelo: Brisa
+[GameLoop]   ├─ Tipo: sport
 [GameLoop]   ├─ Posición: (0, 0)
 [GameLoop]   ├─ Ángulo: 0°
 [GameLoop]   ├─ Velocidad actual: 0 km/h
@@ -256,13 +256,13 @@ CollisionManager: Capas cargadas OK.
 [GameLoop]   ├─ Velocidad Y: 0
 [GameLoop]   │
 [GameLoop]   ├─  ESTADÍSTICAS:
-[GameLoop]   │  ├─ Velocidad máxima: 105 km/h
-[GameLoop]   │  ├─ Aceleración: 48
-[GameLoop]   │  ├─ Manejo (handling): 0.65
-[GameLoop]   │  └─ Peso: 1400 kg
+[GameLoop]   │  ├─ Velocidad máxima: 135 km/h
+[GameLoop]   │  ├─ Aceleración: 68
+[GameLoop]   │  ├─ Manejo (handling): 0.7
+[GameLoop]   │  └─ Peso: 1300 kg
 [GameLoop]   │
 [GameLoop]   ├─  SALUD:
-[GameLoop]   │  ├─ Salud actual: 100 HP
+[GameLoop]   │  ├─ Salud actual: 80 HP
 [GameLoop]   │  └─ Destruido: No
 [GameLoop]   │
 [GameLoop]   ├─  ESTADO:
@@ -279,7 +279,7 @@ CollisionManager: Capas cargadas OK.
 ╔════════════════════════════════════════════════════════════╗
 ║  MATCH #1 - JUGADORES (1/2)                          ║
 ╠════════════════════════════════════════════════════════════╣
-║ ID: 1   │ julio1          │ Leyenda Urbana (clas │ ✗ NOT READY ║
+║ ID: 1   │ julio1          │ Brisa (sport)        │ ✗ NOT READY ║
 ╚════════════════════════════════════════════════════════════╝
 
 [Receiver] ✅ ACK sent to julio1
@@ -303,7 +303,7 @@ CollisionManager: Capas cargadas OK.
 ╔════════════════════════════════════════════════════════════╗
 ║  MATCH #1 - JUGADORES (2/2)                          ║
 ╠════════════════════════════════════════════════════════════╣
-║ ID: 1   │ julio1          │ Leyenda Urbana (clas │ ✗ NOT READY ║
+║ ID: 1   │ julio1          │ Brisa (sport)        │ ✗ NOT READY ║
 ║ ID: 2   │ julio2          │ [SIN AUTO]           │ ✗ NOT READY ║
 ╚════════════════════════════════════════════════════════════╝
 
@@ -311,15 +311,15 @@ CollisionManager: Capas cargadas OK.
 [Receiver] julio2 joined match 1
 [Receiver] Sending room snapshot to julio2 (1 existing players)
 [Receiver]   → Player exists: julio1
-[Receiver]   → Car: Leyenda Urbana
+[Receiver]   → Car: Brisa
 [Receiver] ✅ Snapshot sent with END marker to julio2
 [MatchesMonitor] Broadcasting to match 1 (excluding: julio2)
 [MatchesMonitor] ✅ Sent to julio1
 [MatchesMonitor]   Skipping julio2 (sender)
 [MatchesMonitor] Broadcast completed: 1 messages sent to match 1
 [Receiver] Broadcasted join notification (excluding julio2)
-[Receiver] julio2 selected car: Brisa (sport)
-[Match] Jugador julio2 eligió auto Brisa (sport)
+[Receiver] julio2 selected car: Cavallo V8 (sport)
+[Match] Jugador julio2 eligió auto Cavallo V8 (sport)
 [Match] >>> Registrando julio2 en los GameLoops de las 3 carreras...
 
 
@@ -331,9 +331,9 @@ CollisionManager: Capas cargadas OK.
 [GameLoop] Registrando jugador...
 [GameLoop]   • ID: 2
 [GameLoop]   • Nombre: julio2
-[GameLoop]   • Auto: Brisa (sport)
-[Car] Creado: Brisa (sport)
-[Car] Stats cargados para Brisa: Max Speed=135 Accel=68 Handling=0.7 HP=80
+[GameLoop]   • Auto: Cavallo V8 (sport)
+[Car] Creado: Cavallo V8 (sport)
+[Car] Stats cargados para Cavallo V8: Max Speed=135 Accel=68 Handling=0.7 HP=80
 [GameLoop]   Stats cargadas desde YAML:
 [GameLoop]      - Velocidad máxima: 135 km/h
 [GameLoop]      - Aceleración: 68
@@ -364,7 +364,7 @@ CollisionManager: Capas cargadas OK.
 [GameLoop]   └─ Vivo: Sí
 
 [GameLoop]  DATOS DEL AUTO:
-[GameLoop]   ├─ Modelo: Brisa
+[GameLoop]   ├─ Modelo: Cavallo V8
 [GameLoop]   ├─ Tipo: sport
 [GameLoop]   ├─ Posición: (0, 0)
 [GameLoop]   ├─ Ángulo: 0°
@@ -401,9 +401,9 @@ CollisionManager: Capas cargadas OK.
 [GameLoop] Registrando jugador...
 [GameLoop]   • ID: 2
 [GameLoop]   • Nombre: julio2
-[GameLoop]   • Auto: Brisa (sport)
-[Car] Creado: Brisa (sport)
-[Car] Stats cargados para Brisa: Max Speed=135 Accel=68 Handling=0.7 HP=80
+[GameLoop]   • Auto: Cavallo V8 (sport)
+[Car] Creado: Cavallo V8 (sport)
+[Car] Stats cargados para Cavallo V8: Max Speed=135 Accel=68 Handling=0.7 HP=80
 [GameLoop]   Stats cargadas desde YAML:
 [GameLoop]      - Velocidad máxima: 135 km/h
 [GameLoop]      - Aceleración: 68
@@ -434,7 +434,7 @@ CollisionManager: Capas cargadas OK.
 [GameLoop]   └─ Vivo: Sí
 
 [GameLoop]  DATOS DEL AUTO:
-[GameLoop]   ├─ Modelo: Brisa
+[GameLoop]   ├─ Modelo: Cavallo V8
 [GameLoop]   ├─ Tipo: sport
 [GameLoop]   ├─ Posición: (0, 0)
 [GameLoop]   ├─ Ángulo: 0°
@@ -471,9 +471,9 @@ CollisionManager: Capas cargadas OK.
 [GameLoop] Registrando jugador...
 [GameLoop]   • ID: 2
 [GameLoop]   • Nombre: julio2
-[GameLoop]   • Auto: Brisa (sport)
-[Car] Creado: Brisa (sport)
-[Car] Stats cargados para Brisa: Max Speed=135 Accel=68 Handling=0.7 HP=80
+[GameLoop]   • Auto: Cavallo V8 (sport)
+[Car] Creado: Cavallo V8 (sport)
+[Car] Stats cargados para Cavallo V8: Max Speed=135 Accel=68 Handling=0.7 HP=80
 [GameLoop]   Stats cargadas desde YAML:
 [GameLoop]      - Velocidad máxima: 135 km/h
 [GameLoop]      - Aceleración: 68
@@ -504,7 +504,7 @@ CollisionManager: Capas cargadas OK.
 [GameLoop]   └─ Vivo: Sí
 
 [GameLoop]  DATOS DEL AUTO:
-[GameLoop]   ├─ Modelo: Brisa
+[GameLoop]   ├─ Modelo: Cavallo V8
 [GameLoop]   ├─ Tipo: sport
 [GameLoop]   ├─ Posición: (0, 0)
 [GameLoop]   ├─ Ángulo: 0°
@@ -536,8 +536,8 @@ CollisionManager: Capas cargadas OK.
 ╔════════════════════════════════════════════════════════════╗
 ║  MATCH #1 - JUGADORES (2/2)                          ║
 ╠════════════════════════════════════════════════════════════╣
-║ ID: 1   │ julio1          │ Leyenda Urbana (clas │ ✗ NOT READY ║
-║ ID: 2   │ julio2          │ Brisa (sport)        │ ✗ NOT READY ║
+║ ID: 1   │ julio1          │ Brisa (sport)        │ ✗ NOT READY ║
+║ ID: 2   │ julio2          │ Cavallo V8 (sport)   │ ✗ NOT READY ║
 ╚════════════════════════════════════════════════════════════╝
 
 [Receiver] ✅ ACK sent to julio2
@@ -546,21 +546,37 @@ CollisionManager: Capas cargadas OK.
 [MatchesMonitor]   Skipping julio2 (sender)
 [MatchesMonitor] Broadcast completed: 1 messages sent to match 1
 [Receiver] ✅ Broadcast triggered (excluding julio2)
-[Receiver] julio1 set ready: YES
-[Match] julio1 is now READY
+[Receiver] julio2 set ready: YES
+[Match] julio2 is now READY
 [Match] >>> Actualizando estado ready en GameLoops...
 [Match] <<< Estado ready actualizado en 3 carreras
 
 ╔════════════════════════════════════════════════════════════╗
 ║  MATCH #1 - JUGADORES (2/2)                          ║
 ╠════════════════════════════════════════════════════════════╣
-║ ID: 1   │ julio1          │ Leyenda Urbana (clas │ ✓ READY ║
-║ ID: 2   │ julio2          │ Brisa (sport)        │ ✗ NOT READY ║
+║ ID: 1   │ julio1          │ Brisa (sport)        │ ✗ NOT READY ║
+║ ID: 2   │ julio2          │ Cavallo V8 (sport)   │ ✓ READY ║
 ╚════════════════════════════════════════════════════════════╝
 
-[MatchesMonitor] Broadcasting to match 1 (excluding: julio1)
-[MatchesMonitor]   Skipping julio1 (sender)
-[MatchesMonitor] ✅ Sent to julio2
+[MatchesMonitor] Broadcasting to match 1 (excluding: julio2)
+[MatchesMonitor] ✅ Sent to julio1
+[MatchesMonitor]   Skipping julio2 (sender)
+[MatchesMonitor] Broadcast completed: 1 messages sent to match 1
+[Receiver] julio2 set ready: NO
+[Match] julio2 is now NOT READY
+[Match] >>> Actualizando estado ready en GameLoops...
+[Match] <<< Estado ready actualizado en 3 carreras
+
+╔════════════════════════════════════════════════════════════╗
+║  MATCH #1 - JUGADORES (2/2)                          ║
+╠════════════════════════════════════════════════════════════╣
+║ ID: 1   │ julio1          │ Brisa (sport)        │ ✗ NOT READY ║
+║ ID: 2   │ julio2          │ Cavallo V8 (sport)   │ ✗ NOT READY ║
+╚════════════════════════════════════════════════════════════╝
+
+[MatchesMonitor] Broadcasting to match 1 (excluding: julio2)
+[MatchesMonitor] ✅ Sent to julio1
+[MatchesMonitor]   Skipping julio2 (sender)
 [MatchesMonitor] Broadcast completed: 1 messages sent to match 1
 [Receiver] julio2 set ready: YES
 [Match] julio2 is now READY
@@ -570,20 +586,41 @@ CollisionManager: Capas cargadas OK.
 ╔════════════════════════════════════════════════════════════╗
 ║  MATCH #1 - JUGADORES (2/2)                          ║
 ╠════════════════════════════════════════════════════════════╣
-║ ID: 1   │ julio1          │ Leyenda Urbana (clas │ ✓ READY ║
-║ ID: 2   │ julio2          │ Brisa (sport)        │ ✓ READY ║
+║ ID: 1   │ julio1          │ Brisa (sport)        │ ✗ NOT READY ║
+║ ID: 2   │ julio2          │ Cavallo V8 (sport)   │ ✓ READY ║
 ╚════════════════════════════════════════════════════════════╝
 
 [MatchesMonitor] Broadcasting to match 1 (excluding: julio2)
 [MatchesMonitor] ✅ Sent to julio1
 [MatchesMonitor]   Skipping julio2 (sender)
 [MatchesMonitor] Broadcast completed: 1 messages sent to match 1
+[Receiver] julio1 set ready: YES
+[Match] julio1 is now READY
+[Match] >>> Actualizando estado ready en GameLoops...
+[Match] <<< Estado ready actualizado en 3 carreras
+
+╔════════════════════════════════════════════════════════════╗
+║  MATCH #1 - JUGADORES (2/2)                          ║
+╠════════════════════════════════════════════════════════════╣
+║ ID: 1   │ julio1          │ Brisa (sport)        │ ✓ READY ║
+║ ID: 2   │ julio2          │ Cavallo V8 (sport)   │ ✓ READY ║
+╚════════════════════════════════════════════════════════════╝
+
+[MatchesMonitor] Broadcasting to match 1 (excluding: julio1)
+[MatchesMonitor]   Skipping julio1 (sender)
+[MatchesMonitor] ✅ Sent to julio2
+[MatchesMonitor] Broadcast completed: 1 messages sent to match 1
 [Receiver] julio1 starting game 1
 [MatchesMonitor] Starting match 1
 [Match] ════════════════════════════════════════════
 [Match] 🏁 INICIANDO CAMPEONATO CODE 1
 [Match] ════════════════════════════════════════════
-[Receiver] julio2 starting game 1
+
+
+
+
+
+
 
 
 
@@ -682,46 +719,69 @@ qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 [GarageWindow] Auto cargado: Nómada (tipo: truck)
 [GarageWindow] Auto cargado: Stallion GT (tipo: sport)
 [GarageWindow] ✅ 7 autos cargados desde config.yaml
-Auto seleccionado: Leyenda Urbana (classic)
-[Controller] Auto seleccionado: Leyenda Urbana
+Auto seleccionado: Brisa (sport)
+[Controller] Auto seleccionado: Brisa
 [Controller] DEBUG: Enviando selección de auto...
-[Protocol] Selected car: Leyenda Urbana (classic)
+[Protocol] Selected car: Brisa (sport)
 [Controller] DEBUG: Esperando ACK...
-[LobbyClient] Server confirmed car: Leyenda Urbana (classic)
-[Controller] ✅ CAR confirmed: Leyenda Urbana
+[LobbyClient] Server confirmed car: Brisa (sport)
+[Controller] ✅ CAR confirmed: Brisa
 [Controller] 🚀 Starting listener NOW...
 [LobbyClient] Notification listener started
 [Controller] Listener status: RUNNING
 [Controller] Abriendo sala de espera...
 [Controller] Abriendo sala de espera...
-[LobbyClient] Notification listener running...
 qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+[LobbyClient] Notification listener running...
 [Controller] Adding local player: julio1
 [Controller] Sala de espera inicializada
-[Controller] Actualizando auto del jugador local: Leyenda Urbana
+[Controller] Actualizando auto del jugador local: Brisa
 [LobbyClient] Received notification type: 32
-[LobbyClient] Player joined: julio2
 [Controller] Notification: Player joined: julio2
 [LobbyClient] Received notification type: 35
-[LobbyClient] Player julio2 selected Brisa
-[Controller] Notification: Player julio2 selected Brisa
+[Controller] Notification: Player julio2 selected Cavallo V8
+[LobbyClient] Received notification type: 34
+[Controller] 🔔 Notification: Player julio2 ready: 1 (local: julio1)
+[LobbyClient] Received notification type: 34
+[Controller] 🔔 Notification: Player julio2 ready: 0 (local: julio1)
+[LobbyClient] Received notification type: 34
+[Controller] 🔔 Notification: Player julio2 ready: 1 (local: julio1)
 [Controller] Jugador marcado como: LISTO
 [Controller] ✅ Local ready state updated for julio1
 [Protocol] Set ready: YES
 Estado listo: SI
-[LobbyClient] Received notification type: 34
-[LobbyClient] Player julio2 is now READY
-[Controller] 🔔 Notification: Player julio2 ready: 1 (local: julio1)
 Iniciando partida...
 [Controller] Usuario solicitó iniciar partida
 [Protocol] Start game request sent for ID: 1
 [Controller] Señal de inicio enviada
-[Controller] 🛑 Deteniendo listener de lobby...
+[Controller] ⏳ Esperando RACE_INFO del servidor...
+[Controller] ❌ Error: Timeout esperando RACE_INFO
+[Client] Lobby terminado (success=0)
+[Client] Abortando inicio de juego por fallo en lobby
+[Controller] Destructor llamado
 [LobbyClient] Stopping notification listener...
+[ClientProtocol] Socket shutdown completed
+[LobbyClient] Socket shutdown forced
 [LobbyClient] Joining listener thread...
+[LobbyClient] Listener stopped gracefully
+[LobbyClient] Notification listener exited
+[LobbyClient] Listener thread joined
+=== Cliente finalizado ===
+[Client] Destructor llamado
+[Client] ℹ️  Threads ya fueron cerrados previamente
+[Client] 👋 Destructor completado
+terminate called after throwing an instance of 'std::system_error'
+  what():  Argumento inválido
+Abortado (`core' generado)
 
 
-Terminal 3: cliente 2:
+
+
+
+
+
+terminal 3: CLiente 2:
+
 julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL 2/TP_TALLER$ ./client
 === Need for Speed 2D - Cliente ===
 Conectando a localhost:8080
@@ -772,7 +832,7 @@ qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 [LobbyClient] Snapshot msg type: 32
 [LobbyClient]   Snapshot player: julio1
 [LobbyClient] Snapshot msg type: 35
-[LobbyClient]   Snapshot car: julio1 -> Leyenda Urbana
+[LobbyClient]   Snapshot car: julio1 -> Brisa
 [LobbyClient] Snapshot msg type: 37
 [LobbyClient] ✅ END OF SNAPSHOT detected
 [LobbyClient] Snapshot read complete: 1 players
@@ -789,13 +849,13 @@ qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 [GarageWindow] Auto cargado: Nómada (tipo: truck)
 [GarageWindow] Auto cargado: Stallion GT (tipo: sport)
 [GarageWindow] ✅ 7 autos cargados desde config.yaml
-Auto seleccionado: Brisa (sport)
-[Controller] Auto seleccionado: Brisa
+Auto seleccionado: Cavallo V8 (sport)
+[Controller] Auto seleccionado: Cavallo V8
 [Controller] DEBUG: Enviando selección de auto...
-[Protocol] Selected car: Brisa (sport)
+[Protocol] Selected car: Cavallo V8 (sport)
 [Controller] DEBUG: Esperando ACK...
-[LobbyClient] Server confirmed car: Brisa (sport)
-[Controller] ✅ CAR confirmed: Brisa
+[LobbyClient] Server confirmed car: Cavallo V8 (sport)
+[Controller] ✅ CAR confirmed: Cavallo V8
 [Controller] 🚀 Starting listener NOW...
 [LobbyClient] Notification listener started
 [Controller] Listener status: RUNNING
@@ -804,36 +864,21 @@ Auto seleccionado: Brisa (sport)
 qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 [LobbyClient] Notification listener running...
 [Controller] Procesando jugador pendiente: julio1
-[Controller] Procesando auto pendiente: Leyenda Urbana
+[Controller] Procesando auto pendiente: Brisa
 [Controller] Adding local player: julio2
 [Controller] Sala de espera inicializada
-[Controller] Actualizando auto del jugador local: Brisa
-[LobbyClient] Received notification type: 34
-[LobbyClient] Player julio1 is now READY
-[Controller] 🔔 Notification: Player julio1 ready: 1 (local: julio2)
+[Controller] Actualizando auto del jugador local: Cavallo V8
 [Controller] Jugador marcado como: LISTO
 [Controller] ✅ Local ready state updated for julio2
 [Protocol] Set ready: YES
 Estado listo: SI
-Iniciando partida...
-[Controller] Usuario solicitó iniciar partida
-[Protocol] Start game request sent for ID: 1
-[Controller] Señal de inicio enviada
-[Controller] 🛑 Deteniendo listener de lobby...
-[LobbyClient] Stopping notification listener...
-[LobbyClient] Joining listener thread...
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+[Controller] Jugador marcado como: NO LISTO
+[Controller] ✅ Local ready state updated for julio2
+[Protocol] Set ready: NO
+Estado listo: NO
+[Controller] Jugador marcado como: LISTO
+[Controller] ✅ Local ready state updated for julio2
+[Protocol] Set ready: YES
+Estado listo: SI
+[LobbyClient] Received notification type: 34
+[Controller] 🔔 Notification: Player julio1 ready: 1 (local: julio2)

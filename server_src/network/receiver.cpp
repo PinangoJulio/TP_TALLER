@@ -329,35 +329,38 @@ void Receiver::handle_lobby() {
             // ------------------------------------------------------------
             case MSG_START_GAME: {
                 int game_id = static_cast<int>(protocol.read_uint16());
-
+            
                 std::cout << "[Receiver] " << username << " starting game " << game_id << "\n";
-
+            
                 if (current_match_id != game_id) {
-                    protocol.send_buffer(LobbyProtocol::serialize_error(ERR_PLAYER_NOT_IN_GAME,
-                                                                        "You are not in this game"));
+                    protocol.send_buffer(LobbyProtocol::serialize_error(
+                        ERR_PLAYER_NOT_IN_GAME, "You are not in this game"));
                     break;
                 }
-
-                // Validar que se pueda iniciar
+            
                 if (!monitor.is_match_ready(game_id)) {
                     protocol.send_buffer(LobbyProtocol::serialize_error(
-                        ERR_PLAYERS_NOT_READY, "Not all players are ready or no races configured"));
+                        ERR_PLAYERS_NOT_READY, "Not all players ready"));
                     break;
                 }
-
-                // ✅ INICIAR LA PARTIDA (arranca el GameLoop)
-                monitor.start_match(game_id);
-
-                // Broadcast MSG_GAME_STARTED a todos
-                auto buffer = LobbyProtocol::serialize_game_started(static_cast<uint16_t>(game_id));
+            
+                // ✅ CRÍTICO: Broadcast MSG_GAME_STARTED **ANTES** de start_match
+                std::cout << "[Receiver] >>> Broadcasting GAME_STARTED..." << std::endl;
+                auto buffer = LobbyProtocol::serialize_game_started(
+                    static_cast<uint16_t>(game_id));
                 monitor.broadcast_to_match(game_id, buffer, "");
-
-                std::cout << "[Receiver] ✅ Game " << game_id << " started successfully!"
-                          << std::endl;
-
-                // ✅ TRANSICIÓN AL JUEGO
+                std::cout << "[Receiver] <<< GAME_STARTED broadcasted" << std::endl;
+            
+                // ✅ Pequeña espera para asegurar que llegue
+                std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            
+                // ✅ AHORA SÍ iniciar el match (que enviará RACE_INFO)
+                std::cout << "[Receiver] >>> Calling monitor.start_match()..." << std::endl;
+                monitor.start_match(game_id);
+                std::cout << "[Receiver] <<< Match started" << std::endl;
+            
+                // ✅ Transición al juego
                 in_lobby = false;
-
                 break;
             }
             // ------------------------------------------------------------

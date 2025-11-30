@@ -452,9 +452,8 @@ void Match::start_next_race() {
         return;
     }
     
-    // Verificar si ya terminamos todas las carreras
     if (current_race_index >= static_cast<int>(races.size())) {
-        std::cout << "[Match] 🏆 CAMPEONATO FINALIZADO (Todas las carreras completadas).\n";
+        std::cout << "[Match] 🏆 CAMPEONATO FINALIZADO\n";
         is_active.store(false);
         state = MatchState::FINISHED;
         return;
@@ -462,41 +461,36 @@ void Match::start_next_race() {
 
     is_active.store(true);
     
-    // Obtener la instancia de carrera y su configuración
     auto& current_race = races[current_race_index];
     const auto& current_config = race_configs[current_race_index];
     
-    std::string yaml = current_race->get_map_path();
-    
-    std::cout << "[Match] 🏁 Iniciando carrera #" << (current_race_index + 1) << " en " 
-              << current_config.city << " - " << current_config.race_name 
+    std::cout << "[Match] 🏁 Iniciando carrera #" << (current_race_index + 1) 
+              << " en " << current_config.city << " - " << current_config.race_name 
               << " (" << current_config.laps << " laps)\n";
 
-    // ✅ CRÍTICO: Verificar que broadcast_callback existe
+    // ✅ CRÍTICO: Verificar broadcast_callback
     if (!broadcast_callback) {
-        std::cerr << "[Match] ❌ ERROR CRÍTICO: No hay broadcast_callback configurado!" << std::endl;
-        std::cerr << "[Match]    El servidor NO puede enviar RACE_INFO sin este callback." << std::endl;
+        std::cerr << "[Match] ❌ ERROR: No hay broadcast_callback configurado!\n";
         return;
     }
 
-    // ✅ Enviar RACE_INFO ANTES de arrancar el GameLoop
-    std::cout << "[Match] >>> Enviando RACE_INFO a todos los jugadores..." << std::endl;
+    // ✅ 1. ENVIAR RACE_INFO **PRIMERO**
+    std::cout << "[Match] >>> Enviando RACE_INFO (BEFORE GameLoop)..." << std::endl;
     send_race_info_to_all_players(current_race_index);
     std::cout << "[Match] <<< RACE_INFO enviado" << std::endl;
 
-    // Pequeña espera para asegurar que el mensaje llegue
-    std::this_thread::sleep_for(std::chrono::milliseconds(200)); // ✅ Aumentado a 200ms
+    // ✅ 2. ESPERAR más tiempo para asegurar que llegue
+    std::this_thread::sleep_for(std::chrono::milliseconds(500)); // ✅ Aumentado a 500ms
 
-    // ✅ Configurar parámetros de la carrera en el GameLoop
+    // ✅ 3. Configurar parámetros de la carrera
     current_race->set_total_laps(current_config.laps); 
     current_race->set_city(current_config.city);
 
-    // Iniciar la carrera
+    // ✅ 4. AHORA SÍ iniciar GameLoop
     std::cout << "[Match] >>> Iniciando GameLoop..." << std::endl;
     current_race->start();
     std::cout << "[Match] <<< GameLoop iniciado" << std::endl;
     
-    // Preparar índice para la próxima (cuando esta termine)
     current_race_index++;
 }
 
