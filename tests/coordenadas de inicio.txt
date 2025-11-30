@@ -1,0 +1,97 @@
+COORDENADAS DE INICIO 
+
+VICE CITY
+    RUTA 1
+        Pos: (2195, 4556) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (2090, 4556) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (2040, 4556) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (2040, 4466) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (2040, 4321) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (1950, 4321) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (1850, 4321) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (1755, 4446) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+    
+    RUTA 2
+        Pos: (40, 1836) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (40, 1901) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (40, 1971) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (135, 1656) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (135, 1611) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (135, 1561) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (240, 2126) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (325, 2126) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+
+    RUTA 3
+        Pos: (260, 206) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (260, 236) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (325, 236) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (325, 216) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (365, 216) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (365, 241) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (420, 241) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (420, 216) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+
+SAN ANDREAS
+    RUTA 1 
+        Pos: (4440, 3861) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4440, 3781) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4440, 3711) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4475, 3711) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4505, 3711) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4535, 3711) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4575, 3711) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4605, 3711) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+
+    RUTA 2 
+        Pos: (140, 131) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (170, 131) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (170, 161) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (140, 161) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (140, 206) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (170, 206) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (170, 256) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (140, 256) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+
+    RUTA 3
+
+        Pos: (4610, 76) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4610, 111) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4610, 151) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4610, 196) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4610, 236) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4610, 276) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4610, 321) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4610, 371) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+
+LIBERTY CITY
+    RUTA 1
+        Pos: (4440, 81) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4400, 61) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4400, 101) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4345, 101) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4345, 81) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4275, 81) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4275, 101) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4195, 86) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+    
+    RUTA 2
+        Pos: (4525, 871) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4525, 836) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4505, 796) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4530, 796) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4530, 756) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4510, 756) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4510, 696) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (4525, 646) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+    
+    RUTA 3
+        Pos: (1110, 4521) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (1110, 4471) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (1175, 4471) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (1220, 4471) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (1240, 4416) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (1240, 4381) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (1290, 4381) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        Pos: (1350, 4381) | Nivel: 0 | Camino: Sí | Puente: No | Rampa: No
+        
+

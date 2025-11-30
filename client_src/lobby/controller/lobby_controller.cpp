@@ -55,6 +55,27 @@ void LobbyController::onPlayClicked() {
     }
 }
 
+// void LobbyController::onPlayClicked() {
+//     std::cout << "[Controller] TEST MODE: Mostrando Ranking Final" << std::endl;
+    
+//     // Ocultar el lobby
+//     lobbyWindow->hide();
+    
+//     // --- LÓGICA DE PRUEBA ---
+//     // En lugar de conectar al servidor, mostramos el ranking directamente
+//     this->showTestRanking(); 
+    
+//     /* // COMENTAR TODO EL BLOQUE ORIGINAL DE CONEXIÓN
+//     try {
+//         connectToServer();
+//         // ... resto del código original ...
+//     } catch (const std::exception& e) {
+//         handleNetworkError(e);
+//         lobbyWindow->show();
+//     }
+//     */
+// }
+
 void LobbyController::connectToServer() {
     std::cout << "[Controller] Conectando al servidor " 
               << serverHost.toStdString() << ":" << serverPort.toStdString() 
@@ -660,4 +681,50 @@ void LobbyController::onBackFromWaitingRoom() {
     }
     
     std::cout << "[Controller] Flujo de salida completado" << std::endl;
+}
+
+// Implementación del método de prueba
+void LobbyController::showTestRanking() {
+    std::cout << "[Controller] Mostrando ranking de prueba..." << std::endl;
+    
+    // Cerrar lo que haya abierto (ej: WaitingRoom o Juego)
+    if (waitingRoomWindow) waitingRoomWindow->close(); 
+    // (Aquí deberías cerrar la ventana de SDL cuando la tengas)
+
+    finalRankingWindow = new FinalRankingWindow();
+    
+    // Datos falsos para probar visualmente
+    std::vector<PlayerResult> fakeResults;
+    fakeResults.push_back({"Fabi R.", 1, "02:10.00", 100, "Muscle Car"});
+    fakeResults.push_back({"Another Fabi.", 2, "02:12.30", 90, "JDM Legend"});
+    
+
+    finalRankingWindow->setResults(fakeResults);
+    
+    connect(finalRankingWindow, &FinalRankingWindow::returnToLobbyRequested,
+            this, &LobbyController::onBackFromRanking);
+            
+    finalRankingWindow->show();
+}
+
+void LobbyController::onBackFromRanking() {
+    if (finalRankingWindow) {
+        finalRankingWindow->close();
+        delete finalRankingWindow;
+        finalRankingWindow = nullptr;
+    }
+    
+    // Lógica para volver al estado inicial del lobby
+    // Importante: resetear estado de red si es necesario
+    currentGameId = 0;
+    selectedCarIndex = -1;
+    
+    // Mostrar la selección de partidas
+    if (matchSelectionWindow) {
+        matchSelectionWindow->show();
+        refreshGamesList(); 
+    } else {
+        // O volver al lobby principal si prefieres
+        openMatchSelection(); 
+    }
 }

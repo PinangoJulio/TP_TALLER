@@ -18,6 +18,9 @@ target_sources(client
 
     #game
     game/collision_manager.cpp
+
+    #ranking
+    ranking/final_ranking.cpp
     
     PUBLIC
     # .h files
@@ -39,5 +42,7 @@ target_sources(client
     #game
     game/collision_manager.h
     
+    #ranking
+    ranking/final_ranking.h
 )
 
