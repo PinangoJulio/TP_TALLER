@@ -483,21 +483,22 @@ void LobbyController::connectNotificationSignals() {
     });
 
     connect(lobbyClient.get(), &LobbyClient::playerReadyNotification, this,
-            [this](QString username, bool isReady) {
-                std::cout << "[Controller] 🔔 Notification: Player " << username.toStdString()
-                          << " ready: " << isReady << " (local: " << playerName.toStdString() << ")"
+        [this](QString username, bool isReady) {
+            std::cout << "[Controller] 🔔 Notification: Player " << username.toStdString()
+                      << " ready: " << isReady << " (local: " << playerName.toStdString() << ")"
+                      << std::endl;
+
+            // ✅ FIX: NO actualizar si es el jugador local (ya lo hicimos en onPlayerReadyToggled)
+            if (username == playerName) {
+                std::cout << "[Controller] ⚠️  Ignoring ready notification for LOCAL player!"
                           << std::endl;
+                return;  // ✅ IMPORTANTE: Ignorar la notificación propia
+            }
 
-                // Verificar si es el jugador local
-                if (username == playerName) {
-                    std::cout << "[Controller] ⚠️  WARNING: Ready notification for LOCAL player!"
-                              << std::endl;
-                }
-
-                if (waitingRoomWindow) {
-                    waitingRoomWindow->setPlayerReadyByName(username, isReady);
-                }
-            });
+            if (waitingRoomWindow) {
+                waitingRoomWindow->setPlayerReadyByName(username, isReady);
+            }
+        });
 
     connect(lobbyClient.get(), &LobbyClient::carSelectedNotification, this,
             [this](QString username, QString carName, QString) {

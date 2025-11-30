@@ -301,26 +301,27 @@ void Receiver::handle_lobby() {
             // ------------------------------------------------------------
             case MSG_PLAYER_READY: {
                 uint8_t is_ready = protocol.get_uint8_t();
-
+            
                 std::cout << "[Receiver] " << username << " set ready: " << (is_ready ? "YES" : "NO")
                           << "\n";
-
+            
                 if (current_match_id == -1) {
                     protocol.send_buffer(LobbyProtocol::serialize_error(ERR_PLAYER_NOT_IN_GAME,
                                                                         "You are not in any game"));
                     break;
                 }
-
+            
                 if (!monitor.set_player_ready(username, is_ready != 0)) {
                     protocol.send_buffer(LobbyProtocol::serialize_error(
                         ERR_INVALID_CAR_INDEX, "You must select a car before being ready"));
                     break;
                 }
-
+            
+                // ✅ IMPORTANTE: broadcast EXCLUYENDO al que envió el mensaje
                 auto notif =
                     LobbyProtocol::serialize_player_ready_notification(username, is_ready != 0);
-                monitor.broadcast_to_match(current_match_id, notif, username);
-
+                monitor.broadcast_to_match(current_match_id, notif, username);  // ✅ username excluido
+            
                 break;
             }
             // ------------------------------------------------------------

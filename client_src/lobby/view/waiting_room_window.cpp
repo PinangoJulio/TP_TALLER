@@ -258,15 +258,26 @@ void WaitingRoomWindow::setPlayerCarByName(const QString& name, const QString& c
 void WaitingRoomWindow::updateStartButtonState() {
     int activePlayers = 0;
     bool allReady = true;
+    
     for (const auto& p : players) {
         if (p.name != "Esperando...") {
             activePlayers++;
-            if (!p.isReady)
+            if (!p.isReady) {
                 allReady = false;
+                std::cout << "[WaitingRoom] Player NOT ready: " << p.name.toStdString() << std::endl;  // ✅ DEBUG
+            } else {
+                std::cout << "[WaitingRoom] Player IS ready: " << p.name.toStdString() << std::endl;  // ✅ DEBUG
+            }
         }
     }
+    
     bool canStart = (activePlayers >= 2) && allReady;
     startButton->setEnabled(canStart);
+    
+    std::cout << "[WaitingRoom] Start button state: " << (canStart ? "ENABLED" : "DISABLED") 
+              << " (players=" << activePlayers << ", allReady=" << allReady << ")" << std::endl;  // ✅ DEBUG
+    
+    // Actualizar mensaje de estado
     if (canStart) {
         statusLabel->setText("Todos listos! El host puede iniciar");
         statusLabel->setStyleSheet(
