@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
         std::cout << "Cargando máscaras de colisión..." << std::endl;
 
         CollisionManager collisionManager(
-            "assets/img/map/layers/vice-city/camino-vice-city.png",
+            "assets/img/map/layers/vice-city/vice-city.png",
             "assets/img/map/layers/vice-city/puentes-vice-city.png",
             "assets/img/map/layers/vice-city/rampas-vice-city.png");
 
