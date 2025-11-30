@@ -428,13 +428,16 @@ void LobbyController::onCarSelected(const CarInfo& car) {
             garageWindow = nullptr;
         }
 
-        /*if (!lobbyClient->is_listening()) {
+        // ✅ CAMBIO CLAVE: INICIAR LISTENER ANTES DE ABRIR WAITING ROOM
+        if (!lobbyClient->is_listening()) {
+            std::cout << "[Controller] 🚀 Starting listener NOW..." << std::endl;
             lobbyClient->start_listening();
-        }*/
+        }
 
-        /*std::cout << "[Controller] Listener status: "
+        std::cout << "[Controller] Listener status: "
                   << (lobbyClient->is_listening() ? "RUNNING" : "STOPPED") << std::endl;
 
+        // ✅ CAMBIO CLAVE: ABRIR WAITING ROOM EN LUGAR DE FINALIZAR
         std::cout << "[Controller] Abriendo sala de espera..." << std::endl;
         openWaitingRoom();
 
@@ -442,9 +445,7 @@ void LobbyController::onCarSelected(const CarInfo& car) {
             std::cout << "[Controller] Actualizando auto del jugador local: "
                       << car.name.toStdString() << std::endl;
             waitingRoomWindow->setPlayerCarByName(playerName, car.name);
-        }*/
-        protocol.set_ready(true);
-        finishLobby(true);
+        }
 
     } catch (const std::exception& e) {
         handleNetworkError(e);
@@ -627,36 +628,36 @@ void LobbyController::onPlayerReadyToggled(bool isReady) {
 
 void LobbyController::onStartGameRequested() {
     std::cout << "[Controller] Usuario solicitó iniciar partida" << std::endl;
+    
     try {
         if (!lobbyClient) {
             throw std::runtime_error("LobbyClient no inicializado");
         }
-        // Enviar start al servidor y continuar sin esperar confirmación
+        
+        // ✅ Enviar start_game al servidor
         lobbyClient->start_game(currentGameId);
         std::cout << "[Controller] Señal de inicio enviada" << std::endl;
-
-        // ✅ IMPORTANTE: Detener listener PERO mantener socket abierto para el juego
-        std::cout << "[Controller]  Deteniendo listener de lobby..." << std::endl;
+        
+        // ✅ IMPORTANTE: Detener listener PERO mantener socket abierto
+        std::cout << "[Controller] 🛑 Deteniendo listener de lobby..." << std::endl;
         if (lobbyClient) {
-            // ✅ Pasar FALSE para NO cerrar el socket (lo necesitamos para el juego)
-            // El socket será usado por los threads receiver/sender del juego
+            // FALSE = no cerrar socket (lo necesitamos para el juego)
             lobbyClient->stop_listening(false);
         }
         std::cout << "[Controller] ✅ Listener detenido" << std::endl;
 
-        // ✅ IMPORTANTE: Usar QTimer::singleShot para que finishLobby se ejecute
-        // DESPUÉS de que termine este slot, permitiendo que Qt procese la señal
+        // ✅ Usar QTimer para ejecutar finishLobby DESPUÉS de este slot
         QTimer::singleShot(0, this, [this]() {
             finishLobby(true);
         });
 
     } catch (const std::exception& e) {
+        std::cerr << "[Controller] ❌ Error: " << e.what() << std::endl;
         handleNetworkError(e);
         finishLobby(false);
     }
 }
 
-// En cualquier flujo de salida manual del lobby (volver) marcar como no exitoso
 void LobbyController::onBackFromWaitingRoom() {
     std::cout << "[Controller] Usuario salió de la sala de espera" << std::endl;
 
@@ -672,14 +673,13 @@ void LobbyController::onBackFromWaitingRoom() {
                       << std::endl;
             lobbyClient->leave_game(currentGameId);
         } catch (const std::exception& e) {
-            std::cerr << "[Controller] Error al enviar leave_game: " << e.what() << std::endl;
+            std::cerr << "[Controller] ⚠️ Error al enviar leave_game: " << e.what() << std::endl;
         }
     }
 
     if (lobbyClient) {
         std::cout << "[Controller] Deteniendo listener (preservando conexión)..." << std::endl;
-        // [FIX] Pasar false para NO cerrar el socket.
-        // El thread del listener saldrá solo cuando reciba la lista de juegos actualizada del servidor.
+        // Pasar false para NO cerrar el socket
         lobbyClient->stop_listening(false);
     }
 

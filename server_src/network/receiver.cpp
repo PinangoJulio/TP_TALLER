@@ -326,32 +326,34 @@ void Receiver::handle_lobby() {
             // ------------------------------------------------------------
             case MSG_START_GAME: {
                 int game_id = static_cast<int>(protocol.read_uint16());
-
+            
                 std::cout << "[Receiver] " << username << " starting game " << game_id << "\n";
-
+            
                 if (current_match_id != game_id) {
                     protocol.send_buffer(LobbyProtocol::serialize_error(ERR_PLAYER_NOT_IN_GAME,
                                                                         "You are not in this game"));
                     break;
                 }
-
+            
                 // Validar que se pueda iniciar
                 if (!monitor.is_match_ready(game_id)) {
                     protocol.send_buffer(LobbyProtocol::serialize_error(
                         ERR_PLAYERS_NOT_READY, "Not all players are ready or no races configured"));
                     break;
                 }
-
+            
+                // ✅ IMPORTANTE: Iniciar el match ANTES de salir del lobby
                 monitor.start_match(game_id);
-
+            
                 std::cout << "[Receiver] ✅ Game " << game_id << " started successfully!"
                           << std::endl;
-
-                // ✅ TRANSICIÓN AL JUEGO
+            
+                // ✅ TRANSICIÓN AL JUEGO: Salir del loop del lobby
                 in_lobby = false;
-
+            
                 break;
             }
+            
             // ------------------------------------------------------------
             default:
                 std::cerr << "[Receiver] Unknown message type: " << static_cast<int>(msg_type)
@@ -363,6 +365,20 @@ void Receiver::handle_lobby() {
 
         std::cout << "[Receiver] ✅ Exiting lobby loop for " << username
                   << " (match_id=" << match_id << ", is_running=" << is_running << ")" << std::endl;
+        
+        // OBTENER QUEUE DE COMANDOS DEL MATCH
+        commands_queue = monitor.get_command_queue(match_id);
+
+        if (!commands_queue) {
+            std::cerr << "[Receiver] ❌ ERROR: Could not get command queue for match " 
+                     << match_id << std::endl;
+            is_running = false;
+            return;
+        }
+
+        // INICIAR SENDER (para enviar GameState a este jugador)
+        sender.start();
+        std::cout << "[Receiver] ✅ Sender started for player " << username << std::endl;
 
 
         // OBTENER QUEUE DE COMANDOS DEL MATCH
