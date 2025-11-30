@@ -9,6 +9,8 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <QProgressDialog>
+#include <QApplication>
 
 #include "../../client_protocol.h"
 #include "../model/lobby_client.h"

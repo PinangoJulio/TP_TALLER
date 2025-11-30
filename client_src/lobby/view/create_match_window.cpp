@@ -6,6 +6,8 @@
 #include <QPainter>
 #include <QVBoxLayout>
 #include <iostream>
+#include <QApplication>
+#include <QProgressBar>
 
 CreateMatchWindow::CreateMatchWindow(QWidget* parent)
     : BaseLobby(parent), currentCityIndex(0), currentTrackIndex(0), currentEditingSlot(-1),
@@ -29,12 +31,12 @@ CreateMatchWindow::CreateMatchWindow(QWidget* parent)
     setupStep1UI();
     setupStep2UI();
     setupStep3UI();
+    setupLoadingUI(); // Inicializamos la pantalla de carga
 
     stepsStack->setCurrentIndex(0);
 }
 
 void CreateMatchWindow::loadCities() {
-    // Cargar información de las 3 ciudades
     CityInfo liberty;
     liberty.name = "Liberty City";
     liberty.imagePath = "assets/img/lobby/cities/liberty-city.png";
@@ -74,7 +76,6 @@ void CreateMatchWindow::setupStep1UI() {
         }
     }
 
-    // Título
     step1TitleLabel = new QLabel("Crear Nueva Partida", step1Widget);
     if (customFontId != -1) {
         QFont titleFont = customFont;
@@ -366,7 +367,6 @@ void CreateMatchWindow::setupStep3UI() {
         }
     }
 
-    // Label de qué carrera se está customizando
     editingLabel = new QLabel("Configurando: Carrera 1", step3Widget);
     if (customFontId != -1) {
         QFont labelFont = customFont;
@@ -378,7 +378,6 @@ void CreateMatchWindow::setupStep3UI() {
     editingLabel->setAlignment(Qt::AlignCenter);
     editingLabel->setGeometry(150, 20, 450, 40);
 
-    // Nombre de la ciudad
     cityNameLabel = new QLabel("", step3Widget);
     if (customFontId != -1) {
         QFont nameFont = customFont;
@@ -459,14 +458,14 @@ void CreateMatchWindow::setupStep3UI() {
         backButtonStep3->setFont(btnFont);
     }
     backButtonStep3->setStyleSheet("QPushButton {"
-                                   "   background-color: rgba(0, 0, 0, 230);"
+                                   "   background-color: rgba(100, 0, 0, 230);"
                                    "   color: white;"
                                    "   border: 2px solid white;"
                                    "   border-radius: 5px;"
                                    "   padding: 10px;"
                                    "}"
                                    "QPushButton:hover {"
-                                   "   background-color: rgba(100, 0, 0, 230);"
+                                   "   background-color: rgba(150, 0, 0, 230);"
                                    "   border: 2px solid #FF0000;"
                                    "}");
     backButtonStep3->setCursor(Qt::PointingHandCursor);
@@ -483,6 +482,92 @@ void CreateMatchWindow::setupStep3UI() {
     stepsStack->addWidget(step3Widget);
 }
 
+void CreateMatchWindow::setupLoadingUI() {
+    loadingWidget = new QWidget(this);
+    
+    // Layout principal centrado
+    QVBoxLayout* mainLayout = new QVBoxLayout(loadingWidget);
+    mainLayout->setAlignment(Qt::AlignCenter);
+    
+    // Tarjeta "Pro" (Frame)
+    QFrame* frame = new QFrame(loadingWidget);
+    frame->setFixedSize(500, 250);
+    frame->setStyleSheet(
+        "QFrame {"
+        "   background-color: rgba(0, 0, 0, 240);"
+        "   border: 4px solid white;"
+        "   border-radius: 10px;"
+        "}"
+    );
+
+    QVBoxLayout* frameLayout = new QVBoxLayout(frame);
+    frameLayout->setAlignment(Qt::AlignCenter);
+    frameLayout->setSpacing(20);
+
+    // Título Grande
+    QLabel* titleLabel = new QLabel("PROCESANDO", frame);
+    QFont titleFont;
+    if (customFontId != -1) {
+        QStringList fontFamilies = QFontDatabase::applicationFontFamilies(customFontId);
+        if (!fontFamilies.isEmpty()) {
+            titleFont = QFont(fontFamilies.at(0));
+        }
+    }
+    titleFont.setPointSize(36);
+    titleLabel->setFont(titleFont);
+    titleLabel->setAlignment(Qt::AlignCenter);
+    titleLabel->setStyleSheet("color: #FFFF00; background-color: transparent; border: none;");
+
+    // Mensaje Dinámico
+    loadingLabel = new QLabel("Cargando...", frame);
+    titleFont.setPointSize(18);
+    loadingLabel->setFont(titleFont);
+    loadingLabel->setAlignment(Qt::AlignCenter);
+    loadingLabel->setStyleSheet("color: #CCCCCC; background-color: transparent; border: none;");
+
+    // Barra de Progreso PORCENTUAL (0-100)
+    loadingBar = new QProgressBar(frame);
+    loadingBar->setFixedSize(400, 30);
+    loadingBar->setTextVisible(true);
+    loadingBar->setRange(0, 100);
+    loadingBar->setValue(0);
+    loadingBar->setAlignment(Qt::AlignCenter);
+    
+    // Estilo verde neón
+    loadingBar->setStyleSheet(
+        "QProgressBar {"
+        "   border: 2px solid white;"
+        "   background-color: #333333;"
+        "   border-radius: 5px;"
+        "   color: white;"
+        "   font-weight: bold;"
+        "}"
+        "QProgressBar::chunk {"
+        "   background-color: #00FF00;"
+        "   width: 20px;"
+        "}"
+    );
+
+    frameLayout->addWidget(titleLabel);
+    frameLayout->addWidget(loadingLabel);
+    frameLayout->addWidget(loadingBar);
+
+    mainLayout->addWidget(frame);
+    
+    stepsStack->addWidget(loadingWidget);
+}
+
+void CreateMatchWindow::showLoading(const QString& message, int progress) {
+    loadingLabel->setText(message);
+    loadingBar->setValue(progress);
+    
+    stepsStack->setCurrentWidget(loadingWidget);
+    
+    // Forzar actualización visual inmediata
+    this->repaint();
+    QApplication::processEvents();
+}
+
 void CreateMatchWindow::validateStep1() {
     QString matchName = matchNameInput->text().trimmed();
     bool valid = !matchName.isEmpty() && matchName.length() >= 3;
@@ -496,8 +581,6 @@ void CreateMatchWindow::onMatchNameChanged(const QString& text) {
 
 void CreateMatchWindow::onNextToRaceList() {
     totalRaces = numRacesSpinBox->value();
-
-    // Inicializar carreras vacías
     configuredRaces.clear();
     configuredRaces.resize(totalRaces);
 
@@ -529,27 +612,23 @@ void CreateMatchWindow::updateRaceList() {
         }
 
         QListWidgetItem* item = new QListWidgetItem(itemText);
-        item->setData(Qt::UserRole, static_cast<int>(i));  // Guardar índice
+        item->setData(Qt::UserRole, static_cast<int>(i));
         raceListWidget->addItem(item);
     }
 
     progressLabel->setText(
         QString("%1 / %2 carreras configuradas").arg(configuredCount).arg(totalRaces));
 
-    // Habilitar botón de confirmar si todas las carreras están configuradas
     confirmButton->setEnabled(configuredCount == totalRaces);
 }
 
 void CreateMatchWindow::onRaceSlotClicked(QListWidgetItem* item) {
-    if (!item)
-        return;
+    if (!item) return;
 
     currentEditingSlot = item->data(Qt::UserRole).toInt();
-
-    // Si ya tiene configuración, cargar esos datos
     const RaceConfig& race = configuredRaces[currentEditingSlot];
+    
     if (!race.cityName.isEmpty()) {
-        // Encontrar el índice de la ciudad
         for (size_t i = 0; i < cities.size(); i++) {
             if (cities[i].name == race.cityName) {
                 currentCityIndex = i;
@@ -558,7 +637,6 @@ void CreateMatchWindow::onRaceSlotClicked(QListWidgetItem* item) {
             }
         }
     } else {
-        // Iniciar desde el principio
         currentCityIndex = 0;
         currentTrackIndex = 0;
     }
@@ -566,7 +644,6 @@ void CreateMatchWindow::onRaceSlotClicked(QListWidgetItem* item) {
     editingLabel->setText(
         QString("Configurando: Carrera %1 - Selecciona Ciudad").arg(currentEditingSlot + 1));
 
-    // Cambiar texto del botón para seleccionar ciudad
     confirmSelectionButton->setText("Seleccionar");
     confirmSelectionButton->disconnect();
     connect(confirmSelectionButton, &QPushButton::clicked, this, &CreateMatchWindow::onCitySelected);
@@ -576,19 +653,16 @@ void CreateMatchWindow::onRaceSlotClicked(QListWidgetItem* item) {
 }
 
 void CreateMatchWindow::updateCityDisplay() {
-    if (currentCityIndex >= cities.size())
-        return;
+    if (currentCityIndex >= cities.size()) return;
 
     const CityInfo& city = cities[currentCityIndex];
     cityNameLabel->setText(city.name);
 
-    // Cargar imagen de la ciudad como fondo
     QPixmap cityImage(city.imagePath);
     if (!cityImage.isNull()) {
         backgroundImage =
             cityImage.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     } else {
-        // Placeholder si no existe
         backgroundImage = QPixmap(700, 700);
         backgroundImage.fill(QColor(30, 30, 30));
         QPainter p(&backgroundImage);
@@ -601,20 +675,17 @@ void CreateMatchWindow::updateCityDisplay() {
 }
 
 void CreateMatchWindow::updateTrackDisplay() {
-    if (currentCityIndex >= cities.size())
-        return;
+    if (currentCityIndex >= cities.size()) return;
 
     const CityInfo& city = cities[currentCityIndex];
     if (currentTrackIndex < 0 || currentTrackIndex >= static_cast<int>(city.trackNames.size()))
         return;
 
-    // Cargar imagen del track como fondo
     QPixmap trackImage(city.trackImagePaths[currentTrackIndex]);
     if (!trackImage.isNull()) {
         backgroundImage =
             trackImage.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     } else {
-        // Placeholder si no existe
         backgroundImage = QPixmap(700, 700);
         backgroundImage.fill(QColor(40, 40, 40));
         QPainter p(&backgroundImage);
@@ -625,7 +696,7 @@ void CreateMatchWindow::updateTrackDisplay() {
     }
 
     cityNameLabel->setText(city.trackNames[currentTrackIndex]);
-    step3Widget->update();  // Forzar repintado
+    step3Widget->update();
 }
 
 void CreateMatchWindow::onPreviousCity() {
@@ -646,8 +717,7 @@ void CreateMatchWindow::onNextCity() {
 }
 
 void CreateMatchWindow::onCitySelected() {
-    if (currentCityIndex >= cities.size())
-        return;
+    if (currentCityIndex >= cities.size()) return;
 
     currentTrackIndex = 0;
 
@@ -668,8 +738,7 @@ void CreateMatchWindow::onCitySelected() {
 }
 
 void CreateMatchWindow::onPreviousTrack() {
-    if (currentCityIndex >= cities.size())
-        return;
+    if (currentCityIndex >= cities.size()) return;
 
     const CityInfo& city = cities[currentCityIndex];
     if (currentTrackIndex == 0) {
@@ -681,8 +750,7 @@ void CreateMatchWindow::onPreviousTrack() {
 }
 
 void CreateMatchWindow::onNextTrack() {
-    if (currentCityIndex >= cities.size())
-        return;
+    if (currentCityIndex >= cities.size()) return;
 
     const CityInfo& city = cities[currentCityIndex];
     currentTrackIndex++;
@@ -702,7 +770,6 @@ void CreateMatchWindow::onConfirmSelection() {
     if (currentTrackIndex < 0 || currentTrackIndex >= static_cast<int>(city.trackNames.size()))
         return;
 
-    // Guardar la configuración
     RaceConfig& race = configuredRaces[currentEditingSlot];
     race.cityName = city.name;
     race.trackIndex = currentTrackIndex;
@@ -712,7 +779,6 @@ void CreateMatchWindow::onConfirmSelection() {
               << " configurada: " << race.cityName.toStdString() << " - "
               << race.trackName.toStdString() << std::endl;
 
-    // Restaurar estado inicial para próxima selección
     prevCityButton->disconnect();
     nextCityButton->disconnect();
     connect(prevCityButton, &QPushButton::clicked, this, &CreateMatchWindow::onPreviousCity);
@@ -744,31 +810,22 @@ void CreateMatchWindow::onBackFromSelector() {
 }
 
 void CreateMatchWindow::onConfirmRaceList() {
+    // 1. Desactivar botón inmediatamente
+    confirmButton->setEnabled(false);
+
     QString matchName = matchNameInput->text().trimmed();
     int maxPlayers = maxPlayersSpinBox->value();
 
-    std::cout << "Confirmando creación de partida:" << std::endl;
-    std::cout << "  Nombre: " << matchName.toStdString() << std::endl;
-    std::cout << "  Jugadores: " << maxPlayers << std::endl;
-    std::cout << "  Carreras: " << configuredRaces.size() << std::endl;
-
-    for (size_t i = 0; i < configuredRaces.size(); i++) {
-        std::cout << "  Carrera " << (i + 1) << ": " << configuredRaces[i].cityName.toStdString()
-                  << " - " << configuredRaces[i].trackName.toStdString() << std::endl;
-    }
-
+    std::cout << "Confirmando creación de partida..." << std::endl;
     emit matchCreated(matchName, maxPlayers, configuredRaces);
 }
 
 void CreateMatchWindow::onBackFromRaceList() {
-    // Volver al paso 1
     stepsStack->setCurrentIndex(0);
 }
 
 void CreateMatchWindow::paintEvent(QPaintEvent* event) {
     QPainter painter(this);
-
-    // Dibujar la imagen de fondo actual
     if (!backgroundImage.isNull()) {
         painter.drawPixmap(0, 0, backgroundImage);
     } else {
@@ -777,7 +834,6 @@ void CreateMatchWindow::paintEvent(QPaintEvent* event) {
         gradient.setColorAt(1, QColor(10, 10, 30));
         painter.fillRect(rect(), gradient);
     }
-
     QWidget::paintEvent(event);
 }
 

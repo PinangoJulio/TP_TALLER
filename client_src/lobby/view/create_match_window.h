@@ -12,10 +12,12 @@
 #include <QSpinBox>
 #include <QStackedWidget>
 #include <QWidget>
+#include <QProgressBar> // Necesario para el puntero
 #include <vector>
 
 #include "base_lobby.h"
 #include "common_types.h"
+
 struct CityInfo {
     QString name;
     QString imagePath;
@@ -29,6 +31,9 @@ class CreateMatchWindow : public BaseLobby {
 public:
     explicit CreateMatchWindow(QWidget* parent = nullptr);
     ~CreateMatchWindow();
+
+    
+    void showLoading(const QString& message, int progress);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -61,6 +66,10 @@ private:
     void setupStep1UI();
     void setupStep2UI();
     void setupStep3UI();
+    
+    
+    void setupLoadingUI();
+    
     void loadCities();
     void updateCityDisplay();
     void updateTrackDisplay();
@@ -74,7 +83,7 @@ private:
     std::vector<RaceConfig> configuredRaces;
     size_t currentCityIndex;
     int currentTrackIndex;
-    int currentEditingSlot;  // Índice q se está editando
+    int currentEditingSlot;
     int totalRaces;
 
     // Paso 1 - Configuración básica
@@ -118,6 +127,11 @@ private:
 
     QPushButton* confirmSelectionButton;
     QPushButton* backButtonStep3;
+
+    
+    QWidget* loadingWidget;
+    QLabel* loadingLabel;
+    QProgressBar* loadingBar; // Barra de progreso
 };
 
 #endif  // CREATE_MATCH_WINDOW_H
