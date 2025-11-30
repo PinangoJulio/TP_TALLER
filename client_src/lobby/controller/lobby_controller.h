@@ -16,6 +16,7 @@
 #include "../view/waiting_room_window.h"
 #include "../view/create_match_window.h"
 #include "../view/match_selection_window.h"
+#include "../../ranking/final_ranking.h" 
 
 
 class LobbyClient;
@@ -55,6 +56,7 @@ private:
 public:
     explicit LobbyController(const QString& host, const QString& port, QObject* parent = nullptr);
     ~LobbyController();
+    void showTestRanking();
     
     // Iniciar el flujo (mostrar lobby principal)
     void start();
@@ -88,6 +90,9 @@ private slots:
     void onStartGameRequested();
     void onBackFromWaitingRoom();
 
+    // test del ranking
+     void onBackFromRanking();
+
 private:
     void connectToServer();
     void handleNetworkError(const std::exception& e);
@@ -97,6 +102,11 @@ private:
     void openGarage();
     void openWaitingRoom();
     void connectNotificationSignals();
+
+    FinalRankingWindow* finalRankingWindow;
+
+
+   
 };
 
 #endif // LOBBY_CONTROLLER_H
