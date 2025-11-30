@@ -8,14 +8,7 @@
 
 #include "dtos.h"
 
-// Estructura para información de una partida
-struct GameInfo {
-    uint16_t game_id;
-    char game_name[32];
-    uint8_t current_players;
-    uint8_t max_players;
-    bool is_started;
-} __attribute__((packed));
+// [BORRADO] struct GameInfo ya está en dtos.h
 
 namespace LobbyProtocol {
 // Funciones de serialización

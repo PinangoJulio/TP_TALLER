@@ -1,3 +1,0 @@
-username nathi1304
-get_market
-get_current_car

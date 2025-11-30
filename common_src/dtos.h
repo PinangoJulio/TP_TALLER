@@ -57,12 +57,22 @@ enum LobbyErrorCode : uint8_t {
     ERR_PLAYERS_NOT_READY = 0x0A
 };
 
+// Estructura para información de la sala (snapshot)
 struct PlayerRoomState {
     char username[32];
     char car_name[32];
     char car_type[16];
     uint8_t is_ready;  // 1 = listo, 0 = no listo
 } __attribute__((packed));
+
+// ✅ NUEVA ESTRUCTURA AGREGADA (necesaria para MSG_GAMES_LIST)
+struct GameInfo {
+    uint16_t game_id;
+    char game_name[32];
+    uint8_t current_players;
+    uint8_t max_players;
+    bool is_started;
+};
 
 // DTOs de la Fase de Juego
 // ============================================

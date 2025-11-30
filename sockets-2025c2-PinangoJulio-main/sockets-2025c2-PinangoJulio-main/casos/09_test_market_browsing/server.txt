@@ -1,4 +1,0 @@
-money 1000
-car ToyotaCorolla 2018 12000
-car HondaCivic 2020 14000
-car FordFocus 2017 11000

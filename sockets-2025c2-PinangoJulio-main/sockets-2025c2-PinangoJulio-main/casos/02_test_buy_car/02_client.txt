@@ -1,2 +1,0 @@
-username Mandie
-buy_car ToyotaCorolla

@@ -7,8 +7,9 @@
 #include <iostream>
 #include <stdexcept>
 #include <utility>
+#include <vector>   
 
-#include "common_src/lobby_protocol.h"
+#include "../common_src/lobby_protocol.h" 
 
 ClientProtocol::ClientProtocol(const char* host, const char* servname)
     : socket(Socket(host, servname)), host(host), port(servname) {
@@ -42,7 +43,17 @@ void ClientProtocol::disconnect() {
     std::cout << "[ClientProtocol] Disconnected from server" << std::endl;
 }
 
+void ClientProtocol::unread_message_type(uint8_t byte) {
+    buffered_byte = byte;
+    has_buffered_byte = true;
+}
+
 uint8_t ClientProtocol::read_message_type() {
+    if (has_buffered_byte) {
+        has_buffered_byte = false;
+        return buffered_byte;
+    }
+
     uint8_t type;
     int bytes = socket.recvall(&type, sizeof(type));
     if (bytes == 0) {
@@ -84,21 +95,6 @@ void ClientProtocol::send_string(const std::string& str) {
 
 void ClientProtocol::send_username(const std::string& user) {
     auto buffer = LobbyProtocol::serialize_username(user);
-
-    std::cout << "[Protocol] DEBUG: Username: '" << user << "' (length: " << user.length() << ")"
-              << std::endl;
-    std::cout << "[Protocol] DEBUG: Buffer size: " << buffer.size() << " bytes" << std::endl;
-    std::cout << "[Protocol] DEBUG: Buffer content: ";
-    for (size_t i = 0; i < buffer.size(); ++i) {
-        printf("%02X ", buffer[i]);
-    }
-    std::cout << std::endl;
-
-    if (buffer.size() >= 3) {
-        uint16_t len_sent = (buffer[1] << 8) | buffer[2];
-        std::cout << "[Protocol] DEBUG: Length encoded in buffer: " << len_sent << std::endl;
-    }
-
     socket.sendall(buffer.data(), buffer.size());
     std::cout << "[Protocol] Sent username: " << user << std::endl;
 }
@@ -109,16 +105,17 @@ void ClientProtocol::request_games_list() {
     std::cout << "[Protocol] Requested games list" << std::endl;
 }
 
-// Helper para leer lista de juegos del socket
 std::vector<GameInfo> ClientProtocol::read_games_list_from_socket(uint16_t count) {
     std::vector<GameInfo> games;
 
     for (uint16_t i = 0; i < count; i++) {
         GameInfo info;
         info.game_id = read_uint16();
+        
         socket.recvall(info.game_name, sizeof(info.game_name));
         socket.recvall(&info.current_players, sizeof(info.current_players));
         socket.recvall(&info.max_players, sizeof(info.max_players));
+        
         uint8_t started;
         socket.recvall(&started, sizeof(started));
         info.is_started = (started != 0);
@@ -149,7 +146,7 @@ void ClientProtocol::create_game(const std::string& game_name, uint8_t max_playe
     socket.sendall(buffer.data(), buffer.size());
     for (const auto& race : races) {
         send_string(race.first);  // city
-        send_string(race.second);
+        send_string(race.second); // track
     }
     std::cout << "[Protocol] Requested to create game: " << game_name
               << " (max players: " << static_cast<int>(max_players)
@@ -181,18 +178,13 @@ uint16_t ClientProtocol::receive_game_joined() {
 
     uint16_t game_id = read_uint16();
     std::cout << "[Protocol] Joined game: " << game_id << std::endl;
-
-    // El snapshot llegará vía notificaciones automáticamente
-
     return game_id;
 }
 
 void ClientProtocol::read_error_details(std::string& error_message) {
     uint8_t error_code;
     socket.recvall(&error_code, sizeof(error_code));
-
     error_message = read_string();
-
     std::cout << "[Protocol] Error received (code " << static_cast<int>(error_code)
               << "): " << error_message << std::endl;
 }
@@ -281,78 +273,76 @@ void ClientProtocol::push_back_uint16(std::vector<uint8_t>& message, std::uint16
 
 GameState ClientProtocol::receive_snapshot() {
     try {
-        uint8_t msg_type;
-        socket.recvall(&msg_type, sizeof(msg_type));
-
-        std::cout << "[ClientProtocol] 📥 Recibiendo snapshot (tipo: "
-                  << static_cast<int>(msg_type) << ")..." << std::endl;
+        uint8_t msg_type = read_message_type(); 
+        (void)msg_type; // [FIX] Silenciar warning de variable no usada
 
         GameState snapshot;
 
-        // Leer número de jugadores
-        uint8_t num_players;
-        socket.recvall(&num_players, sizeof(num_players));
-        std::cout << "[ClientProtocol]   → " << static_cast<int>(num_players)
-                  << " jugadores en el snapshot" << std::endl;
+        // Leer timestamp
+        uint32_t timestamp_net;
+        socket.recvall(&timestamp_net, sizeof(timestamp_net));
+        snapshot.race_info.remaining_time_ms = ntohl(timestamp_net); 
 
-        // Leer datos de cada jugador
-        for (uint8_t i = 0; i < num_players; i++) {
+        // Leer número de autos
+        uint8_t num_cars = read_uint8();
+        
+        // Leer status
+        uint8_t status = read_uint8();
+        snapshot.race_info.status = static_cast<MatchStatus>(status);
+
+        uint16_t countdown_sec = read_uint16();
+        (void)countdown_sec; // [FIX] Silenciar warning
+
+        uint32_t elapsed = 0;
+        socket.recvall(&elapsed, sizeof(elapsed)); 
+
+        uint16_t current_cp = read_uint16();
+        (void)current_cp; // [FIX] Silenciar warning
+
+        uint16_t total_cp = read_uint16();
+        snapshot.race_current_info.total_checkpoints = total_cp;
+
+        // Leer datos de cada jugador (CarState)
+        for (uint8_t i = 0; i < num_cars; i++) {
             InfoPlayer player;
 
             // ID del jugador
-            uint16_t player_id_net;
-            socket.recvall(&player_id_net, sizeof(player_id_net));
-            player.player_id = ntohs(player_id_net);
+            player.player_id = read_uint16();
 
-            // Posición X (float como uint32)
-            uint32_t pos_x_net;
-            socket.recvall(&pos_x_net, sizeof(pos_x_net));
-            player.pos_x = static_cast<float>(ntohl(pos_x_net)) / 100.0f;
+            // Posición X (float)
+            socket.recvall(&player.pos_x, sizeof(float));
+            // Posición Y (float)
+            socket.recvall(&player.pos_y, sizeof(float));
+            // Angle
+            socket.recvall(&player.angle, sizeof(float));
+            
+            float velocity; // temp
+            socket.recvall(&velocity, sizeof(float));
+            player.speed = velocity;
 
-            // Posición Y (float como uint32)
-            uint32_t pos_y_net;
-            socket.recvall(&pos_y_net, sizeof(pos_y_net));
-            player.pos_y = static_cast<float>(ntohl(pos_y_net)) / 100.0f;
+            socket.recvall(&player.velocity_x, sizeof(float));
+            socket.recvall(&player.velocity_y, sizeof(float));
 
-            // Ángulo (float como uint16)
-            uint16_t angle_net;
-            socket.recvall(&angle_net, sizeof(angle_net));
-            player.angle = static_cast<float>(ntohs(angle_net)) / 100.0f;
+            player.health = read_uint8();
+            player.nitro_amount = read_uint8();
+            
+            uint8_t nitro_act = read_uint8();
+            player.nitro_active = (nitro_act != 0);
 
-            // Velocidad (float como uint16)
-            uint16_t velocity_net;
-            socket.recvall(&velocity_net, sizeof(velocity_net));
-            player.speed = static_cast<float>(ntohs(velocity_net)) / 10.0f;
+            uint8_t drifting = read_uint8();
+            player.is_drifting = (drifting != 0);
 
-            // Salud
-            socket.recvall(&player.health, sizeof(player.health));
+            uint8_t colliding = read_uint8();
+            player.is_colliding = (colliding != 0);
 
-            // ✅ NUEVO: Leer nivel (0=calle, 1=puente)
-            uint8_t level;
-            socket.recvall(&level, sizeof(level));
-            player.level = static_cast<int32_t>(level);
+            uint8_t destroyed = read_uint8();
+            player.is_alive = (destroyed == 0);
 
-            // Flags (nitro_active, is_drifting, etc.)
-            uint8_t flags;
-            socket.recvall(&flags, sizeof(flags));
-            player.nitro_active = (flags & 0x01) != 0;
-            player.is_drifting = (flags & 0x02) != 0;
-            player.race_finished = (flags & 0x04) != 0;
-            player.is_alive = (flags & 0x08) != 0;
+            player.current_checkpoint = read_uint16();
+            player.completed_laps = read_uint8();
+            player.position_in_race = read_uint8();
 
             snapshot.players.push_back(player);
-
-            // Log del jugador recibido
-            std::cout << "[ClientProtocol]   🏎️  Player " << player.player_id
-                      << ": pos=(" << player.pos_x << "," << player.pos_y << ") "
-                      << "vel=" << player.speed << " km/h "
-                      << "angle=" << player.angle << "° "
-                      << "hp=" << static_cast<int>(player.health)
-                      << " level=" << player.level  // ✅ NUEVO
-                      << (player.nitro_active ? " ⚡" : "")
-                      << (player.is_drifting ? " 💨" : "")
-                      << (player.race_finished ? " 🏁" : "")
-                      << (!player.is_alive ? " ☠️" : "") << std::endl;
         }
 
         return snapshot;
@@ -362,120 +352,32 @@ GameState ClientProtocol::receive_snapshot() {
         throw;
     }
 }
-// GameState ClientProtocol::receive_snapshot() {
-//     try {
-//         uint8_t msg_type;
-//         socket.recvall(&msg_type, sizeof(msg_type));
-
-//         std::cout << "[ClientProtocol]  Recibiendo snapshot (tipo: "
-//                   << static_cast<int>(msg_type) << ")..." << std::endl;
-
-//         GameState snapshot;
-
-//         // Leer número de jugadores
-//         uint8_t num_players;
-//         socket.recvall(&num_players, sizeof(num_players));
-//         std::cout << "[ClientProtocol]   → " << static_cast<int>(num_players)
-//                   << " jugadores en el snapshot" << std::endl;
-
-//         // Leer datos de cada jugador
-//         for (uint8_t i = 0; i < num_players; i++) {
-//             InfoPlayer player;
-
-//             // ID del jugador
-//             uint16_t player_id_net;
-//             socket.recvall(&player_id_net, sizeof(player_id_net));
-//             player.player_id = ntohs(player_id_net);
-
-//             // Posición X (float como uint32)
-//             uint32_t pos_x_net;
-//             socket.recvall(&pos_x_net, sizeof(pos_x_net));
-//             player.pos_x = static_cast<float>(ntohl(pos_x_net)) / 100.0f;
-
-//             // Posición Y (float como uint32)
-//             uint32_t pos_y_net;
-//             socket.recvall(&pos_y_net, sizeof(pos_y_net));
-//             player.pos_y = static_cast<float>(ntohl(pos_y_net)) / 100.0f;
-
-//             // Ángulo (float como uint16)
-//             uint16_t angle_net;
-//             socket.recvall(&angle_net, sizeof(angle_net));
-//             player.angle = static_cast<float>(ntohs(angle_net)) / 100.0f;
-
-//             // Velocidad (float como uint16)
-//             uint16_t velocity_net;
-//             socket.recvall(&velocity_net, sizeof(velocity_net));
-//             player.speed = static_cast<float>(ntohs(velocity_net)) / 10.0f;
-
-//             // Salud
-//             socket.recvall(&player.health, sizeof(player.health));
-
-//             // Flags (nitro_active, is_drifting, etc.)
-//             uint8_t flags;
-//             socket.recvall(&flags, sizeof(flags));
-//             player.nitro_active = (flags & 0x01) != 0;
-//             player.is_drifting = (flags & 0x02) != 0;
-//             player.race_finished = (flags & 0x04) != 0;
-//             player.is_alive = (flags & 0x08) != 0;
-
-//             snapshot.players.push_back(player);
-
-//             // Log del jugador recibido
-//             std::cout << "[ClientProtocol]   🏎️  Player " << player.player_id
-//                       << ": pos=(" << player.pos_x << "," << player.pos_y << ") "
-//                       << "vel=" << player.speed << " km/h "
-//                       << "angle=" << player.angle << "° "
-//                       << "hp=" << static_cast<int>(player.health)
-//                       << (player.nitro_active ? " ⚡" : "")
-//                       << (player.is_drifting ? " 💨" : "")
-//                       << (player.race_finished ? " 🏁" : "")
-//                       << (!player.is_alive ? " ☠️" : "") << std::endl;
-//         }
-
-//         // TODO: Leer checkpoints, power-ups, etc.
-
-//         return snapshot;
-
-//     } catch (const std::exception& e) {
-//         std::cerr << "[ClientProtocol] ❌ Error receiving snapshot: " << e.what() << std::endl;
-//         throw;
-//     }
-// }
 
 int ClientProtocol::receive_client_id() {
-    // Leer el ID del cliente enviado por el servidor
     uint16_t client_id = read_uint16();
     std::cout << "[ClientProtocol] Received client ID: " << client_id << std::endl;
     return static_cast<int>(client_id);
 }
 
-// ============================================================================
-// RECEPCIÓN DE INFORMACIÓN DE CARRERA
-// ============================================================================
-
 RaceInfoDTO ClientProtocol::receive_race_info() {
     RaceInfoDTO race_info;
     std::memset(&race_info, 0, sizeof(race_info));
 
-    // 1. Leer tipo de mensaje (debe ser RACE_INFO)
-    uint8_t msg_type = read_message_type();
+    uint8_t msg_type = read_message_type(); 
+    
     if (msg_type != static_cast<uint8_t>(ServerMessageType::RACE_INFO)) {
         throw std::runtime_error("Expected RACE_INFO message, got " + std::to_string(msg_type));
     }
 
-    // 2. Leer ciudad
     std::string city = read_string();
     std::strncpy(race_info.city_name, city.c_str(), sizeof(race_info.city_name) - 1);
 
-    // 3. Leer nombre de carrera
     std::string race = read_string();
     std::strncpy(race_info.race_name, race.c_str(), sizeof(race_info.race_name) - 1);
 
-    // 4. Leer ruta del mapa
     std::string map_path = read_string();
     std::strncpy(race_info.map_file_path, map_path.c_str(), sizeof(race_info.map_file_path) - 1);
 
-    // 5. Leer datos numéricos
     race_info.total_laps = read_uint8();
     race_info.race_number = read_uint8();
     race_info.total_races = read_uint8();
@@ -484,13 +386,6 @@ RaceInfoDTO ClientProtocol::receive_race_info() {
     uint32_t max_time_net;
     socket.recvall(&max_time_net, sizeof(max_time_net));
     race_info.max_time_ms = ntohl(max_time_net);
-
-    std::cout << "[ClientProtocol] ✅ Race info received:" << std::endl;
-    std::cout << "[ClientProtocol]   City: " << race_info.city_name << std::endl;
-    std::cout << "[ClientProtocol]   Race: " << race_info.race_name << std::endl;
-    std::cout << "[ClientProtocol]   Map: " << race_info.map_file_path << std::endl;
-    std::cout << "[ClientProtocol]   Lap " << static_cast<int>(race_info.race_number) << "/"
-              << static_cast<int>(race_info.total_races) << std::endl;
 
     return race_info;
 }
