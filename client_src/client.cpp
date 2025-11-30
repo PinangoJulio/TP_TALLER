@@ -33,8 +33,7 @@ Client::Client(const char* hostname, const char* servname)
 void Client::start() {
     std::cout << "[Client] Iniciando fase de lobby Qt..." << std::endl;
 
-    // Crear controlador de lobby con el protocolo ya conectado
-    // Usamos una referencia explícita al protocolo de la clase
+
     LobbyController controller(this->protocol);
 
     // Event loop temporal para esperar fin del lobby
@@ -77,6 +76,16 @@ void Client::start() {
     // FASE 2: INICIAR THREADS DE COMUNICACIÓN
 
     std::cout << "[Client] Iniciando threads de comunicación..." << std::endl;
+
+    // Notificar al servidor que el cliente está listo para jugar (si aplica)
+    //protocol.send_player_ready();
+
+    // Esperar señal del servidor: todos los jugadores están listos
+    std::cout << "[Client] Esperando a que todos los jugadores esten listos..." << std::endl;
+    // Bloqueante: implementar en ClientProtocol para esperar el mensaje "ALL_READY" o snapshot inicial
+    //protocol.wait_all_players_ready();
+    std::cout << "[Client] Todos listos: iniciando comunicación y partida" << std::endl;
+
 
     sender.start();
     receiver.start();

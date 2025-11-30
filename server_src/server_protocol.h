@@ -28,6 +28,8 @@ public:
 
     // Lee un uint8_t
     uint8_t get_uint8_t();
+    float read_float32();
+
 
     // Envía un buffer
     void send_buffer(const std::vector<uint8_t>& buffer);

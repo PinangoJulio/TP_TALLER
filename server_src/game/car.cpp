@@ -77,6 +77,19 @@ void Car::rechargeNitro(float amount) {
 // ==========================================================
 // COMANDOS DE CONTROL
 // ==========================================================
+// C++
+void Car::update(float delta_time) {
+    if (is_destroyed)
+        return;
+
+    // recalcular componentes de velocidad por si no se actualizan en accelerate/brake
+    velocity_x = current_speed * std::cos(angle);
+    velocity_y = current_speed * std::sin(angle);
+
+    // integrar posición
+    x += velocity_x * delta_time;
+    y += velocity_y * delta_time;
+}
 
 void Car::accelerate(float delta_time) {
     if (is_destroyed)
@@ -94,9 +107,7 @@ void Car::accelerate(float delta_time) {
 
     current_speed = std::min(max_speed, current_speed + effective_acceleration * delta_time);
 
-    // Actualizar velocidad en X e Y según el ángulo
-    velocity_x = current_speed * std::cos(angle);
-    velocity_y = current_speed * std::sin(angle);
+    update(delta_time);
 }
 
 void Car::brake(float delta_time) {

@@ -1,25 +1,23 @@
 #include "game_loop.h"
-z:<
+
 #include <chrono>
+#include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <string>
 #include <thread>
 #include <utility>
+#include <yaml-cpp/yaml.h>
 
 #include "../../common_src/config.h"
+#include "race.h"
 
-// ==========================================================
-// CONSTRUCTOR Y DESTRUCTOR
-// ==========================================================
 
-GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues,
-                   const std::string& yaml_path)
-    : is_running(false), race_finished(false), comandos(comandos), queues_players(queues),
-      yaml_path(yaml_path), total_laps(3)  // Por defecto 3 vueltas
+GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues)
+    : is_running(false), match_finished(false), comandos(comandos), queues_players(queues),
+      current_race_index(0), current_race_finished(false), current_total_laps(3), spawns_loaded(false)
 {
-    std::cout << "[GameLoop] Constructor compilado OK. Simulación lista para iniciar." << std::endl;
-    std::cout << "[GameLoop] Mapa: " << yaml_path << std::endl;
+    std::cout << "[GameLoop] Constructor OK. Listo para gestionar múltiples carreras.\n";
 }
 
 GameLoop::~GameLoop() {
@@ -27,9 +25,7 @@ GameLoop::~GameLoop() {
     players.clear();
 }
 
-// ==========================================================
 // AGREGAR JUGADORES
-// ==========================================================
 /*
  * FLUJO DE REGISTRO DE JUGADORES:
  *
@@ -65,12 +61,11 @@ void GameLoop::add_player(int player_id, const std::string& name, const std::str
     std::cout << "[GameLoop]   • Nombre: " << name << std::endl;
     std::cout << "[GameLoop]   • Auto: " << car_name << " (" << car_type << ")" << std::endl;
 
-    // ✅ 1. Crear Car con unique_ptr (gestión automática de memoria)
+    // Crear Car con unique_ptr (gestión automática de memoria)
     auto car = std::make_unique<Car>(car_name, car_type);
 
-    // ✅ 2. Cargar stats del auto desde config.yaml
+    //Cargar stats del auto desde config.yaml
     try {
-        // ✅ Cargar config.yaml GLOBAL (no el YAML del mapa)
         YAML::Node global_config = YAML::LoadFile("config.yaml");
         YAML::Node cars_list = global_config["cars"];
 
@@ -242,86 +237,40 @@ void GameLoop::set_player_ready(int player_id, bool ready) {
     player->setReady(ready);
 }
 
-// ==========================================================
-// MÉTODOS DE DEBUG
-// ==========================================================
+// MÉTODOS DE DEBUG (ACTUALIZADOS PARA MÚLTIPLES CARRERAS)
 
-void GameLoop::print_race_info() const {
-    std::cout << "\n╔════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  GAMELOOP - CARRERA EN " << std::setw(35) << std::left << city_name << "║\n";
-    std::cout << "║  Mapa: " << std::setw(50) << std::left << yaml_path.substr(0, 50) << "║\n";
-    std::cout << "║  Vueltas: " << total_laps << std::string(48, ' ') << "║\n";
-    std::cout << "╠════════════════════════════════════════════════════════════╣\n";
-    std::cout << "║  JUGADORES REGISTRADOS (" << players.size() << ")" << std::string(33, ' ')
-              << "║\n";
-    std::cout << "╠════════════════════════════════════════════════════════════╣\n";
+// Métodos de visualización de información ahora están en:
+// - print_current_race_table()
+// - print_total_standings()
+// - print_match_info()
 
-    if (players.empty()) {
-        std::cout << "║  [VACÍO] No hay jugadores registrados" << std::string(22, ' ') << "║\n";
-    } else {
-        for (const auto& [id, player_ptr] : players) {
-            const Player* player = player_ptr.get();  // ✅ Obtener raw pointer
-            std::cout << "║ ID: " << std::setw(3) << id << " │ ";
-            std::cout << std::setw(15) << std::left << player->getName() << " │ ";
-            std::cout << std::setw(20) << player->getSelectedCar();
-            std::cout << " │ Vueltas: " << player->getCompletedLaps() << "/" << total_laps;
-            std::cout << " ║\n";
+// MÉTODOS DE CONTROL
+
+
+void GameLoop::stop_match() {
+    std::cout << "[GameLoop] Deteniendo partida...\n";
+    is_running = false;
+    match_finished = true;
+}
+
+// server_src/game/game_loop.cpp
+
+bool GameLoop::all_players_disconnected() const {
+    int connected_count = 0;
+    for (const auto& [id, player_ptr] : players) {
+        if (!player_ptr) continue;
+        // Se considera "conectado" si no está marcado como desconectado
+        if (!player_ptr->isDisconnected()) {
+            ++connected_count;
+            if (connected_count > 1) {
+                // Si hay más de 1 jugador conectado, NO terminar la partida
+                return false;
+            }
         }
     }
+    // Si quedan 0 o 1 jugadores conectados, devolver true (terminar partida)
+    return true;
 }
-
-// ==========================================================
-// MÉTODOS DE CONTROL
-// ==========================================================
-
-void GameLoop::stop_race() {
-    std::cout << "[GameLoop] Deteniendo carrera..." << std::endl;
-    is_running = false;
-    race_finished = true;
-}
-
-// ==========================================================
-// BUCLE PRINCIPAL
-// ==========================================================
-
-void GameLoop::run() {
-    is_running = true;
-    race_start_time = std::chrono::steady_clock::now();
-
-    std::cout << "[GameLoop] ═══════════════════════════════════════════════" << std::endl;
-    std::cout << "[GameLoop] CARRERA INICIADA " << std::endl;
-    std::cout << "[GameLoop] ═══════════════════════════════════════════════" << std::endl;
-
-    print_race_info();
-
-    while (is_running.load() && !race_finished.load()) {
-        // --- FASE 1: Procesar Comandos ---
-        procesar_comandos();
-
-        // --- FASE 2: Actualizar Física (Box2D) ---
-        actualizar_fisica();
-
-        // --- FASE 3: Detectar Colisiones ---
-        detectar_colisiones();
-
-        // --- FASE 4: Actualizar Estado de Carrera ---
-        actualizar_estado_carrera();
-
-        // --- FASE 5: Verificar Ganadores ---
-        verificar_ganadores();
-
-        // --- FASE 6: Enviar Estado a Jugadores ---
-        enviar_estado_a_jugadores();
-
-        // --- Dormir para mantener frecuencia de ticks ---
-        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP));
-    }
-
-    std::cout << "[GameLoop]  CARRERA FINALIZADA " << std::endl;
-    std::cout << "[GameLoop] Hilo de simulación detenido correctamente." << std::endl;
-}
-
-// MÉTODOS PRIVADOS (LÓGICA DE JUEGO)
 
 void GameLoop::procesar_comandos() {
     ComandMatchDTO comando;
@@ -418,6 +367,12 @@ void GameLoop::procesar_comandos() {
                 player_it->second->disconnect();
                 std::cout << "[GameLoop] Jugador " << player_it->second->getName()
                           << " se desconectó" << std::endl;
+
+            }
+            if (all_players_disconnected()) {
+                std::cout << "[GameLoop] Todos los jugadores se desconectaron. Deteniendo partida."
+                          << std::endl;
+                stop_match();
             }
         } break;
 
@@ -475,7 +430,6 @@ void GameLoop::enviar_estado_a_jugadores() {
 
 // ==========================================================
 // CREAR SNAPSHOT (GAMESTATE)
-// ==========================================================
 
 GameState GameLoop::create_snapshot() {
     // Convertir map<int, unique_ptr<Player>> a vector<Player*>
@@ -485,9 +439,9 @@ GameState GameLoop::create_snapshot() {
     }
 
     // Crear snapshot usando el constructor
-    GameState snapshot(player_list, city_name, yaml_path, total_laps, is_running.load());
+    GameState snapshot(player_list, current_city_name, current_map_yaml, current_total_laps, is_running.load());
 
-    // Cuando se implementen, agregar:
+    // TODO: Cuando se implementen, agregar:
     // - checkpoints
     // - hints
     // - NPCs
@@ -495,3 +449,320 @@ GameState GameLoop::create_snapshot() {
 
     return snapshot;
 }
+
+// ==========================================================
+// GESTIÓN DE MÚLTIPLES CARRERAS
+// ==========================================================
+
+void GameLoop::add_race(const std::string& city, const std::string& yaml_path, int laps) {
+    int race_number = static_cast<int>(races.size()) + 1;
+    auto race = std::make_unique<Race>(city, yaml_path, laps, race_number);
+    races.push_back(std::move(race));
+    std::cout << "[GameLoop] Carrera " << race_number << " agregada: " << city << "\n";
+}
+
+void GameLoop::set_races(std::vector<std::unique_ptr<Race>> race_configs) {
+    races = std::move(race_configs);
+    race_finish_times.resize(races.size());
+    std::cout << "[GameLoop] Configuradas " << races.size() << " carreras\n";
+}
+
+void GameLoop::load_spawn_points_for_current_race() {
+    spawn_points.clear();
+    spawns_loaded = false;
+
+    if (current_race_index >= races.size()) {
+        std::cerr << "[GameLoop] ERROR: Índice de carrera inválido\n";
+        return;
+    }
+
+    try {
+        YAML::Node map_yaml = YAML::LoadFile(current_map_yaml);
+        YAML::Node spawns = map_yaml["spawn_points"];
+
+        if (
+            !spawns || !spawns.IsSequence()) {
+            std::cerr << "[GameLoop] WARNING: 'spawn_points' ausente en " << current_map_yaml << "\n";
+        } else {
+            for (const auto& node : spawns) {
+                float x = node["x"].as<float>();
+                float y = node["y"].as<float>();
+                float angle_deg = node["angle"].as<float>();
+                float angle_rad = angle_deg * static_cast<float>(M_PI) / 180.0f;
+                spawn_points.emplace_back(x, y, angle_rad);
+            }
+            std::cout << "[GameLoop] Cargados " << spawn_points.size() << " spawn points\n";
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "[GameLoop] ERROR leyendo spawns: " << e.what() << "\n";
+    }
+
+    spawns_loaded = true;
+}
+
+void GameLoop::reset_players_for_race() {
+    std::cout << "[GameLoop] >>> Reseteando jugadores para nueva carrera...\n";
+
+    load_spawn_points_for_current_race();
+
+    size_t spawn_idx = 0;
+    for (auto& [id, player_ptr] : players) {
+        Player* player = player_ptr.get();
+        Car* car = player->getCar();
+
+        if (!car) continue;
+
+        // Resetear estado del jugador
+        player->resetForNewRace();
+
+        // Asignar spawn point
+        float spawn_x = 0.f, spawn_y = 0.f, spawn_angle = 0.f;
+        if (spawn_idx < spawn_points.size()) {
+            std::tie(spawn_x, spawn_y, spawn_angle) = spawn_points[spawn_idx];
+        } else {
+            spawn_x = 100.f + 10.f * static_cast<float>(spawn_idx);
+            spawn_y = 200.f;
+            spawn_angle = 0.f;
+        }
+
+        player->setPosition(spawn_x, spawn_y);
+        player->setAngle(spawn_angle);
+        car->setPosition(spawn_x, spawn_y);
+        car->setAngle(spawn_angle);
+        car->reset();
+
+        std::cout << "[GameLoop]   " << player->getName() << " → spawn (" << spawn_x
+                  << ", " << spawn_y << ")\n";
+
+        spawn_idx++;
+    }
+
+    std::cout << "[GameLoop] <<< Jugadores reseteados\n";
+}
+
+void GameLoop::start_current_race() {
+    if (current_race_index >= races.size()) {
+        std::cerr << "[GameLoop] ERROR: No hay más carreras\n";
+        return;
+    }
+
+    const auto& race = races[current_race_index];
+    current_map_yaml = race->get_map_path();
+    current_city_name = race->get_city_name();
+    current_total_laps = race->get_total_laps();
+    current_race_finished = false;
+
+    std::cout << "\n╔════════════════════════════════════════════════════════════╗\n";
+    std::cout << "║  🏁 CARRERA #" << (current_race_index + 1) << "/" << races.size()
+              << " - " << current_city_name << std::string(30 - current_city_name.size(), ' ') << "║\n";
+    std::cout << "╠════════════════════════════════════════════════════════════╣\n";
+    std::cout << "║  Mapa: " << current_map_yaml.substr(0, 50) << std::string(50 - std::min(50UL, current_map_yaml.size()), ' ') << "║\n";
+    std::cout << "║  Vueltas: " << current_total_laps << std::string(47, ' ') << "║\n";
+    std::cout << "╚════════════════════════════════════════════════════════════╝\n\n";
+
+    reset_players_for_race();
+    race_start_time = std::chrono::steady_clock::now();
+}
+
+void GameLoop::finish_current_race() {
+    std::cout << "\n[GameLoop] ═══════════════════════════════════════════════\n";
+    std::cout << "[GameLoop]  CARRERA #" << (current_race_index + 1) << " FINALIZADA\n";
+    std::cout << "[GameLoop] ═══════════════════════════════════════════════\n";
+
+    print_current_race_table();
+
+    // Avanzar a la siguiente carrera
+    current_race_index++;
+    current_race_finished = true;
+
+    if (current_race_index >= races.size()) {
+        std::cout << "[GameLoop]  TODAS LAS CARRERAS COMPLETADAS\n";
+        print_total_standings();
+        match_finished = true;
+    } else {
+        std::cout << "[GameLoop] Preparando siguiente carrera...\n";
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+    }
+}
+
+bool GameLoop::all_players_finished_race() const {
+    for (const auto& [id, player_ptr] : players) {
+        if (!player_ptr->isFinished() && player_ptr->isAlive()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void GameLoop::mark_player_finished(int player_id) {
+    auto it = players.find(player_id);
+    if (it == players.end()) return;
+
+    Player* player = it->second.get();
+    if (player->isFinished()) return;
+
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - race_start_time);
+    uint32_t finish_time_ms = static_cast<uint32_t>(elapsed.count());
+
+    player->markAsFinished();
+
+    // Guardar tiempo de esta carrera
+    race_finish_times[current_race_index][player_id] = finish_time_ms;
+
+    // Actualizar tiempo total
+    total_times[player_id] += finish_time_ms;
+
+    std::cout << "[GameLoop]  " << player->getName() << " terminó la carrera #"
+              << (current_race_index + 1) << " en " << (finish_time_ms / 1000.0f) << "s\n";
+
+    print_current_race_table();
+}
+
+void GameLoop::print_current_race_table() const {
+    std::cout << "\n╔════════════════════════════════════════════════════════════╗\n";
+    std::cout << "║  TABLA DE TIEMPOS - CARRERA #" << (current_race_index + 1) << std::string(27, ' ') << "║\n";
+    std::cout << "╠════════════════════════════════════════════════════════════╣\n";
+
+    const auto& times = race_finish_times[current_race_index];
+
+    if (times.empty()) {
+        std::cout << "║  Nadie ha terminado aún" << std::string(35, ' ') << "║\n";
+    } else {
+        // Ordenar por tiempo
+        std::vector<std::pair<int, uint32_t>> sorted_times(times.begin(), times.end());
+        std::sort(sorted_times.begin(), sorted_times.end(),
+                  [](const auto& a, const auto& b) { return a.second < b.second; });
+
+        int pos = 1;
+        for (const auto& [player_id, time_ms] : sorted_times) {
+            auto it = players.find(player_id);
+            if (it == players.end()) continue;
+
+            std::string name = it->second->getName();
+            float time_s = time_ms / 1000.0f;
+
+            std::cout << "║ " << pos << ". " << std::setw(20) << std::left << name
+                      << " " << std::fixed << std::setprecision(2) << time_s << "s"
+                      << std::string(20, ' ') << "║\n";
+            pos++;
+        }
+    }
+
+    std::cout << "╚════════════════════════════════════════════════════════════╝\n\n";
+}
+
+void GameLoop::print_total_standings() const {
+    std::cout << "\n╔════════════════════════════════════════════════════════════╗\n";
+    std::cout << "║  TABLA GENERAL - ACUMULADO TOTAL" << std::string(26, ' ') << "║\n";
+    std::cout << "╠════════════════════════════════════════════════════════════╣\n";
+
+    if (total_times.empty()) {
+        std::cout << "║  No hay tiempos registrados" << std::string(31, ' ') << "║\n";
+    } else {
+        std::vector<std::pair<int, uint32_t>> sorted_totals(total_times.begin(), total_times.end());
+        std::sort(sorted_totals.begin(), sorted_totals.end(),
+                  [](const auto& a, const auto& b) { return a.second < b.second; });
+
+        int pos = 1;
+        for (const auto& [player_id, total_ms] : sorted_totals) {
+            auto it = players.find(player_id);
+            if (it == players.end()) continue;
+
+            std::string name = it->second->getName();
+            float total_s = total_ms / 1000.0f;
+
+            std::cout << "║ " << pos << ". " << std::setw(20) << std::left << name
+                      << " " << std::fixed << std::setprecision(2) << total_s << "s"
+                      << std::string(20, ' ') << "║\n";
+            pos++;
+        }
+    }
+
+    std::cout << "╚════════════════════════════════════════════════════════════╝\n\n";
+}
+
+void GameLoop::print_match_info() const {
+    std::cout << "\n╔════════════════════════════════════════════════════════════╗\n";
+    std::cout << "║  GAMELOOP - INFORMACIÓN DE LA PARTIDA" << std::string(21, ' ') << "║\n";
+    std::cout << "╠════════════════════════════════════════════════════════════╣\n";
+    std::cout << "║  Total de carreras: " << races.size() << std::string(37, ' ') << "║\n";
+    std::cout << "║  Carrera actual: " << (current_race_index + 1) << "/" << races.size()
+              << std::string(37, ' ') << "║\n";
+    std::cout << "║  Jugadores: " << players.size() << std::string(45, ' ') << "║\n";
+    std::cout << "╚════════════════════════════════════════════════════════════╝\n\n";
+}
+// ==========================================================
+// BUCLE PRINCIPAL DEL MATCH (GESTIONA TODAS LAS CARRERAS)
+// ==========================================================
+
+void GameLoop::run() {
+    is_running = true;
+    match_finished = false;
+    current_race_index = 0;
+
+    std::cout << "[GameLoop] ═══════════════════════════════════════════════\n";
+    std::cout << "[GameLoop]  THREAD INICIADO\n";
+    std::cout << "[GameLoop]  Esperando carreras y jugadores...\n";
+    std::cout << "[GameLoop] ═══════════════════════════════════════════════\n";
+
+    // ✅ ESPERAR A QUE HAYA CARRERAS CONFIGURADAS (con timeout de 10 segundos)
+    auto wait_start = std::chrono::steady_clock::now();
+
+    while (is_running.load() && races.empty()) {
+        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::steady_clock::now() - wait_start).count();
+
+        std::cout << "[GameLoop]  Esperando carreras... (races=" << races.size()
+                  << ", elapsed=" << elapsed << "s)\n";
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+
+
+    std::cout << "[GameLoop] ═══════════════════════════════════════════════\n";
+    std::cout << "[GameLoop]  PARTIDA INICIADA \n";
+    std::cout << "[GameLoop]  Carreras configuradas: " << races.size() << "\n";
+    std::cout << "[GameLoop]  Jugadores registrados: " << players.size() << "\n";
+    std::cout << "[GameLoop] ═══════════════════════════════════════════════\n";
+
+    print_match_info();
+
+    // Bucle principal: iterar sobre todas las carreras
+    while (is_running.load() && !match_finished.load() && current_race_index < races.size()) {
+        // Iniciar carrera actual
+        start_current_race();
+
+        // Bucle de la carrera actual
+        while (is_running.load() && !current_race_finished.load()) {
+            // --- FASE 1: Procesar Comandos ---
+            procesar_comandos();
+
+            // --- FASE 2: Actualizar Física ---
+            actualizar_fisica();
+
+            // --- FASE 3: Detectar Colisiones ---
+            detectar_colisiones();
+
+            // --- FASE 4: Actualizar Estado de Carrera ---
+            actualizar_estado_carrera();
+
+            // --- FASE 5: Verificar si todos terminaron ---
+            if (all_players_finished_race()) {
+                current_race_finished = true;
+            }
+
+            // --- FASE 6: Enviar Estado a Jugadores ---
+            enviar_estado_a_jugadores();
+
+            // --- Dormir para mantener frecuencia de ticks ---
+            std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP));
+        }
+
+        // Finalizar carrera actual
+        finish_current_race();
+    }
+
+    std::cout << "[GameLoop]  PARTIDA FINALIZADA\n";
+    std::cout << "[GameLoop] Hilo de simulación detenido correctamente.\n";
+}
+

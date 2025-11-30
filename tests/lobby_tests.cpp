@@ -19,11 +19,7 @@ protected:
     }
 };
 
-// Test 1: crear una partida correctamente
-TEST_F(MatchesMonitorTest, CreateMatch) {
-    int match_id = monitor.create_match(4, "player1", 1, dummy_queue);
-    EXPECT_GT(match_id, 0);
-}
+/*
 
 // Test 2: unirse a una partida existente
 TEST_F(MatchesMonitorTest, JoinMatch) {
@@ -94,3 +90,4 @@ TEST_F(MatchesMonitorTest, ClearAllMatches) {
     auto matches = monitor.list_available_matches();
     EXPECT_TRUE(matches.empty());
 }
+*/

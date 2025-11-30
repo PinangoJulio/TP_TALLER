@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "game_loop.h"
 #include "../../common_src/dtos.h"
 #include "../../common_src/game_state.h"
 #include "../../common_src/queue.h"
@@ -40,23 +41,25 @@ private:
     std::atomic<bool> is_active;
     MatchState state;
 
-    std::vector<std::unique_ptr<Race>> races;
-    std::vector<ServerRaceConfig> race_configs;  // ✅ Guardar las carreras seleccionadas
-    int current_race_index;
+    std::vector<ServerRaceConfig> race_configs;  // Solo configs, las races están en GameLoop
+
+    // ✅ ÚNICO GameLoop que gestiona TODAS las carreras
+    std::unique_ptr<GameLoop> gameloop;
 
     ClientMonitor players_queues;
     Queue<ComandMatchDTO> command_queue;
     int max_players;
 
-    std::map<int, PlayerLobbyInfo> players_info;   // ✅ Información completa de lobby
-    std::map<std::string, int> player_name_to_id;  // ✅ Lookup por nombre
-    std::vector<std::unique_ptr<Player>> players;  // ✅ Mantener para compatibilidad
+    std::map<int, PlayerLobbyInfo> players_info;
+    std::map<std::string, int> player_name_to_id;
+    std::vector<std::unique_ptr<Player>> players;
+
 
     std::mutex mtx;
     std::function<void(const std::vector<uint8_t>&, int exclude_player_id)> broadcast_callback;
 
-    // Helper para enviar info del mapa a todos los jugadores
     void send_race_info_to_all_players();
+    void send_game_started_confirmation();
 
 public:
     Match(std::string host_name, int code, int max_players);
@@ -87,13 +90,12 @@ public:
     const std::map<int, PlayerLobbyInfo>& get_players() const;  // ✅ Alias para compatibilidad
 
     // ---- LOBBY: Carreras ----
-    void add_race(const std::string& yaml_path, const std::string& city_name);
     void set_race_configs(const std::vector<ServerRaceConfig>& configs);
     const std::vector<ServerRaceConfig>& get_race_configs() const { return race_configs; }
 
     // ---- CARRERAS ----
-    void start_match();  // ✅ Inicia el gameloop
-    void start_next_race();
+    void start_match();  // Notifica al GameLoop que comience (ya está corriendo)
+    void stop_match();   // Detiene el gameloop
     bool is_running() const { return is_active.load(); }
     bool is_started() const { return state == MatchState::STARTED; }
     bool can_start() const;

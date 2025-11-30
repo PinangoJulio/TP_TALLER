@@ -1,6 +1,0 @@
-username William
-get_market
-buy_car ToyotaCorolla
-get_current_car
-buy_car FordFocus
-get_current_car

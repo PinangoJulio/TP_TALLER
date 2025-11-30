@@ -111,16 +111,16 @@ void Receiver::handle_lobby() {
                 }
 
                 // Crear la partida (el host se agrega automáticamente)
-                int match_id =
+                int new_match_id =
                     monitor.create_match(max_players, username, id, sender_messages_queue);
-                if (match_id < 0) {  // ✅ CORRECTO: create_match retorna -1 en error
+                if (new_match_id < 0) {  // ✅ CORRECTO: create_match retorna -1 en error
                     protocol.send_buffer(
                         LobbyProtocol::serialize_error(ERR_ALREADY_IN_GAME, "Error creating match"));
                     break;
                 }
 
-                current_match_id = match_id;
-                this->match_id = match_id;
+                current_match_id = new_match_id;
+                this->match_id = new_match_id;
 
                 // Registrar socket
                 monitor.register_player_socket(match_id, username, protocol.get_socket());
@@ -269,10 +269,7 @@ void Receiver::handle_lobby() {
             
                 std::cout << "[Receiver] " << username << " leaving game " << game_id << "\n";
             
-                // Validar que esté en esa partida
                 if (current_match_id != game_id) {
-                    std::cout << "[Receiver] ERROR: " << username << " is not in game " << game_id
-                              << " (current: " << current_match_id << ")\n";
                     protocol.send_buffer(LobbyProtocol::serialize_error(ERR_PLAYER_NOT_IN_GAME,
                                                                         "You are not in that game"));
                     break;
@@ -345,12 +342,7 @@ void Receiver::handle_lobby() {
                     break;
                 }
 
-                // ✅ INICIAR LA PARTIDA (arranca el GameLoop)
                 monitor.start_match(game_id);
-
-                // Broadcast MSG_GAME_STARTED a todos
-                auto buffer = LobbyProtocol::serialize_game_started(static_cast<uint16_t>(game_id));
-                monitor.broadcast_to_match(game_id, buffer, "");
 
                 std::cout << "[Receiver] ✅ Game " << game_id << " started successfully!"
                           << std::endl;
@@ -369,8 +361,16 @@ void Receiver::handle_lobby() {
             }
         }
 
-        // FIN DEL LOBBY - handle_match_messages() se llamará desde run()
+        std::cout << "[Receiver] ✅ Exiting lobby loop for " << username
+                  << " (match_id=" << match_id << ", is_running=" << is_running << ")" << std::endl;
 
+
+        // OBTENER QUEUE DE COMANDOS DEL MATCH
+        commands_queue = monitor.get_command_queue(match_id);
+
+        // INICIAR SENDER (para enviar GameState a este jugador)
+        sender.start();
+        std::cout << "[Receiver] Sender started for player " << username << std::endl;
     } catch (const std::exception& e) {
         std::string error_msg = e.what();
 
@@ -393,7 +393,6 @@ void Receiver::handle_lobby() {
                           << std::endl;
             }
         }
-
         is_running = false;
     }
 }
@@ -402,16 +401,16 @@ void Receiver::handle_match_messages() {
     std::cout << "[Receiver]  Game loop started - listening for player commands..." << std::endl;
 
     try {
-        // ♾- Espera comandos del jugador constantemente
         while (is_running) {
             ComandMatchDTO comand_match;
             comand_match.player_id = id;
+            std::cout << "[Receiver] Waiting for command from player " << comand_match.player_id << "..."
+                      << std::endl;
 
             try {
-                // bloquea aca hasta recibir un comando del cliente
+                // hasta recibir un comando del cliente
                 protocol.read_command_client(comand_match);
             } catch (...) {
-                // Conexión cerrada o error de lectura
                 break;
             }
 
@@ -442,19 +441,9 @@ void Receiver::run() {
     handle_lobby();
 
     // VERIFICAR SI PASÓ A FASE DE JUEGO
-    if (match_id != -1 && is_running) {
-        std::cout << "[Receiver] Player " << username << " transitioning to GAME MODE for match "
-                  << match_id << std::endl;
-        // OBTENER QUEUE DE COMANDOS DEL MATCH
-        commands_queue = monitor.get_command_queue(match_id);
 
-        // INICIAR SENDER (para enviar GameState a este jugador)
-        sender.start();
-        std::cout << "[Receiver] Sender started for player " << username << std::endl;
+    handle_match_messages();
 
-        // ⃣FASE JUEGO
-        handle_match_messages();
-    }
 
     if (match_id != -1) {
         monitor.delete_player_from_match(id, match_id);

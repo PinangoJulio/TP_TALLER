@@ -5,7 +5,7 @@
 #include "../common_src/dtos.h"
 #include "../common_src/queue.h"
 #include "game/game_loop.h"
-#include "network/monitor.h"
+#include "network/matches_monitor.h"
 
 #define QUIT 'q'
 

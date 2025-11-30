@@ -58,19 +58,21 @@ bool ServerProtocol::read_command_client(ComandMatchDTO& command) {
     // Leer el código de comando (1 byte)
     uint8_t cmd_code;
     int bytes = socket.recvall(&cmd_code, sizeof(cmd_code));
-    if (bytes == 0) {
-        return false;  // Connection closed
-    }
+    if (bytes == 0) return false; // conexión cerrada
+    if (bytes < 0) return false;  // error de lectura
+    std::cout << "[ServerProtocol] Reading command code: 0x" << std::endl;
 
     // Interpretar según el código y leer datos adicionales si es necesario
     switch (cmd_code) {
     // ===== COMANDOS SIMPLES (solo 1 byte) =====
-    case CMD_ACCELERATE:
+        case CMD_ACCELERATE:
+            std::cout << "[ServerProtocol] Reading command code: ACCELERATE" << std::endl;
         command.command = GameCommand::ACCELERATE;
         command.speed_boost = 1.0f;
         break;
 
-    case CMD_BRAKE:  //(frenar)
+        case CMD_BRAKE:  //(frenar)
+            std::cout << "[ServerProtocol] Reading command code: BRAKE" << std::endl;
         command.command = GameCommand::BRAKE;
         command.speed_boost = 1.0f;
         break;
@@ -105,6 +107,7 @@ bool ServerProtocol::read_command_client(ComandMatchDTO& command) {
         break;
 
     case CMD_TURN_LEFT: {
+        std::cout << "[ServerProtocol] Reading command code: TURN_LEFT" << std::endl;
         command.command = GameCommand::TURN_LEFT;
         // Leer intensidad del giro (1 byte: 0-100 = 0.0-1.0)
         uint8_t intensity;
@@ -114,6 +117,7 @@ bool ServerProtocol::read_command_client(ComandMatchDTO& command) {
     }
 
     case CMD_TURN_RIGHT: {
+        std::cout << "[ServerProtocol] Reading command code: TURN_RIGHT" << std::endl;
         command.command = GameCommand::TURN_RIGHT;
         // Leer intensidad del giro (1 byte: 0-100 = 0.0-1.0)
         uint8_t intensity;
@@ -177,8 +181,7 @@ bool ServerProtocol::read_command_client(ComandMatchDTO& command) {
     default:
         std::cerr << "[ServerProtocol] Código de comando desconocido: 0x" << std::hex
                   << static_cast<int>(cmd_code) << std::dec << std::endl;
-        command.command = GameCommand::DISCONNECT;
-        return false;
+        break;
     }
 
     return true;
@@ -202,6 +205,14 @@ static void push_back_uint32_t(std::vector<uint8_t>& buffer, uint32_t value) {
     buffer.push_back(reinterpret_cast<uint8_t*>(&net_value)[3]);
 }
 
+static void push_back_int32_t(std::vector<uint8_t>& buffer, int32_t value) {
+    uint32_t net = htonl(static_cast<uint32_t>(value));
+    buffer.push_back(reinterpret_cast<uint8_t*>(&net)[0]);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&net)[1]);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&net)[2]);
+    buffer.push_back(reinterpret_cast<uint8_t*>(&net)[3]);
+}
+
 static void push_back_string(std::vector<uint8_t>& buffer, const std::string& str) {
     // Enviar longitud (uint16_t)
     push_back_uint16_t(buffer, static_cast<uint16_t>(str.size()));
@@ -214,133 +225,125 @@ bool ServerProtocol::send_client_id(int client_id) {
     socket.sendall(&id, sizeof(id));
     return true;
 }
+static void push_back_int16_t(std::vector<uint8_t>& buffer, int16_t value) {
+    uint16_t net = htons(static_cast<uint16_t>(value));
+    buffer.push_back((net >> 8) & 0xFF);
+    buffer.push_back(net & 0xFF);
+}
 
 
 // ============================================================================
 // SERIALIZACIÓN DEL GAMESTATE (SNAPSHOT)
 // ============================================================================
 
+
+
 bool ServerProtocol::send_snapshot(const GameState& snapshot) {
-    // Verificar que haya jugadores
-    if (snapshot.players.empty()) {
-        std::cerr << "[ServerProtocol] Warning: Empty snapshot, nothing to send." << std::endl;
-        return false;
-    }
-
     std::vector<uint8_t> buffer;
+    buffer.reserve(4096);
 
-    // 1. JUGADORES
+    buffer.push_back(static_cast<uint8_t>(ServerMessageType::GAME_STATE_UPDATE));
+
+    // ---- 1. PLAYERS ----
     push_back_uint16_t(buffer, static_cast<uint16_t>(snapshot.players.size()));
 
-    for (const InfoPlayer& player : snapshot.players) {
-        // ID del jugador (4 bytes)
-        push_back_uint32_t(buffer, static_cast<uint32_t>(player.player_id));
+    for (const InfoPlayer& p : snapshot.players) {
+        // Strings
+        push_back_string(buffer, p.username);
+        push_back_string(buffer, p.car_name);
+        push_back_string(buffer, p.car_type);
 
-        // Nombre (string con longitud)
-        push_back_string(buffer, player.username);
+        // player_id
+        push_back_uint16_t(buffer, static_cast<uint16_t>(p.player_id));
 
-        // Auto (nombre y tipo)
-        push_back_string(buffer, player.car_name);
-        push_back_string(buffer, player.car_type);
+        // pos_x / pos_y (int32 scaled x100)
+        push_back_int32_t(buffer, static_cast<int32_t>(p.pos_x * 100.0f));
+        push_back_int32_t(buffer, static_cast<int32_t>(p.pos_y * 100.0f));
 
-        // Posición y física (multiplicar por 100 para enviar como enteros)
-        push_back_uint32_t(buffer, static_cast<uint32_t>(player.pos_x * 100.0f));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(player.pos_y * 100.0f));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(player.angle * 100.0f));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(player.speed * 100.0f));
+        // angle / speed (uint16 scaled)
+        push_back_uint16_t(buffer, static_cast<uint16_t>(p.angle * 100.0f));
+        push_back_uint16_t(buffer, static_cast<uint16_t>(p.speed * 100.0f));
 
-        // Velocidad (componentes X e Y, pueden ser negativos, usar int16_t)
-        int16_t vel_x = static_cast<int16_t>(player.velocity_x * 100.0f);
-        int16_t vel_y = static_cast<int16_t>(player.velocity_y * 100.0f);
-        push_back_uint16_t(buffer, static_cast<uint16_t>(vel_x));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(vel_y));
+        // velocity_x / velocity_y (int16 scaled)
+        push_back_int16_t(buffer, static_cast<int16_t>(p.velocity_x * 100.0f));
+        push_back_int16_t(buffer, static_cast<int16_t>(p.velocity_y * 100.0f));
 
-        // Estado del auto
-        buffer.push_back(static_cast<uint8_t>(player.health));
-        buffer.push_back(static_cast<uint8_t>(player.nitro_amount));
-        buffer.push_back(player.nitro_active ? 0x01 : 0x00);
-        buffer.push_back(player.is_drifting ? 0x01 : 0x00);
-        buffer.push_back(player.is_colliding ? 0x01 : 0x00);
+        // health, nitro (uint8)
+        buffer.push_back((uint8_t)p.health);
+        buffer.push_back((uint8_t)p.nitro_amount);
 
-        // Progreso en la carrera
-        push_back_uint16_t(buffer, static_cast<uint16_t>(player.completed_laps));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(player.current_checkpoint));
-        buffer.push_back(static_cast<uint8_t>(player.position_in_race));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(player.race_time_ms));
+        // flags
+        uint8_t flags = 0;
+        flags |= p.nitro_active ? 0x01 : 0;
+        flags |= p.is_drifting  ? 0x02 : 0;
+        flags |= p.is_colliding ? 0x04 : 0;
+        buffer.push_back(flags);
 
-        // Estado del jugador
-        buffer.push_back(player.race_finished ? 0x01 : 0x00);
-        buffer.push_back(player.is_alive ? 0x01 : 0x00);
-        buffer.push_back(player.disconnected ? 0x01 : 0x00);
+        // progreso
+        push_back_uint16_t(buffer, p.completed_laps);
+        push_back_uint16_t(buffer, p.current_checkpoint);
+        buffer.push_back((uint8_t)p.position_in_race);
+
+        // race time
+        push_back_uint32_t(buffer, p.race_time_ms);
+
+        // estados
+        buffer.push_back(p.race_finished ? 1 : 0);
+        buffer.push_back(p.is_alive ? 1 : 0);
+        buffer.push_back(p.disconnected ? 1 : 0);
     }
 
-    // 2. CHECKPOINTS
-    push_back_uint16_t(buffer, static_cast<uint16_t>(snapshot.checkpoints.size()));
+    // ---- 2. CHECKPOINTS ----
+    push_back_uint16_t(buffer, snapshot.checkpoints.size());
+    for (const CheckpointInfo& c : snapshot.checkpoints) {
+        push_back_uint32_t(buffer, c.id);
+        push_back_int32_t(buffer, (int32_t)(c.pos_x * 100.0f));
+        push_back_int32_t(buffer, (int32_t)(c.pos_y * 100.0f));
+        push_back_uint16_t(buffer, (uint16_t)(c.width * 100.0f));
+        push_back_uint16_t(buffer, (uint16_t)(c.angle * 100.0f));
 
-    for (const CheckpointInfo& cp : snapshot.checkpoints) {
-        push_back_uint32_t(buffer, static_cast<uint32_t>(cp.id));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(cp.pos_x * 100.0f));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(cp.pos_y * 100.0f));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(cp.width * 100.0f));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(cp.angle * 100.0f));
-        buffer.push_back(cp.is_start ? 0x01 : 0x00);
-        buffer.push_back(cp.is_finish ? 0x01 : 0x00);
+        buffer.push_back(c.is_start ? 1 : 0);
+        buffer.push_back(c.is_finish ? 1 : 0);
     }
 
-    // 3. HINTS (FLECHAS DIRECCIONALES)
-    push_back_uint16_t(buffer, static_cast<uint16_t>(snapshot.hints.size()));
+    // ---- 3. NPCs ----
+    push_back_uint16_t(buffer, snapshot.npcs.size());
+    for (const NPCCarInfo& n : snapshot.npcs) {
+        push_back_uint32_t(buffer, n.npc_id);
+        push_back_int32_t(buffer, (int32_t)(n.pos_x * 100.0f));
+        push_back_int32_t(buffer, (int32_t)(n.pos_y * 100.0f));
+        push_back_uint16_t(buffer, (uint16_t)(n.angle * 100.0f));
+        push_back_uint16_t(buffer, (uint16_t)(n.speed * 100.0f));
 
-    for (const HintInfo& hint : snapshot.hints) {
-        push_back_uint32_t(buffer, static_cast<uint32_t>(hint.id));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(hint.pos_x * 100.0f));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(hint.pos_y * 100.0f));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(hint.direction_angle * 100.0f));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(hint.for_checkpoint));
+        buffer.push_back(n.is_parked ? 1 : 0);
     }
 
-    // 4. NPCs
-    push_back_uint16_t(buffer, static_cast<uint16_t>(snapshot.npcs.size()));
+    // ---- 4. RACE INFO ----
+    buffer.push_back((uint8_t)snapshot.race_info.status);
+    buffer.push_back((uint8_t)snapshot.race_info.race_number);
+    buffer.push_back((uint8_t)snapshot.race_info.total_races);
 
-    for (const NPCCarInfo& npc : snapshot.npcs) {
-        push_back_uint32_t(buffer, static_cast<uint32_t>(npc.npc_id));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(npc.pos_x * 100.0f));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(npc.pos_y * 100.0f));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(npc.angle * 100.0f));
-        push_back_uint16_t(buffer, static_cast<uint16_t>(npc.speed * 100.0f));
-        push_back_string(buffer, npc.car_model);
-        buffer.push_back(npc.is_parked ? 0x01 : 0x00);
+    push_back_uint32_t(buffer, snapshot.race_info.remaining_time_ms);
+
+    buffer.push_back((uint8_t)snapshot.race_info.players_finished);
+    buffer.push_back((uint8_t)snapshot.race_info.total_players);
+
+    // ---- 5. EVENTS ----
+    push_back_uint16_t(buffer, snapshot.events.size());
+
+    for (const GameEvent& e : snapshot.events) {
+        buffer.push_back((uint8_t)e.type);
+        push_back_uint32_t(buffer, e.player_id);
+        push_back_int32_t(buffer, (int32_t)(e.pos_x * 100.0f));
+        push_back_int32_t(buffer, (int32_t)(e.pos_y * 100.0f));
     }
 
-    // 5. RACE CURRENT INFO
-    push_back_string(buffer, snapshot.race_current_info.city);
-    push_back_string(buffer, snapshot.race_current_info.race_name);
-    push_back_uint16_t(buffer, static_cast<uint16_t>(snapshot.race_current_info.total_laps));
-    push_back_uint16_t(buffer, static_cast<uint16_t>(snapshot.race_current_info.total_checkpoints));
-
-    // 6. RACE INFO
-    buffer.push_back(static_cast<uint8_t>(snapshot.race_info.status));
-    buffer.push_back(static_cast<uint8_t>(snapshot.race_info.race_number));
-    buffer.push_back(static_cast<uint8_t>(snapshot.race_info.total_races));
-    push_back_uint32_t(buffer, static_cast<uint32_t>(snapshot.race_info.remaining_time_ms));
-    buffer.push_back(static_cast<uint8_t>(snapshot.race_info.players_finished));
-    buffer.push_back(static_cast<uint8_t>(snapshot.race_info.total_players));
-    push_back_string(buffer, snapshot.race_info.winner_name);
-
-    // 7. EVENTOS
-    push_back_uint16_t(buffer, static_cast<uint16_t>(snapshot.events.size()));
-
-    for (const GameEvent& event : snapshot.events) {
-        buffer.push_back(static_cast<uint8_t>(event.type));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(event.player_id));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(event.pos_x * 100.0f));
-        push_back_uint32_t(buffer, static_cast<uint32_t>(event.pos_y * 100.0f));
-    }
-
-    // ENVIAR BUFFER
-    socket.sendall(buffer.data(), buffer.size());
-
-    return true;
+    // ---- SEND ----
+    return socket.sendall(buffer.data(), buffer.size());
 }
+
+
+
 
 // ============================================================================
 // ENVÍO DE INFORMACIÓN DE CARRERA

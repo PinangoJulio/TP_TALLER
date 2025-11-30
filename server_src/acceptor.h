@@ -9,7 +9,6 @@
 #include "../common_src/thread.h"
 #include "network/client_handler.h"
 #include "network/matches_monitor.h"
-#include "network/monitor.h"
 
 class Acceptor : public Thread {
 private:

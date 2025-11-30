@@ -95,6 +95,7 @@ public:
     void rechargeNitro(float amount);
 
     // ---- COMANDOS DE CONTROL ----
+    void update(float delta_time);
     void accelerate(float delta_time);
     void brake(float delta_time);
     void turn_left(float delta_time);

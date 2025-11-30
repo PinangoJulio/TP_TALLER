@@ -175,8 +175,6 @@ struct RaceInfoDTO {
 struct ComandMatchDTO {
     uint16_t player_id;   // ID del jugador
     GameCommand command;  // Comando a ejecutar
-
-    // Campos opcionales (se usan según el comando)
     float turn_intensity;      // Para TURN_LEFT/TURN_RIGHT (0.0 - 1.0)
     float speed_boost;         // Para ACCELERATE/BRAKE (0.0 - 1.0)
     uint16_t checkpoint_id;    // Para CHEAT_TELEPORT_CHECKPOINT
