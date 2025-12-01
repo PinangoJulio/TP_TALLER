@@ -211,7 +211,9 @@ car_name.size()); buffer.insert(buffer.end(), car_name.begin(), car_name.end());
 */
 std::vector<uint8_t> serialize_game_started(uint16_t game_id) {
     std::vector<uint8_t> buffer;
-    buffer.push_back(MSG_START_GAME);
+    // CORRECCIÓN: Usar MSG_GAME_STARTED (0x14) en lugar de MSG_START_GAME (0x05)
+    // MSG_GAME_STARTED es la notificación que el servidor envía a los clientes
+    buffer.push_back(MSG_GAME_STARTED); 
     LobbyProtocol::push_uint16(buffer, game_id);
     return buffer;
 }

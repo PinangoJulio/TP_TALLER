@@ -250,7 +250,6 @@ void LobbyClient::notification_listener() {
     std::cout << "[LobbyClient] Notification listener running..." << std::endl;
 
     try {
-        // El chequeo de listening se hace al principio de cada iteración
         while (listening.load() && connected) {
             uint8_t msg_type;
 
@@ -264,22 +263,27 @@ void LobbyClient::notification_listener() {
                 throw;
             }
 
-            // [FIX] ELIMINADO EL CHEQUEO PREMATURO DE !listening.load()
-            // Si ya leímos el tipo de mensaje, DEBEMOS procesarlo completo para vaciar el socket,
-            // incluso si nos pidieron detenernos. El loop terminará en la siguiente vuelta.
-            
-            /* BLOQUE ELIMINADO QUE CAUSABA EL ERROR:
-            if (!listening.load()) {
-                std::cout << "[LobbyClient] Listener stopped, ignoring message type "
-                          << static_cast<int>(msg_type) << std::endl;
-                break; 
-            }
-            */
-
             std::cout << "[LobbyClient] Received notification type: " << static_cast<int>(msg_type)
                       << std::endl;
 
             switch (msg_type) {
+            
+            // --- CASO NUEVO CORREGIDO ---
+            case MSG_GAME_STARTED: { // 0x14
+                // Leemos el game_id que envía serialize_game_started
+                uint16_t game_id = protocol.read_uint16();
+                
+                std::cout << "[LobbyClient] 🏁 Game started notification received (ID: " << game_id << ")" << std::endl;
+                
+                // Avisamos al Controller
+                emit gameStartedNotification();
+                
+                // Salimos del listener para liberar el socket para SDL
+                listening.store(false);
+                return; 
+            }
+            // ---------------------------
+
             case MSG_PLAYER_JOINED_NOTIFICATION: {
                 std::string user = protocol.read_string();
                 std::cout << "[LobbyClient] Player joined: " << user << std::endl;
@@ -316,22 +320,11 @@ void LobbyClient::notification_listener() {
             }
 
             case MSG_GAMES_LIST: {
-                std::cout << "[LobbyClient] Received MSG_GAMES_LIST in listener (consuming fully)"
-                          << std::endl;
-
                 uint16_t count = protocol.read_uint16();
-                std::cout << "[LobbyClient] Games list has " << count << " games" << std::endl;
-
-                // Usar la función helper para evitar duplicación
                 std::vector<GameInfo> games = protocol.read_games_list_from_socket(count);
-
                 emit gamesListReceived(games);
-
-                std::cout << "[LobbyClient] MSG_GAMES_LIST fully consumed, exiting listener"
-                          << std::endl;
-
-                // Salir del listener explícitamente porque este mensaje marca el fin del ciclo de lobby
-                listening.store(false);
+                // Si recibimos lista de juegos aquí, asumimos fin de ciclo lobby
+                listening.store(false); 
                 return;
             }
 
@@ -347,13 +340,10 @@ void LobbyClient::notification_listener() {
             default:
                 std::cerr << "[LobbyClient] Unknown notification type: "
                           << static_cast<int>(msg_type) << std::endl;
-                // Si leemos un tipo desconocido, probablemente el protocolo ya se desincronizó
-                // o es basura, así que aquí sí es seguro salir o lanzar excepción.
                 break;
             }
         }
     } catch (const std::exception& e) {
-        // Solo loguear error si se suponía que debíamos seguir escuchando
         if (listening.load()) {
             std::cerr << "[LobbyClient] Notification listener error: " << e.what() << std::endl;
         }

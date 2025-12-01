@@ -14,7 +14,10 @@
 
 
 GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues)
-    : is_running(false), match_finished(false), comandos(comandos), queues_players(queues),
+    : is_running(false), 
+      match_finished(false), 
+      start_game_signal(false), // <--- ✅ AGREGAR ESTA LÍNEA
+      comandos(comandos), queues_players(queues),
       current_race_index(0), current_race_finished(false), spawns_loaded(false)
 {
     std::cout << "[GameLoop] Constructor OK. Listo para gestionar múltiples carreras.\n";
@@ -690,6 +693,11 @@ void GameLoop::print_match_info() const {
 // BUCLE PRINCIPAL DEL MATCH (GESTIONA TODAS LAS CARRERAS)
 // ==========================================================
 
+void GameLoop::start_game() {
+    start_game_signal = true;
+    std::cout << "[GameLoop] 🚦 SEÑAL DE INICIO RECIBIDA. Arrancando motores...\n";
+}
+
 void GameLoop::run() {
     is_running = true;
     match_finished = false;
@@ -697,21 +705,27 @@ void GameLoop::run() {
 
     std::cout << "[GameLoop] ═══════════════════════════════════════════════\n";
     std::cout << "[GameLoop]  THREAD INICIADO\n";
-    std::cout << "[GameLoop]  Esperando carreras y jugadores...\n";
+    std::cout << "[GameLoop]  Esperando carreras, jugadores y SEÑAL DE INICIO...\n";
     std::cout << "[GameLoop] ═══════════════════════════════════════════════\n";
 
-    // ✅ ESPERAR A QUE HAYA CARRERAS CONFIGURADAS (con timeout de 10 segundos)
-    auto wait_start = std::chrono::steady_clock::now();
-
-    while (is_running.load() && races.empty()) {
-        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::steady_clock::now() - wait_start).count();
-
-        std::cout << "[GameLoop]  Esperando carreras... (races=" << races.size()
-                  << ", elapsed=" << elapsed << "s)\n";
+    // ✅ BLOQUE DE ESPERA (MODIFICADO)
+    // El loop se queda aquí mientras:
+    // 1. El thread siga activo (is_running)
+    // 2. Y (NO haya señal de inicio O NO haya carreras configuradas)
+    while (is_running.load() && (!start_game_signal.load() || races.empty())) {
+        // Hacemos un sleep para no consumir 100% de CPU esperando
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        
+        // Log opcional para ver que está esperando (puedes comentarlo si molesta)
+        // static int wait_counter = 0;
+        // if (wait_counter++ % 10 == 0) { 
+        //    std::cout << "[GameLoop] Esperando... (Signal: " << start_game_signal.load() 
+        //              << ", Races: " << races.size() << ")\n";
+        // }
     }
 
+    // Si se detuvo el servidor mientras esperábamos, salir.
+    if (!is_running.load()) return;
 
     std::cout << "[GameLoop] ═══════════════════════════════════════════════\n";
     std::cout << "[GameLoop]  PARTIDA INICIADA \n";

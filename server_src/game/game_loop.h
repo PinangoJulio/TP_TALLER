@@ -1,4 +1,3 @@
-// filepath: /home/lou/Escritorio/Taller/TP-Final/TP_TALLER/server_src/game/game_loop.h
 #ifndef GAME_LOOP_H
 #define GAME_LOOP_H
 
@@ -41,6 +40,9 @@ private:
     // ---- ESTADO ----
     std::atomic<bool> is_running;
     std::atomic<bool> match_finished;  // Todas las carreras completadas
+    
+    // ✅ NUEVO: Señal para esperar la orden explícita del Match
+    std::atomic<bool> start_game_signal; 
 
     // ---- COMUNICACIÓN ----
     Queue<ComandMatchDTO>& comandos;  // Comandos de jugadores (ACCELERATE, BRAKE, etc)
@@ -106,6 +108,9 @@ public:
     void set_player_ready(int player_id, bool ready);
 
     // ---- CONTROL ----
+    // ✅ NUEVO: Método para desbloquear el loop
+    void start_game();
+    
     void run() override;
     void stop_match();
     bool is_alive() const override { return is_running.load(); }
@@ -117,4 +122,3 @@ public:
 };
 
 #endif  // GAME_LOOP_H
-

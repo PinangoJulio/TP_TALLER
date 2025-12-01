@@ -447,7 +447,7 @@ void Match::send_race_info_to_all_players() {
  * - Envía snapshots a clientes cada 250ms
  */
 
-void Match::start_match() {
+ void Match::start_match() {
     std::cout << "[Match] ════════════════════════════════════════════" << std::endl;
     std::cout << "[Match] 🏁 INICIANDO PARTIDA CODE " << match_code << std::endl;
     std::cout << "[Match] ════════════════════════════════════════════" << std::endl;
@@ -469,23 +469,15 @@ void Match::start_match() {
     std::cout << "[Match]  Carreras configuradas: " << race_configs.size() << std::endl;
 
     if (gameloop) {
-        std::cout << "[Match]  DEBUG: GameLoop existe" << std::endl;
-        int players_with_car = 0;
-        for (const auto& [id, info] : players_info) {
-            if (!info.car_name.empty()) players_with_car++;
-        }
-        std::cout << "[Match]  DEBUG: Jugadores con auto seleccionado: " << players_with_car << std::endl;
+        std::cout << "[Match] >>> Enviando señal de inicio al GameLoop...\n";
+        // ✅ AQUÍ SE ACTIVA EL GAMELOOP QUE ESTABA ESPERANDO
+        gameloop->start_game(); 
     } else {
         std::cerr << "[Match] ❌ ERROR: GameLoop NO existe!" << std::endl;
     }
 
-    // Importante: NO enviar confirmación al cliente; el cliente no la espera.
-    // Solo enviar la info de la primera carrera para que prepare recursos gráficos.
-    //send_race_info_to_all_players();
-
-    std::cout << "[Match] ✅ GameLoop ya está activo, comenzando carrera..." << std::endl;
+    std::cout << "[Match] ✅ GameLoop activado, comenzando carrera..." << std::endl;
 }
-
 void Match::stop_match() {
     std::cout << "[Match] Deteniendo partida..." << std::endl;
     is_active.store(false);

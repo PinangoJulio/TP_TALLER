@@ -327,30 +327,39 @@ void Receiver::handle_lobby() {
             // ------------------------------------------------------------
             case MSG_START_GAME: {
                 int game_id = static_cast<int>(protocol.read_uint16());
-
+            
                 std::cout << "[Receiver] " << username << " starting game " << game_id << "\n";
-
+            
                 if (current_match_id != game_id) {
                     protocol.send_buffer(LobbyProtocol::serialize_error(ERR_PLAYER_NOT_IN_GAME,
                                                                         "You are not in this game"));
                     break;
                 }
-
+            
                 // Validar que se pueda iniciar
                 if (!monitor.is_match_ready(game_id)) {
                     protocol.send_buffer(LobbyProtocol::serialize_error(
                         ERR_PLAYERS_NOT_READY, "Not all players are ready or no races configured"));
                     break;
                 }
-
+            
+                // ✅ FIX 1: BROADCAST MSG_GAME_STARTED **ANTES** de start_match
+                std::vector<uint8_t> start_notif;
+                start_notif.push_back(static_cast<uint8_t>(LobbyMessageType::MSG_GAME_STARTED));
+                monitor.broadcast_to_match(game_id, start_notif, "");  // SIN excluir a nadie
+                
+                std::cout << "[Receiver] ✅ Broadcasted MSG_GAME_STARTED to all players in match " 
+                          << game_id << std::endl;
+            
+                // ✅ FIX 2: Iniciar el match en el servidor
                 monitor.start_match(game_id);
-
+            
                 std::cout << "[Receiver] ✅ Game " << game_id << " started successfully!"
                           << std::endl;
-
+            
                 // ✅ TRANSICIÓN AL JUEGO
                 in_lobby = false;
-
+            
                 break;
             }
             // ------------------------------------------------------------
