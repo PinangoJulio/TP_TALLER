@@ -1,0 +1,366 @@
+terminal 1: server
+julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL 2/TP_TALLER$ ./server config.yaml
+[Acceptor] Socket created on port 8080
+==================================================
+    NEED FOR SPEED 2D - SERVER
+==================================================
+Port: 8080
+Press 'q' + Enter to stop
+==================================================
+[Server] Starting acceptor thread...
+[Server] Waiting for connections...
+==================================================
+[Acceptor] New connection accepted
+           Client ID: 1
+           Total clients: 1
+==================================================
+[Receiver] Player connected: julio 1
+[Receiver] julio 1 requested games list
+[Receiver] Sending 0 games to julio 1
+[Receiver] julio 1 creating game: sala 1 (max: 2, races: 3)
+[Match] Creado: julio 1 (code=1, max_players=2)
+[Match] >>> Creando GameLoop...
+[GameLoop] Constructor OK. Listo para gestionar múltiples carreras.
+[Match] >>> Iniciando GameLoop (thread)...
+[Match] ✅ GameLoop iniciado y esperando jugadores
+[GameLoop] ═══════════════════════════════════════════════
+[GameLoop]  THREAD INICIADO
+[GameLoop]  Esperando carreras y jugadores...
+[GameLoop] ═══════════════════════════════════════════════
+[Match] Jugador agregado: julio 1 (id=1, total=1)
+
+╔════════════════════════════════════════════════════════════╗
+║  MATCH #1 - JUGADORES (1/2)                          ║
+╠════════════════════════════════════════════════════════════╣
+║ ID:   1 │ julio 1         │ [SIN AUTO]           │ ✗ NOT READY ║
+╚════════════════════════════════════════════════════════════╝
+
+[MatchesMonitor] ✅ Match created: ID=1 Host=julio 1 (player_id=1)
+[MatchesMonitor] Socket registered: julio 1 in match 1
+[GameLoop]  Esperando carreras... (races=0, elapsed=0s)
+[Receiver]   Race 1: Vice City - Centro
+[Receiver]   Race 2: Vice City - Centro
+[Receiver]   Race 3: Vice City - Centro
+[Race] Configuración creada: Vice City - server_src/city_maps/Vice City/Centro.yaml[Match] Carrera agregada: Vice City -> server_src/city_maps/Vice City/Centro.yaml
+[Race] Configuración creada: Vice City - server_src/city_maps/Vice City/Centro.yaml[Match] Carrera agregada: Vice City -> server_src/city_maps/Vice City/Centro.yaml
+[Race] Configuración creada: Vice City - server_src/city_maps/Vice City/Centro.yaml[Match] Carrera agregada: Vice City -> server_src/city_maps/Vice City/Centro.yaml
+[GameLoop] Configuradas 3 carreras
+[Match] Configuradas 3 carreras en GameLoop
+[MatchesMonitor] Carreras agregadas a match 1
+[Receiver] Game created with ID: 1
+[GameLoop] ═══════════════════════════════════════════════
+[GameLoop]  PARTIDA INICIADA 
+[GameLoop]  Carreras configuradas: 3
+[GameLoop]  Jugadores registrados: 0
+[GameLoop] ═══════════════════════════════════════════════
+
+╔════════════════════════════════════════════════════════════╗
+║  GAMELOOP - INFORMACIÓN DE LA PARTIDA                     ║
+╠════════════════════════════════════════════════════════════╣
+║  Total de carreras: 3                                     ║
+║  Carrera actual: 1/3                                     ║
+║  Jugadores: 0                                             ║
+╚════════════════════════════════════════════════════════════╝
+
+[GameLoop] >>> Reseteando jugadores para nueva carrera...
+[GameLoop] Cargando spawn points desde ...
+[GameLoop] ERROR leyendo spawns: bad file: 
+[GameLoop] <<< Jugadores reseteados
+
+╔════════════════════════════════════════════════════════════╗
+║  🏁 CARRERA #1/3 - Vice City                     ║
+╠════════════════════════════════════════════════════════════╣
+║  Mapa: server_src/city_maps/Vice City/Centro.yaml        ║
+╚════════════════════════════════════════════════════════════╝
+
+[GameLoop] >>> Reseteando jugadores para nueva carrera...
+[GameLoop] Cargando spawn points desde server_src/city_maps/Vice City/Centro.yaml...
+[GameLoop] Cargados 8 spawn points
+[GameLoop] <<< Jugadores reseteados
+
+[GameLoop] ═══════════════════════════════════════════════
+[GameLoop]  CARRERA #1 FINALIZADA
+[GameLoop] ═══════════════════════════════════════════════
+
+╔════════════════════════════════════════════════════════════╗
+║  TABLA DE TIEMPOS - CARRERA #1                           ║
+╠════════════════════════════════════════════════════════════╣
+║  Nadie ha terminado aún                                   ║
+╚════════════════════════════════════════════════════════════╝
+
+[GameLoop] Preparando siguiente carrera...
+[GameLoop] >>> Reseteando jugadores para nueva carrera...
+[GameLoop] Cargando spawn points desde server_src/city_maps/Vice City/Centro.yaml...
+[GameLoop] Cargados 8 spawn points
+[GameLoop] <<< Jugadores reseteados
+
+╔════════════════════════════════════════════════════════════╗
+║  🏁 CARRERA #2/3 - Vice City                     ║
+╠════════════════════════════════════════════════════════════╣
+║  Mapa: server_src/city_maps/Vice City/Centro.yaml        ║
+╚════════════════════════════════════════════════════════════╝
+
+[GameLoop] >>> Reseteando jugadores para nueva carrera...
+[GameLoop] Cargando spawn points desde server_src/city_maps/Vice City/Centro.yaml...
+[GameLoop] Cargados 8 spawn points
+[GameLoop] <<< Jugadores reseteados
+
+[GameLoop] ═══════════════════════════════════════════════
+[GameLoop]  CARRERA #2 FINALIZADA
+[GameLoop] ═══════════════════════════════════════════════
+
+╔════════════════════════════════════════════════════════════╗
+║  TABLA DE TIEMPOS - CARRERA #2                           ║
+╠════════════════════════════════════════════════════════════╣
+║  Nadie ha terminado aún                                   ║
+╚════════════════════════════════════════════════════════════╝
+
+[GameLoop] Preparando siguiente carrera...
+[GameLoop] >>> Reseteando jugadores para nueva carrera...
+[GameLoop] Cargando spawn points desde server_src/city_maps/Vice City/Centro.yaml...
+[GameLoop] Cargados 8 spawn points
+[GameLoop] <<< Jugadores reseteados
+
+╔════════════════════════════════════════════════════════════╗
+║  🏁 CARRERA #3/3 - Vice City                     ║
+╠════════════════════════════════════════════════════════════╣
+║  Mapa: server_src/city_maps/Vice City/Centro.yaml        ║
+╚════════════════════════════════════════════════════════════╝
+
+[GameLoop] >>> Reseteando jugadores para nueva carrera...
+[GameLoop] Cargando spawn points desde server_src/city_maps/Vice City/Centro.yaml...
+[GameLoop] Cargados 8 spawn points
+[GameLoop] <<< Jugadores reseteados
+
+[GameLoop] ═══════════════════════════════════════════════
+[GameLoop]  CARRERA #3 FINALIZADA
+[GameLoop] ═══════════════════════════════════════════════
+
+╔════════════════════════════════════════════════════════════╗
+║  TABLA DE TIEMPOS - CARRERA #3                           ║
+╠════════════════════════════════════════════════════════════╣
+║  Nadie ha terminado aún                                   ║
+╚════════════════════════════════════════════════════════════╝
+
+[GameLoop]  TODAS LAS CARRERAS COMPLETADAS
+
+╔════════════════════════════════════════════════════════════╗
+║  TABLA GENERAL - ACUMULADO TOTAL                          ║
+╠════════════════════════════════════════════════════════════╣
+║  No hay tiempos registrados                               ║
+╚════════════════════════════════════════════════════════════╝
+
+[GameLoop]  PARTIDA FINALIZADA
+[GameLoop] Hilo de simulación detenido correctamente.
+[Receiver] julio 1 selected car: Brisa (sport)
+[Match] Jugador julio 1 eligió auto Brisa (sport)
+[Match] >>> Registrando julio 1 en GameLoop con auto Brisa
+
+
+
+***************************************************************
+█   GAMELOOP::ADD_PLAYER() LLAMADO                            █
+***************************************************************
+
+[GameLoop] Registrando jugador...
+[GameLoop]   • ID: 1
+[GameLoop]   • Nombre: julio 1
+[GameLoop]   • Auto: Brisa (sport)
+[Car] Creado: Brisa (sport)
+[Car] Stats cargados para Brisa: Max Speed=135 Accel=68 Handling=0.7 HP=80
+[GameLoop]   Stats cargadas desde YAML:
+[GameLoop]      - Velocidad máxima: 135 km/h
+[GameLoop]      - Aceleración: 68
+[GameLoop]      - Manejo: 0.7
+[GameLoop]      - Salud: 80 HP
+[GameLoop]      - Durabilidad: 60
+[GameLoop]      - Masa: 1300 kg
+[GameLoop] ✅ Jugador registrado exitosamente
+[GameLoop]   • Total jugadores: 1
+
+[GameLoop] ╔══════════════════════════════════════════════════════╗
+[GameLoop] ║          JUGADOR REGISTRADO EXITOSAMENTE           ║
+[GameLoop] ╚══════════════════════════════════════════════════════╝
+
+[GameLoop] # DATOS DEL JUGADOR:
+[GameLoop]   ├─ ID: 1
+[GameLoop]   ├─ Nombre: julio 1
+[GameLoop]   ├─ Posición: (0, 0)
+[GameLoop]   ├─ Ángulo: 0°
+[GameLoop]   ├─ Velocidad: 0 km/h
+[GameLoop]   ├─ Vueltas completadas: 0
+[GameLoop]   ├─ Checkpoint actual: 0
+[GameLoop]   ├─ Posición en carrera: 0
+[GameLoop]   ├─ Score: 0
+[GameLoop]   ├─ Carrera finalizada: No
+[GameLoop]   ├─ Desconectado: No
+[GameLoop]   ├─ Listo: No
+[GameLoop]   └─ Vivo: Sí
+
+[GameLoop]  DATOS DEL AUTO:
+[GameLoop]   ├─ Modelo: Brisa
+[GameLoop]   ├─ Tipo: sport
+[GameLoop]   ├─ Posición: (0, 0)
+[GameLoop]   ├─ Ángulo: 0°
+[GameLoop]   ├─ Velocidad actual: 0 km/h
+[GameLoop]   ├─ Velocidad X: 0
+[GameLoop]   ├─ Velocidad Y: 0
+[GameLoop]   │
+[GameLoop]   ├─  ESTADÍSTICAS:
+[GameLoop]   │  ├─ Velocidad máxima: 135 km/h
+[GameLoop]   │  ├─ Aceleración: 68
+[GameLoop]   │  ├─ Manejo (handling): 0.7
+[GameLoop]   │  └─ Peso: 1300 kg
+[GameLoop]   │
+[GameLoop]   ├─  SALUD:
+[GameLoop]   │  ├─ Salud actual: 80 HP
+[GameLoop]   │  └─ Destruido: No
+[GameLoop]   │
+[GameLoop]   ├─  ESTADO:
+[GameLoop]   │  ├─ Nitro disponible: 100%
+[GameLoop]   │  ├─ Nitro activo: No
+[GameLoop]   │  ├─ Derrapando: No
+[GameLoop]   │  └─ Colisionando: No
+
+[GameLoop] RESUMEN PARTIDA:
+[GameLoop]   ├─ Total jugadores registrados: 1
+[GameLoop]   └─ Carrera iniciada: Sí
+[Match] ✅ Jugador julio 1 agregado al GameLoop exitosamente
+
+╔════════════════════════════════════════════════════════════╗
+║  MATCH #1 - JUGADORES (1/2)                          ║
+╠════════════════════════════════════════════════════════════╣
+║ ID: 1   │ julio 1         │ Brisa (sport)        │ ✗ NOT READY ║
+╚════════════════════════════════════════════════════════════╝
+
+[Receiver] ✅ ACK sent to julio 1
+[MatchesMonitor] Broadcasting to match 1 (excluding: julio 1)
+[MatchesMonitor]   Skipping julio 1 (sender)
+[MatchesMonitor] Broadcast completed: 0 messages sent to match 1
+[Receiver] ✅ Broadcast triggered (excluding julio 1)
+
+
+
+
+
+
+terminal 2: cliente 1
+julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL 2/TP_TALLER$ ./client
+=== Need for Speed 2D - Cliente ===
+Conectando a localhost:8080
+[ClientProtocol] Connected to server localhost:8080
+[Client] Cliente inicializado para Player
+[ClientProtocol] Received client ID: 1
+[Client] Iniciando fase de lobby Qt...
+[Controller] Controlador creado (sin conectar al servidor todavía)
+[Controller] Mostrando lobby principal
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+Fuente cargada: ArcadeClassic
+Imagen de fondo cargada correctamente
+SDL Audio inicializado correctamente
+Música de fondo iniciada en loop
+QWidget::setLayout: Cannot set layout to 0
+[LobbyWindow] Botón Jugar presionado
+[Controller] Usuario presionó 'Jugar'
+[LobbyClient] Connected to server 
+[Controller] Conectado exitosamente
+[Controller] Mostrando ventana de ingreso de nombre
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+Nombre de jugador confirmado: julio 1
+[Controller] Usuario confirmó nombre: julio 1
+[Protocol] DEBUG: Username: 'julio 1' (length: 7)
+[Protocol] DEBUG: Buffer size: 10 bytes
+[Protocol] DEBUG: Buffer content: 01 00 07 6A 75 6C 69 6F 20 31 
+[Protocol] DEBUG: Length encoded in buffer: 7
+[Protocol] Sent username: julio 1
+[Controller] Nombre enviado al servidor
+[Controller] Esperando mensaje de bienvenida...
+[LobbyClient] DEBUG: Waiting for welcome message...
+[LobbyClient] DEBUG: Received type: 16
+[LobbyClient] DEBUG: Reading welcome string...
+[LobbyClient] Received welcome: Welcome to Need for Speed 2D, julio 1!
+[Controller] Bienvenida recibida: Welcome to Need for Speed 2D, julio 1!
+[Controller] Abriendo ventana de selección de partidas
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+[Controller] Solicitando lista de partidas al servidor...
+[Protocol] Requested games list
+[LobbyClient] Received 0 games
+[Controller] Recibidas 0 partidas
+[MatchSelectionWindow] Actualizando lista con 0 partidas
+Creando nueva partida...
+[Controller] Usuario quiere crear nueva partida
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+Carrera 1 configurada: Vice City - Centro
+Carrera 2 configurada: Vice City - Centro
+Carrera 3 configurada: Vice City - Centro
+Confirmando creación de partida:
+  Nombre: sala 1
+  Jugadores: 2
+  Carreras: 3
+  Carrera 1: Vice City - Centro
+  Carrera 2: Vice City - Centro
+  Carrera 3: Vice City - Centro
+[Controller] Usuario confirmó creación de partida:
+  Nombre: sala 1
+  Jugadores máximos: 2
+  Número de carreras: 3
+  Carrera: Vice City - Centro
+  Carrera: Vice City - Centro
+  Carrera: Vice City - Centro
+[Protocol] Requested to create game: sala 1 (max players: 2, races: 3)
+[LobbyClient] Game created with ID: 1
+[Controller] Partida creada con ID: 1
+[Controller] Abriendo garage...
+[Controller] Abriendo ventana de garage...
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+[GarageWindow] Auto cargado: Leyenda Urbana (tipo: classic)
+[GarageWindow] Auto cargado: Brisa (tipo: sport)
+[GarageWindow] Auto cargado: J-Classic 600 (tipo: classic)
+[GarageWindow] Auto cargado: Cavallo V8 (tipo: sport)
+[GarageWindow] Auto cargado: Senator (tipo: classic)
+[GarageWindow] Auto cargado: Nómada (tipo: truck)
+[GarageWindow] Auto cargado: Stallion GT (tipo: sport)
+[GarageWindow] ✅ 7 autos cargados desde config.yaml
+Auto seleccionado: Brisa (sport)
+[Controller] Auto seleccionado: Brisa
+[Controller] DEBUG: Enviando selección de auto...
+[Protocol] Selected car: Brisa (sport)
+[Controller] DEBUG: Esperando ACK...
+[LobbyClient] Server confirmed car: Brisa (sport)
+[Controller] ✅ CAR confirmed: Brisa
+[Controller] Conectando señales de notificaciones...
+[Controller] Iniciando listener...
+[LobbyClient] Notification listener started
+[Controller] Listener status: RUNNING
+[Controller] Abriendo sala de espera...
+[Controller] Abriendo sala de espera...
+[LobbyClient] Notification listener running...
+qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
+[Controller] Adding local player: julio 1
+[Controller] Sala de espera inicializada
+[Controller] Actualizando auto del jugador local: Brisa
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

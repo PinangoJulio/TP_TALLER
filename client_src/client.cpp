@@ -43,16 +43,17 @@ void Client::start() {
     // Event loop temporal para esperar fin del lobby
     QEventLoop lobbyLoop;
     
-    QObject::connect(&controller, &LobbyController::lobbyFinished, &lobbyLoop, [&](bool success) {
-        std::cout << "[Client] Lobby terminado (success=" << success << ")" << std::endl;
-        if (!success) {
-            active = false;  // abortar cliente si lobby falla
-        }
-        lobbyLoop.quit();
-    });
+    QObject::connect(&controller, &LobbyController::lobbyFinished, &lobbyLoop, 
+        [&](bool success) {
+            std::cout << "[Client] Lobby terminado (success=" << success << ")" << std::endl;
+            if (!success) {
+                active = false;  // abortar cliente si lobby falla
+            }
+            lobbyLoop.quit();
+        });
 
     controller.start();
-    lobbyLoop.exec();  // Bloquea hasta que el lobby emite lobbyFinished
+    lobbyLoop.exec();  // ✅ Bloquea hasta que el lobby emite lobbyFinished
 
     if (!active) {
         std::cout << "[Client] Abortando inicio de juego por fallo en lobby" << std::endl;
@@ -62,7 +63,7 @@ void Client::start() {
     username = controller.getPlayerName().toStdString();
     std::cout << "[Client] Usuario listo: " << username << std::endl;
 
-    // Cerrar ventanas Qt DESPUÉS de que el QEventLoop termine
+    // ✅ Cerrar ventanas Qt DESPUÉS de que el QEventLoop termine
     std::cout << "[Client] Cerrando ventanas Qt..." << std::endl;
     controller.closeAllWindows();
 
@@ -79,20 +80,11 @@ void Client::start() {
     std::cout << "╚════════════════════════════════════════════════════════════╝" << std::endl;
     std::cout << "\n";
 
+    // ---------------------------------------------------------
     // FASE 2: INICIAR THREADS DE COMUNICACIÓN
-
+    // ---------------------------------------------------------
     std::cout << "[Client] Iniciando threads de comunicación..." << std::endl;
 
-    // Notificar al servidor que el cliente está listo para jugar (si aplica)
-    //protocol.send_player_ready();
-
-    // Esperar señal del servidor: todos los jugadores están listos
-    std::cout << "[Client] Esperando a que todos los jugadores esten listos..." << std::endl;
-    // Bloqueante: implementar en ClientProtocol para esperar el mensaje "ALL_READY" o snapshot inicial
-    //protocol.wait_all_players_ready();
-    std::cout << "[Client] Todos listos: iniciando comunicación y partida" << std::endl;
-
-    
     sender.start();
     receiver.start();
     threads_started = true;
@@ -121,7 +113,6 @@ void Client::start() {
     int ms_per_frame = 1000 / FPS;
     
     GameState current_snapshot; 
-    //GameState final_snapshot;
     bool race_finished = false;
 
     std::cout << "\n";
@@ -139,52 +130,12 @@ void Client::start() {
     std::cout << "[Client]    P: Perder carrera" << std::endl;
     std::cout << "\n";
 
+    // ---------------------------------------------------------
     // FASE 5: GAME LOOP PRINCIPAL
-
+    // ---------------------------------------------------------
     while (active) {
         auto t1 = std::chrono::steady_clock::now();
-        //  // 1. Leer todos los snapshots disponibles de la queue
-        // std::vector<GameState> snapshots;
 
-        // if (!race_finished) {
-        //     while (snapshot_queue.try_pop(current_snapshot)) {
-        //         snapshots.push_back(current_snapshot);
-
-        //         // Verificar si la carrera terminó (todos los jugadores terminaron)
-        //         // Por ahora, verificamos si el jugador local terminó
-        //         InfoPlayer* local_player = current_snapshot.findPlayer(player_id);
-        //         if (local_player && local_player->race_finished) {
-        //             race_finished = true;
-        //             final_snapshot = current_snapshot;  // Guardar snapshot final
-        //             std::cout << "[Client]  Carrera finalizada!" << std::endl;
-        //             break;
-        //         }
-        //     }
-        // }
-
-        // // 2. Reproducir sonidos y renderizar
-        // if (!race_finished) {
-        //     // Reproducir sonidos de todos los snapshots recibidos
-        //     //  Implementar SoundManager
-        //     // for (const auto& snapshot : snapshots) {
-        //     //     sound_manager.play_sounds(snapshot);
-        //     // }
-
-        //     // Renderizar el último snapshot
-        //     if (!snapshots.empty()) {
-        //         const auto& latest = snapshots.back();
-
-        //         // TODO: game_renderer.render(latest);
-
-        //         // DEBUG: Imprimir estado básico
-        //         InfoPlayer* local_player = latest.findPlayer(player_id);
-        //         std::cout << "[Client] Players: " << latest.players.size();
-        //         if (local_player) {
-        //             std::cout << " | Lap: " << local_player->completed_laps << "/"
-        //                       << latest.race_current_info.total_laps;
-        //         }
-        //         std::cout << std::endl;
-        //     }
         // 1. PROCESAR MENSAJES DE RED
         GameState new_snapshot;
         while (snapshot_queue.try_pop(new_snapshot)) {
@@ -196,7 +147,6 @@ void Client::start() {
                 race_finished = true;
                 std::cout << "[Client] ¡Carrera terminada!" << std::endl;
             }
-            
         }
     
         // 2. INPUT
@@ -212,6 +162,7 @@ void Client::start() {
             std::this_thread::sleep_for(std::chrono::milliseconds(ms_per_frame - elapsed));
         }
 
+        // 5. VERIFICAR FIN DE CARRERA
         if (race_finished) {
             std::this_thread::sleep_for(std::chrono::seconds(3));
             active = false;
@@ -226,8 +177,7 @@ void Client::start() {
     if (threads_started) {
         std::cout << "[Client]   → Deteniendo thread sender..." << std::endl;
         sender.stop();
-        //  Descomentar cuando receiver esté activo
-        // receiver.stop();
+        receiver.stop();
 
         std::cout << "[Client]   → Cerrando colas de comunicación..." << std::endl;
         command_queue.close();
@@ -235,11 +185,10 @@ void Client::start() {
 
         std::cout << "[Client]   → Esperando finalización de threads..." << std::endl;
         sender.join();
-        //  Descomentar cuando receiver esté activo
-        // receiver.join();
+        receiver.join();
 
         std::cout << "[Client]   ✅ Threads finalizados correctamente" << std::endl;
-        threads_started = false;  // Marcar como cerrados para evitar doble cierre en destructor
+        threads_started = false;
     }
 
     std::cout << "[Client] ✅ Todos los recursos cerrados correctamente" << std::endl;

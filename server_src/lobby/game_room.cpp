@@ -78,6 +78,13 @@ bool GameRoom::set_player_ready(const std::string& username, bool ready) {
     std::cout << "[GameRoom " << game_id << "] Player '" << username << "' is now "
               << (ready ? "READY" : "NOT READY") << std::endl;
 
+    // --- CAMBIO: Auto-start si todos están listos ---
+    if (state == RoomState::READY && all_players_ready()) {
+        std::cout << "[GameRoom " << game_id << "] All players ready! Auto-starting game..." << std::endl;
+        start();
+    }
+    // ------------------------------------------------
+
     return true;
 }
 
@@ -127,6 +134,8 @@ bool GameRoom::is_started() const {
 void GameRoom::start() {
     if (state != RoomState::READY)
         return;
+    
+    // Doble verificación por seguridad
     if (!all_players_ready()) {
         std::cout << "[GameRoom " << game_id << "] Cannot start: not all players ready" << std::endl;
         return;
@@ -134,6 +143,14 @@ void GameRoom::start() {
 
     state = RoomState::STARTED;
     std::cout << "[GameRoom " << game_id << "] Game started!" << std::endl;
+
+    // --- CAMBIO: Notificar a todos los clientes ---
+    if (broadcast_callback) {
+        // Serializamos el mensaje de START (asegúrate de que serialize_game_started exista en LobbyProtocol)
+        auto buffer = LobbyProtocol::serialize_game_started(game_id);
+        broadcast_callback(buffer);
+    }
+    // ----------------------------------------------
 }
 
 bool GameRoom::has_player(const std::string& username) const {
