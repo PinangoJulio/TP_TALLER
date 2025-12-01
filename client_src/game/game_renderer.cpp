@@ -3,8 +3,7 @@
 #include <cmath>
 #include <SDL2/SDL_image.h>
 #include <yaml-cpp/yaml.h>
-#include <fstream> // Necesario para verificar existencia de archivos
-
+#include <fstream> 
 const float RAD_TO_DEG = 180.0f / M_PI;
 
 GameRenderer::GameRenderer(SDL2pp::Renderer& renderer_ref)
@@ -28,65 +27,83 @@ GameRenderer::GameRenderer(SDL2pp::Renderer& renderer_ref)
     car_clips[7] = SDL2pp::Rect(0, 0, 32, 32);
 }
 
+
 void GameRenderer::init_race(const std::string& yaml_path) {
-    std::cout << "[GameRenderer] Cargando carrera desde: " << yaml_path << std::endl;
+    std::cout << "[GameRenderer] Inicializando carrera. Config: " << yaml_path << std::endl;
 
     try {
+       
         YAML::Node config = YAML::LoadFile(yaml_path);
-        
-        // Obtener el nombre de la ciudad del YAML
-        std::string city = "Vice City"; // Default
-        if (config["race"] && config["race"]["city"]) {
-            city = config["race"]["city"].as<std::string>();
+
+        if (!config["race"] || !config["race"]["city"] || !config["race"]["name"]) {
+            throw std::runtime_error("El archivo YAML no tiene los campos 'race.city' o 'race.name'");
         }
 
-        std::cout << "[GameRenderer] Ciudad detectada: " << city << std::endl;
+       
+        std::string raw_city = config["race"]["city"].as<std::string>(); 
+        std::string raw_name = config["race"]["name"].as<std::string>(); 
 
-        // Definir rutas base
-        std::string visual_base = "assets/img/map/cities/";
-        std::string layer_base = "assets/img/map/layers/";
-        
-        std::string map_file, bridges_file, top_file;
-        std::string collision_file, bridges_mask, ramps_file;
-
-        // Selección de archivos según la ciudad
-        if (city == "Vice_City" || city == "Vice City") {
-            map_file = visual_base + "vice-city.png";
-            bridges_file = layer_base + "vice-city/vice-city-puentes.png";
-            top_file = layer_base + "vice-city/vice-city-top.png";
+    
+        auto normalize_path_name = [](std::string s) {
+            // A minúsculas
+            std::transform(s.begin(), s.end(), s.begin(),
+                [](unsigned char c){ return std::tolower(c); });
             
-            collision_file = layer_base + "vice-city/vice-city.png";
-            bridges_mask = layer_base + "vice-city/puentes-transitables.png";
-            ramps_file = layer_base + "vice-city/rampas.png";
-        } 
-        else if (city == "Liberty_City" || city == "Liberty City") {
-            map_file = visual_base + "liberty-city.png";
-            // Configura aquí los archivos para Liberty City cuando los tengas
-        } 
-        else {
-            // San Andreas o Default
-            map_file = visual_base + "san-andreas.png";
-        }
+            // Reemplazar guion bajo por guion medio
+            std::replace(s.begin(), s.end(), '_', '-');
+            
+            // Reemplazar espacio por guion medio (por si acaso viene "San Andreas")
+            std::replace(s.begin(), s.end(), ' ', '-');
+            
+            return s;
+        };
 
-        // Cargar texturas visuales
+        std::string city_name = normalize_path_name(raw_city); 
+        std::string route_name = normalize_path_name(raw_name);
+
+        std::cout << "[GameRenderer] YAML Leído -> Ciudad: " << raw_city << " (" << city_name << ")"
+                  << " | Ruta: " << raw_name << " (" << route_name << ")" << std::endl;
+
+       
+        std::string visual_base = "assets/img/map/cities/";
+        std::string map_file = visual_base + city_name + ".png";
+
+
+        std::string layer_base = "assets/img/map/layers/";
+        std::string layer_root = layer_base + city_name  + "/";
+        
+        std::string collision_file = layer_root + "camino.png";
+        std::string bridges_mask   = layer_root + "puentes.png";
+        std::string ramps_file     = layer_root + "rampas.png";
+        std::string top_file       = layer_root + "top.png";
+        std::string bridges_visual = layer_root + "puentes-top.png";
+
+       
+        std::string minimap_file = "assets/img/map/cities/caminos/" + city_name + "/" + route_name + "/debug_resultado_v5.png";
+
+        std::cout << "[GameRenderer] Assets calculados:" << std::endl;
+        std::cout << "  - Visual: " << map_file << std::endl;
+        std::cout << "  - Collision: " << collision_file << std::endl;
+
+
+       
         SDL_Surface* surfMap = IMG_Load(map_file.c_str());
-        if (!surfMap) throw std::runtime_error("Fallo al cargar mapa: " + std::string(IMG_GetError()));
-        
+        if (!surfMap) {
+            throw std::runtime_error("Fallo al cargar mapa visual (" + map_file + "): " + std::string(IMG_GetError()));
+        }
         map_texture = std::make_unique<SDL2pp::Texture>(renderer, SDL2pp::Surface(surfMap));
-        
-        // AHORA SÍ sabemos cuánto mide el mapa real
         map_width = map_texture->GetWidth();
         map_height = map_texture->GetHeight();
 
-        // Cargar capas opcionales (Puentes)
-        SDL_Surface* surfPuentes = IMG_Load(bridges_file.c_str());
+       
+        SDL_Surface* surfPuentes = IMG_Load(bridges_visual.c_str());
         if (surfPuentes) {
             puentes_texture = std::make_unique<SDL2pp::Texture>(renderer, SDL2pp::Surface(surfPuentes));
         } else {
-            puentes_texture.reset(); // Liberar si existía de una carrera anterior
+            puentes_texture.reset();
         }
 
-        // Cargar capas opcionales (Techos)
+      
         SDL_Surface* surfTop = IMG_Load(top_file.c_str());
         if (surfTop) {
             top_texture = std::make_unique<SDL2pp::Texture>(renderer, SDL2pp::Surface(surfTop));
@@ -94,19 +111,20 @@ void GameRenderer::init_race(const std::string& yaml_path) {
             top_texture.reset();
         }
 
-        // Inicializar CollisionManager (solo si existen los archivos)
+        
         std::ifstream f(collision_file);
         if (f.good()) {
              collision_manager = std::make_unique<CollisionManager>(collision_file, bridges_mask, ramps_file);
+             std::cout << "[GameRenderer] CollisionManager OK." << std::endl;
+        } else {
+             std::cerr << "[GameRenderer] ⚠️ ALERTA: No se encontró collision mask: " << collision_file << std::endl;
         }
 
-        std::cout << "[GameRenderer] Carrera cargada exitosamente. Dimensiones del mapa: " 
-                  << map_width << "x" << map_height << std::endl;
-
     } catch (const std::exception& e) {
-        std::cerr << "[GameRenderer] ERROR FATAL cargando carrera: " << e.what() << std::endl;
+        std::cerr << "[GameRenderer] ERROR FATAL: " << e.what() << std::endl;
     }
 }
+
 
 int GameRenderer::getClipIndexFromAngle(float angle_radians) {
     float degrees = angle_radians * RAD_TO_DEG;
@@ -154,10 +172,10 @@ void GameRenderer::render(const GameState& state, int player_id) {
     renderer.SetDrawColor(0, 0, 0, 255);
     renderer.Clear();
 
-    // --- CAPA 1: MAPA BASE ---
+    // --- MAPA BASE ---
     renderer.Copy(*map_texture, viewport, screen_rect);
 
-    // --- CAPA 2: JUGADORES ---
+   
     for (const auto& player : state.players) {
         int screen_x = static_cast<int>(player.pos_x) - cam_x;
         int screen_y = static_cast<int>(player.pos_y) - cam_y;
@@ -174,12 +192,12 @@ void GameRenderer::render(const GameState& state, int player_id) {
         }
     }
 
-    // --- CAPA 3: PUENTES (Para dar efecto de profundidad si pasas por abajo) ---
+
     if (puentes_texture) {
        renderer.Copy(*puentes_texture, viewport, screen_rect);
     }
 
-    // --- CAPA 4: TOP (Techos de edificios, árboles altos) ---
+
     if (top_texture) {
         renderer.Copy(*top_texture, viewport, screen_rect);
     }
