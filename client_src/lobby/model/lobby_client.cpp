@@ -225,21 +225,24 @@ void LobbyClient::stop_listening(bool shutdown_connection) {
         } catch (const std::exception& e) {
             std::cerr << "[LobbyClient] Error shutting down socket: " << e.what() << std::endl;
         }
-    }
 
-    // 3. Esperar al thread.
-    // NOTA: Si no cerramos el socket, confiamos en que el servidor envíe un mensaje 
-    // (como la respuesta a leave_game, MSG_GAMES_LIST) que desbloquee el recv().
-    if (notification_thread.joinable()) {
-        try {
-            std::cout << "[LobbyClient] Joining listener thread..." << std::endl;
-            notification_thread.join();
-            std::cout << "[LobbyClient] Listener thread joined" << std::endl;
-        } catch (const std::exception& e) {
-            std::cerr << "[LobbyClient] Error joining listener: " << e.what() << std::endl;
+        // 3. Solo hacer join() si cerramos el socket (para desbloquear recv())
+        if (notification_thread.joinable()) {
+            try {
+                std::cout << "[LobbyClient] Joining listener thread..." << std::endl;
+                notification_thread.join();
+                std::cout << "[LobbyClient] Listener thread joined" << std::endl;
+            } catch (const std::exception& e) {
+                std::cerr << "[LobbyClient] Error joining listener: " << e.what() << std::endl;
+            }
         }
     } else {
-        std::cout << "[LobbyClient] No join needed (not joinable)" << std::endl;
+        // ✅ NO hacer join() si el socket sigue abierto
+        // El thread está bloqueado en recv() y se detendrá solo cuando:
+        // - Llegue el próximo mensaje del servidor
+        // - Se cierre la conexión
+        // - El programa termine
+        std::cout << "[LobbyClient] Listener will stop on next message (no blocking join)" << std::endl;
     }
 }
 

@@ -1,2 +1,0 @@
-username Eric
-get_current_car

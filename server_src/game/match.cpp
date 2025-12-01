@@ -6,34 +6,52 @@
 #include <utility>
 #include <vector> 
 #include <iostream>
-#include <algorithm> // Necesario para transform
-#include <cctype>    // Necesario para tolower
+#include <algorithm> // transform
+#include <cctype>    // tolower
 
 #include "../../common_src/config.h"
 #include "../../common_src/dtos.h"
 
 // ============================================
-// HELPER: Normalizar nombre de archivo
-// Convierte "Vice City" -> "vice-city.yaml"
+// HELPER: Normalizar nombres de archivo
 // ============================================
+
 static std::string normalize_map_name(std::string city_name) {
     std::string filename = city_name;
-    
-    // 1. Convertir a minúsculas
     std::transform(filename.begin(), filename.end(), filename.begin(),
                    [](unsigned char c){ return std::tolower(c); });
-                   
-    // 2. Reemplazar espacios y guiones bajos por guiones medios
     std::replace(filename.begin(), filename.end(), ' ', '-');
-    std::replace(filename.begin(), filename.end(), '_', '-');
-    
     return filename + ".yaml";
 }
+
+static std::string normalize_race_filename(std::string race_name) {
+    std::string filename = race_name;
+    std::replace(filename.begin(), filename.end(), ' ', '_');
+    if (filename.length() < 5 || filename.substr(filename.length() - 5) != ".yaml") {
+        filename += ".yaml";
+    }
+    return filename;
+}
+
+// ============================================
+// CONSTRUCTOR
+// ============================================
 
 Match::Match(std::string host_name, int code, int max_players)
     : host_name(std::move(host_name)), match_code(code), is_active(false),
       state(MatchState::WAITING), current_race_index(0), players_queues(), command_queue(),
-      max_players(max_players) {}
+      max_players(max_players) {
+    
+    std::cout << "[Match] Creado: " << this->host_name << " (code=" << code
+              << ", max_players=" << max_players << ")\n";
+              
+    // ✅ INICIALIZAR GAMELOOP ÚNICO
+    // Le pasamos las colas para que pueda escuchar comandos y enviar broadcasts
+    gameloop = std::make_unique<GameLoop>(command_queue, players_queues);
+    
+    // Arrancamos el thread del GameLoop (se quedará esperando carreras)
+    gameloop->start();
+}
 
 // ============================================
 // GESTIÓN DE JUGADORES
@@ -136,10 +154,9 @@ bool Match::set_player_car(int player_id, const std::string& car_name, const std
 
     std::cout << "[Match] Jugador " << it->second.name << " eligió auto " << car_name << "\n";
 
-    if (!races.empty()) {
-        for (auto& race : races) {
-            race->add_player_to_gameloop(player_id, it->second.name, car_name, car_type);
-        }
+    // ✅ CORRECCIÓN: Delegar al GameLoop directamente, no iterar 'races'
+    if (gameloop) {
+        gameloop->add_player(player_id, it->second.name, car_name, car_type);
     }
 
     print_players_info();
@@ -183,11 +200,11 @@ bool Match::set_player_ready(int player_id, bool ready) {
 
     it->second.is_ready = ready;
 
-    if (!races.empty()) {
-        for (auto& race : races) {
-            race->set_player_ready(player_id, ready);
-        }
+    // ✅ CORRECCIÓN: Delegar al GameLoop directamente
+    if (gameloop) {
+        gameloop->set_player_ready(player_id, ready);
     }
+    
     print_players_info();
     return true;
 }
@@ -227,44 +244,46 @@ const std::map<int, PlayerLobbyInfo>& Match::get_players() const {
 }
 
 // ============================================
-// CARRERAS (CONFIGURACIÓN CORREGIDA)
+// CARRERAS 
 // ============================================
 
 void Match::set_race_configs(const std::vector<ServerRaceConfig>& configs) {
     std::lock_guard<std::mutex> lock(mtx);
     race_configs = configs;
-    races.clear(); 
+    races.clear(); // Limpiamos el vector temporal de Match
 
     for (const auto& config : configs) {
-        // 1. MAPA BASE: Usamos la función para convertir "Vice City" -> "vice-city.yaml"
-        std::string filename = normalize_map_name(config.city);
-        std::string base_map_path = "server_src/city_maps/" + config.city + "/" + filename;
+        // 1. Mapa Base
+        std::string base_filename = normalize_map_name(config.city);
+        std::string base_map_path = "server_src/city_maps/" + config.city + "/" + base_filename;
         
-        // 2. CARRERA: Si la carrera no tiene extension .yaml, se la agregamos
-        std::string race_config_path = "server_src/city_maps/" + config.city + "/" + config.race_name;
-        if (race_config_path.substr(race_config_path.length() - 5) != ".yaml") {
-            race_config_path += ".yaml";
-        }
-
+        // 2. Configuración de Carrera
+        std::string race_filename = normalize_race_filename(config.race_name);
+        std::string race_config_path = "server_src/city_maps/" + config.city + "/" + race_filename;
+        
+        // Llamamos a add_race (que ahora SÍ usa los parámetros)
         add_race(base_map_path, race_config_path, config.city);
     }
 
-    std::cout << "[Match] Configuradas " << races.size() << " carreras.\n";
+    // IMPORTANTE: Transferimos la propiedad de las carreras al GameLoop
+    if (gameloop) {
+        gameloop->set_races(std::move(races));
+    }
+
+    std::cout << "[Match] Configuradas " << race_configs.size() << " carreras y transferidas al GameLoop.\n";
 }
 
 void Match::add_race(const std::string& map_path, const std::string& race_path, const std::string& city_name) {
-    auto new_race = std::make_unique<Race>(command_queue, players_queues, city_name, map_path, race_path);
+    // Usamos el constructor nuevo de Race (DTO)
+    auto new_race = std::make_unique<Race>(city_name, map_path, race_path);
 
-    for (const auto& [id, info] : players_info) {
-        if (!info.car_name.empty()) {
-            new_race->add_player_to_gameloop(id, info.name, info.car_name, info.car_type);
-        }
-    }
-
+    // Lo guardamos en el vector temporal de Match
     races.push_back(std::move(new_race));
-    std::cout << "[Match] + Carrera: " << city_name << "\n"
-              << "        - Base: " << map_path << "\n"
-              << "        - Config: " << race_path << "\n";
+    
+    // Usamos los parámetros en el cout para evitar el error "unused parameter"
+    std::cout << "[Match]  Carrera preparada: " << city_name << "\n"
+              << "        Base: " << map_path << "\n"
+              << "        Config: " << race_path << "\n";
 }
 
 // ============================================
@@ -272,7 +291,7 @@ void Match::add_race(const std::string& map_path, const std::string& race_path, 
 // ============================================
 
 void Match::send_race_info_to_all_players() {
-    if (races.empty() || race_configs.empty()) return;
+    if (race_configs.empty()) return;
 
     const auto& first_config = race_configs[0];
     
@@ -282,15 +301,13 @@ void Match::send_race_info_to_all_players() {
     std::strncpy(race_info.city_name, first_config.city.c_str(), sizeof(race_info.city_name) - 1);
     std::strncpy(race_info.race_name, first_config.race_name.c_str(), sizeof(race_info.race_name) - 1);
     
-    // Construimos la ruta normalizada también para enviar al cliente
-    std::string filename = normalize_map_name(first_config.city);
-    std::string map_path = "server_src/city_maps/" + first_config.city + "/" + filename;
-    
+    std::string base_filename = normalize_map_name(first_config.city);
+    std::string map_path = "server_src/city_maps/" + first_config.city + "/" + base_filename;
     std::strncpy(race_info.map_file_path, map_path.c_str(), sizeof(race_info.map_file_path) - 1);
 
     race_info.total_laps = 3; 
     race_info.race_number = 1;
-    race_info.total_races = static_cast<uint8_t>(races.size());
+    race_info.total_races = static_cast<uint8_t>(race_configs.size());
     race_info.total_checkpoints = 0; 
     race_info.max_time_ms = 600000;
 
@@ -325,6 +342,23 @@ void Match::send_race_info_to_all_players() {
     if (broadcast_callback) {
         broadcast_callback(buffer, -1);
     }
+    
+    std::cout << "[Match] ✅ Información de carrera enviada a " << players_info.size() << " jugadores\n";
+}
+
+void Match::send_game_started_confirmation() {
+    std::cout << "[Match] Enviando MSG_GAME_STARTED a todos los jugadores..." << std::endl;
+
+    if (!broadcast_callback) {
+        std::cerr << "[Match] ❌ No hay broadcast_callback configurado" << std::endl;
+        return;
+    }
+
+    std::vector<uint8_t> buffer;
+    buffer.push_back(static_cast<uint8_t>(LobbyMessageType::MSG_GAME_STARTED));
+
+    broadcast_callback(buffer, -1);
+    std::cout << "[Match] ✅ MSG_GAME_STARTED enviado.\n";
 }
 
 // ============================================
@@ -332,41 +366,83 @@ void Match::send_race_info_to_all_players() {
 // ============================================
 
 void Match::start_match() {
+    std::cout << "[Match] ════════════════════════════════════════════" << std::endl;
+    std::cout << "[Match] 🏁 INICIANDO PARTIDA CODE " << match_code << std::endl;
+    std::cout << "[Match] ════════════════════════════════════════════" << std::endl;
+
     std::lock_guard<std::mutex> lock(mtx);
-    if (state == MatchState::STARTED || !can_start()) return;
-
-    state = MatchState::STARTED;
-    send_race_info_to_all_players();
-    start_next_race();
-}
-
-void Match::start_next_race() {
-    if (races.empty() || current_race_index >= static_cast<int>(races.size())) {
-        is_active.store(false);
-        std::cout << "[Match] Fin de todas las carreras.\n";
+    if (state == MatchState::STARTED) {
+        std::cout << "[Match] Ya está iniciada" << std::endl;
         return;
     }
 
+    if (!can_start()) {
+        std::cout << "[Match] No se puede iniciar (no todos listos o sin carreras)" << std::endl;
+        return;
+    }
+
+    state = MatchState::STARTED;
     is_active.store(true);
-    auto& current_race = races[current_race_index];
+
+    // 1. Enviar confirmación
+    send_game_started_confirmation();
     
-    std::cout << "[Match] Iniciando carrera " << (current_race_index + 1) << "\n";
+    // 2. Enviar datos de la primera carrera
+    send_race_info_to_all_players();
     
-    current_race->set_total_laps(3); 
-    current_race->start();
+    // 3. El GameLoop ya está corriendo en su thread (iniciado en constructor).
+    // Al haberle pasado las 'races' en set_race_configs, el GameLoop detectará 
+    // que ya no está vacío y comenzará la secuencia automáticamente.
     
-    current_race_index++;
+    std::cout << "[Match] Partida en marcha.\n";
+}
+
+// Ya no necesitamos start_next_race() porque el GameLoop maneja el bucle.
+// Dejamos una implementación vacía o la borramos de match.h
+void Match::start_next_race() {
+    // Delegado al GameLoop
+}
+
+void Match::stop_match() {
+    std::cout << "[Match] Deteniendo partida...\n";
+    is_active.store(false);
+    if (gameloop) {
+        gameloop->stop_match();
+    }
 }
 
 Match::~Match() {
-    is_active = false;
-    races.clear();
+    stop_match();
+    if (gameloop) {
+        gameloop->join();
+    }
 }
 
 void Match::print_players_info() const {
-    std::cout << "--- Lista de Jugadores (" << players_info.size() << ") ---\n";
-    for (const auto& [id, info] : players_info) {
-        std::cout << "ID: " << id << " | " << info.name << " | " 
-                  << (info.is_ready ? "READY" : "WAITING") << "\n";
+    std::cout << "\n╔════════════════════════════════════════════════════════════╗\n";
+    std::cout << "║  MATCH #" << match_code << " - JUGADORES (" << players_info.size() << "/"
+              << max_players << ")";
+    std::cout << std::string(26, ' ') << "║\n";
+    std::cout << "╠════════════════════════════════════════════════════════════╣\n";
+
+    if (players_info.empty()) {
+        std::cout << "║  [VACÍO] No hay jugadores en esta partida" << std::string(17, ' ') << "║\n";
+    } else {
+        for (const auto& [player_id, info] : players_info) {
+            std::cout << "║ ID: " << std::setw(3) << player_id << " │ ";
+            std::cout << std::setw(15) << std::left << info.name << " │ ";
+
+            if (info.car_name.empty()) {
+                std::cout << std::setw(20) << "[SIN AUTO]";
+            } else {
+                std::string car_info = info.car_name + " (" + info.car_type + ")";
+                std::cout << std::setw(20) << car_info.substr(0, 20);
+            }
+
+            std::cout << " │ " << (info.is_ready ? "✓ READY" : "✗ NOT READY");
+            std::cout << " ║\n";
+        }
     }
+
+    std::cout << "╚════════════════════════════════════════════════════════════╝\n\n";
 }

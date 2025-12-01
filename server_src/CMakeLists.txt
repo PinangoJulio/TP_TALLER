@@ -17,13 +17,15 @@ target_sources(server
     game/collision_handler.cpp
     game/checkpoint_manager.cpp
     game/obstacle.cpp
+    game/match.cpp
 
     # Network
     network/client_handler.cpp
     network/receiver.cpp
     network/sender.cpp
-    network/monitor.cpp
-    
+    network/client_monitor.cpp
+    network/matches_monitor.cpp
+
     PUBLIC
     # Headers
     server.h
@@ -37,10 +39,14 @@ target_sources(server
     game/collision_handler.h
     game/checkpoint_manager.h
     game/obstacle.h
+    game/match.h
+    game/player.h
+    game/race.h
     network/client_handler.h
     network/receiver.h
     network/sender.h
-    network/monitor.h
+    network/client_monitor.h
+    network/matches_monitor.h
 )
 
 # Ejecutable temporal del lobby (para testing)

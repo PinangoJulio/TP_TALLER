@@ -18,16 +18,17 @@ target_sources(client
 
     #game
     game/collision_manager.cpp
+    game/game_renderer.cpp
     client_event_handler.cpp
-
+    
     #threads/protocol
     client_receiver.cpp
     client_sender.cpp
-
+    
     PUBLIC
     # .h files
     lobby/model/lobby_client.h
-
+    
     #view
     lobby/view/lobby_window.h
     lobby/view/base_lobby.h
@@ -43,10 +44,11 @@ target_sources(client
 
     #game
     game/collision_manager.h
+    game/game_renderer.h
     client_event_handler.h
-
+    
     #threads/protocol
     client_receiver.h
     client_sender.h
     
-)
+    )

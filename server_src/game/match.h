@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "game_loop.h"
 #include "../../common_src/dtos.h"
 #include "../../common_src/game_state.h"
 #include "../../common_src/queue.h"
@@ -40,23 +41,33 @@ private:
     std::atomic<bool> is_active;
     MatchState state;
 
-    std::vector<std::unique_ptr<Race>> races;
-    std::vector<ServerRaceConfig> race_configs;  // ✅ Guardar las carreras seleccionadas
+    // Configuraciones crudas
+    std::vector<ServerRaceConfig> race_configs;  
+
+    // Lista de objetos Race (Configuración de cada carrera)
+    std::vector<std::unique_ptr<Race>> races; 
     int current_race_index;
+
+    // ÚNICO GameLoop que gestiona la física y lógica
+    std::unique_ptr<GameLoop> gameloop;
 
     ClientMonitor players_queues;
     Queue<ComandMatchDTO> command_queue;
     int max_players;
 
-    std::map<int, PlayerLobbyInfo> players_info;   // ✅ Información completa de lobby
-    std::map<std::string, int> player_name_to_id;  // ✅ Lookup por nombre
-    std::vector<std::unique_ptr<Player>> players;  // ✅ Mantener para compatibilidad
+    std::map<int, PlayerLobbyInfo> players_info;
+    std::map<std::string, int> player_name_to_id;
+    
+    // Nota: Los punteros Player reales ahora viven dentro del GameLoop, 
+    // aquí mantenemos la info de lobby.
 
     std::mutex mtx;
     std::function<void(const std::vector<uint8_t>&, int exclude_player_id)> broadcast_callback;
 
-    // Helper para enviar info del mapa a todos los jugadores
+    // Métodos internos
     void send_race_info_to_all_players();
+    void send_game_started_confirmation();
+    void start_next_race();
 
 public:
     Match(std::string host_name, int code, int max_players);
@@ -84,15 +95,19 @@ public:
 
     // ---- LOBBY: Snapshot ----
     std::map<int, PlayerLobbyInfo> get_players_snapshot() const;
-    const std::map<int, PlayerLobbyInfo>& get_players() const;  // ✅ Alias para compatibilidad
+    const std::map<int, PlayerLobbyInfo>& get_players() const; 
 
     // ---- LOBBY: Carreras ----
-    void add_race(const std::string& map_path, const std::string& race_path, const std::string& city_name);    void set_race_configs(const std::vector<ServerRaceConfig>& configs);
+    // Método unificado que pide las 3 cosas necesarias para Box2D + Lobby
+    void add_race(const std::string& map_path, const std::string& race_path, const std::string& city_name);
+    
+    void set_race_configs(const std::vector<ServerRaceConfig>& configs);
     const std::vector<ServerRaceConfig>& get_race_configs() const { return race_configs; }
 
     // ---- CARRERAS ----
-    void start_match();  // ✅ Inicia el gameloop
-    void start_next_race();
+    void start_match();  
+    void stop_match();   
+    
     bool is_running() const { return is_active.load(); }
     bool is_started() const { return state == MatchState::STARTED; }
     bool can_start() const;
@@ -110,7 +125,7 @@ public:
 
     // ---- GETTERS ----
     std::string get_host_name() const { return host_name; }
-    std::string get_match_name() const { return host_name; }  // Alias
+    std::string get_match_name() const { return host_name; } 
     int getMatchCode() const { return match_code; }
     int get_player_count() const;
     int get_max_players() const { return max_players; }

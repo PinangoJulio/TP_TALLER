@@ -12,7 +12,7 @@ void Sender::run() {
     try {
         while (alive) {
             GameState snapshot = sender_queue.pop();
-            // protocol.send_game_state(snapshot);  --> enviar logica
+            protocol.send_snapshot(snapshot);
         }
     } catch (...) {
         alive = false;

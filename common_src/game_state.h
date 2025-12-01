@@ -43,7 +43,7 @@ struct MatchConfig {
 
 // ---- Información detallada de cada jugador ----
 struct InfoPlayer {
-    int32_t player_id = 0;
+    int player_id = 0;
     std::string username;
     std::string car_name;
     std::string car_type;
@@ -64,9 +64,9 @@ struct InfoPlayer {
     bool is_colliding = false;    // En colisión
 
     // Progreso en la carrera
-    int32_t completed_laps = 0;
-    int32_t current_checkpoint = 0;  // Índice del siguiente checkpoint
-    int32_t position_in_race = 0;    // 1st, 2nd, 3rd, etc.
+    int completed_laps = 0;
+    int current_checkpoint = 0;  // Índice del siguiente checkpoint
+    int position_in_race = 0;    // 1st, 2nd, 3rd, etc.
     int32_t race_time_ms = 0;        // Tiempo transcurrido en la carrera (ms)
 
     // Estado del jugador
@@ -77,7 +77,7 @@ struct InfoPlayer {
 
 // ---- Información de checkpoints ----
 struct CheckpointInfo {
-    int32_t id = 0;
+    int id = 0;
     float pos_x = 0.0f;
     float pos_y = 0.0f;
     float width = 50.0f;     // Ancho del checkpoint
@@ -88,16 +88,16 @@ struct CheckpointInfo {
 
 // ---- Hints/flechas direccionales ----
 struct HintInfo {
-    int32_t id = 0;
+    int id = 0;
     float pos_x = 0.0f;
     float pos_y = 0.0f;
     float direction_angle = 0.0f;  // Hacia dónde apunta la flecha
-    int32_t for_checkpoint = 0;    // A qué checkpoint conduce
+    int for_checkpoint = 0;    // A qué checkpoint conduce
 };
 
 // ---- NPCs (autos que no son jugadores) ----
 struct NPCCarInfo {
-    int32_t npc_id = 0;
+    int npc_id = 0;
     float pos_x = 0.0f;
     float pos_y = 0.0f;
     float angle = 0.0f;
@@ -110,18 +110,18 @@ struct NPCCarInfo {
 struct RaceCurrentInfo {
     std::string city;               // Ciudad actual
     std::string race_name;          // Nombre del circuito
-    int32_t total_laps = 3;         // Vueltas totales
-    int32_t total_checkpoints = 0;  // Cantidad de checkpoints
+    int total_laps = 3;         // Vueltas totales
+    int total_checkpoints = 0;  // Cantidad de checkpoints
 };
 
 // ---- Estado global de la carrera ----
 struct RaceInfo {
     MatchStatus status = MatchStatus::WAITING_FOR_PLAYERS;
-    int32_t race_number = 1;             // Carrera actual (1, 2, 3...)
-    int32_t total_races = 3;             // Carreras totales en la partida
+    int race_number = 1;             // Carrera actual (1, 2, 3...)
+    int total_races = 3;             // Carreras totales en la partida
     int32_t remaining_time_ms = 600000;  // Tiempo restante (10 min max)
-    int32_t players_finished = 0;
-    int32_t total_players = 0;
+    int players_finished = 0;
+    int total_players = 0;
     std::string winner_name;
 };
 
@@ -135,7 +135,7 @@ struct GameEvent {
     };
 
     EventType type = EXPLOSION;
-    int32_t player_id = 0;  // Jugador involucrado
+    int player_id = 0;  // Jugador involucrado
     float pos_x = 0.0f;
     float pos_y = 0.0f;
 };
@@ -164,7 +164,7 @@ struct GameState {
     // Constructor que llena el snapshot desde el servidor
     // La implementación está en common_src/game_state.cpp
     GameState(const std::vector<Player*>& players, const std::string& city,
-              const std::string& map_path, int laps, bool running);
+              const std::string& map_path, bool running);
 
     // ---- Buscar jugador por ID ----
     InfoPlayer* findPlayer(int id) const {

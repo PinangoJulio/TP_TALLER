@@ -6,7 +6,7 @@
 
 // Constructor que convierte Player* a InfoPlayer
 GameState::GameState(const std::vector<Player*>& player_list, const std::string& city,
-                     const std::string& map_path, int laps, bool running) {
+                     const std::string& map_path, bool running) {
     // Llenar información de todos los jugadores
     for (const auto& player_ptr : player_list) {
         if (!player_ptr)
@@ -55,17 +55,17 @@ GameState::GameState(const std::vector<Player*>& player_list, const std::string&
     // Llenar race current info
     race_current_info.city = city;
     race_current_info.race_name = map_path;
-    race_current_info.total_laps = laps;
-    race_current_info.total_checkpoints = 0;  // TODO: Contar checkpoints del mapa
+    race_current_info.total_laps = 0;
+    race_current_info.total_checkpoints = 0;  // Contar checkpoints del mapa
 
     // Llenar race info
     race_info.status = running ? MatchStatus::IN_PROGRESS : MatchStatus::WAITING_FOR_PLAYERS;
-    race_info.race_number = 1;             // TODO: Obtener número de carrera actual
+    race_info.race_number = 1;             // Obtener número de carrera actual
     race_info.total_races = 1;             // Obtener total de carreras
     race_info.remaining_time_ms = 600000;  // Calcular tiempo restante
     race_info.players_finished = 0;        //  Contar jugadores que terminaron
     race_info.total_players = static_cast<int32_t>(players.size());
     race_info.winner_name = "";  //  Determinar ganador
 
-    // TODO: Llenar checkpoints, hints, NPCs, eventos
+    // Llenar checkpoints, hints, NPCs, eventos
 }

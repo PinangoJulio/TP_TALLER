@@ -18,6 +18,8 @@ private:
     bool socket_shutdown_done = false;
     void push_back_uint16(std::vector<uint8_t>& message, std::uint16_t value);
     void serialize_command(const ComandMatchDTO& command, std::vector<uint8_t>& message);
+    void push_back_float01_as_uint8(std::vector<uint8_t>& message, float value);
+
 
 public:
     explicit ClientProtocol(const char* host, const char* servname);
@@ -26,6 +28,11 @@ public:
     std::string read_string();
     uint16_t read_uint16();
     uint8_t read_uint8();
+    uint32_t read_uint32();
+    int16_t read_int16();
+    int32_t read_int32();
+
+
 
     void send_string(const std::string& str);
     void send_username(const std::string& user);

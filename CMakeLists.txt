@@ -80,7 +80,7 @@ if(TALLER_CLIENT OR TALLER_EDITOR)
   FetchContent_MakeAvailable(SDL2 SDL2_image SDL2_mixer SDL2_ttf libSDL2pp)
 endif()
 
-# --- Box2D Integration (IMPORTANTE: Usar nombre en minúsculas) ---
+# --- Box2D Integration ---
 FetchContent_Declare(
   box2d
   GIT_REPOSITORY https://github.com/erincatto/box2d.git
@@ -88,9 +88,7 @@ FetchContent_Declare(
   GIT_SHALLOW TRUE)
 FetchContent_MakeAvailable(box2d)
 
-# --- yaml-cpp Integration (Parser YAML) ---
-# Primero intentar usar el paquete del sistema; si no existe, bajar un tarball
-# estable (no git).
+# --- yaml-cpp Integration ---
 find_package(yaml-cpp QUIET)
 
 if(NOT yaml-cpp_FOUND AND NOT TARGET yaml-cpp)
@@ -98,26 +96,21 @@ if(NOT yaml-cpp_FOUND AND NOT TARGET yaml-cpp)
   FetchContent_Declare(
     yaml-cpp
     URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-0.7.0.tar.gz
-    # URL_HASH SHA256=<<opcional-agregar-sha256-para-integridad>>
   )
   FetchContent_MakeAvailable(yaml-cpp)
 endif()
 
-# Si el paquete del sistema exporta yaml-cpp::yaml-cpp, crear un alias simple
-# "yaml-cpp"
 if(TARGET yaml-cpp::yaml-cpp AND NOT TARGET yaml-cpp)
   add_library(yaml-cpp ALIAS yaml-cpp::yaml-cpp)
 endif()
 
-# --- GoogleTest (para tests) ---
+# --- GoogleTest ---
 if(TALLER_TESTS)
   FetchContent_Declare(
     googletest
     URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
   )
-  set(gtest_force_shared_crt
-      ON
-      CACHE BOOL "" FORCE)
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
   FetchContent_MakeAvailable(googletest)
   include(GoogleTest)
 endif()
@@ -133,12 +126,10 @@ include(cmake/CompilerWarnings.cmake)
 set_project_warnings(taller_common ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 target_include_directories(taller_common PUBLIC .)
 
-# Box2D está fuera para evitar propagación al cliente. Usar el alias yaml-cpp
-# (ya sea del sistema o del FetchContent)
 target_link_libraries(taller_common PUBLIC yaml-cpp)
 
 # =======================================================
-# Librería de Lobby (compartida entre server y tests)
+# Librería de Lobby
 # =======================================================
 
 add_library(
@@ -147,16 +138,13 @@ add_library(
   server_src/lobby/lobby_server.cpp)
 
 target_include_directories(taller_lobby PUBLIC ${CMAKE_SOURCE_DIR})
-
 target_link_libraries(taller_lobby PUBLIC taller_common)
-
 set_project_warnings(taller_lobby ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 
 # =======================================================
-# Program section (Ejecutables) - UNA SOLA VEZ
+# Program section (Ejecutables)
 # =======================================================
 
-# --- CLIENTE ---
 # --- CLIENTE ---
 if(TALLER_CLIENT)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
@@ -169,16 +157,13 @@ if(TALLER_CLIENT)
     client_src/client_receiver.cpp
     client_src/client_protocol.h
     client_src/client_protocol.cpp
-    client_src/client_protocol.cpp
-    client_src/client_protocol.cpp
     client_src/client.h
     client_src/client.cpp
-          client_src/client_event_handler.h
-          client_src/client_event_handler.cpp)
+    client_src/client_event_handler.h
+    client_src/client_event_handler.cpp)
 
-  add_subdirectory(client_src) # PRIMERO el subdirectorio
+  add_subdirectory(client_src) 
 
-  # DESPUÉS los includes (AMBAS líneas necesarias)
   target_include_directories(client PRIVATE ${libSDL2pp_SOURCE_DIR}/include
                                             ${CMAKE_SOURCE_DIR})
 
@@ -197,6 +182,7 @@ if(TALLER_CLIENT)
             Qt6::Core
             Qt6::Network)
 endif()
+
 # --- SERVIDOR ---
 if(TALLER_SERVER)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
@@ -212,7 +198,13 @@ if(TALLER_SERVER)
     server_src/game/race.h
     server_src/game/match.cpp
     server_src/server_protocol.cpp
-    server_src/game/game_loop.cpp)
+    server_src/game/game_loop.cpp
+    server_src/game/car.cpp
+    server_src/game/collision_handler.cpp
+    server_src/game/obstacle.cpp
+    server_src/game/map_loader.cpp
+    server_src/game/checkpoint_manager.cpp
+    )
   add_subdirectory(server_src)
   set_project_warnings(server ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 
@@ -238,49 +230,48 @@ endif()
 # =======================================================
 # Testing section
 # =======================================================
-# Target del Test de Colisión y Movimiento
-# =======================================================
+
 add_executable(collision_test tests/test_collision_movimiento.cpp
                               client_src/game/collision_manager.cpp)
 
 target_include_directories(
   collision_test
   PRIVATE ${CMAKE_SOURCE_DIR}
-          # ${libSDL2pp_SOURCE_DIR} # Necesario para SDL2pp
           ${libSDL2pp_SOURCE_DIR}/include)
 
 target_link_libraries(
   collision_test
-  PRIVATE taller_common # Para dependencias comunes (socket, etc., aunque este
-                        # test no las usa)
-          SDL2pp::SDL2pp # Para la ventana y renderizado
-          SDL2_image # Para cargar los PNG
+  PRIVATE taller_common 
+          SDL2pp::SDL2pp 
+          SDL2_image 
 )
 
 set_target_properties(collision_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY
                                                 ${CMAKE_SOURCE_DIR})
+
 if(TALLER_TESTS)
   add_executable(taller_tests)
   add_subdirectory(tests)
   set_project_warnings(taller_tests ${TALLER_MAKE_WARNINGS_AS_ERRORS} TRUE)
 
-  # CORRECCIÓN CRÍTICA: Añadir TODAS las implementaciones de la lógica.
   target_sources(
     taller_tests
-    PRIVATE # Implementaciones de Monitor y Partida (que contienen los
-            # constructores y destructores)
+    PRIVATE 
             server_src/network/matches_monitor.cpp
             server_src/network/client_monitor.cpp
             server_src/game/match.cpp
             server_src/game/game_loop.cpp
             server_src/game/car.cpp
+            server_src/game/collision_handler.cpp
+            server_src/game/obstacle.cpp
+            server_src/game/map_loader.cpp
+            server_src/game/checkpoint_manager.cpp
             server_src/server_protocol.cpp
             server_src/lobby/lobby_manager.cpp
             server_src/lobby/game_room.cpp
             client_src/client_protocol.cpp
             client_src/lobby/model/lobby_client.cpp)
 
-  # Añadir las rutas de los headers de GoogleTest/Mock
   target_include_directories(
     taller_tests
     PRIVATE ${googletest_SOURCE_DIR}/googletest/include
@@ -290,7 +281,6 @@ if(TALLER_TESTS)
             ${CMAKE_SOURCE_DIR}/server_src/network/
             ${CMAKE_SOURCE_DIR}/server_src/lobby/)
 
-  # Link the dependencies
   target_link_libraries(
     taller_tests
     PRIVATE taller_common
@@ -299,10 +289,11 @@ if(TALLER_TESTS)
             Qt6::Widgets
             Qt6::Multimedia
             Qt6::Network
-            Qt6::Core)
+            Qt6::Core
+            box2d) 
 endif()
 
-
+# --- MOVIMIENTO AUTO ---
 add_executable(movimiento_auto
   server_src/tests/movimiento_auto.cpp
   server_src/game/game_loop.cpp
@@ -322,5 +313,4 @@ add_executable(movimiento_auto
 
 target_include_directories(movimiento_auto PRIVATE ${CMAKE_SOURCE_DIR})
 
-# Asegúrate de que box2d esté aquí (si taller_common ya lo tiene PUBLIC, esto está bien)
-target_link_libraries(movimiento_auto PRIVATE taller_common yaml-cpp)
+target_link_libraries(movimiento_auto PRIVATE taller_common yaml-cpp box2d)
