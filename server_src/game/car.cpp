@@ -25,7 +25,7 @@ Car::Car(const std::string& model, const std::string& type, b2BodyId body)
 // ================= CONFIGURACIÓN =================
 void Car::load_stats(float max_spd, float accel, float hand, float durability, float nitro, float wgt) {
     this->max_speed = max_spd;
-    this->acceleration_power = accel * 50.0f; // Escalar para Box2D
+    this->acceleration_power = accel * 50.0f; 
     this->handling = hand;
     this->max_durability = durability;
     this->current_health = durability;
@@ -33,22 +33,27 @@ void Car::load_stats(float max_spd, float accel, float hand, float durability, f
     this->weight = wgt;
 }
 
-// ================= FÍSICA (GETTERS) =================
+void Car::setBodyId(b2BodyId newBody) {
+    this->bodyId = newBody;
+}
+
+// ================= FÍSICA (GETTERS PROTEGIDOS) =================
+// Estos 'if' son los que evitan que el server se cierre en el Lobby
 
 float Car::getX() const {
-    if (B2_IS_NULL(bodyId)) return 0.0f;
+    if (B2_IS_NULL(bodyId)) return 0.0f; 
     b2Vec2 pos = b2Body_GetPosition(bodyId);
     return pos.x;
 }
 
 float Car::getY() const {
-    if (B2_IS_NULL(bodyId)) return 0.0f;
+    if (B2_IS_NULL(bodyId)) return 0.0f; 
     b2Vec2 pos = b2Body_GetPosition(bodyId);
     return pos.y;
 }
 
 float Car::getAngle() const {
-    if (B2_IS_NULL(bodyId)) return 0.0f;
+    if (B2_IS_NULL(bodyId)) return 0.0f; 
     b2Rot rot = b2Body_GetRotation(bodyId);
     return b2Rot_GetAngle(rot);
 }
@@ -71,7 +76,7 @@ float Car::getCurrentSpeed() const {
     return b2Length(vel);
 }
 
-// ================= FÍSICA (SETTERS) =================
+// ================= FÍSICA (SETTERS PROTEGIDOS) =================
 
 void Car::setPosition(float nx, float ny) {
     if (B2_IS_NULL(bodyId)) return;
@@ -97,18 +102,15 @@ void Car::setCurrentSpeed(float speed) {
 // ================= COMANDOS DE CONTROL =================
 
 void Car::accelerate(float delta_time) {
-    if (is_destroyed || B2_IS_NULL(bodyId)) return;
+    if (is_destroyed || B2_IS_NULL(bodyId)) return; 
 
     float currentSpeed = getCurrentSpeed();
 
-    // 1. Si estamos debajo del límite, aplicamos fuerza
     if (currentSpeed < max_speed) {
         float angle = getAngle();
         b2Vec2 direction = { std::cos(angle), std::sin(angle) };
 
         float force = acceleration_power;
-        
-        // Lógica de Nitro
         if (nitro_active && nitro_amount > 0) {
             force *= nitro_boost;
             nitro_amount -= (15.0f * delta_time);
@@ -117,9 +119,8 @@ void Car::accelerate(float delta_time) {
 
         b2Vec2 forceVec = { direction.x * force, direction.y * force };
         b2Body_ApplyForceToCenter(bodyId, forceVec, true);
-    } 
-    else {
-        // 2. Si nos pasamos, limitamos la velocidad suavemente
+    } else {
+        // Límite de velocidad suave
         b2Vec2 velocity = b2Body_GetLinearVelocity(bodyId);
         float scale = max_speed / currentSpeed;
         b2Vec2 clampedVel = { velocity.x * scale, velocity.y * scale };
@@ -128,17 +129,13 @@ void Car::accelerate(float delta_time) {
 }
 
 void Car::brake(float delta_time) {
-    (void)delta_time; // Evitar warning
+    (void)delta_time; 
     if (is_destroyed || B2_IS_NULL(bodyId)) return;
-    
-    // Frenado simple aumentando la resistencia
     b2Body_SetLinearDamping(bodyId, 5.0f); 
 }
 
 void Car::turn_left(float delta_time) {
     if (is_destroyed || B2_IS_NULL(bodyId)) return;
-    
-    // No girar si el auto está casi detenido (realismo)
     if (getCurrentSpeed() < 1.0f) return;
 
     float current_ang = b2Body_GetAngularVelocity(bodyId);
@@ -147,7 +144,6 @@ void Car::turn_left(float delta_time) {
 
 void Car::turn_right(float delta_time) {
     if (is_destroyed || B2_IS_NULL(bodyId)) return;
-    
     if (getCurrentSpeed() < 1.0f) return;
 
     float current_ang = b2Body_GetAngularVelocity(bodyId);
@@ -182,7 +178,7 @@ void Car::activateNitro() {
 void Car::deactivateNitro() { 
     nitro_active = false; 
     if (!B2_IS_NULL(bodyId)) {
-        b2Body_SetLinearDamping(bodyId, 1.0f); // Restaurar fricción normal
+        b2Body_SetLinearDamping(bodyId, 1.0f);
     }
 }
 

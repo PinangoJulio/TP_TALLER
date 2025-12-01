@@ -234,17 +234,20 @@ void LobbyController::onMatchCreated(const QString& matchName, int maxPlayers,
         currentGameId = lobbyClient->receive_game_created();
         std::cout << "[Controller] Partida creada con ID: " << currentGameId << std::endl;
 
+        // ✅ Recibir rutas YAML de las carreras
+        try {
+            racePaths = lobbyClient->receive_race_paths();
+            std::cout << "[Controller] ✅ Received " << racePaths.size()
+                      << " race paths from server" << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "[Controller] ❌ Error receiving race paths: " << e.what() << std::endl;
+        }
+
         if (createMatchWindow) {
             createMatchWindow->close();
             createMatchWindow->deleteLater();
             createMatchWindow = nullptr;
         }
-
-        // Conectar señales pero NO iniciar listener todavía
-        /*if (!lobbyClient->is_listening()) {
-            std::cout << "[Controller] Conectando señales de notificaciones..." << std::endl;
-            connectNotificationSignals();
-        }*/
 
         std::cout << "[Controller] Abriendo garage..." << std::endl;
         openGarage();
@@ -340,9 +343,12 @@ void LobbyController::onJoinMatchRequested(const QString& matchId) {
 
         std::cout << "[Controller] Unido exitosamente a partida ID: " << currentGameId << std::endl;
 
+     
         std::vector<QString> snapshotPlayers;
         std::map<QString, QString> snapshotCars;
 
+        // 1. LEER SNAPSHOT DE JUGADORES (Primero en el protocolo del server)
+        std::cout << "[Controller] Esperando snapshot de jugadores..." << std::endl;
         lobbyClient->read_room_snapshot(snapshotPlayers, snapshotCars);
 
         pendingPlayers = snapshotPlayers;
@@ -351,12 +357,19 @@ void LobbyController::onJoinMatchRequested(const QString& matchId) {
         std::cout << "[Controller] Snapshot recibido: " << pendingPlayers.size() << " jugadores"
                   << std::endl;
 
-        matchSelectionWindow->hide();
+        // 2. RECIBIR MAPAS (Segundo en el protocolo del server)
+        try {
+            std::cout << "[Controller] Esperando rutas de mapas..." << std::endl;
+            racePaths = lobbyClient->receive_race_paths();
+            std::cout << "[Controller] ✅ Received " << racePaths.size()
+                      << " race paths from server" << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "[Controller] ❌ Error receiving race paths: " << e.what() << std::endl;
+        }
 
-        /*if (!lobbyClient->is_listening()) {
-            std::cout << "[Controller] Conectando señales de notificaciones..." << std::endl;
-            connectNotificationSignals();
-        }*/
+        // =========================================================================
+
+        matchSelectionWindow->hide();
 
         std::cout << "[Controller] Abriendo garage..." << std::endl;
         openGarage();
@@ -428,21 +441,6 @@ void LobbyController::onCarSelected(const CarInfo& car) {
             garageWindow = nullptr;
         }
 
-        /*if (!lobbyClient->is_listening()) {
-            lobbyClient->start_listening();
-        }*/
-
-        /*std::cout << "[Controller] Listener status: "
-                  << (lobbyClient->is_listening() ? "RUNNING" : "STOPPED") << std::endl;
-
-        std::cout << "[Controller] Abriendo sala de espera..." << std::endl;
-        openWaitingRoom();
-
-        if (waitingRoomWindow) {
-            std::cout << "[Controller] Actualizando auto del jugador local: "
-                      << car.name.toStdString() << std::endl;
-            waitingRoomWindow->setPlayerCarByName(playerName, car.name);
-        }*/
         protocol.set_ready(true);
         finishLobby(true);
 
@@ -453,12 +451,9 @@ void LobbyController::onCarSelected(const CarInfo& car) {
 
 void LobbyController::connectNotificationSignals() {
     if (lobbyClient) {
-        // Usamos el global disconnect de Qt porque lobbyClient es unique_ptr
-        // y queremos desconectar todas las señales que vienen de ese objeto hacia 'this'
         disconnect(lobbyClient.get(), nullptr, this, nullptr);
     }
 
-    // Conectar señales de notificaciones
     connect(lobbyClient.get(), &LobbyClient::playerJoinedNotification, this,
             [this](QString username) {
                 std::cout << "[Controller] Notification: Player joined: " << username.toStdString()
@@ -487,7 +482,6 @@ void LobbyController::connectNotificationSignals() {
                           << " ready: " << isReady << " (local: " << playerName.toStdString() << ")"
                           << std::endl;
 
-                // Verificar si es el jugador local
                 if (username == playerName) {
                     std::cout << "[Controller] ⚠️  WARNING: Ready notification for LOCAL player!"
                               << std::endl;
@@ -570,7 +564,6 @@ void LobbyController::openWaitingRoom() {
     uint8_t maxPlayers = 8;
     waitingRoomWindow = new WaitingRoomWindow(maxPlayers);
 
-    // 1. Procesar jugadores pendientes (del snapshot)
     for (const auto& username : pendingPlayers) {
         std::cout << "[Controller] Procesando jugador pendiente: " << username.toStdString()
                   << std::endl;
@@ -584,15 +577,12 @@ void LobbyController::openWaitingRoom() {
         }
     }
 
-    // Limpiar pendientes
     pendingPlayers.clear();
     pendingCars.clear();
 
-    // 2. Agregar jugador local
     std::cout << "[Controller] Adding local player: " << playerName.toStdString() << std::endl;
     waitingRoomWindow->addPlayerByName(playerName);
 
-    // 3. Conectar botones de la UI
     connect(waitingRoomWindow, &WaitingRoomWindow::readyToggled, this,
             &LobbyController::onPlayerReadyToggled);
     connect(waitingRoomWindow, &WaitingRoomWindow::startGameRequested, this,
@@ -610,14 +600,12 @@ void LobbyController::onPlayerReadyToggled(bool isReady) {
               << std::endl;
 
     try {
-        // PRIMERO marcar localmente
         if (waitingRoomWindow) {
             waitingRoomWindow->setPlayerReadyByName(playerName, isReady);
             std::cout << "[Controller] ✅ Local ready state updated for " << playerName.toStdString()
                       << std::endl;
         }
 
-        // Luego enviar al servidor
         lobbyClient->set_ready(isReady);
 
     } catch (const std::exception& e) {
@@ -631,21 +619,15 @@ void LobbyController::onStartGameRequested() {
         if (!lobbyClient) {
             throw std::runtime_error("LobbyClient no inicializado");
         }
-        // Enviar start al servidor y continuar sin esperar confirmación
         lobbyClient->start_game(currentGameId);
         std::cout << "[Controller] Señal de inicio enviada" << std::endl;
 
-        // ✅ IMPORTANTE: Detener listener PERO mantener socket abierto para el juego
         std::cout << "[Controller]  Deteniendo listener de lobby..." << std::endl;
         if (lobbyClient) {
-            // ✅ Pasar FALSE para NO cerrar el socket (lo necesitamos para el juego)
-            // El socket será usado por los threads receiver/sender del juego
             lobbyClient->stop_listening(false);
         }
         std::cout << "[Controller] ✅ Listener detenido" << std::endl;
 
-        // ✅ IMPORTANTE: Usar QTimer::singleShot para que finishLobby se ejecute
-        // DESPUÉS de que termine este slot, permitiendo que Qt procese la señal
         QTimer::singleShot(0, this, [this]() {
             finishLobby(true);
         });
@@ -656,7 +638,6 @@ void LobbyController::onStartGameRequested() {
     }
 }
 
-// En cualquier flujo de salida manual del lobby (volver) marcar como no exitoso
 void LobbyController::onBackFromWaitingRoom() {
     std::cout << "[Controller] Usuario salió de la sala de espera" << std::endl;
 
@@ -678,8 +659,6 @@ void LobbyController::onBackFromWaitingRoom() {
 
     if (lobbyClient) {
         std::cout << "[Controller] Deteniendo listener (preservando conexión)..." << std::endl;
-        // [FIX] Pasar false para NO cerrar el socket.
-        // El thread del listener saldrá solo cuando reciba la lista de juegos actualizada del servidor.
         lobbyClient->stop_listening(false);
     }
 

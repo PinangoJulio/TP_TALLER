@@ -509,3 +509,33 @@ RaceInfoDTO ClientProtocol::receive_race_info() {
 
     return race_info;
 }
+
+// RECEPCIÓN DE RUTAS YAML DE CARRERAS
+
+std::vector<std::string> ClientProtocol::receive_race_paths() {
+    // Leer tipo de mensaje (debe ser RACE_PATHS)
+    uint8_t msg_type = read_message_type();
+    if (msg_type != static_cast<uint8_t>(ServerMessageType::RACE_PATHS)) {
+        throw std::runtime_error("Expected RACE_PATHS message, got " + std::to_string(msg_type));
+    }
+
+    //Leer cantidad de carreras
+    uint8_t num_races = read_uint8();
+
+    std::vector<std::string> paths;
+    paths.reserve(num_races);
+
+    // Leer cada path
+    for (uint8_t i = 0; i < num_races; ++i) {
+        std::string path = read_string();
+        paths.push_back(path);
+        std::cout << "[ClientProtocol]   Race " << static_cast<int>(i + 1)
+                  << ": " << path << std::endl;
+    }
+
+    std::cout << "[ClientProtocol] ✅ Received " << static_cast<int>(num_races)
+              << " race paths" << std::endl;
+
+    return paths;
+}
+

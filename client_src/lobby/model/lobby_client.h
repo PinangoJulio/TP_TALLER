@@ -8,7 +8,7 @@
 #include <utility>
 #include <map>
 #include <QObject>
-#include <QString> // Importante para las señales
+#include <QString> 
 
 #include "../../client_protocol.h"
 #include "../../../common_src/dtos.h"
@@ -55,8 +55,10 @@ public:
     std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::string>>>> receive_city_maps();
     void send_selected_races(const std::vector<std::pair<std::string, std::string>>& races);
     
+    // Recibir rutas YAML de las carreras de la partida
+    std::vector<std::string> receive_race_paths();
+
     void start_listening();
-    // [MODIFICADO] flag shutdown_connection opcional
     void stop_listening(bool shutdown_connection = false);
     bool is_listening() const { return listening.load(); }
 
@@ -69,7 +71,7 @@ signals:
     void playerLeftNotification(QString username);
     void playerReadyNotification(QString username, bool isReady);
     void carSelectedNotification(QString username, QString carName, QString carType);
-    void gameStarted(uint16_t game_id);  // Señal cuando la partida comienza
+    void gameStarted(uint16_t game_id); 
     void gameStartedNotification();
     void errorOccurred(QString message);
     void gamesListReceived(std::vector<GameInfo> games);

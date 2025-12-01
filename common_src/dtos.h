@@ -31,6 +31,7 @@ enum LobbyMessageType : uint8_t {
     MSG_GAME_STARTED = 0x14,
     MSG_CITY_MAPS = 0x15,
     MSG_CAR_SELECTED_ACK = 0x16,
+    MSG_RACE_PATHS = 0x17,  // Rutas YAML de las carreras de la partida
 
     // NOTIFICACIONES PUSH (Servidor → Todos en la sala)
     MSG_PLAYER_JOINED_NOTIFICATION = 0x20,
@@ -132,7 +133,8 @@ enum class ServerMessageType : uint8_t {
     POSITION_UPDATE = 0x0A,     // Actualización de posiciones en carrera
     LAP_COMPLETED = 0x0B,       // Vuelta completada
     COUNTDOWN = 0x0C,           // Countdown antes de iniciar (3, 2, 1, GO!)
-    RACE_TIMEOUT = 0x0D         // Carrera terminó por timeout (10 min)
+    RACE_TIMEOUT = 0x0D,        // Carrera terminó por timeout (10 min)
+    RACE_PATHS = 0x17,          // Rutas YAML de las carreras de la partida
 };
 
 // Tipo de colisión

@@ -26,7 +26,6 @@ private:
     std::map<std::string, int> player_to_match;
 
 public:
-    // **NUEVO: Constructor por defecto explícitamente pedido (FIX)**
     MatchesMonitor() = default;
 
     // Constructor de movimiento
@@ -47,6 +46,7 @@ public:
 
     bool add_races_to_match(int match_id, const std::vector<ServerRaceConfig>& race_paths);
     std::vector<GameInfo> list_available_matches();
+    std::vector<std::string> get_race_paths(int match_id) const;
 
     // ---- LOBBY: Validaciones ----
     bool is_player_in_match(const std::string& player_name) const;

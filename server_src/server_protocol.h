@@ -48,6 +48,9 @@ public:
 
     // Enviar información inicial de la carrera
     bool send_race_info(const RaceInfoDTO& race_info);
+
+    // Enviar rutas YAML de las carreras de la partida
+    bool send_race_paths(const std::vector<std::string>& yaml_paths);
 };
 
 #endif  // SERVER_PROTOCOL_H

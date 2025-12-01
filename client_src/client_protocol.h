@@ -62,6 +62,9 @@ public:
     // Recibir información inicial de la carrera
     RaceInfoDTO receive_race_info();
 
+    // Recibir rutas YAML de las carreras de la partida
+    std::vector<std::string> receive_race_paths();
+
     // Utilidades
     std::string get_host() const { return host; }
     std::string get_port() const { return port; }

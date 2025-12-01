@@ -166,16 +166,79 @@ void LobbyClient::select_car(const std::string& car_name, const std::string& car
 }
 
 std::string LobbyClient::receive_car_confirmation() {
-    uint8_t type = protocol.read_message_type();
-    if (type != MSG_CAR_SELECTED_ACK) {
-        throw std::runtime_error("Expected CAR_SELECTED_ACK");
-    }
-    std::string car_name = protocol.read_string();
-    std::string car_type = protocol.read_string();
+    std::cout << "[LobbyClient] Waiting for CAR_SELECTED_ACK..." << std::endl;
 
-    std::cout << "[LobbyClient] Server confirmed car: " << car_name << " (" << car_type << ")"
-              << std::endl;
-    return car_name;
+    while (true) {
+        uint8_t type = protocol.read_message_type();
+
+        // ---------------------------------------------------------
+        // CASO 1: ÉXITO 
+        // ---------------------------------------------------------
+        if (type == MSG_CAR_SELECTED_ACK) {
+            std::string car_name = protocol.read_string();
+            std::string car_type = protocol.read_string();
+            std::cout << "[LobbyClient] ✅ Server confirmed car: " << car_name << " (" << car_type << ")"
+                      << std::endl;
+            return car_name;
+        }
+
+        // ---------------------------------------------------------
+        // CASO 2: ERROR - El servidor rechazó la selección
+        // ---------------------------------------------------------
+        if (type == MSG_ERROR) {
+            std::string error_msg;
+            read_error_details(error_msg);
+            throw std::runtime_error(error_msg);
+        }
+
+        // ---------------------------------------------------------
+        // CASO 3: NOTIFICACIONES INTERCALADAS
+        // ---------------------------------------------------------
+        std::cout << "[LobbyClient] ⚠️ Received interleaved message type: " << static_cast<int>(type)
+                  << " while waiting for ACK. Processing..." << std::endl;
+
+        switch (type) {
+            case MSG_PLAYER_JOINED_NOTIFICATION: {
+                std::string user = protocol.read_string();
+                std::cout << "[LobbyClient] (Interleaved) Player joined: " << user << std::endl;
+                emit playerJoinedNotification(QString::fromStdString(user));
+                break;
+            }
+
+            case MSG_PLAYER_LEFT_NOTIFICATION: {
+                std::string user = protocol.read_string();
+                std::cout << "[LobbyClient] (Interleaved) Player left: " << user << std::endl;
+                emit playerLeftNotification(QString::fromStdString(user));
+                break;
+            }
+
+            case MSG_PLAYER_READY_NOTIFICATION: {
+                std::string user = protocol.read_string();
+                uint8_t is_ready = protocol.read_uint8();
+                std::cout << "[LobbyClient] (Interleaved) Player ready: " << user << std::endl;
+                emit playerReadyNotification(QString::fromStdString(user), is_ready != 0);
+                break;
+            }
+
+            case MSG_CAR_SELECTED_NOTIFICATION: {
+                std::string user = protocol.read_string();
+                std::string c_name = protocol.read_string();
+                std::string c_type = protocol.read_string();
+                std::cout << "[LobbyClient] (Interleaved) Car selected: " << user << std::endl;
+                emit carSelectedNotification(QString::fromStdString(user),
+                                             QString::fromStdString(c_name),
+                                             QString::fromStdString(c_type));
+                break;
+            }
+
+            default:
+                // Si llega un tipo de mensaje que no sabemos manejar aquí, lanzamos error
+                // para evitar quedarnos colgados o leer basura.
+                throw std::runtime_error("Unexpected message type while waiting for car ACK: " +
+                                       std::to_string(type));
+        }
+        
+    }
 }
 
 void LobbyClient::start_game(uint16_t game_id) {
@@ -414,34 +477,13 @@ void LobbyClient::read_room_snapshot(std::vector<QString>& players,
               << std::endl;
 }
 
+// Recibir rutas YAML de las carreras
+std::vector<std::string> LobbyClient::receive_race_paths() {
+    return protocol.receive_race_paths();
+}
+
 // Destructor actualizado
 LobbyClient::~LobbyClient() {
-    // Asegurar join antes de destruir el objeto para evitar std::terminate.
-    // Aquí SÍ forzamos el cierre del socket porque el objeto se muere.
     stop_listening(true);
 }
 
-// ========================================================================================================================================================================
-// Estas son las funciones que necesito nuevas para seguir
-
-// void LobbyClient::leave_game(uint16_t game_id) {
-
-//     // To do: Falta esto en el servidor
-// }
-
-// void LobbyClient::select_car(uint8_t car_index) {
-
-//     // To do: Falta esto en el servidor
-// }
-
-// void LobbyClient::set_ready(bool is_ready) {
-
-//     // To do: Falta esto en el servidor
-// }
-
-// void LobbyClient::start_game(uint16_t game_id) {
-
-//     // To do: Falta esto en el servidor
-// }
-// //
-// ========================================================================================================================================================================

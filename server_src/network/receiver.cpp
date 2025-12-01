@@ -141,6 +141,15 @@ void Receiver::handle_lobby() {
 
                 protocol.send_buffer(LobbyProtocol::serialize_game_created(match_id));
                 std::cout << "[Receiver] Game created with ID: " << match_id << "\n";
+
+                //ENVIAR YAML AL CLIENTE
+                std::vector<std::string> yaml_paths = monitor.get_race_paths(match_id);
+                if (!yaml_paths.empty()) {
+                    protocol.send_race_paths(yaml_paths);
+                    std::cout << "[Receiver] Sent " << yaml_paths.size()
+                              << " race paths to " << username << std::endl;
+                }
+
                 break;
             }
             // ------------------------------------------------------------
@@ -220,6 +229,14 @@ void Receiver::handle_lobby() {
 
                 std::cout << "[Receiver] ✅ Snapshot sent with END marker to " << username
                           << std::endl;
+
+                //ENVIAR YAML AL CLIENTE
+                std::vector<std::string> yaml_paths = monitor.get_race_paths(game_id);
+                if (!yaml_paths.empty()) {
+                    protocol.send_race_paths(yaml_paths);
+                    std::cout << "[Receiver] Sent " << yaml_paths.size()
+                              << " race paths to " << username << std::endl;
+                }
 
                 // 6. BROADCAST A LOS DEMÁS **DESPUÉS**
                 auto joined_notif = LobbyProtocol::serialize_player_joined_notification(username);

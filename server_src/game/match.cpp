@@ -46,10 +46,7 @@ Match::Match(std::string host_name, int code, int max_players)
               << ", max_players=" << max_players << ")\n";
               
     // ✅ INICIALIZAR GAMELOOP ÚNICO
-    // Le pasamos las colas para que pueda escuchar comandos y enviar broadcasts
     gameloop = std::make_unique<GameLoop>(command_queue, players_queues);
-    
-    // Arrancamos el thread del GameLoop (se quedará esperando carreras)
     gameloop->start();
 }
 
@@ -154,7 +151,6 @@ bool Match::set_player_car(int player_id, const std::string& car_name, const std
 
     std::cout << "[Match] Jugador " << it->second.name << " eligió auto " << car_name << "\n";
 
-    // ✅ CORRECCIÓN: Delegar al GameLoop directamente, no iterar 'races'
     if (gameloop) {
         gameloop->add_player(player_id, it->second.name, car_name, car_type);
     }
@@ -200,7 +196,6 @@ bool Match::set_player_ready(int player_id, bool ready) {
 
     it->second.is_ready = ready;
 
-    // ✅ CORRECCIÓN: Delegar al GameLoop directamente
     if (gameloop) {
         gameloop->set_player_ready(player_id, ready);
     }
@@ -250,18 +245,17 @@ const std::map<int, PlayerLobbyInfo>& Match::get_players() const {
 void Match::set_race_configs(const std::vector<ServerRaceConfig>& configs) {
     std::lock_guard<std::mutex> lock(mtx);
     race_configs = configs;
-    races.clear(); // Limpiamos el vector temporal de Match
+    races.clear(); 
 
     for (const auto& config : configs) {
-        // 1. Mapa Base
+        // 1. MAPA BASE: "Vice City" -> "vice-city.yaml"
         std::string base_filename = normalize_map_name(config.city);
         std::string base_map_path = "server_src/city_maps/" + config.city + "/" + base_filename;
         
-        // 2. Configuración de Carrera
+        // 2. CARRERA: "Ruta 2" -> "Ruta_2.yaml"
         std::string race_filename = normalize_race_filename(config.race_name);
         std::string race_config_path = "server_src/city_maps/" + config.city + "/" + race_filename;
         
-        // Llamamos a add_race (que ahora SÍ usa los parámetros)
         add_race(base_map_path, race_config_path, config.city);
     }
 
@@ -281,7 +275,7 @@ void Match::add_race(const std::string& map_path, const std::string& race_path, 
     races.push_back(std::move(new_race));
     
     // Usamos los parámetros en el cout para evitar el error "unused parameter"
-    std::cout << "[Match]  Carrera preparada: " << city_name << "\n"
+    std::cout << "[Match] + Carrera preparada: " << city_name << "\n"
               << "        Base: " << map_path << "\n"
               << "        Config: " << race_path << "\n";
 }
@@ -390,15 +384,14 @@ void Match::start_match() {
     // 2. Enviar datos de la primera carrera
     send_race_info_to_all_players();
     
-    // 3. El GameLoop ya está corriendo en su thread (iniciado en constructor).
-    // Al haberle pasado las 'races' en set_race_configs, el GameLoop detectará 
-    // que ya no está vacío y comenzará la secuencia automáticamente.
+    // 3. Arrancar
+    if (gameloop) {
+        gameloop->begin_match(); 
+    }
     
     std::cout << "[Match] Partida en marcha.\n";
 }
 
-// Ya no necesitamos start_next_race() porque el GameLoop maneja el bucle.
-// Dejamos una implementación vacía o la borramos de match.h
 void Match::start_next_race() {
     // Delegado al GameLoop
 }
@@ -445,4 +438,18 @@ void Match::print_players_info() const {
     }
 
     std::cout << "╚════════════════════════════════════════════════════════════╝\n\n";
+}
+
+std::vector<std::string> Match::get_race_yaml_paths() const {
+    std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(mtx));
+    std::vector<std::string> paths;
+    
+    for (const auto& config : race_configs) {
+        
+        std::string race_filename = normalize_race_filename(config.race_name);
+        std::string full_path = "server_src/city_maps/" + config.city + "/" + race_filename;
+        paths.push_back(full_path);
+    }
+    
+    return paths;
 }
