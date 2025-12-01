@@ -16,7 +16,7 @@ GameRenderer::GameRenderer(SDL2pp::Renderer& renderer_ref)
 
     // Cargar spritesheet de autos
     car_texture = std::make_unique<SDL2pp::Texture>(renderer, 
-        SDL2pp::Surface(IMG_Load("assets/img/map/cars/spriteshit-cars.png")));
+        SDL2pp::Surface(IMG_Load("assets/img/map/cars/spritesheet-cars.png")));
 
     // Inicializar clips
     car_clips[0] = SDL2pp::Rect(32, 0, 32, 32);
