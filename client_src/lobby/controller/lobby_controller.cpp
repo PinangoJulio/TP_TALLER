@@ -221,10 +221,13 @@ void LobbyController::onMatchCreated(const QString& matchName, int maxPlayers,
     race_pairs.reserve(races.size());
 
     for (const auto& race : races) {
-        std::cout << "  Carrera: " << race.cityName.toStdString() << " - "
-                  << race.trackName.toStdString() << std::endl;
+       std::string technicalName = "ruta-" + std::to_string(race.trackIndex + 1);
 
-        race_pairs.emplace_back(race.cityName.toStdString(), race.trackName.toStdString());
+        std::cout << "  Carrera: " << race.cityName.toStdString() << " - "
+                  << technicalName << " (UI: " << race.trackName.toStdString() << ")" << std::endl;
+
+        // Enviamos technicalName en lugar de race.trackName
+        race_pairs.emplace_back(race.cityName.toStdString(), technicalName);
     }
 
     try {

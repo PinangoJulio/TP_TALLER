@@ -34,34 +34,65 @@ CreateMatchWindow::CreateMatchWindow(QWidget* parent)
 }
 
 void CreateMatchWindow::loadCities() {
-    // Cargar información de las 3 ciudades
+
     CityInfo liberty;
     liberty.name = "Liberty City";
     liberty.imagePath = "assets/img/lobby/cities/liberty-city.png";
-    liberty.trackNames = {"Circuito Centro", "Ruta Costera", "Autopista Norte"};
-    liberty.trackImagePaths = {"assets/img/tracks/liberty_track1.png",
-                               "assets/img/tracks/liberty_track2.png",
-                               "assets/img/tracks/liberty_track3.png"};
+    liberty.trackNames = {"Montline Parkway", "Upper West Side", "Lower East Side"};
+    liberty.trackImagePaths = {
+        "assets/img/map/cities/caminos/liberty-city/ruta-1/debug_resultado_v5.jpg",
+        "assets/img/map/cities/caminos/liberty-city/ruta-2/debug_resultado_v5.png",
+        "assets/img/map/cities/caminos/liberty-city/ruta-3/debug_resultado_v5.png"};
     cities.push_back(liberty);
 
     CityInfo sanAndreas;
     sanAndreas.name = "San Andreas";
     sanAndreas.imagePath = "assets/img/lobby/cities/san-andreas.png";
-    sanAndreas.trackNames = {"Desierto", "Ciudad", "Montaña"};
-    sanAndreas.trackImagePaths = {"assets/img/tracks/san_andreas_track1.png",
-                                  "assets/img/tracks/san_andreas_track2.png",
-                                  "assets/img/tracks/san_andreas_track3.png"};
+    sanAndreas.trackNames = {"Southshore District", "Vinecrest Heights", "Sunset Diagonal"};
+    sanAndreas.trackImagePaths = {
+        "assets/img/map/cities/caminos/san-andreas/ruta-1/debug_resultado_v5.png",
+        "assets/img/map/cities/caminos/san-andreas/ruta-2/debug_resultado_v5.png",
+        "assets/img/map/cities/caminos/san-andreas/ruta-3/debug_resultado_v5.jpg"};
     cities.push_back(sanAndreas);
 
     CityInfo viceCity;
     viceCity.name = "Vice City";
     viceCity.imagePath = "assets/img/lobby/cities/vice-city.png";
-    viceCity.trackNames = {"Playa", "Centro", "Puentes"};
-    viceCity.trackImagePaths = {"assets/img/tracks/vice_city_track1.png",
-                                "assets/img/tracks/vice_city_track2.png",
-                                "assets/img/tracks/vice_city_track3.png"};
+    viceCity.trackNames = {"North Grove Ribbon", "Tropical U", "Coral Serpent Way"};
+    viceCity.trackImagePaths = {
+        "assets/img/map/cities/caminos/vice-city/ruta-1/debug_resultado_v5.jpg",
+        "assets/img/map/cities/caminos/vice-city/ruta-2/debug_resultado_v5.jpg",
+        "assets/img/map/cities/caminos/vice-city/ruta-3/debug_resultado_v5.jpg"};
     cities.push_back(viceCity);
 }
+    // Cargar información de las 3 ciudades
+    // CityInfo liberty;
+    // liberty.name = "Liberty City";
+    // liberty.imagePath = "assets/img/lobby/cities/liberty-city.png";
+    // liberty.trackNames = {"Circuito Centro", "Ruta Costera", "Autopista Norte"};
+    // liberty.trackImagePaths = {"assets/img/tracks/liberty_track1.png",
+    //                            "assets/img/tracks/liberty_track2.png",
+    //                            "assets/img/tracks/liberty_track3.png"};
+    // cities.push_back(liberty);
+
+    // CityInfo sanAndreas;
+    // sanAndreas.name = "San Andreas";
+    // sanAndreas.imagePath = "assets/img/lobby/cities/san-andreas.png";
+    // sanAndreas.trackNames = {"Desierto", "Ciudad", "Montaña"};
+    // sanAndreas.trackImagePaths = {"assets/img/tracks/san_andreas_track1.png",
+    //                               "assets/img/tracks/san_andreas_track2.png",
+    //                               "assets/img/tracks/san_andreas_track3.png"};
+    // cities.push_back(sanAndreas);
+
+    // CityInfo viceCity;
+    // viceCity.name = "Vice City";
+    // viceCity.imagePath = "assets/img/lobby/cities/vice-city.png";
+    // viceCity.trackNames = {"Playa", "Centro", "Puentes"};
+    // viceCity.trackImagePaths = {"assets/img/tracks/vice_city_track1.png",
+    //                             "assets/img/tracks/vice_city_track2.png",
+    //                             "assets/img/tracks/vice_city_track3.png"};
+    // cities.push_back(viceCity);
+
 
 void CreateMatchWindow::setupStep1UI() {
     step1Widget = new QWidget();
