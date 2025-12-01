@@ -17,12 +17,19 @@
 // ==========================================================
 
 GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues)
-    : is_running(false), match_finished(false), comandos(comandos), queues_players(queues),
-      current_race_index(0), current_race_finished(false), spawns_loaded(false)
+    : is_running(false), match_finished(false), started_signal(false),
+      comandos(comandos), queues_players(queues),
+      current_race_index(0), current_race_finished(false), 
+      spawns_loaded(false) // Inicializar variables
 {
-    // Inicializar sistemas de física
+    // Conectar sistemas de física
     collisionHandler.set_obstacle_manager(&obstacleManager);
     
+    // Crear un mundo inicial (aunque se recreará en start_current_race) para evitar crash
+    b2WorldDef worldDef = b2DefaultWorldDef();
+    worldDef.gravity = {0.0f, 0.0f};
+    worldId = b2CreateWorld(&worldDef);
+
     std::cout << "[GameLoop] Constructor OK. Listo para gestionar múltiples carreras con Box2D.\n";
 }
 
@@ -38,14 +45,13 @@ GameLoop::~GameLoop() {
 
 void GameLoop::add_player(int player_id, const std::string& name, const std::string& car_name,
                           const std::string& car_type) {
-    std::cout << "\n[GameLoop] Registrando jugador: " << name << " (" << car_name << ")\n";
+    std::cout << "[GameLoop] Registrando jugador: " << name << " (" << car_name << ")\n";
 
-    // NOTA: En esta fase (Lobby), creamos el auto PERO SIN CUERPO FÍSICO.
-    // El b2BodyId se creará en 'reset_players_for_race' cuando arranque la carrera.
+    // 1. Crear el Auto (Sin cuerpo físico todavía)
     b2BodyId nullBody = b2_nullBodyId; 
     auto car = std::make_unique<Car>(car_name, car_type, nullBody);
 
-    // Cargar stats del auto desde config.yaml
+    // 2. Cargar stats del auto desde config.yaml
     try {
         YAML::Node global_config = YAML::LoadFile("config.yaml");
         YAML::Node cars_list = global_config["cars"];
@@ -81,13 +87,21 @@ void GameLoop::add_player(int player_id, const std::string& name, const std::str
         car->load_stats(100.0f, 50.0f, 1.0f, 100.0f, 2.0f, 1000.0f);
     }
 
-    // Crear Player y asignarle el Car
+    // 3. Crear Player y guardar
     auto player = std::make_unique<Player>(player_id, name);
     player->setCarOwnership(std::move(car));
 
     players[player_id] = std::move(player);
-
     std::cout << "[GameLoop] ✅ Jugador " << player_id << " registrado.\n";
+}
+
+void GameLoop::delete_player_from_match(int player_id) {
+    auto it = players.find(player_id);
+    if (it != players.end()) {
+        std::cout << "[GameLoop] Eliminando jugador " << it->second->getName() << "\n";
+        collisionHandler.unregister_car(player_id);
+        players.erase(it);
+    }
 }
 
 void GameLoop::set_player_ready(int player_id, bool ready) {
@@ -98,14 +112,12 @@ void GameLoop::set_player_ready(int player_id, bool ready) {
 }
 
 // ==========================================================
-// GESTIÓN DE MÚLTIPLES CARRERAS
+// GESTIÓN DE CARRERAS
 // ==========================================================
 
 void GameLoop::add_race(const std::string& city, const std::string& yaml_path) {
-    // Método legacy: Solo silenciamos warnings
-    (void)city;
-    (void)yaml_path;
-    // No hacemos nada porque usamos set_races desde Match
+    // Método legacy para cumplir interfaz.
+    (void)city; (void)yaml_path;
 }
 
 void GameLoop::set_races(std::vector<std::unique_ptr<Race>> race_configs) {
@@ -114,81 +126,24 @@ void GameLoop::set_races(std::vector<std::unique_ptr<Race>> race_configs) {
     std::cout << "[GameLoop] Configuradas " << races.size() << " carreras\n";
 }
 
-// ==========================================================
-// PREPARACIÓN DE CARRERA (BOX2D INIT)
-// ==========================================================
-
-void GameLoop::reset_players_for_race() {
-    std::cout << "[GameLoop] >>> Reseteando jugadores (Creando Física)...\n";
-
-    const auto& spawns = mapLoader.get_spawn_points();
-    size_t spawn_idx = 0;
-
-    for (auto& [id, player_ptr] : players) {
-        Player* player = player_ptr.get();
-        Car* car = player->getCar();
-
-        if (!car) continue;
-
-        // 1. Obtener posición de spawn
-        float spawn_x = 100.0f, spawn_y = 100.0f, spawn_angle = 0.0f;
-        if (spawn_idx < spawns.size()) {
-            spawn_x = spawns[spawn_idx].x;
-            spawn_y = spawns[spawn_idx].y;
-            spawn_angle = spawns[spawn_idx].angle;
-        } else {
-            spawn_x += (spawn_idx * 10.0f); 
-        }
-
-        // 2. CREAR CUERPO FÍSICO BOX2D
-        b2BodyDef bodyDef = b2DefaultBodyDef();
-        bodyDef.type = b2_dynamicBody;
-        bodyDef.position = {spawn_x, spawn_y};
-        bodyDef.rotation = b2MakeRot(spawn_angle);
-        bodyDef.linearDamping = 1.0f; 
-        bodyDef.angularDamping = 2.0f;
-        
-        b2BodyId carBodyId = b2CreateBody(worldId, &bodyDef);
-        
-        // Forma del auto
-        b2Polygon box = b2MakeBox(1.0f, 2.0f);
-        b2ShapeDef shapeDef = b2DefaultShapeDef();
-        shapeDef.density = 1.0f;
-        // shapeDef.friction = 0.3f; // COMENTADO POR COMPATIBILIDAD v3
-        
-        b2CreatePolygonShape(carBodyId, &shapeDef, &box);
-        
-        // UserData para colisiones (guardamos el ID del jugador)
-        b2Body_SetUserData(carBodyId, reinterpret_cast<void*>(static_cast<uintptr_t>(id)));
-
-        // 3. Recrear el auto con el nuevo cuerpo físico
-        std::string model = car->getModelName();
-        std::string type = car->getCarType();
-        
-        auto newCar = std::make_unique<Car>(model, type, carBodyId);
-        // Restaurar stats básicos (idealmente leer del anterior car si tuvieras getters)
-        newCar->load_stats(120.0f, 50.0f, 2.0f, 100.0f, 2.0f, 1000.0f); 
-
-        player->setCarOwnership(std::move(newCar));
-        player->resetForNewRace();
-
-        // Registrar en managers
-        collisionHandler.register_car(id, player->getCar());
-        checkpointManager.register_player(id);
-
-        std::cout << "[GameLoop]   " << player->getName() << " → spawn (" << spawn_x << ", " << spawn_y << ")\n";
-        spawn_idx++;
-    }
+void GameLoop::begin_match() {
+    started_signal = true;
+    std::cout << "[GameLoop] Señal de largada recibida.\n";
 }
+
+// ==========================================================
+// PREPARACIÓN DE CARRERA (CARGA Y FÍSICA)
+// ==========================================================
 
 void GameLoop::start_current_race() {
     if (current_race_index >= static_cast<int>(races.size())) return;
 
     const auto& race = races[current_race_index];
-    current_city_name = race->get_city_name();
     
-    current_map_yaml = race->get_map_path();   // Mapa Paredes
-    std::string race_config_path = race->get_race_path(); // Mapa Checkpoints
+    // Obtener rutas del objeto Race
+    current_city_name = race->get_city_name();
+    current_map_yaml = race->get_map_path();         // Mapa Base (Paredes)
+    std::string race_config_path = race->get_race_path(); // Configuración (Checkpoints)
 
     std::cout << "\n>>> INICIANDO CARRERA " << (current_race_index + 1) << "\n";
     std::cout << "    Base: " << current_map_yaml << "\n";
@@ -204,21 +159,84 @@ void GameLoop::start_current_race() {
 
     // 2. Cargar Mapas
     try {
+        std::cout << "[GameLoop] Cargando geometría...\n";
         mapLoader.load_map(worldId, obstacleManager, current_map_yaml);
+        
+        std::cout << "[GameLoop] Cargando configuración...\n";
         mapLoader.load_race_config(race_config_path);
+        
         checkpointManager.load_checkpoints(mapLoader.get_checkpoints());
     } catch (const std::exception& e) {
-        std::cerr << "[GameLoop] ❌ ERROR FATAL cargando mapa: " << e.what() << "\n";
+        std::cerr << "[GameLoop] ❌ ERROR cargando mapa: " << e.what() << "\n";
+        // No retornamos para intentar seguir aunque sea roto, o puedes hacer return;
     }
 
     current_race_finished = false;
     race_start_time = std::chrono::steady_clock::now();
-    
-    reset_players_for_race();
+}
+
+void GameLoop::reset_players_for_race() {
+    std::cout << "[GameLoop] >>> Reseteando jugadores y creando cuerpos...\n";
+
+    const auto& spawns = mapLoader.get_spawn_points();
+    size_t spawn_idx = 0;
+
+    for (auto& [id, player_ptr] : players) {
+        Player* player = player_ptr.get();
+        Car* car = player->getCar();
+        if (!car) continue;
+
+        // 1. Calcular posición spawn
+        float spawn_x = 100.0f, spawn_y = 100.0f, spawn_angle = 0.0f;
+        if (spawn_idx < spawns.size()) {
+            spawn_x = spawns[spawn_idx].x;
+            spawn_y = spawns[spawn_idx].y;
+            spawn_angle = spawns[spawn_idx].angle;
+        } else {
+            spawn_x += (spawn_idx * 10.0f); // Fallback para evitar superposición
+        }
+
+        // 2. Crear Cuerpo Físico
+        b2BodyDef bodyDef = b2DefaultBodyDef();
+        bodyDef.type = b2_dynamicBody;
+        bodyDef.position = {spawn_x, spawn_y};
+        bodyDef.rotation = b2MakeRot(spawn_angle);
+        bodyDef.linearDamping = 1.0f; 
+        bodyDef.angularDamping = 2.0f;
+        
+        b2BodyId carBodyId = b2CreateBody(worldId, &bodyDef);
+        
+        b2Polygon box = b2MakeBox(1.0f, 2.0f);
+        b2ShapeDef shapeDef = b2DefaultShapeDef();
+        shapeDef.density = 1.0f;
+        // shapeDef.friction = 0.3f; // Comentado por compatibilidad
+        b2CreatePolygonShape(carBodyId, &shapeDef, &box);
+        
+        // Guardar ID jugador en UserData para colisiones
+        b2Body_SetUserData(carBodyId, reinterpret_cast<void*>(static_cast<uintptr_t>(id)));
+
+        // 3. Recrear Auto con el nuevo cuerpo
+        std::string model = car->getModelName();
+        std::string type = car->getCarType();
+        auto newCar = std::make_unique<Car>(model, type, carBodyId);
+        
+        // Restaurar stats (usamos valores seguros o podrías guardarlos antes)
+        newCar->load_stats(120.0f, 50.0f, 2.0f, 100.0f, 2.0f, 1000.0f); 
+
+        player->setCarOwnership(std::move(newCar));
+        player->resetForNewRace();
+
+        // Registrar en managers
+        collisionHandler.register_car(id, player->getCar());
+        checkpointManager.register_player(id);
+
+        std::cout << "[GameLoop]   Player " << id << " spawneado en (" << spawn_x << ", " << spawn_y << ")\n";
+        spawn_idx++;
+    }
 }
 
 // ==========================================================
-// BUCLE PRINCIPAL
+// BUCLE PRINCIPAL (RUN)
 // ==========================================================
 
 void GameLoop::run() {
@@ -226,19 +244,25 @@ void GameLoop::run() {
     match_finished = false;
     current_race_index = 0;
 
-    std::cout << "[GameLoop] THREAD INICIADO. Esperando carreras...\n";
+    std::cout << "[GameLoop] Thread iniciado. Esperando señal de Match...\n";
 
-    while (is_running.load() && races.empty()) {
+    // Esperar señal de inicio (Evita Race Condition de jugadores uniéndose tarde)
+    while (is_running.load() && (!started_signal.load() || races.empty())) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    std::cout << "[GameLoop] PARTIDA INICIADA. Carreras: " << races.size() << "\n";
+    if (!is_running.load()) return;
 
+    std::cout << "[GameLoop] PARTIDA INICIADA. Carreras: " << races.size() << "\n";
+    print_match_info();
+
+    // Bucle de Torneo
     while (is_running.load() && !match_finished.load() && current_race_index < static_cast<int>(races.size())) {
         
         start_current_race();
+        reset_players_for_race();
 
-        // Loop de juego (Tick)
+        // Bucle de Carrera (Tick)
         while (is_running.load() && !current_race_finished.load()) {
             auto start_time = std::chrono::steady_clock::now();
 
@@ -251,7 +275,7 @@ void GameLoop::run() {
                 current_race_finished = true;
             }
 
-            std::this_thread::sleep_until(start_time + std::chrono::milliseconds(16));
+            std::this_thread::sleep_until(start_time + std::chrono::milliseconds(SLEEP));
         }
 
         finish_current_race();
@@ -261,7 +285,7 @@ void GameLoop::run() {
 }
 
 // ==========================================================
-// LÓGICA INTERNA
+// LÓGICA DE JUEGO (UPDATE)
 // ==========================================================
 
 void GameLoop::procesar_comandos() {
@@ -278,10 +302,9 @@ void GameLoop::procesar_comandos() {
                     case GameCommand::TURN_LEFT: car->turn_left(dt); break;
                     case GameCommand::TURN_RIGHT: car->turn_right(dt); break;
                     case GameCommand::USE_NITRO: car->activateNitro(); break;
-                    
-                    case GameCommand::DISCONNECT:
-                        it->second->disconnect();
-                        std::cout << "[GameLoop] Jugador " << it->second->getName() << " desconectado.\n";
+                    case GameCommand::DISCONNECT: 
+                        it->second->setDisconnected(true);
+                        std::cout << "[GameLoop] Jugador desconectado.\n";
                         if (all_players_disconnected()) stop_match();
                         break;
                     default: break;
@@ -293,7 +316,6 @@ void GameLoop::procesar_comandos() {
 
 void GameLoop::actualizar_fisica() {
     if (!b2World_IsValid(worldId)) return;
-
     b2World_Step(worldId, TIME_STEP, SUB_STEPS);
     
     b2ContactEvents events = b2World_GetContactEvents(worldId);
@@ -320,11 +342,27 @@ void GameLoop::actualizar_logica_juego() {
 }
 
 // ==========================================================
-// HELPERS DE ESTADO
+// HELPERS Y RED
 // ==========================================================
 
+void GameLoop::enviar_estado() {
+    GameState snapshot = create_snapshot();
+    queues_players.broadcast(snapshot);
+}
+
+GameState GameLoop::create_snapshot() {
+    std::vector<Player*> player_list;
+    for (auto& p : players) player_list.push_back(p.second.get());
+    return GameState(player_list, current_city_name, current_map_yaml, is_running.load());
+}
+
+void GameLoop::stop_match() {
+    is_running = false;
+    match_finished = true;
+}
+
 void GameLoop::finish_current_race() {
-    std::cout << "\n[GameLoop] CARRERA #" << (current_race_index + 1) << " FINALIZADA\n";
+    std::cout << "[GameLoop] Carrera Finalizada.\n";
     print_current_race_table();
     current_race_index++;
     
@@ -332,16 +370,14 @@ void GameLoop::finish_current_race() {
         match_finished = true;
         print_total_standings();
     } else {
-        std::this_thread::sleep_for(std::chrono::seconds(5));
+        std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 }
 
 bool GameLoop::all_players_finished_race() const {
     if (players.empty()) return false;
     for (const auto& [id, player_ptr] : players) {
-        if (!player_ptr->isFinished() && !player_ptr->isDisconnected()) {
-            return false;
-        }
+        if (!player_ptr->isFinished() && !player_ptr->isDisconnected()) return false;
     }
     return true;
 }
@@ -361,35 +397,37 @@ void GameLoop::mark_player_finished(int player_id) {
     if (p->isFinished()) return;
 
     p->markAsFinished();
-    
     auto now = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - race_start_time).count();
     
     race_finish_times[current_race_index][player_id] = elapsed;
     total_times[player_id] += elapsed;
     
-    std::cout << "[GameLoop]  " << p->getName() << " terminó en " << (elapsed/1000.0f) << "s\n";
+    std::cout << "[GameLoop] " << p->getName() << " terminó en " << (elapsed/1000.0f) << "s\n";
 }
 
-void GameLoop::stop_match() {
-    std::cout << "[GameLoop] Deteniendo partida...\n";
-    is_running = false;
-    match_finished = true;
+void GameLoop::verificar_ganadores() { } // Placeholder
+
+void GameLoop::load_spawn_points_for_current_race() { } // Placeholder
+
+// Debug Prints
+void GameLoop::print_current_race_table() const {
+    std::cout << "--- Resultados Carrera ---\n";
+    const auto& times = race_finish_times[current_race_index];
+    for(auto const& [id, time] : times) {
+        std::cout << "ID: " << id << " Tiempo: " << (time/1000.0f) << "s\n";
+    }
 }
 
-void GameLoop::enviar_estado() {
-    GameState snapshot = create_snapshot();
-    queues_players.broadcast(snapshot);
+void GameLoop::print_total_standings() const {
+    std::cout << "--- Tabla General ---\n";
+    for(auto const& [id, time] : total_times) {
+        std::cout << "ID: " << id << " Total: " << (time/1000.0f) << "s\n";
+    }
 }
 
-GameState GameLoop::create_snapshot() {
-    std::vector<Player*> player_list;
-    for (auto& p : players) player_list.push_back(p.second.get());
-    return GameState(player_list, current_city_name, current_map_yaml, is_running.load());
+void GameLoop::print_match_info() const {
+    std::cout << "--- Match Info ---\n";
+    std::cout << "Carreras: " << races.size() << "\n";
+    std::cout << "Jugadores: " << players.size() << "\n";
 }
-
-// Métodos de impresión (simplificados para compilar, puedes pegar los originales de tus compañeros si prefieres)
-void GameLoop::print_current_race_table() const { std::cout << "--- Tabla Carrera ---\n"; }
-void GameLoop::print_total_standings() const { std::cout << "--- Tabla General ---\n"; }
-void GameLoop::print_match_info() const { std::cout << "--- Info Partida ---\n"; }
-void GameLoop::load_spawn_points_for_current_race() { /* ya manejado en reset_players */ }

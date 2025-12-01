@@ -102,6 +102,9 @@ TEST_F(AdvancedPhysicsTest, TurningChangesAngle) {
     Car car("Test", "Sport", body);
     car.load_stats(100.0f, 10.0f, 5.0f, 100.0f, 1.5f, 1000.0f);
     
+    // FIX: Dar velocidad inicial, porque el auto no gira si está quieto
+    b2Body_SetLinearVelocity(body, {50.0f, 0.0f});
+
     float angle_initial = car.getAngle();
     
     // Girar a la izquierda

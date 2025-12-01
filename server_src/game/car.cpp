@@ -25,7 +25,7 @@ Car::Car(const std::string& model, const std::string& type, b2BodyId body)
 // ================= CONFIGURACIÓN =================
 void Car::load_stats(float max_spd, float accel, float hand, float durability, float nitro, float wgt) {
     this->max_speed = max_spd;
-    this->acceleration_power = accel * 50.0f; 
+    this->acceleration_power = accel * 50.0f; // Escalar para Box2D
     this->handling = hand;
     this->max_durability = durability;
     this->current_health = durability;
@@ -33,71 +33,82 @@ void Car::load_stats(float max_spd, float accel, float hand, float durability, f
     this->weight = wgt;
 }
 
-// ================= FÍSICA (GETTERS - Consultas a Box2D) =================
+// ================= FÍSICA (GETTERS) =================
+
 float Car::getX() const {
+    if (B2_IS_NULL(bodyId)) return 0.0f;
     b2Vec2 pos = b2Body_GetPosition(bodyId);
     return pos.x;
 }
 
 float Car::getY() const {
+    if (B2_IS_NULL(bodyId)) return 0.0f;
     b2Vec2 pos = b2Body_GetPosition(bodyId);
     return pos.y;
 }
 
 float Car::getAngle() const {
+    if (B2_IS_NULL(bodyId)) return 0.0f;
     b2Rot rot = b2Body_GetRotation(bodyId);
     return b2Rot_GetAngle(rot);
 }
 
 float Car::getVelocityX() const {
+    if (B2_IS_NULL(bodyId)) return 0.0f;
     b2Vec2 vel = b2Body_GetLinearVelocity(bodyId);
     return vel.x;
 }
 
 float Car::getVelocityY() const {
+    if (B2_IS_NULL(bodyId)) return 0.0f;
     b2Vec2 vel = b2Body_GetLinearVelocity(bodyId);
     return vel.y;
 }
 
 float Car::getCurrentSpeed() const {
+    if (B2_IS_NULL(bodyId)) return 0.0f;
     b2Vec2 vel = b2Body_GetLinearVelocity(bodyId);
     return b2Length(vel);
 }
 
-// ================= FÍSICA (SETTERS - Control Directo) =================
+// ================= FÍSICA (SETTERS) =================
 
 void Car::setPosition(float nx, float ny) {
+    if (B2_IS_NULL(bodyId)) return;
     b2Vec2 currentPos = {nx, ny};
     b2Rot currentRot = b2Body_GetRotation(bodyId);
     b2Body_SetTransform(bodyId, currentPos, currentRot);
 }
 
 void Car::setAngle(float angle_rad) {
+    if (B2_IS_NULL(bodyId)) return;
     b2Vec2 currentPos = b2Body_GetPosition(bodyId);
     b2Rot newRot = b2MakeRot(angle_rad);
     b2Body_SetTransform(bodyId, currentPos, newRot);
 }
 
 void Car::setCurrentSpeed(float speed) {
+    if (B2_IS_NULL(bodyId)) return;
     float angle = getAngle();
     b2Vec2 newVel = { std::cos(angle) * speed, std::sin(angle) * speed };
     b2Body_SetLinearVelocity(bodyId, newVel);
 }
 
-// ================= COMANDOS DE CONTROL (Física) =================
-
-// En server_src/game/car.cpp
+// ================= COMANDOS DE CONTROL =================
 
 void Car::accelerate(float delta_time) {
-    if (is_destroyed) return;
+    if (is_destroyed || B2_IS_NULL(bodyId)) return;
 
     float currentSpeed = getCurrentSpeed();
 
+    // 1. Si estamos debajo del límite, aplicamos fuerza
     if (currentSpeed < max_speed) {
         float angle = getAngle();
         b2Vec2 direction = { std::cos(angle), std::sin(angle) };
 
         float force = acceleration_power;
+        
+        // Lógica de Nitro
         if (nitro_active && nitro_amount > 0) {
             force *= nitro_boost;
             nitro_amount -= (15.0f * delta_time);
@@ -106,8 +117,9 @@ void Car::accelerate(float delta_time) {
 
         b2Vec2 forceVec = { direction.x * force, direction.y * force };
         b2Body_ApplyForceToCenter(bodyId, forceVec, true);
-    } else {
-        // Si nos pasamos (ej: por una bajada o nitro previo), limitamos suavemente
+    } 
+    else {
+        // 2. Si nos pasamos, limitamos la velocidad suavemente
         b2Vec2 velocity = b2Body_GetLinearVelocity(bodyId);
         float scale = max_speed / currentSpeed;
         b2Vec2 clampedVel = { velocity.x * scale, velocity.y * scale };
@@ -116,31 +128,39 @@ void Car::accelerate(float delta_time) {
 }
 
 void Car::brake(float delta_time) {
-    (void)delta_time; // No usado por ahora (freno es constante)
-
-    if (is_destroyed) return;
-    // Aplicar damping alto para simular frenado
+    (void)delta_time; // Evitar warning
+    if (is_destroyed || B2_IS_NULL(bodyId)) return;
+    
+    // Frenado simple aumentando la resistencia
     b2Body_SetLinearDamping(bodyId, 5.0f); 
 }
 
 void Car::turn_left(float delta_time) {
-    if (is_destroyed) return;
+    if (is_destroyed || B2_IS_NULL(bodyId)) return;
+    
+    // No girar si el auto está casi detenido (realismo)
+    if (getCurrentSpeed() < 1.0f) return;
+
     float current_ang = b2Body_GetAngularVelocity(bodyId);
     b2Body_SetAngularVelocity(bodyId, current_ang - (handling * delta_time));
 }
 
 void Car::turn_right(float delta_time) {
-    if (is_destroyed) return;
+    if (is_destroyed || B2_IS_NULL(bodyId)) return;
+    
+    if (getCurrentSpeed() < 1.0f) return;
+
     float current_ang = b2Body_GetAngularVelocity(bodyId);
     b2Body_SetAngularVelocity(bodyId, current_ang + (handling * delta_time));
 }
 
 void Car::stop() {
+    if (B2_IS_NULL(bodyId)) return;
     b2Body_SetLinearVelocity(bodyId, {0,0});
     b2Body_SetAngularVelocity(bodyId, 0);
 }
 
-// ================= LOGICA DE JUEGO (Salud, Nitro) =================
+// ================= LÓGICA DE JUEGO =================
 
 void Car::takeDamage(float damage) {
     current_health -= damage;
@@ -156,12 +176,14 @@ void Car::repair(float amount) {
 }
 
 void Car::activateNitro() { 
-    if(nitro_amount > 0) nitro_active = true; 
+    if (nitro_amount > 0) nitro_active = true; 
 }
 
 void Car::deactivateNitro() { 
     nitro_active = false; 
-    b2Body_SetLinearDamping(bodyId, 1.0f);
+    if (!B2_IS_NULL(bodyId)) {
+        b2Body_SetLinearDamping(bodyId, 1.0f); // Restaurar fricción normal
+    }
 }
 
 void Car::rechargeNitro(float amount) {
