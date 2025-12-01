@@ -40,7 +40,7 @@ void CreateMatchWindow::loadCities() {
     liberty.imagePath = "assets/img/lobby/cities/liberty-city.png";
     liberty.trackNames = {"Montline Parkway", "Upper West Side", "Lower East Side"};
     liberty.trackImagePaths = {
-        "assets/img/map/cities/caminos/liberty-city/ruta-1/debug_resultado_v5.jpg",
+        "assets/img/map/cities/caminos/liberty-city/ruta-1/debug_resultado_v5",
         "assets/img/map/cities/caminos/liberty-city/ruta-2/debug_resultado_v5.png",
         "assets/img/map/cities/caminos/liberty-city/ruta-3/debug_resultado_v5.png"};
     cities.push_back(liberty);
@@ -52,7 +52,7 @@ void CreateMatchWindow::loadCities() {
     sanAndreas.trackImagePaths = {
         "assets/img/map/cities/caminos/san-andreas/ruta-1/debug_resultado_v5.png",
         "assets/img/map/cities/caminos/san-andreas/ruta-2/debug_resultado_v5.png",
-        "assets/img/map/cities/caminos/san-andreas/ruta-3/debug_resultado_v5.jpg"};
+        "assets/img/map/cities/caminos/san-andreas/ruta-3/debug_resultado_v5.png"};
     cities.push_back(sanAndreas);
 
     CityInfo viceCity;
@@ -60,9 +60,9 @@ void CreateMatchWindow::loadCities() {
     viceCity.imagePath = "assets/img/lobby/cities/vice-city.png";
     viceCity.trackNames = {"North Grove Ribbon", "Tropical U", "Coral Serpent Way"};
     viceCity.trackImagePaths = {
-        "assets/img/map/cities/caminos/vice-city/ruta-1/debug_resultado_v5.jpg",
-        "assets/img/map/cities/caminos/vice-city/ruta-2/debug_resultado_v5.jpg",
-        "assets/img/map/cities/caminos/vice-city/ruta-3/debug_resultado_v5.jpg"};
+        "assets/img/map/cities/caminos/vice-city/ruta-1/debug_resultado_v5.png",
+        "assets/img/map/cities/caminos/vice-city/ruta-2/debug_resultado_v5.png",
+        "assets/img/map/cities/caminos/vice-city/ruta-3/debug_resultado_v5.png"};
     cities.push_back(viceCity);
 }
     // Cargar información de las 3 ciudades
