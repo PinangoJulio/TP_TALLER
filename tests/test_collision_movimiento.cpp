@@ -63,8 +63,8 @@ int main(int argc, char* argv[]) {
         std::cout << "Cargando máscaras de colisión..." << std::endl;
 
         CollisionManager collisionManager("assets/img/map/layers/vice-city/vice-city.png",
-                                          "assets/img/map/layers/vice-city/puentes-transitables.png",
-                                          "assets/img/map/layers/vice-city/rampas.png");
+                                          "assets/img/map/layers/vice-city/puentes-vice-city.png",
+                                          "assets/img/map/layers/vice-city/rampas-vice-city.png");
 
         const int MAP_WIDTH = collisionManager.GetWidth();
         const int MAP_HEIGHT = collisionManager.GetHeight();
@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
         SDL_SetColorKey(carSurface, SDL_TRUE, SDL_MapRGB(carSurface->format, 0, 0, 0));
         SDL2pp::Texture carTexture(renderer, SDL2pp::Surface(carSurface));
 
-        SDL_Surface* puentesSurf = IMG_Load("assets/img/map/layers/vice-city/puentes-vice-city.png");
+        SDL_Surface* puentesSurf = IMG_Load("assets/img/map/layers/vice-city/puentes-top-vice-city.png");
         SDL2pp::Texture puentesTexture(
             renderer, SDL2pp::Surface(puentesSurf ? puentesSurf
                                                   : SDL_CreateRGBSurface(0, 1, 1, 32, 0, 0, 0, 0)));
