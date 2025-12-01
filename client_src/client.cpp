@@ -141,12 +141,27 @@ void Client::start() {
 }
 
 Client::~Client() {
+    std::cout << "[Client] Destructor llamado" << std::endl;
+
     if (threads_started) {
+        std::cout << "[Client] Cerrando threads de comunicación..." << std::endl;
+
+        // 1. Señalizar a los threads que deben detenerse
         sender.stop();
         receiver.stop();
+
+        // 2. Cerrar las colas para desbloquear los threads si están esperando
         command_queue.close();
         snapshot_queue.close();
+
+        // 3. Esperar a que los threads finalicen
         sender.join();
         receiver.join();
+
+        std::cout << "[Client] Threads finalizados correctamente" << std::endl;
+    } else {
+        std::cout << "[Client]  Threads ya fueron cerrados previamente" << std::endl;
     }
+
+    std::cout << "[Client]  Destructor completado" << std::endl;
 }
