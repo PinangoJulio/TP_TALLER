@@ -13,13 +13,16 @@ class GameRenderer {
 private:
     SDL2pp::Renderer& renderer;
 
-    // Texturas dinámicas (punteros para poder cambiarlas al cargar otra carrera)
+    // Texturas
     std::unique_ptr<SDL2pp::Texture> map_texture;
     std::unique_ptr<SDL2pp::Texture> puentes_texture;
     std::unique_ptr<SDL2pp::Texture> top_texture;
     std::unique_ptr<SDL2pp::Texture> car_texture;
+    
+    // Textura del Minimapa
+    std::unique_ptr<SDL2pp::Texture> minimap_texture;
 
-    // Collision Manager para lógica visual (opcional)
+    // Collision Manager para lógica visual
     std::unique_ptr<CollisionManager> collision_manager;
 
     // Clips de animación de los autos
@@ -36,7 +39,11 @@ public:
     static const int SCREEN_WIDTH = 700;
     static const int SCREEN_HEIGHT = 700;
 
-   
+    // Constantes del Minimapa
+    static const int MINIMAP_SIZE = 200;   // Tamaño en px en pantalla
+    static const int MINIMAP_MARGIN = 20;  // Margen desde el borde
+    static const int MINIMAP_SCOPE = 1000; // Cuánto terreno real cubre el minimapa
+
     explicit GameRenderer(SDL2pp::Renderer& renderer);
 
     // Carga los assets específicos de la carrera leyendo el YAML
