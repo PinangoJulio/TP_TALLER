@@ -378,3 +378,27 @@ bool ServerProtocol::send_race_info(const RaceInfoDTO& race_info) {
     return true;
 }
 
+// ENVIAR RUTAS YAML DE LAS CARRERAS
+
+bool ServerProtocol::send_race_paths(const std::vector<std::string>& yaml_paths) {
+    std::vector<uint8_t> buffer;
+
+    // 1. Tipo de mensaje
+    buffer.push_back(static_cast<uint8_t>(ServerMessageType::RACE_PATHS));
+
+    // 2. Cantidad de carreras (uint8_t porque no habrá más de 255 carreras por partida)
+    buffer.push_back(static_cast<uint8_t>(yaml_paths.size()));
+
+    // 3. Cada path como string
+    for (const auto& path : yaml_paths) {
+        push_back_string(buffer, path);
+    }
+
+    // 4. Enviar buffer
+    socket.sendall(buffer.data(), buffer.size());
+
+    std::cout << "[ServerProtocol] ✅ Sent " << yaml_paths.size()
+              << " race paths to client" << std::endl;
+
+    return true;
+}

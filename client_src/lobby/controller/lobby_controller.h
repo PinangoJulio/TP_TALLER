@@ -52,6 +52,7 @@ private:
     int selectedCarIndex;
     std::vector<QString> pendingPlayers;
     std::map<QString, QString> pendingCars;
+    std::vector<std::string> racePaths;  // Rutas YAML de las carreras
 
     // Estado del ciclo de lobby
     bool lobbyCompleted = false;
@@ -69,6 +70,7 @@ public:
 
     bool isLobbySuccessful() const { return lobbyCompleted && lobbySuccess; }
     QString getPlayerName() const { return playerName; }
+    std::vector<std::string> getRacePaths() const { return racePaths; }
 signals:
     void lobbyFinished(bool success);
 

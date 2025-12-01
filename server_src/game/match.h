@@ -99,6 +99,7 @@ public:
     bool is_running() const { return is_active.load(); }
     bool is_started() const { return state == MatchState::STARTED; }
     bool can_start() const;
+    std::vector<std::string> get_race_yaml_paths() const;
 
     // ---- BROADCAST ----
     void set_broadcast_callback(

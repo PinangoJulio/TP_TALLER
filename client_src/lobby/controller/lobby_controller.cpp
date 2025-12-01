@@ -234,6 +234,15 @@ void LobbyController::onMatchCreated(const QString& matchName, int maxPlayers,
         currentGameId = lobbyClient->receive_game_created();
         std::cout << "[Controller] Partida creada con ID: " << currentGameId << std::endl;
 
+        // ✅ Recibir rutas YAML de las carreras
+        try {
+            racePaths = lobbyClient->receive_race_paths();
+            std::cout << "[Controller] ✅ Received " << racePaths.size()
+                      << " race paths from server" << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "[Controller] ❌ Error receiving race paths: " << e.what() << std::endl;
+        }
+
         if (createMatchWindow) {
             createMatchWindow->close();
             createMatchWindow->deleteLater();
@@ -339,6 +348,15 @@ void LobbyController::onJoinMatchRequested(const QString& matchId) {
         currentGameId = confirmedGameId;
 
         std::cout << "[Controller] Unido exitosamente a partida ID: " << currentGameId << std::endl;
+
+        // ✅ Recibir rutas YAML de las carreras
+        try {
+            racePaths = lobbyClient->receive_race_paths();
+            std::cout << "[Controller] ✅ Received " << racePaths.size()
+                      << " race paths from server" << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "[Controller] ❌ Error receiving race paths: " << e.what() << std::endl;
+        }
 
         std::vector<QString> snapshotPlayers;
         std::map<QString, QString> snapshotCars;

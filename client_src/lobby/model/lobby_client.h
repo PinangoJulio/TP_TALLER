@@ -55,6 +55,9 @@ public:
     std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::string>>>> receive_city_maps();
     void send_selected_races(const std::vector<std::pair<std::string, std::string>>& races);
     
+    // Recibir rutas YAML de las carreras de la partida
+    std::vector<std::string> receive_race_paths();
+
     void start_listening();
     // [MODIFICADO] flag shutdown_connection opcional
     void stop_listening(bool shutdown_connection = false);

@@ -7,7 +7,9 @@
 
 #include "common_src/config.h"
 #include "common_src/dtos.h"  // RaceInfoDTO, ServerMessageType
+#define RUTA_MAPS "server_src/city_maps/"
 
+// ============================================
 Match::Match(std::string host_name, int code, int max_players)
     : host_name(std::move(host_name)), match_code(code), is_active(false),
       state(MatchState::WAITING), players_queues(), command_queue(),
@@ -275,6 +277,15 @@ const std::map<int, PlayerLobbyInfo>& Match::get_players() const {
 // ============================================
 // CARRERAS
 // ============================================
+std::vector<std::string> Match::get_race_yaml_paths() const {
+    std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(mtx));
+    std::vector<std::string> paths;
+    paths.reserve(race_configs.size());
+    for (const auto& cfg : race_configs) {
+        paths.push_back(std::string(RUTA_MAPS) + cfg.city + "/" + cfg.race_name + ".yaml");
+    }
+    return paths;
+}
 
 void Match::set_race_configs(const std::vector<ServerRaceConfig>& configs) {
     std::lock_guard<std::mutex> lock(mtx);

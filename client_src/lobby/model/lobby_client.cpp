@@ -414,34 +414,13 @@ void LobbyClient::read_room_snapshot(std::vector<QString>& players,
               << std::endl;
 }
 
+// Recibir rutas YAML de las carreras
+std::vector<std::string> LobbyClient::receive_race_paths() {
+    return protocol.receive_race_paths();
+}
+
 // Destructor actualizado
 LobbyClient::~LobbyClient() {
-    // Asegurar join antes de destruir el objeto para evitar std::terminate.
-    // Aquí SÍ forzamos el cierre del socket porque el objeto se muere.
     stop_listening(true);
 }
 
-// ========================================================================================================================================================================
-// Estas son las funciones que necesito nuevas para seguir
-
-// void LobbyClient::leave_game(uint16_t game_id) {
-
-//     // To do: Falta esto en el servidor
-// }
-
-// void LobbyClient::select_car(uint8_t car_index) {
-
-//     // To do: Falta esto en el servidor
-// }
-
-// void LobbyClient::set_ready(bool is_ready) {
-
-//     // To do: Falta esto en el servidor
-// }
-
-// void LobbyClient::start_game(uint16_t game_id) {
-
-//     // To do: Falta esto en el servidor
-// }
-// //
-// ========================================================================================================================================================================

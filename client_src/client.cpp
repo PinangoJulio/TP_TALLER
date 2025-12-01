@@ -25,7 +25,7 @@ using namespace SDL2pp;
 
 Client::Client(const char* hostname, const char* servname)
     : protocol(hostname, servname), username("Player"),  // Obtener del lobby Qt
-      player_id(-1), active(true), command_queue(), snapshot_queue(),
+      player_id(-1), races_paths() , active(true), command_queue(), snapshot_queue(),
       sender(protocol, command_queue), receiver(protocol, snapshot_queue), threads_started(false) {
     std::cout << "[Client] Cliente inicializado para " << username << std::endl;
     player_id = protocol.receive_client_id();
@@ -52,6 +52,10 @@ void Client::start() {
     });
 
     controller.start();
+    username = controller.getPlayerName().toStdString();
+    std::vector<std::string> paths = controller.getRacePaths();
+    races_paths = paths;
+
     lobbyLoop.exec();  // Bloquea hasta que el lobby emite lobbyFinished
 
     if (!active) {
@@ -125,7 +129,7 @@ void Client::start() {
     bool race_finished = false;
 
     std::cout << "\n";
-    std::cout << "[Client] 🏁 Entrando al game loop..." << std::endl;
+    std::cout << "[Client]Entrando al game loop..." << std::endl;
     std::cout << "[Client]  Controles:" << std::endl;
     std::cout << "[Client]    W: Acelerar" << std::endl;
     std::cout << "[Client]    S: Frenar" << std::endl;

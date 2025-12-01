@@ -175,9 +175,20 @@ bool MatchesMonitor::add_races_to_match(int match_id, const std::vector<ServerRa
     return true;
 }
 
-// ============================================
 // LISTADO Y VALIDACIONES
-// ============================================
+
+std::vector<std::string> MatchesMonitor::get_race_paths(int match_id) const {
+    std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(mtx));
+
+    auto it = matches.find(match_id);
+    if (it == matches.end()) {
+        std::cerr << "[MatchesMonitor] Match " << match_id << " not found" << std::endl;
+        return {};
+    }
+
+    return it->second->get_race_yaml_paths();
+}
+
 
 std::vector<GameInfo> MatchesMonitor::list_available_matches() {
     std::lock_guard<std::mutex> lock(mtx);

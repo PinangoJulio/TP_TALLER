@@ -15,6 +15,7 @@ private:
     ClientProtocol protocol;
     std::string username;
     uint16_t player_id;
+    std::vector<std::string> races_paths;
     bool active;
 
     // Queues para comunicación entre threads
