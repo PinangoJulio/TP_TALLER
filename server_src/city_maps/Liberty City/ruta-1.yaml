@@ -1,7 +1,7 @@
 race:
-  name: "Ruta1"
+  name: "Ruta-1"
   city: "Liberty City"
-  description: "Circuito Ruta1 en Liberty City"
+  description: "Circuito Ruta-1 en Liberty City"
   max_time_seconds: 600
   total_laps: 3
 

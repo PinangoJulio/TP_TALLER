@@ -1,7 +1,7 @@
 race:
-  name: "Ruta2"
+  name: "Ruta-2"
   city: "San_Andreas"
-  description: "Circuito Ruta2 en San_Andreas"
+  description: "Circuito Ruta-2 en San_Andreas"
   max_time_seconds: 600
   total_laps: 3
 

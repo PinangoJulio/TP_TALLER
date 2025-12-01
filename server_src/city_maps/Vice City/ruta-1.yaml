@@ -1,7 +1,7 @@
 race:
-  name: "Ruta1"
+  name: "Ruta-1"
   city: "Vice_City"
-  description: "Circuito Ruta1 en Vice_City"
+  description: "Circuito Ruta-1 en Vice_City"
   max_time_seconds: 600
   total_laps: 3
 
