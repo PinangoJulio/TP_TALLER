@@ -26,12 +26,16 @@ void ClientReceiver::run() {
             if (player && player->disconnected)
                 this->stop();
         } catch (const std::exception& e) {
-            std::cerr << "[ClientReceiver] ❌ Error recibiendo snapshot: " << e.what() << std::endl;
+            // Solo reportar error si no estamos cerrando intencionalmente
+            if (should_keep_running()) {
+                std::cerr << "[ClientReceiver] ❌ Error recibiendo snapshot: " << e.what() << std::endl;
+            }
             break;
         }
         try {
             snapshots_queue.try_push(game_state_snapshot);
         } catch (const ClosedQueue&) {
+            // Cola cerrada, salir limpiamente
             break;
         }
     }
@@ -40,6 +44,6 @@ void ClientReceiver::run() {
 }
 
 ClientReceiver::~ClientReceiver() {
-    stop();
-    join();
+    // El join() se hace desde Client::~Client()
+    // No hacemos nada aquí para evitar doble join
 }
