@@ -1,7 +1,20 @@
-.PHONY: all debug test clean clean_all server client install
+.PHONY: all debug test clean clean_all server client install setup
 
 BUILD_DIR = build
 INSTALLER = install.sh
+
+# =======================================================
+# Target de Setup (primera instalación)
+# =======================================================
+
+# Instala todas las dependencias necesarias del sistema
+# Instala todas las dependencias necesarias del sistema
+setup:
+	@echo "--- Instalando dependencias del sistema ---"
+	@sudo apt-get update
+	@sudo apt-get install -y cmake build-essential qt6-base-dev libqt6charts6-dev qt6-multimedia-dev libyaml-cpp-dev libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev libxmp-dev fluidsynth libfluidsynth-dev libwavpack-dev
+	@echo "--- Dependencias instaladas correctamente ---"
+
 
 # =======================================================
 # Targets de Desarrollo Rápido (make debug)
@@ -67,15 +80,11 @@ clean_all:
 # Target de Instalación (make install)
 # =======================================================
 
-# El target 'install' ejecuta el script de instalación del sistema.
-# Depende de 'debug' para asegurar que el proyecto esté compilado.
-install: debug
+# El target 'install' primero instala dependencias y luego ejecuta el script de instalación.
+# Para primera instalación: sudo make install
+install: setup debug
 	@echo "--- 4. Preparando el instalador ---"
-	# 1. Asegurarse de que el script instalador sea ejecutable
 	@sudo chmod +x $(INSTALLER)
-	# 2. Ejecutar el script con privilegios de root para la instalación final.
 	@echo "--- 5. Ejecutando instalación final del sistema (requiere sudo) ---"
 	@sudo bash ./$(INSTALLER)
 	@echo "--- Instalación Completa ---"
-
-
