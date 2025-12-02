@@ -20,9 +20,8 @@ void ClientMonitor::broadcast(const GameState& state) {
         Queue<GameState>& queue = pair.first;
         try {
             queue.try_push(state);
-        } catch (const std::exception& e) {
-            std::cout << "Error trying to push the message, probably client's queue is closed. "
-                      << e.what() << std::endl;
+        } catch (const ClosedQueue&) {
+        } catch (const std::exception&) {
         }
     }
 }

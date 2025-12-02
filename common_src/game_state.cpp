@@ -22,11 +22,6 @@ GameState::GameState(const std::vector<Player*>& player_list, const std::string&
         info.car_name = player_ptr->getSelectedCar();
         info.car_type = player_ptr->getCarType();
 
-        // ✅ DEBUG
-        std::cout << "[GameState] Player " << info.player_id
-                  << ": username='" << info.username
-                  << "' car='" << info.car_name
-                  << "' type='" << info.car_type << "'" << std::endl;
 
         // Posición y física
         info.pos_x = player_ptr->getX();

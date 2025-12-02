@@ -475,9 +475,8 @@ void Receiver::handle_match_messages() {
 
     try {
         while (is_running) {
-            // ✅ VERIFICAR SHUTDOWN
             if (!is_running) {
-                std::cout << "[Receiver " << username << "] 🛑 Match interrupted by shutdown" << std::endl;
+                std::cout << "[Receiver " << username << "]  Match interrupted by shutdown" << std::endl;
                 break;
             }
             
