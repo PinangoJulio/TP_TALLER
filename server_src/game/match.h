@@ -8,6 +8,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <thread> 
 
 #include "game_loop.h"
 #include "../../common_src/dtos.h"
@@ -50,6 +51,9 @@ private:
 
     // ÚNICO GameLoop que gestiona la física y lógica
     std::unique_ptr<GameLoop> gameloop;
+    
+    // Thread para ejecutar el GameLoop <-- AGREGAR ESTA LÍNEA
+    std::unique_ptr<std::thread> game_thread;
 
     ClientMonitor players_queues;
     Queue<ComandMatchDTO> command_queue;

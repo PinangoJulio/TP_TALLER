@@ -143,13 +143,6 @@ void Receiver::handle_lobby() {
                     break;
                 }
                 
-                // ================================================================
-                // ✅ SOLUCIÓN DEL CONFLICTO (Estilo de tu compañera)
-                // 1. PRIMERO enviamos el Broadcast a todos (incluido Host)
-                // 2. LUEGO iniciamos el Match
-                // Esto evita que el Match intente hacer broadcast mientras el Monitor está ocupado.
-                // ================================================================
-                
                 std::vector<uint8_t> start_msg = { static_cast<uint8_t>(LobbyMessageType::MSG_GAME_STARTED) };
                 
                 // Enviar al Host (nosotros)

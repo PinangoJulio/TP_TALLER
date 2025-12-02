@@ -37,22 +37,79 @@ static std::string normalize_race_filename(std::string race_name) {
 // ============================================
 
 Match::Match(std::string host_name, int code, int max_players)
-    : host_name(std::move(host_name)), match_code(code), is_active(false),
-      state(MatchState::WAITING), current_race_index(0), players_queues(), command_queue(),
-      max_players(max_players) {
+    : host_name(std::move(host_name)), 
+      match_code(code), 
+      is_active(false),
+      state(MatchState::WAITING),
+      current_race_index(0),
+      game_thread(nullptr),  // <-- Inicializar game_thread como nullptr
+      command_queue(),
+      max_players(max_players),
+      broadcast_callback(nullptr) {
     
     std::cout << "[Match] Creado: " << this->host_name << " (code=" << code << ", max=" << max_players << ")\n";
     
-    // Inicializamos el GameLoop pero se queda esperando la señal
+    // Inicializamos el GameLoop (pero NO creamos el thread todavía)
     gameloop = std::make_unique<GameLoop>(command_queue, players_queues);
-    gameloop->start();
 }
 
 Match::~Match() {
     stop_match();
-    if (gameloop) {
-        gameloop->join();
+    
+    // Esperar a que el thread del GameLoop termine
+    if (game_thread && game_thread->joinable()) {
+        game_thread->join();
     }
+}
+
+// ============================================
+// START MATCH (MANUAL)
+// ============================================
+
+void Match::start_match() {
+    std::cout << "[Match] ════════════════════════════════════════════\n";
+    std::cout << "[Match] 🏁 INICIANDO PARTIDA CODE " << match_code << "\n";
+    std::cout << "[Match] ════════════════════════════════════════════\n";
+
+    std::lock_guard<std::mutex> lock(mtx);
+    
+    if (state == MatchState::STARTED) {
+        std::cout << "[Match] Ya está iniciada\n";
+        return;
+    }
+
+    // Validación manual de seguridad
+    bool all_ready = true;
+    if (players_info.empty()) all_ready = false;
+    for (const auto& [id, info] : players_info) {
+        if (!info.is_ready) { 
+            all_ready = false; 
+            break; 
+        }
+    }
+
+    if (!all_ready || race_configs.empty()) {
+        std::cout << "[Match] No se puede iniciar (Faltan jugadores listos o carreras)\n";
+        return;
+    }
+
+    // 1. Cambiar estado
+    state = MatchState::STARTED;
+    is_active.store(true);
+
+    if (gameloop) {
+        gameloop->begin_match();  // <-- Pone start_game_signal = true
+    }
+
+    // 2. Crear y lanzar el thread del GameLoop (si no existe ya)
+    if (gameloop && !game_thread) {
+        game_thread = std::make_unique<std::thread>([this]() {
+            gameloop->run();
+        });
+        std::cout << "[Match] Thread de GameLoop creado y lanzado\n";
+    }
+    
+    std::cout << "[Match] Partida en marcha (GameLoop ejecutándose en thread separado).\n";
 }
 
 void Match::stop_match() {
@@ -244,48 +301,6 @@ bool Match::can_start() const {
     return state == MatchState::READY && all_players_ready() && !race_configs.empty();
 }
 
-// ============================================
-// START MATCH (MANUAL)
-// ============================================
-
-void Match::start_match() {
-    std::cout << "[Match] ════════════════════════════════════════════\n";
-    std::cout << "[Match] 🏁 INICIANDO PARTIDA CODE " << match_code << "\n";
-    std::cout << "[Match] ════════════════════════════════════════════\n";
-
-    std::lock_guard<std::mutex> lock(mtx);
-    
-    if (state == MatchState::STARTED) {
-        std::cout << "[Match] Ya está iniciada\n";
-        return;
-    }
-
-    // Validación manual de seguridad
-    bool all_ready = true;
-    if (players_info.empty()) all_ready = false;
-    for (const auto& [id, info] : players_info) {
-        if (!info.is_ready) { 
-            all_ready = false; 
-            break; 
-        }
-    }
-
-    if (!all_ready || race_configs.empty()) {
-        std::cout << "[Match] No se puede iniciar (Faltan jugadores listos o carreras)\n";
-        return;
-    }
-
-    // 1. Cambiar estado
-    state = MatchState::STARTED;
-    is_active.store(true);
-
-    // 2. Despertar el GameLoop
-    if (gameloop) {
-        gameloop->begin_match(); 
-    }
-    
-    std::cout << "[Match] Partida en marcha (GameLoop notificado).\n";
-}
 
 // ============================================
 // CONFIGURACIÓN DE CARRERAS
