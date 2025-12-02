@@ -204,6 +204,15 @@ void LobbyServer::send_error(Socket& client_socket, LobbyErrorCode error_code,
     client_socket.sendall(buffer.data(), buffer.size());
 }
 
+// uint8_t LobbyServer::read_message_type(Socket& client_socket) {
+//     uint8_t type;
+//     int bytes = client_socket.recvall(&type, sizeof(type));
+//     if (bytes == 0) {
+//         throw std::runtime_error("Connection closed by client");
+//     }
+//     return type;
+// }
+
 uint8_t LobbyServer::read_message_type(Socket& client_socket) {
     uint8_t type;
     int bytes = client_socket.recvall(&type, sizeof(type));

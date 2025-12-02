@@ -17,7 +17,6 @@ Receiver::Receiver(ServerProtocol& protocol, int id, Queue<GameState>& sender_me
       is_running(is_running), monitor(monitor), commands_queue(),
       sender(protocol, sender_messages_queue, is_running, id) {}
 
-
 std::vector<std::pair<std::string, std::vector<std::pair<std::string, std::string>>>>
 Receiver::get_city_maps() {
     namespace fs = std::filesystem;
@@ -142,12 +141,12 @@ void Receiver::handle_lobby() {
                 protocol.send_buffer(LobbyProtocol::serialize_game_created(match_id));
                 std::cout << "[Receiver] Game created with ID: " << match_id << "\n";
 
-                //ENVIAR YAML AL CLIENTE
+                // ENVIAR YAML AL CLIENTE
                 std::vector<std::string> yaml_paths = monitor.get_race_paths(match_id);
                 if (!yaml_paths.empty()) {
                     protocol.send_race_paths(yaml_paths);
-                    std::cout << "[Receiver] Sent " << yaml_paths.size()
-                              << " race paths to " << username << std::endl;
+                    std::cout << "[Receiver] Sent " << yaml_paths.size() << " race paths to "
+                              << username << std::endl;
                 }
 
                 break;
@@ -230,12 +229,12 @@ void Receiver::handle_lobby() {
                 std::cout << "[Receiver] ✅ Snapshot sent with END marker to " << username
                           << std::endl;
 
-                //ENVIAR YAML AL CLIENTE
+                // ENVIAR YAML AL CLIENTE
                 std::vector<std::string> yaml_paths = monitor.get_race_paths(game_id);
                 if (!yaml_paths.empty()) {
                     protocol.send_race_paths(yaml_paths);
-                    std::cout << "[Receiver] Sent " << yaml_paths.size()
-                              << " race paths to " << username << std::endl;
+                    std::cout << "[Receiver] Sent " << yaml_paths.size() << " race paths to "
+                              << username << std::endl;
                 }
 
                 // 6. BROADCAST A LOS DEMÁS **DESPUÉS**
@@ -284,36 +283,36 @@ void Receiver::handle_lobby() {
             // ------------------------------------------------------------
             case MSG_LEAVE_GAME: {
                 uint16_t game_id = protocol.read_uint16();
-            
+
                 std::cout << "[Receiver] " << username << " leaving game " << game_id << "\n";
-            
+
                 if (current_match_id != game_id) {
                     protocol.send_buffer(LobbyProtocol::serialize_error(ERR_PLAYER_NOT_IN_GAME,
                                                                         "You are not in that game"));
                     break;
                 }
-            
+
                 // ✅ ENVIAR NOTIFICACIÓN DE SALIDA **ANTES** DE ELIMINAR
                 auto left_notif = LobbyProtocol::serialize_player_left_notification(username);
                 monitor.broadcast_to_match(game_id, left_notif, username);
-            
+
                 // Eliminar del monitor
                 monitor.leave_match(username);
-            
+
                 current_match_id = -1;
                 this->match_id = -1;
-            
+
                 std::cout << "[Receiver] " << username << " successfully left game " << game_id
                           << std::endl;
-            
+
                 // Enviar lista de partidas actualizada
                 std::vector<GameInfo> games = monitor.list_available_matches();
                 auto buffer = LobbyProtocol::serialize_games_list(games);
                 protocol.send_buffer(buffer);
-            
+
                 std::cout << "[Receiver] Sent updated games list (" << games.size() << " games)"
                           << std::endl;
-            
+
                 break;
             }
             // ------------------------------------------------------------
@@ -360,10 +359,25 @@ void Receiver::handle_lobby() {
                     break;
                 }
 
+                // ✅ INICIAR EL MATCH (sin enviar mensajes)
                 monitor.start_match(game_id);
 
                 std::cout << "[Receiver] ✅ Game " << game_id << " started successfully!"
                           << std::endl;
+
+                // ✅ AHORA ENVIAR MSG_GAME_STARTED A TODOS (ya no hay lock)
+                std::cout << "[Receiver] 📡 Broadcasting MSG_GAME_STARTED to all players..."
+                          << std::endl;
+                std::vector<uint8_t> start_msg = {
+                    static_cast<uint8_t>(LobbyMessageType::MSG_GAME_STARTED)};
+
+                // Enviar al jugador que solicitó el inicio
+                protocol.send_buffer(start_msg);
+                std::cout << "[Receiver]   ✅ Sent to " << username << " (requester)" << std::endl;
+
+                // Broadcast a todos los demás
+                monitor.broadcast_to_match(game_id, start_msg, username);
+                std::cout << "[Receiver]   ✅ Broadcasted to other players" << std::endl;
 
                 // ✅ TRANSICIÓN AL JUEGO
                 in_lobby = false;
@@ -379,9 +393,8 @@ void Receiver::handle_lobby() {
             }
         }
 
-        std::cout << "[Receiver] ✅ Exiting lobby loop for " << username
-                  << " (match_id=" << match_id << ", is_running=" << is_running << ")" << std::endl;
-
+        std::cout << "[Receiver] ✅ Exiting lobby loop for " << username << " (match_id=" << match_id
+                  << ", is_running=" << is_running << ")" << std::endl;
 
         // OBTENER QUEUE DE COMANDOS DEL MATCH
         commands_queue = monitor.get_command_queue(match_id);
@@ -422,8 +435,8 @@ void Receiver::handle_match_messages() {
         while (is_running) {
             ComandMatchDTO comand_match;
             comand_match.player_id = id;
-            std::cout << "[Receiver] Waiting for command from player " << comand_match.player_id << "..."
-                      << std::endl;
+            std::cout << "[Receiver] Waiting for command from player " << comand_match.player_id
+                      << "..." << std::endl;
 
             try {
                 // hasta recibir un comando del cliente
@@ -461,7 +474,6 @@ void Receiver::run() {
     // VERIFICAR SI PASÓ A FASE DE JUEGO
 
     handle_match_messages();
-
 
     if (match_id != -1) {
         monitor.delete_player_from_match(id, match_id);

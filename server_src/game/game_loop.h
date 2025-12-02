@@ -1,4 +1,3 @@
-// filepath: /home/lou/Escritorio/Taller/TP-Final/TP_TALLER/server_src/game/game_loop.h
 #ifndef GAME_LOOP_H
 #define GAME_LOOP_H
 
@@ -11,6 +10,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <tuple>
 
 #include "../../common_src/dtos.h"
 #include "../../common_src/game_state.h"
@@ -21,7 +21,7 @@
 #include "player.h"
 
 #define NITRO_DURATION 12
-#define SLEEP          250
+#define SLEEP          250 // Ticks de 250ms (4 updates por segundo)
 
 // Forward declaration
 class Race;
@@ -41,6 +41,9 @@ private:
     // ---- ESTADO ----
     std::atomic<bool> is_running;
     std::atomic<bool> match_finished;  // Todas las carreras completadas
+    
+    // ✅ NUEVO: Control de inicio sincronizado
+    std::atomic<bool> is_game_started;
 
     // ---- COMUNICACIÓN ----
     Queue<ComandMatchDTO>& comandos;  // Comandos de jugadores (ACCELERATE, BRAKE, etc)
@@ -92,6 +95,9 @@ private:
 
 public:
     GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues);
+  
+    // ✅ NUEVO: Método para desbloquear el loop
+    void start_game();
 
     // ---- CONFIGURACIÓN DE CARRERAS ----
     void add_race(const std::string& city, const std::string& yaml_path);
@@ -117,4 +123,3 @@ public:
 };
 
 #endif  // GAME_LOOP_H
-

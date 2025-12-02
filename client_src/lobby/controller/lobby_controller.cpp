@@ -437,36 +437,44 @@ void LobbyController::onCarSelected(const CarInfo& car) {
     std::cout << "[Controller] Auto seleccionado: " << car.name.toStdString() << std::endl;
 
     try {
-        std::cout << "[Controller] DEBUG: Enviando selección de auto..." << std::endl;
+        std::cout << "[Controller] Enviando selección de auto..." << std::endl;
         lobbyClient->select_car(car.name.toStdString(), car.type.toStdString());
 
-        std::cout << "[Controller] DEBUG: Esperando ACK..." << std::endl;
+        std::cout << "[Controller] Esperando confirmación (ACK)..." << std::endl;
         std::string car_confirmed = lobbyClient->receive_car_confirmation();
-        std::cout << "[Controller] ✅ CAR confirmed: " << car_confirmed << std::endl;
+        std::cout << "[Controller] ✅ Auto confirmado por servidor: " << car_confirmed << std::endl;
 
+        // 1. Cerrar Garage
         if (garageWindow) {
             garageWindow->close();
             garageWindow->deleteLater();
             garageWindow = nullptr;
         }
 
-        /*if (!lobbyClient->is_listening()) {
+        // 2. IMPORTANTE: Iniciar el listener para recibir notificaciones (Ready, Start, Joined)
+        // Esto es vital para que la Waiting Room se actualice y para recibir la señal de inicio.
+        if (!lobbyClient->is_listening()) {
+            std::cout << "[Controller] Iniciando listener de notificaciones..." << std::endl;
+            // Conectar las señales antes de iniciar el thread
+            connectNotificationSignals(); 
             lobbyClient->start_listening();
-        }*/
+        }
 
-        /*std::cout << "[Controller] Listener status: "
-                  << (lobbyClient->is_listening() ? "RUNNING" : "STOPPED") << std::endl;
-
+        // 3. Abrir la Sala de Espera (Waiting Room)
         std::cout << "[Controller] Abriendo sala de espera..." << std::endl;
         openWaitingRoom();
 
+        // 4. Configurar datos iniciales del jugador local en la ventana
         if (waitingRoomWindow) {
-            std::cout << "[Controller] Actualizando auto del jugador local: "
-                      << car.name.toStdString() << std::endl;
-            waitingRoomWindow->setPlayerCarByName(playerName, car.name);
-        }*/
-        protocol.set_ready(true);
-        finishLobby(true);
+            // Mostrar mi propio auto y nombre
+            waitingRoomWindow->setLocalPlayerInfo(playerName, car.name);
+            
+            // Asegurarnos de que el estado visual sea "No Listo" al entrar
+            waitingRoomWindow->setPlayerReadyByName(playerName, false);
+        }
+
+        // ⚠️ NOTA: Ya NO llamamos a finishLobby(true) aquí.
+        // Ahora esperamos en la WaitingRoom hasta que suceda el evento MSG_GAME_STARTED.
 
     } catch (const std::exception& e) {
         handleNetworkError(e);
@@ -534,11 +542,18 @@ void LobbyController::connectNotificationSignals() {
                 }
             });
 
+    // CONEXIÓN CLAVE PARA EL INICIO:
     connect(lobbyClient.get(), &LobbyClient::gameStartedNotification, this, [this]() {
-        std::cout << "[Controller] Notification: Game starting!" << std::endl;
-        if (waitingRoomWindow) {
-            waitingRoomWindow->close();
+        std::cout << "[Controller] ✅ Señal de inicio confirmada por el servidor. Pasando a SDL..." << std::endl;
+        
+        // Detener el listener sin cerrar el socket (false), 
+        // porque Client::start() necesita usar ese socket para el juego.
+        if (lobbyClient) {
+            lobbyClient->stop_listening(false);
         }
+        
+        // Esto cierra el loop de Qt y devuelve el control a main/Client::start
+        finishLobby(true); 
     });
 
     connect(lobbyClient.get(), &LobbyClient::errorOccurred, this, [this](QString errorMsg) {
@@ -555,6 +570,7 @@ void LobbyController::connectNotificationSignals() {
                 }
             });
 }
+
 
 void LobbyController::onBackFromGarage() {
     std::cout << "[Controller] Usuario volvió desde garage" << std::endl;
@@ -587,44 +603,38 @@ void LobbyController::onBackFromGarage() {
 }
 
 void LobbyController::openWaitingRoom() {
-    std::cout << "[Controller] Abriendo sala de espera..." << std::endl;
+    std::cout << "[Controller] Inicializando UI de WaitingRoom..." << std::endl;
 
-    uint8_t maxPlayers = 8;
+    uint8_t maxPlayers = 8; // O leerlo de la config de la partida si la tienes guardada
     waitingRoomWindow = new WaitingRoomWindow(maxPlayers);
 
-    // 1. Procesar jugadores pendientes (del snapshot)
+    // 1. Cargar jugadores que ya estaban (si nos unimos a una partida empezada)
     for (const auto& username : pendingPlayers) {
-        std::cout << "[Controller] Procesando jugador pendiente: " << username.toStdString()
-                  << std::endl;
         waitingRoomWindow->addPlayerByName(username);
-
+        
+        // Si teníamos info de sus autos, ponerla
         auto it = pendingCars.find(username);
         if (it != pendingCars.end()) {
-            std::cout << "[Controller] Procesando auto pendiente: " << it->second.toStdString()
-                      << std::endl;
             waitingRoomWindow->setPlayerCarByName(username, it->second);
         }
     }
-
-    // Limpiar pendientes
+    
+    // Limpiar buffers temporales
     pendingPlayers.clear();
     pendingCars.clear();
 
-    // 2. Agregar jugador local
-    std::cout << "[Controller] Adding local player: " << playerName.toStdString() << std::endl;
-    waitingRoomWindow->addPlayerByName(playerName);
-
-    // 3. Conectar botones de la UI
+    // 2. Conectar señales de la ventana
     connect(waitingRoomWindow, &WaitingRoomWindow::readyToggled, this,
             &LobbyController::onPlayerReadyToggled);
+            
     connect(waitingRoomWindow, &WaitingRoomWindow::startGameRequested, this,
             &LobbyController::onStartGameRequested);
+            
     connect(waitingRoomWindow, &WaitingRoomWindow::backRequested, this,
             &LobbyController::onBackFromWaitingRoom);
 
+    // 3. Mostrar ventana
     waitingRoomWindow->show();
-
-    std::cout << "[Controller] Sala de espera inicializada" << std::endl;
 }
 
 void LobbyController::onPlayerReadyToggled(bool isReady) {
@@ -647,37 +657,34 @@ void LobbyController::onPlayerReadyToggled(bool isReady) {
     }
 }
 
+
 void LobbyController::onStartGameRequested() {
-    std::cout << "[Controller] Usuario solicitó iniciar partida" << std::endl;
+    std::cout << "[Controller] ════════════════════════════════════════════" << std::endl;
+    std::cout << "[Controller] 🎮 Solicitando inicio de partida al servidor..." << std::endl;
+    
     try {
-        if (!lobbyClient) {
-            throw std::runtime_error("LobbyClient no inicializado");
-        }
-        // Enviar start al servidor y continuar sin esperar confirmación
-        lobbyClient->start_game(currentGameId);
-        std::cout << "[Controller] Señal de inicio enviada" << std::endl;
-
-        // ✅ IMPORTANTE: Detener listener PERO mantener socket abierto para el juego
-        std::cout << "[Controller]  Deteniendo listener de lobby..." << std::endl;
         if (lobbyClient) {
-            // ✅ Pasar FALSE para NO cerrar el socket (lo necesitamos para el juego)
-            // El socket será usado por los threads receiver/sender del juego
-            lobbyClient->stop_listening(false);
+            std::cout << "[Controller]   Verificando listener..." << std::endl;
+            std::cout << "[Controller]   Listener activo: " 
+                      << (lobbyClient->is_listening() ? "SÍ ✅" : "NO ❌") << std::endl;
+            
+            std::cout << "[Controller]   Enviando start_game(currentGameId=" 
+                      << currentGameId << ")..." << std::endl;
+            lobbyClient->start_game(currentGameId);
+            
+            std::cout << "[Controller] ✅ Solicitud enviada. Esperando MSG_GAME_STARTED..." << std::endl;
+            std::cout << "[Controller]   (El listener debe capturar el mensaje automáticamente)" << std::endl;
+        } else {
+            std::cerr << "[Controller] ❌ ERROR: lobbyClient es nullptr" << std::endl;
         }
-        std::cout << "[Controller] ✅ Listener detenido" << std::endl;
-
-        // ✅ IMPORTANTE: Usar QTimer::singleShot para que finishLobby se ejecute
-        // DESPUÉS de que termine este slot, permitiendo que Qt procese la señal
-        QTimer::singleShot(0, this, [this]() {
-            finishLobby(true);
-        });
-
+        
     } catch (const std::exception& e) {
+        std::cerr << "[Controller] ❌ Error al solicitar inicio: " << e.what() << std::endl;
         handleNetworkError(e);
-        finishLobby(false);
     }
+    
+    std::cout << "[Controller] ════════════════════════════════════════════" << std::endl;
 }
-
 // En cualquier flujo de salida manual del lobby (volver) marcar como no exitoso
 void LobbyController::onBackFromWaitingRoom() {
     std::cout << "[Controller] Usuario salió de la sala de espera" << std::endl;

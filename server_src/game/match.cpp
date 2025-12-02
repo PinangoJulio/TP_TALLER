@@ -318,23 +318,35 @@ void Match::set_race_configs(const std::vector<ServerRaceConfig>& configs) {
     std::cout << "[Match] Configuradas " << race_configs.size() << " carreras en GameLoop\n";
 }
 
+// void Match::send_game_started_confirmation() {
+//     std::cout << "[Match] ════════════════════════════════════════════" << std::endl;
+//     std::cout << "[Match]  Enviando MSG_GAME_STARTED a todos los jugadores..." << std::endl;
+
+//     if (!broadcast_callback) {
+//         std::cerr << "[Match] ❌ No hay broadcast_callback configurado" << std::endl;
+//         return;
+//     }
+
+//     // Serializar mensaje simple: solo el tipo
+//     std::vector<uint8_t> buffer;
+//     buffer.push_back(static_cast<uint8_t>(LobbyMessageType::MSG_GAME_STARTED)); // 0x14
+
+//     std::cout << "[Match]   Mensaje serializado: 0x" << std::hex 
+//               << static_cast<int>(buffer[0]) << std::dec << " (size: " << buffer.size() << ")" << std::endl;
+
+//     // Enviar a TODOS los jugadores (sin excluir a nadie)
+//     std::cout << "[Match]   Llamando a broadcast_callback para " << players_info.size() 
+//               << " jugadores..." << std::endl;
+    
+//     broadcast_callback(buffer, -1);
+
+//     std::cout << "[Match] ✅ MSG_GAME_STARTED broadcast completado" << std::endl;
+//     std::cout << "[Match] ════════════════════════════════════════════" << std::endl;
+// }
+
 void Match::send_game_started_confirmation() {
-    std::cout << "[Match]  Enviando MSG_GAME_STARTED a todos los jugadores..." << std::endl;
-
-    if (!broadcast_callback) {
-        std::cerr << "[Match] ❌ No hay broadcast_callback configurado" << std::endl;
-        return;
-    }
-
-    // Serializar mensaje simple: solo el tipo
-    std::vector<uint8_t> buffer;
-    buffer.push_back(static_cast<uint8_t>(LobbyMessageType::MSG_GAME_STARTED));
-
-    // Enviar a TODOS los jugadores (sin excluir a nadie)
-    broadcast_callback(buffer, -1);
-
-    std::cout << "[Match] ✅ MSG_GAME_STARTED enviado a " << players_info.size()
-              << " jugadores" << std::endl;
+    std::cout << "[Match] ⚠️ send_game_started_confirmation() deprecated - use receiver.cpp instead" << std::endl;
+    // Ya no enviamos nada aquí, se maneja en receiver.cpp
 }
 
 void Match::send_race_info_to_all_players() {
@@ -460,41 +472,44 @@ void Match::send_race_info_to_all_players() {
 
 void Match::start_match() {
     std::cout << "[Match] ════════════════════════════════════════════" << std::endl;
-    std::cout << "[Match] 🏁 INICIANDO PARTIDA CODE " << match_code << std::endl;
-    std::cout << "[Match] ════════════════════════════════════════════" << std::endl;
+    std::cout << "[Match] 🏁 Petición de START recibida para Match " << match_code << std::endl;
 
+    // 1. Evitar doble inicio
     if (state == MatchState::STARTED) {
-        std::cout << "[Match]   Ya está iniciada" << std::endl;
+        std::cout << "[Match] ⚠️ La partida ya está iniciada." << std::endl;
         return;
     }
 
+    // 2. Validación Crítica: ¿Están todos listos y hay mapa?
     if (!can_start()) {
-        std::cout << "[Match]  No se puede iniciar (no todos listos o sin carreras)" << std::endl;
+        std::cout << "[Match] ❌ No se puede iniciar: Faltan jugadores o no están todos listos." << std::endl;
+        // Opcional: Podrías enviar un mensaje de error al cliente que intentó iniciar
         return;
     }
 
+    // 3. Cambiar estado
     state = MatchState::STARTED;
     is_active.store(true);
 
-    std::cout << "[Match]  Partida iniciada con " << players_info.size() << " jugadores" << std::endl;
-    std::cout << "[Match]  Carreras configuradas: " << race_configs.size() << std::endl;
+    std::cout << "[Match] ✅ Condiciones cumplidas. Iniciando simulación..." << std::endl;
 
+    // 4. Despertar al GameLoop
+    // Esto hace que GameLoop salga de su pausa, ejecute reset_players_for_race()
+    // y asigne las posiciones (x, y) de spawn correctamente.
     if (gameloop) {
-        std::cout << "[Match]  DEBUG: GameLoop existe" << std::endl;
-        int players_with_car = 0;
-        for (const auto& [id, info] : players_info) {
-            if (!info.car_name.empty()) players_with_car++;
-        }
-        std::cout << "[Match]  DEBUG: Jugadores con auto seleccionado: " << players_with_car << std::endl;
+        gameloop->start_game();
     } else {
-        std::cerr << "[Match] ❌ ERROR: GameLoop NO existe!" << std::endl;
+        std::cerr << "[Match] ❌ ERROR CRÍTICO: GameLoop es null" << std::endl;
+        return;
     }
+    
+    // 5. Avisar a TODOS los clientes (Broadcast)
+    // Esto envía el MSG_GAME_STARTED (0x14) que hace que los clientes cierren Qt y abran SDL.
+    // Al abrir SDL, recibirán el primer snapshot con las posiciones ya calculadas.
+  //  send_game_started_confirmation(); 
 
-    // Importante: NO enviar confirmación al cliente; el cliente no la espera.
-    // Solo enviar la info de la primera carrera para que prepare recursos gráficos.
-    //send_race_info_to_all_players();
-
-    std::cout << "[Match] ✅ GameLoop ya está activo, comenzando carrera..." << std::endl;
+    std::cout << "[Match] 🚀 Clientes notificados. ¡Juego en marcha!" << std::endl;
+    std::cout << "[Match] ════════════════════════════════════════════" << std::endl;
 }
 
 void Match::stop_match() {
