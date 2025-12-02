@@ -1,16 +1,9 @@
+// server_src/server.cpp
 #include "server.h"
-
 #include <iostream>
 
-#include "../common_src/dtos.h"
-#include "../common_src/queue.h"
-#include "game/game_loop.h"
-#include "network/matches_monitor.h"
-
-#define QUIT 'q'
-
-Server::Server(const char* servicename) : acceptor(servicename) {
-    // 🔥 Banner de inicio
+Server::Server(const char* servicename) 
+    : acceptor(servicename), shutdown_signal(false) {
     std::cout << "==================================================" << std::endl;
     std::cout << "    NEED FOR SPEED 2D - SERVER" << std::endl;
     std::cout << "==================================================" << std::endl;
@@ -25,18 +18,36 @@ void Server::accept_connection() {
     std::cout << "[Server] Waiting for connections..." << std::endl;
 }
 
+void Server::shutdown() {
+    std::cout << "\n==================================================" << std::endl;
+    std::cout << "    🛑 SERVER SHUTDOWN INITIATED" << std::endl;
+    std::cout << "==================================================" << std::endl;
+    
+    shutdown_signal = true;
+    
+    // 1. Detener el acceptor (no acepta más conexiones)
+    std::cout << "[Server] Stopping acceptor..." << std::endl;
+    acceptor.stop();
+    
+    std::cout << "[Server] ✅ Server shutdown complete" << std::endl;
+    std::cout << "==================================================" << std::endl;
+}
+
 void Server::start() {
     accept_connection();
 
-    while (std::cin.get() != QUIT) {
-        std::cout << "[Server] Press 'q' to quit..." << std::endl;
+    char input;
+    while (std::cin.get(input)) {
+        if (input == 'q' || input == 'Q') {
+            break;
+        }
     }
 
-    std::cout << "[Server] Shutting down..." << std::endl;
+    shutdown();
 }
 
 Server::~Server() {
-    std::cout << "[Server] Stopping acceptor..." << std::endl;
-    acceptor.stop_accepting();
-    std::cout << "[Server] Server stopped." << std::endl;
+    if (!shutdown_signal) {
+        shutdown();
+    }
 }

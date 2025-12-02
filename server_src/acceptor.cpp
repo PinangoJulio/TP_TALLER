@@ -87,10 +87,46 @@ void Acceptor::run() {
 }
 
 void Acceptor::stop() {
+    std::cout << "[Acceptor] 🛑 SHUTDOWN: Disconnecting all clients..." << std::endl;
+    
     is_running = false;
-    socket.shutdown(SHUT_RDWR);
-    socket.close();
-    std::cout << "[Acceptor] Socket closed" << std::endl;
+    
+    // 1. Detener todos los clientes ANTES de cerrar el socket
+    for (auto* client : clients_connected) {
+        if (client) {
+            std::cout << "[Acceptor]   Stopping client " << client->get_id() << "..." << std::endl;
+            client->stop_connection();
+        }
+    }
+    
+    // 2. Cerrar el socket (esto desbloquea accept())
+    try {
+        socket.shutdown(SHUT_RDWR);
+        socket.close();
+        std::cout << "[Acceptor] Socket closed" << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "[Acceptor] Error closing socket: " << e.what() << std::endl;
+    }
+    
+    // 3. Esperar que terminen los threads de los clientes
+    std::cout << "[Acceptor] Waiting for " << clients_connected.size() 
+              << " clients to finish..." << std::endl;
+    
+    for (auto* client : clients_connected) {
+        if (client) {
+            try {
+                // Dar tiempo para que el cliente procese la desconexión
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                delete client;
+            } catch (const std::exception& e) {
+                std::cerr << "[Acceptor] Error deleting client: " << e.what() << std::endl;
+            }
+        }
+    }
+    
+    clients_connected.clear();
+    
+    std::cout << "[Acceptor] ✅ All clients disconnected" << std::endl;
 }
 
 Acceptor::~Acceptor() {

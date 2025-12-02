@@ -8,6 +8,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <arpa/inet.h>
 
 #define RUTA_MAPS "server_src/city_maps/"
 
@@ -70,6 +71,11 @@ void Receiver::handle_lobby() {
 
         while (is_running && in_lobby) {
             uint8_t msg_type = protocol.read_message_type();
+            if (!is_running) {
+                std::cout << "[Receiver " << username << "] 🛑 Server shutdown detected" << std::endl;
+                throw std::runtime_error("Server shutdown");
+            }
+        
 
             switch (msg_type) {
             // ------------------------------------------------------------
@@ -405,6 +411,26 @@ void Receiver::handle_lobby() {
     } catch (const std::exception& e) {
         std::string error_msg = e.what();
 
+        if (error_msg.find("Server shutdown") != std::string::npos) {
+            std::cout << "[Receiver " << username << "] Server is shutting down" << std::endl;
+            
+            // ✅ ENVIAR MENSAJE AL CLIENTE
+            try {
+                std::vector<uint8_t> shutdown_msg;
+                shutdown_msg.push_back(MSG_ERROR);
+                shutdown_msg.push_back(0xFF); // Código especial
+                std::string msg = "SERVER SHUTDOWN - DISCONNECTING";
+                uint16_t len = htons(msg.size());
+                shutdown_msg.push_back(reinterpret_cast<uint8_t*>(&len)[0]);
+                shutdown_msg.push_back(reinterpret_cast<uint8_t*>(&len)[1]);
+                shutdown_msg.insert(shutdown_msg.end(), msg.begin(), msg.end());
+                
+                protocol.send_buffer(shutdown_msg);
+            } catch (...) {
+                // Ignorar errores al enviar
+            }
+        }
+
         if (error_msg.find("Connection closed") != std::string::npos) {
             std::cout << "[Receiver] Player " << username << " disconnected" << std::endl;
         } else {
@@ -433,6 +459,10 @@ void Receiver::handle_match_messages() {
 
     try {
         while (is_running) {
+            if (!is_running) {
+                std::cout << "[Receiver " << username << "] 🛑 Match interrupted by shutdown" << std::endl;
+                break;
+            }
             ComandMatchDTO comand_match;
             comand_match.player_id = id;
             std::cout << "[Receiver] Waiting for command from player " << comand_match.player_id

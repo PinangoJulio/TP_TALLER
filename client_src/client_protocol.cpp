@@ -335,6 +335,26 @@ int32_t ClientProtocol::read_int32() {
 // (tu función está perfecta, no hace falta tocarla)
 GameState ClientProtocol::receive_snapshot() {
     uint8_t type = read_message_type();
+    
+    // ✅ DETECTAR MENSAJE DE SHUTDOWN
+    if (type == MSG_ERROR) {
+        uint8_t error_code = read_uint8();
+        if (error_code == 0xFF) { // Código especial de shutdown
+            std::string error_msg = read_string();
+            std::cout << "\n==================================================" << std::endl;
+            std::cout << "    ⚠️  " << error_msg << std::endl;
+            std::cout << "==================================================" << std::endl;
+            throw std::runtime_error("Server shutdown");
+        }
+    }
+    
+    if (type != (uint8_t)ServerMessageType::GAME_STATE_UPDATE) {
+        std::cout << "[ClientProtocol] Warning: Expected GAME_STATE_UPDATE, got " 
+                  << static_cast<int>(type) << std::endl;
+    }
+    
+    
+    
     if (type != (uint8_t)ServerMessageType::GAME_STATE_UPDATE)
         std::cout<< "[ClientProtocol] Warning: Expected GAME_STATE_UPDATE message, got "
                   << static_cast<int>(type) << std::endl;
