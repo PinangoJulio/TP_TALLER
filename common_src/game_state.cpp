@@ -22,12 +22,14 @@ GameState::GameState(const std::vector<Player*>& player_list, const std::string&
         info.car_name = player_ptr->getSelectedCar();
         info.car_type = player_ptr->getCarType();
 
-
         // Posición y física
         info.pos_x = player_ptr->getX();
         info.pos_y = player_ptr->getY();
         info.angle = player_ptr->getAngle();
         info.speed = player_ptr->getSpeed();
+
+        // ✅ NUEVO: Nivel del jugador
+        info.level = player_ptr->getLevel();
 
         // Velocidad (del Car)
         const Car* car = player_ptr->getCar();
@@ -66,9 +68,9 @@ GameState::GameState(const std::vector<Player*>& player_list, const std::string&
     race_info.race_number = 1;             // Obtener número de carrera actual
     race_info.total_races = 1;             // Obtener total de carreras
     race_info.remaining_time_ms = 600000;  // Calcular tiempo restante
-    race_info.players_finished = 0;        //  Contar jugadores que terminaron
+    race_info.players_finished = 0;        // Contar jugadores que terminaron
     race_info.total_players = static_cast<int32_t>(players.size());
-    race_info.winner_name = "";  //  Determinar ganador
+    race_info.winner_name = "";  // Determinar ganador
 
     // Llenar checkpoints, hints, NPCs, eventos
 }

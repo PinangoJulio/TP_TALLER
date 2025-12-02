@@ -348,47 +348,144 @@ bool GameLoop::all_players_disconnected() const {
     return connected_count <= 1; // Terminar si queda 0 o 1 solo
 }
 
-void GameLoop::procesar_comandos() {
-    ComandMatchDTO comando;
-    float delta_time = SLEEP / 1000.0f;
+// REEMPLAZAR procesar_comandos() completo en game_loop.cpp
 
-    while (comandos.try_pop(comando)) {
-        auto it = players.find(comando.player_id);
-        if (it == players.end()) continue;
+// void GameLoop::procesar_comandos() {
+//     ComandMatchDTO comando;
+//     float delta_time = SLEEP / 1000.0f;
 
-        Player* player = it->second.get();
-        Car* car = player->getCar();
-        if (!car) continue;
+//     while (comandos.try_pop(comando)) {
+//         auto it = players.find(comando.player_id);
+//         if (it == players.end()) continue;
 
-        switch (comando.command) {
-            case GameCommand::ACCELERATE: car->accelerate(delta_time * comando.speed_boost); break;
-            case GameCommand::BRAKE: car->brake(delta_time * comando.speed_boost); break;
-            case GameCommand::TURN_LEFT: car->turn_left(delta_time * comando.turn_intensity); break;
-            case GameCommand::TURN_RIGHT: car->turn_right(delta_time * comando.turn_intensity); break;
+//         Player* player = it->second.get();
+//         Car* car = player->getCar();
+//         if (!car) continue;
 
-            // Movimiento en 4 direcciones fijas
-            case GameCommand::MOVE_UP: car->move_up(delta_time); break;
-            case GameCommand::MOVE_DOWN: car->move_down(delta_time); break;
-            case GameCommand::MOVE_LEFT: car->move_left(delta_time); break;
-            case GameCommand::MOVE_RIGHT: car->move_right(delta_time); break;
+//         // ✅ Guardar posición y nivel anteriores antes de aplicar comando
+//         float prev_x = car->getX();
+//         float prev_y = car->getY();
+//         int player_level = player->getLevel();
 
-            case GameCommand::USE_NITRO: car->activateNitro(); break;
-            case GameCommand::DISCONNECT: player->disconnect(); break;
-            case GameCommand::STOP_ALL: car->setCurrentSpeed(0); car->setVelocity(0,0); break;
-            // Cheats
-            case GameCommand::CHEAT_INVINCIBLE: car->repair(1000.0f); break;
-            case GameCommand::CHEAT_WIN_RACE: player->markAsFinished(); break;
-            case GameCommand::CHEAT_MAX_SPEED: car->setCurrentSpeed(car->getMaxSpeed()); break;
-            default: break;
-        }
-    }
-}
+//         // Aplicar el comando (modifica posición del auto)
+//         switch (comando.command) {
+//             case GameCommand::ACCELERATE: 
+//                 car->accelerate(delta_time * comando.speed_boost); 
+//                 break;
+//             case GameCommand::BRAKE: 
+//                 car->brake(delta_time * comando.speed_boost); 
+//                 break;
+//             case GameCommand::TURN_LEFT: 
+//                 car->turn_left(delta_time * comando.turn_intensity); 
+//                 break;
+//             case GameCommand::TURN_RIGHT: 
+//                 car->turn_right(delta_time * comando.turn_intensity); 
+//                 break;
+
+//             // Movimiento en 4 direcciones fijas
+//             case GameCommand::MOVE_UP: 
+//                 car->move_up(delta_time); 
+//                 break;
+//             case GameCommand::MOVE_DOWN: 
+//                 car->move_down(delta_time); 
+//                 break;
+//             case GameCommand::MOVE_LEFT: 
+//                 car->move_left(delta_time); 
+//                 break;
+//             case GameCommand::MOVE_RIGHT: 
+//                 car->move_right(delta_time); 
+//                 break;
+
+//             case GameCommand::USE_NITRO: 
+//                 car->activateNitro(); 
+//                 break;
+//             case GameCommand::DISCONNECT: 
+//                 player->disconnect(); 
+//                 break;
+//             case GameCommand::STOP_ALL: 
+//                 car->setCurrentSpeed(0); 
+//                 car->setVelocity(0,0); 
+//                 break;
+                
+//             // Cheats
+//             case GameCommand::CHEAT_INVINCIBLE: 
+//                 car->repair(1000.0f); 
+//                 break;
+//             case GameCommand::CHEAT_WIN_RACE: 
+//                 player->markAsFinished(); 
+//                 break;
+//             case GameCommand::CHEAT_MAX_SPEED: 
+//                 car->setCurrentSpeed(car->getMaxSpeed()); 
+//                 break;
+//             default: 
+//                 break;
+//         }
+        
+//         // ✅ VALIDACIÓN DE COLISIÓN: Verificar nueva posición después del comando
+//         if (collision_manager) {
+//             float new_x = car->getX();
+//             float new_y = car->getY();
+            
+//             // can_move_to() valida colisiones y actualiza player_level si hay transición
+//             if (!can_move_to(prev_x, prev_y, new_x, new_y, player_level)) {
+//                 // Movimiento inválido - revertir posición
+//                 car->setPosition(prev_x, prev_y);
+//                 car->setCurrentSpeed(0.0f);
+//                 car->setVelocity(0.0f, 0.0f);
+                
+//                 // Debug opcional
+//                 // std::cout << "[GameLoop] 🚫 Colisión detectada para jugador " 
+//                 //           << comando.player_id << " en (" << new_x << ", " << new_y << ")" 
+//                 //           << std::endl;
+//             } else {
+//                 // Movimiento válido - actualizar nivel del jugador si cambió
+//                 player->setLevel(player_level);
+//             }
+//         }
+//     }
+// }
+
+// void GameLoop::procesar_comandos() {
+//     ComandMatchDTO comando;
+//     float delta_time = SLEEP / 1000.0f;
+
+//     while (comandos.try_pop(comando)) {
+//         auto it = players.find(comando.player_id);
+//         if (it == players.end()) continue;
+
+//         Player* player = it->second.get();
+//         Car* car = player->getCar();
+//         if (!car) continue;
+
+//         switch (comando.command) {
+//             case GameCommand::ACCELERATE: car->accelerate(delta_time * comando.speed_boost); break;
+//             case GameCommand::BRAKE: car->brake(delta_time * comando.speed_boost); break;
+//             case GameCommand::TURN_LEFT: car->turn_left(delta_time * comando.turn_intensity); break;
+//             case GameCommand::TURN_RIGHT: car->turn_right(delta_time * comando.turn_intensity); break;
+
+//             // Movimiento en 4 direcciones fijas
+//             case GameCommand::MOVE_UP: car->move_up(delta_time); break;
+//             case GameCommand::MOVE_DOWN: car->move_down(delta_time); break;
+//             case GameCommand::MOVE_LEFT: car->move_left(delta_time); break;
+//             case GameCommand::MOVE_RIGHT: car->move_right(delta_time); break;
+
+//             case GameCommand::USE_NITRO: car->activateNitro(); break;
+//             case GameCommand::DISCONNECT: player->disconnect(); break;
+//             case GameCommand::STOP_ALL: car->setCurrentSpeed(0); car->setVelocity(0,0); break;
+//             // Cheats
+//             case GameCommand::CHEAT_INVINCIBLE: car->repair(1000.0f); break;
+//             case GameCommand::CHEAT_WIN_RACE: player->markAsFinished(); break;
+//             case GameCommand::CHEAT_MAX_SPEED: car->setCurrentSpeed(car->getMaxSpeed()); break;
+//             default: break;
+//         }
+//     }
+// }
 
 void GameLoop::actualizar_fisica() { 
     // Integración Box2D
     // for (auto& [id, player] : players) { if (player->getCar()) player->getCar()->update(SLEEP/1000.0f); }
 }
-void GameLoop::detectar_colisiones() { /* Collision logic here */ }
+//void GameLoop::detectar_colisiones() { /* Collision logic here */ }
 
 void GameLoop::actualizar_estado_carrera() { /* Checkpoints logic here */ }
 
@@ -441,58 +538,58 @@ void GameLoop::load_spawn_points_for_current_race() {
     }
 }
 
-void GameLoop::reset_players_for_race() {
-    std::cout << "[GameLoop] >>> RESETEANDO JUGADORES PARA NUEVA CARRERA" << std::endl;
-    std::cout << "[GameLoop]   Mapa actual: " << current_map_yaml << std::endl;
-    load_spawn_points_for_current_race();
-    load_checkpoints_for_current_race();
-    try {
-        YAML::Node cfg = YAML::LoadFile("config.yaml");
-        if (cfg["checkpoint_tolerance_base"]) checkpoint_tol_base = cfg["checkpoint_tolerance_base"].as<float>();
-        if (cfg["checkpoint_tolerance_finish"]) checkpoint_tol_finish = cfg["checkpoint_tolerance_finish"].as<float>();
-        if (cfg["checkpoint_lookahead"]) checkpoint_lookahead = cfg["checkpoint_lookahead"].as<int>();
-        if (cfg["checkpoint_debug_enabled"]) checkpoint_debug_enabled = cfg["checkpoint_debug_enabled"].as<bool>();
-    } catch (...) {}
-    player_next_checkpoint.clear();
-    player_prev_pos.clear();
-    if (!checkpoints.empty()) {
-        int first_idx = 0;
-        for (size_t i = 0; i < checkpoints.size(); ++i) {
-            if (checkpoints[i].type != "start") { first_idx = (int)i; break; }
-        }
-        for (auto& [pid, player] : players) {
-            player_next_checkpoint[pid] = first_idx;
-        }
-    }
-    if (spawn_points.empty()) {
-        std::cerr << "[GameLoop]   NO HAY SPAWN POINTS! Usando posiciones por defecto" << std::endl;
-    }
+// void GameLoop::reset_players_for_race() {
+//     std::cout << "[GameLoop] >>> RESETEANDO JUGADORES PARA NUEVA CARRERA" << std::endl;
+//     std::cout << "[GameLoop]   Mapa actual: " << current_map_yaml << std::endl;
+//     load_spawn_points_for_current_race();
+//     load_checkpoints_for_current_race();
+//     try {
+//         YAML::Node cfg = YAML::LoadFile("config.yaml");
+//         if (cfg["checkpoint_tolerance_base"]) checkpoint_tol_base = cfg["checkpoint_tolerance_base"].as<float>();
+//         if (cfg["checkpoint_tolerance_finish"]) checkpoint_tol_finish = cfg["checkpoint_tolerance_finish"].as<float>();
+//         if (cfg["checkpoint_lookahead"]) checkpoint_lookahead = cfg["checkpoint_lookahead"].as<int>();
+//         if (cfg["checkpoint_debug_enabled"]) checkpoint_debug_enabled = cfg["checkpoint_debug_enabled"].as<bool>();
+//     } catch (...) {}
+//     player_next_checkpoint.clear();
+//     player_prev_pos.clear();
+//     if (!checkpoints.empty()) {
+//         int first_idx = 0;
+//         for (size_t i = 0; i < checkpoints.size(); ++i) {
+//             if (checkpoints[i].type != "start") { first_idx = (int)i; break; }
+//         }
+//         for (auto& [pid, player] : players) {
+//             player_next_checkpoint[pid] = first_idx;
+//         }
+//     }
+//     if (spawn_points.empty()) {
+//         std::cerr << "[GameLoop]   NO HAY SPAWN POINTS! Usando posiciones por defecto" << std::endl;
+//     }
 
-    size_t idx = 0;
-    for (auto& [id, player] : players) {
-        if (!player->getCar()) {
-            std::cout << "[GameLoop]   Jugador " << id << " no tiene auto, saltando..." << std::endl;
-            continue;
-        }
+//     size_t idx = 0;
+//     for (auto& [id, player] : players) {
+//         if (!player->getCar()) {
+//             std::cout << "[GameLoop]   Jugador " << id << " no tiene auto, saltando..." << std::endl;
+//             continue;
+//         }
 
-        player->resetForNewRace();
-        player->getCar()->reset();
+//         player->resetForNewRace();
+//         player->getCar()->reset();
 
-        float x = 100.f, y = 100.f, a = 0.f;
-        if (idx < spawn_points.size()) {
-            std::tie(x, y, a) = spawn_points[idx];
-        }
+//         float x = 100.f, y = 100.f, a = 0.f;
+//         if (idx < spawn_points.size()) {
+//             std::tie(x, y, a) = spawn_points[idx];
+//         }
 
-        player->setPosition(x, y);
-        player->setAngle(a);
-        player->getCar()->setPosition(x, y);
-        player->getCar()->setAngle(a);
-        player_prev_pos[id] = {x, y};
+//         player->setPosition(x, y);
+//         player->setAngle(a);
+//         player->getCar()->setPosition(x, y);
+//         player->getCar()->setAngle(a);
+//         player_prev_pos[id] = {x, y};
 
-        idx++;
-    }
-    std::cout << "[GameLoop] <<< Reseteo completado" << std::endl;
-}
+//         idx++;
+//     }
+//     std::cout << "[GameLoop] <<< Reseteo completado" << std::endl;
+// }
 
 void GameLoop::start_current_race() {
     if (current_race_index < races.size()) {
@@ -583,4 +680,353 @@ void GameLoop::print_total_standings() const {
 
 void GameLoop::print_match_info() const {
     std::cout << "Match info: " << players.size() << " players, " << races.size() << " races.\n";
+}
+
+
+// ============================================================================
+// MÉTODOS NUEVOS PARA COLISIONES (agregar a game_loop.cpp)
+// ============================================================================
+
+// Cargar el CollisionManager cuando se inicia una carrera
+void GameLoop::load_collision_manager_for_current_race() {
+    try {
+        YAML::Node config = YAML::LoadFile(current_map_yaml);
+        
+        if (!config["race"] || !config["race"]["city"]) {
+            throw std::runtime_error("YAML sin campo 'race.city'");
+        }
+
+        std::string raw_city = config["race"]["city"].as<std::string>();
+        
+        // Normalizar nombre de ciudad
+        auto normalize = [](std::string s) {
+            std::transform(s.begin(), s.end(), s.begin(),
+                [](unsigned char c){ return std::tolower(c); });
+            std::replace(s.begin(), s.end(), '_', '-');
+            std::replace(s.begin(), s.end(), ' ', '-');
+            return s;
+        };
+        
+        std::string city_name = normalize(raw_city);
+        
+        // Rutas a las capas de colisión
+        std::string layer_root = "assets/img/map/layers/" + city_name + "/";
+        std::string collision_file = layer_root + "camino.png";
+        std::string bridges_mask   = layer_root + "puentes.png";
+        std::string ramps_file     = layer_root + "rampas.png";
+        
+        std::cout << "[GameLoop] 🗺️  Cargando collision manager..." << std::endl;
+        std::cout << "[GameLoop]   Camino: " << collision_file << std::endl;
+        std::cout << "[GameLoop]   Puentes: " << bridges_mask << std::endl;
+        std::cout << "[GameLoop]   Rampas: " << ramps_file << std::endl;
+        
+        // Crear el collision manager
+        collision_manager = std::make_unique<CollisionManager>(
+            collision_file, 
+            bridges_mask, 
+            ramps_file
+        );
+        
+        current_map_width = collision_manager->GetWidth();
+        current_map_height = collision_manager->GetHeight();
+        
+        std::cout << "[GameLoop] ✅ Collision manager cargado: " 
+                  << current_map_width << "x" << current_map_height << std::endl;
+        
+    } catch (const std::exception& e) {
+        std::cerr << "[GameLoop] ❌ Error cargando collision manager: " 
+                  << e.what() << std::endl;
+        collision_manager.reset();
+    }
+}
+
+// Verificar si una posición es válida (no hay pared)
+bool GameLoop::is_position_valid(float x, float y, int player_level) {
+    if (!collision_manager) {
+        return true; // Sin collision manager, permitir todo
+    }
+    
+    // Verificar límites del mapa
+    if (x < 0 || y < 0 || x >= current_map_width || y >= current_map_height) {
+        return false;
+    }
+    
+    // Verificar si hay pared en el nivel actual
+    return !collision_manager->isWall(static_cast<int>(x), static_cast<int>(y), player_level);
+}
+
+// ✅ MÉTODO CORREGIDO para transiciones de nivel
+bool GameLoop::can_move_to(float from_x, float from_y, float to_x, float to_y, int& player_level) {
+
+    (void)from_x;
+    (void)from_y;
+    if (!collision_manager) {
+        return true;
+    }
+    
+    // Verificar límites básicos
+    if (to_x < 0 || to_y < 0 || to_x >= current_map_width || to_y >= current_map_height) {
+        return false;
+    }
+    
+    bool next_has_ground = collision_manager->hasGroundLevel(to_x, to_y);
+    bool next_has_bridge = collision_manager->hasBridgeLevel(to_x, to_y);
+    bool next_is_ramp = collision_manager->isRamp(to_x, to_y);
+    
+    // 🔵 CASO 1: Estoy en CALLE (nivel 0)
+    if (player_level == 0) {
+        // Sub-caso 1.1: Siguiente posición tiene SOLO camino
+        if (next_has_ground && !next_has_bridge) {
+            return true; // Movimiento normal en calle
+        }
+        
+        // Sub-caso 1.2: Siguiente posición tiene SOLO puente (sin camino)
+        if (!next_has_ground && next_has_bridge) {
+            // Necesito rampa para subir
+            if (collision_manager->canTransition(to_x, to_y, 0, 1)) {
+                player_level = 1; // ✅ Cambiar a nivel puente
+                std::cout << "[GameLoop] 🚗 Jugador subiendo a puente en (" 
+                          << to_x << ", " << to_y << ")" << std::endl;
+                return true;
+            }
+            return false; // No puedo subir sin rampa
+        }
+        
+        // Sub-caso 1.3: Siguiente posición es RAMPA (tiene ambos)
+        if (next_is_ramp && next_has_ground && next_has_bridge) {
+            // En la rampa puedo moverme libremente, sigo en nivel 0
+            return true;
+        }
+        
+        // Sin camino ni rampa válida
+        return false;
+    }
+    
+    // 🟢 CASO 2: Estoy en PUENTE (nivel 1)
+    else if (player_level == 1) {
+        // Sub-caso 2.1: Siguiente posición tiene SOLO puente
+        if (next_has_bridge && !next_has_ground) {
+            return true; // Movimiento normal en puente
+        }
+        
+        // Sub-caso 2.2: Siguiente posición tiene SOLO camino (sin puente)
+        if (next_has_ground && !next_has_bridge) {
+            // Necesito rampa para bajar
+            if (collision_manager->canTransition(to_x, to_y, 1, 0)) {
+                player_level = 0; // ✅ Cambiar a nivel calle
+                std::cout << "[GameLoop] 🚗 Jugador bajando a calle en (" 
+                          << to_x << ", " << to_y << ")" << std::endl;
+                return true;
+            }
+            return false; // No puedo bajar sin rampa
+        }
+        
+        // Sub-caso 2.3: Siguiente posición es RAMPA (tiene ambos)
+        if (next_is_ramp && next_has_bridge && next_has_ground) {
+            // En la rampa puedo moverme libremente, sigo en nivel 1
+            return true;
+        }
+        
+        // Sin puente ni rampa válida
+        return false;
+    }
+    
+    // Nivel inválido
+    return false;
+}
+
+// REEMPLAZAR el método detectar_colisiones() existente con este:
+void GameLoop::detectar_colisiones() {
+    if (!collision_manager) {
+        return; // Sin collision manager, no validar
+    }
+    
+    for (auto& [player_id, player_ptr] : players) {
+        if (!player_ptr || !player_ptr->getCar()) continue;
+        if (player_ptr->isFinished() || player_ptr->isDisconnected()) continue;
+        
+        Car* car = player_ptr->getCar();
+        
+        // Obtener posición actual y propuesta
+        float current_x = car->getX();
+        float current_y = car->getY();
+        
+        // Verificar si el auto está en una posición inválida
+        // (esto puede pasar si spawneó mal o hubo un bug)
+        // Necesitamos un nivel por jugador - agregar al Player si no existe
+        int player_level = 0; // TODO: Debería venir de Player
+        
+        if (!is_position_valid(current_x, current_y, player_level)) {
+            // Posición inválida - detener el auto
+            car->setCurrentSpeed(0.0f);
+            car->setVelocity(0.0f, 0.0f);
+            
+            std::cout << "[GameLoop] ⚠️ Jugador " << player_id 
+                      << " en posición inválida (" << current_x << ", " << current_y 
+                      << ") - frenado" << std::endl;
+        }
+    }
+}
+void GameLoop::procesar_comandos() {
+    ComandMatchDTO comando;
+    float delta_time = SLEEP / 1000.0f; // 0.016 segundos
+
+    while (comandos.try_pop(comando)) {
+        auto it = players.find(comando.player_id);
+        if (it == players.end()) continue;
+
+        Player* player = it->second.get();
+        Car* car = player->getCar();
+        if (!car) continue;
+
+        // ✅ Guardar posición anterior
+        float prev_x = car->getX();
+        float prev_y = car->getY();
+        int player_level = player->getLevel();
+
+        switch (comando.command) {
+            case GameCommand::ACCELERATE: 
+                car->accelerate(delta_time * comando.speed_boost); 
+                break;
+            case GameCommand::BRAKE: 
+                car->brake(delta_time * comando.speed_boost); 
+                break;
+            case GameCommand::TURN_LEFT: 
+                car->turn_left(delta_time * comando.turn_intensity); 
+                break;
+            case GameCommand::TURN_RIGHT: 
+                car->turn_right(delta_time * comando.turn_intensity); 
+                break;
+
+            // ✅ VELOCIDAD BALANCEADA: 5 píxeles por frame a 60 FPS = ~300 px/s
+            // Ajustá este valor según tus necesidades (3.0f = lento, 8.0f = rápido)
+            case GameCommand::MOVE_UP: 
+                car->move_up(5.0f); 
+                break;
+            case GameCommand::MOVE_DOWN: 
+                car->move_down(5.0f); 
+                break;
+            case GameCommand::MOVE_LEFT: 
+                car->move_left(5.0f); 
+                break;
+            case GameCommand::MOVE_RIGHT: 
+                car->move_right(5.0f); 
+                break;
+
+            case GameCommand::USE_NITRO: 
+                car->activateNitro(); 
+                break;
+            case GameCommand::DISCONNECT: 
+                player->disconnect(); 
+                break;
+            case GameCommand::STOP_ALL: 
+                car->setCurrentSpeed(0); 
+                car->setVelocity(0,0); 
+                break;
+                
+            // Cheats
+            case GameCommand::CHEAT_INVINCIBLE: 
+                car->repair(1000.0f); 
+                break;
+            case GameCommand::CHEAT_WIN_RACE: 
+                player->markAsFinished(); 
+                break;
+            case GameCommand::CHEAT_MAX_SPEED: 
+                car->setCurrentSpeed(car->getMaxSpeed()); 
+                break;
+            default: 
+                break;
+        }
+        
+        // ✅ VALIDACIÓN: Verificar nueva posición después del comando
+        if (collision_manager) {
+            float new_x = car->getX();
+            float new_y = car->getY();
+            
+            if (!can_move_to(prev_x, prev_y, new_x, new_y, player_level)) {
+                car->setPosition(prev_x, prev_y);
+                car->setCurrentSpeed(0.0f);
+                car->setVelocity(0.0f, 0.0f);
+            } else {
+                player->setLevel(player_level);
+            }
+        }
+    }
+}
+
+void GameLoop::reset_players_for_race() {
+    std::cout << "[GameLoop] >>> RESETEANDO JUGADORES PARA NUEVA CARRERA" << std::endl;
+    std::cout << "[GameLoop]   Mapa actual: " << current_map_yaml << std::endl;
+    
+    
+    load_collision_manager_for_current_race();
+    
+    load_spawn_points_for_current_race();
+    load_checkpoints_for_current_race();
+    
+    try {
+        YAML::Node cfg = YAML::LoadFile("config.yaml");
+        if (cfg["checkpoint_tolerance_base"]) 
+            checkpoint_tol_base = cfg["checkpoint_tolerance_base"].as<float>();
+        if (cfg["checkpoint_tolerance_finish"]) 
+            checkpoint_tol_finish = cfg["checkpoint_tolerance_finish"].as<float>();
+        if (cfg["checkpoint_lookahead"]) 
+            checkpoint_lookahead = cfg["checkpoint_lookahead"].as<int>();
+        if (cfg["checkpoint_debug_enabled"]) 
+            checkpoint_debug_enabled = cfg["checkpoint_debug_enabled"].as<bool>();
+    } catch (...) {}
+    
+    player_next_checkpoint.clear();
+    player_prev_pos.clear();
+    
+    if (!checkpoints.empty()) {
+        int first_idx = 0;
+        for (size_t i = 0; i < checkpoints.size(); ++i) {
+            if (checkpoints[i].type != "start") { 
+                first_idx = (int)i; 
+                break; 
+            }
+        }
+        for (auto& [pid, player] : players) {
+            player_next_checkpoint[pid] = first_idx;
+        }
+    }
+    
+    if (spawn_points.empty()) {
+        std::cerr << "[GameLoop]   NO HAY SPAWN POINTS! Usando posiciones por defecto" << std::endl;
+    }
+
+    size_t idx = 0;
+    for (auto& [id, player] : players) {
+        if (!player->getCar()) {
+            std::cout << "[GameLoop]   Jugador " << id << " no tiene auto, saltando..." << std::endl;
+            continue;
+        }
+
+        player->resetForNewRace();
+        player->getCar()->reset();
+
+        float x = 100.f, y = 100.f, a = 0.f;
+        if (idx < spawn_points.size()) {
+            std::tie(x, y, a) = spawn_points[idx];
+        }
+
+        // ✅ VALIDAR que el spawn point sea válido
+        if (collision_manager && !is_position_valid(x, y, 0)) {
+            std::cerr << "[GameLoop] ⚠️ Spawn point inválido para jugador " << id 
+                      << " en (" << x << ", " << y << ")" << std::endl;
+            // Usar posición de emergencia
+            x = 100.f;
+            y = 100.f;
+        }
+
+        player->setPosition(x, y);
+        player->setAngle(a);
+        player->getCar()->setPosition(x, y);
+        player->getCar()->setAngle(a);
+        player_prev_pos[id] = {x, y};
+
+        idx++;
+    }
+    std::cout << "[GameLoop] <<< Reseteo completado" << std::endl;
 }

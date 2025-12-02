@@ -8,7 +8,7 @@
 #include <iostream>
 #include <map>
 
-#include "client_src/game/collision_manager.h"
+#include "common_src/collision_manager.h"
 
 const int SCREEN_WIDTH = 700;
 const int SCREEN_HEIGHT = 700;

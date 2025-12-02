@@ -20,108 +20,67 @@
 #include "car.h"
 #include "player.h"
 
+// ✅ NUEVO: Incluir CollisionManager
+#include "../../common_src/collision_manager.h"
+
 #define NITRO_DURATION 12
-#define SLEEP          16 // Ticks de 16ms (~60 updates por segundo para movimiento fluido)
+#define SLEEP          16
 
-// Forward declaration
 class Race;
-
-/*
- * GameLoop - Servidor de juego multijugador
- * ==========================================
- *
- * Arquitectura basada en el patrón estándar de game servers:
- *
- *   while (not exit) {
- *     1. receive_updates_from_clients();     // Leer comandos (ACCELERATE, TURN, etc)
- *     2. update_game_logic_and_physics();    // Actualizar posiciones, colisiones, checkpoints
- *     3. broadcast_updates_to_clients();     // Enviar GameState a todos
- *     4. sleep_and_calc_next_iteration(60);  // Mantener 60 FPS constantes
- *   }
- *
- * Responsabilidades:
- * ------------------
- * ✅ Gestiona TODAS las carreras de una partida como "rondas"
- * ✅ Recibe comandos de jugadores (acelerar, frenar, girar, nitro)
- * ✅ Actualiza física de los autos (velocidad, dirección, fricción)
- * ✅ Detecta colisiones (contra paredes, otros autos, obstáculos del YAML)
- * ✅ Actualiza estado de juego (checkpoints, tiempos, posiciones)
- * ✅ Envía el estado completo a los clientes vía broadcast (ClientMonitor)
- * ✅ Mantiene 60 FPS constantes para movimiento fluido
- *
- * Flujo de una partida:
- * ---------------------
- * 1. Constructor: GameLoop() - Se crea el thread (pero no inicia)
- * 2. Match llama a add_race() para configurar las carreras
- * 3. Match llama a add_player() por cada jugador
- * 4. Match llama a start_game() cuando todos están listos
- * 5. El thread comienza el loop: receive → update → broadcast → sleep
- * 6. Al terminar todas las carreras, imprime tabla de posiciones final
- *
- * Control de timing:
- * ------------------
- * - SLEEP = 16ms (~60 FPS)
- * - Usa std::this_thread::sleep_until() para evitar acumulación de lag
- * - Compensa automáticamente si una iteración se atrasa
- *
- * Sincronización con clientes:
- * ----------------------------
- * - Los clientes también deben correr a ~60 FPS (o múltiplo)
- * - El cliente interpola entre snapshots para suavizar movimiento
- * - Todos reciben el MISMO snapshot simultáneamente (broadcast)
- */
 
 class GameLoop : public Thread {
 private:
     // ---- ESTADO ----
     std::atomic<bool> is_running;
-    std::atomic<bool> match_finished;  // Todas las carreras completadas
-    
-    // ✅ NUEVO: Control de inicio sincronizado
+    std::atomic<bool> match_finished;
     std::atomic<bool> is_game_started;
 
     // ---- COMUNICACIÓN ----
-    Queue<ComandMatchDTO>& comandos;  // Comandos de jugadores (ACCELERATE, BRAKE, etc)
-    ClientMonitor& queues_players;    // Queues para broadcast a jugadores
+    Queue<ComandMatchDTO>& comandos;
+    ClientMonitor& queues_players;
 
     // ---- JUGADORES Y AUTOS ----
-    std::map<int, std::unique_ptr<Player>> players;  // player_id → Player (contiene Car)
+    std::map<int, std::unique_ptr<Player>> players;
+    
+    // ✅ NUEVO: Sistema de colisiones del mapa
+    std::unique_ptr<CollisionManager> collision_manager;
+    
+    // ✅ NUEVO: Dimensiones del mapa actual
+    int current_map_width;
+    int current_map_height;
+
     bool all_players_disconnected() const;
 
     // ---- CARRERAS (RONDAS) ----
-    std::vector<std::unique_ptr<Race>> races;  // Todas las carreras de la partida
-    size_t current_race_index;                 // Carrera actual (0-based)
-    std::atomic<bool> current_race_finished;   // Carrera actual terminada
+    std::vector<std::unique_ptr<Race>> races;
+    size_t current_race_index;
+    std::atomic<bool> current_race_finished;
 
     // ---- CONFIGURACIÓN CARRERA ACTUAL ----
     std::string current_map_yaml;
     std::string current_city_name;
-    std::vector<std::tuple<float, float, float>> spawn_points;  // (x, y, angle)
+    std::vector<std::tuple<float, float, float>> spawn_points;
     bool spawns_loaded;
 
     struct Checkpoint {
         int id;
-        std::string type;  // "start", "normal", "finish"
+        std::string type;
         float x, y;
         float width, height;
-        float angle;       // grados
+        float angle;
     };
     std::vector<Checkpoint> checkpoints;
-    std::map<int, int> player_next_checkpoint;           // player_id → índice del próximo cp esperado
-    std::map<int, std::pair<float,float>> player_prev_pos; // posición previa por jugador
+    std::map<int, int> player_next_checkpoint;
+    std::map<int, std::pair<float,float>> player_prev_pos;
 
     float checkpoint_tol_base = 1.5f;
     float checkpoint_tol_finish = 3.0f;
     int checkpoint_lookahead = 3;
-    bool checkpoint_debug_enabled = true; // habilita prints de debug
+    bool checkpoint_debug_enabled = true;
 
     // ---- TIEMPOS Y RESULTADOS ----
     std::chrono::steady_clock::time_point race_start_time;
-
-    // Tiempos de finalización por carrera: race_index → (player_id → tiempo_ms)
     std::vector<std::map<int, uint32_t>> race_finish_times;
-
-    // Tabla general acumulada: player_id → tiempo_total_ms
     std::map<int, uint32_t> total_times;
 
     // ---- MÉTODOS PRIVADOS ----
@@ -137,7 +96,12 @@ private:
 
     void procesar_comandos();
     void actualizar_fisica();
+    
+    // ✅ NUEVO: Método para validar colisiones
     void detectar_colisiones();
+    bool is_position_valid(float x, float y, int player_level);
+    bool can_move_to(float from_x, float from_y, float to_x, float to_y, int& player_level);
+    
     void actualizar_estado_carrera();
     void verificar_ganadores();
     void enviar_estado_a_jugadores();
@@ -147,11 +111,13 @@ private:
     void mark_player_finished(int player_id);
     void print_current_race_table() const;
     void print_total_standings() const;
+    
+    // ✅ NUEVO: Cargar collision manager para la carrera actual
+    void load_collision_manager_for_current_race();
 
 public:
     GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues);
-  
-    // ✅ NUEVO: Método para desbloquear el loop
+    
     void start_game();
 
     // ---- CONFIGURACIÓN DE CARRERAS ----

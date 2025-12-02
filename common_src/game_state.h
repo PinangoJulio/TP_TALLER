@@ -43,35 +43,39 @@ struct MatchConfig {
 
 // ---- Información detallada de cada jugador ----
 struct InfoPlayer {
-    int player_id = 0;
+    // Identificación
+    int32_t player_id = 0;
     std::string username;
     std::string car_name;
     std::string car_type;
 
-    // Posición y física del auto
+    // Posición y física
     float pos_x = 0.0f;
     float pos_y = 0.0f;
-    float angle = 0.0f;       // Ángulo en radianes
-    float speed = 0.0f;       // Velocidad actual
-    float velocity_x = 0.0f;  // Componente X de velocidad
-    float velocity_y = 0.0f;  // Componente Y de velocidad
+    float angle = 0.0f;
+    float speed = 0.0f;
+    float velocity_x = 0.0f;
+    float velocity_y = 0.0f;
 
-    // Estado del auto
-    float health = 100.0f;        // Salud actual
-    float nitro_amount = 100.0f;  // Nitro disponible (0-100)
-    bool nitro_active = false;    // Usando nitro
-    bool is_drifting = false;     // Derrapando
-    bool is_colliding = false;    // En colisión
+    // Estado del vehículo
+    float health = 100.0f;
+    float nitro_amount = 100.0f;
+    bool nitro_active = false;
+
+    // ✅ NUEVO: Nivel del jugador (0 = calle, 1 = puente)
+    int level = 0;
 
     // Progreso en la carrera
     int completed_laps = 0;
-    int current_checkpoint = 0;  // Índice del siguiente checkpoint
-    int position_in_race = 0;    // 1st, 2nd, 3rd, etc.
-    int32_t race_time_ms = 0;        // Tiempo transcurrido en la carrera (ms)
+    int current_checkpoint = 0;
+    int position_in_race = 0;
+    uint32_t race_time_ms = 0;
 
-    // Estado del jugador
+    // Estados
+    bool is_drifting = false;
+    bool is_colliding = false;
+    bool is_alive = true;
     bool race_finished = false;
-    bool is_alive = true;  // false si explotó
     bool disconnected = false;
 };
 

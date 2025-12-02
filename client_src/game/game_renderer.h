@@ -7,7 +7,9 @@
 #include <memory>
 #include <vector>
 #include "../../common_src/game_state.h"
-#include "collision_manager.h" 
+
+// CAMBIO: Apuntar al archivo compartido en common_src
+#include "../../common_src/collision_manager.h" 
 
 class GameRenderer {
 private:

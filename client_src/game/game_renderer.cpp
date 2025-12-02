@@ -188,6 +188,9 @@ void GameRenderer::render(const GameState& state, int player_id) {
 
     float focus_x = local_player ? local_player->pos_x : 0;
     float focus_y = local_player ? local_player->pos_y : 0;
+    
+    // ✅ NUEVO: Obtener nivel del jugador local
+    int local_player_level = local_player ? local_player->level : 0;
 
     int cam_x = static_cast<int>(focus_x) - SCREEN_WIDTH / 2;
     int cam_y = static_cast<int>(focus_y) - SCREEN_HEIGHT / 2;
@@ -203,12 +206,18 @@ void GameRenderer::render(const GameState& state, int player_id) {
     renderer.SetDrawColor(0, 0, 0, 255);
     renderer.Clear();
 
+    // 1️⃣ Mapa base (siempre se renderiza)
     renderer.Copy(*map_texture, viewport, screen_rect);
 
-    // Renderizar checkpoints (Se mantiene tu lógica)
+    // 2️⃣ Puentes DEBAJO (solo si estoy en nivel 0 = calle)
+    if (puentes_texture && local_player_level == 0) {
+        renderer.Copy(*puentes_texture, viewport, screen_rect);
+    }
+
+    // Renderizar checkpoints (opcional, para debug)
     render_checkpoints(viewport, cam_x, cam_y);
 
-    // Renderizar Jugadores (Lógica corregida para 2 filas / 16 direcciones)
+    // 3️⃣ Renderizar TODOS los jugadores
     for (const auto& player : state.players) {
         if (!player.is_alive) continue;
 
@@ -217,7 +226,6 @@ void GameRenderer::render(const GameState& state, int player_id) {
 
         auto it = car_info_map.find(player.car_name);
         if (it == car_info_map.end()) {
-            // std::cerr << "Auto desconocido: " << player.car_name << std::endl;
             continue;
         }
 
@@ -227,9 +235,6 @@ void GameRenderer::render(const GameState& state, int player_id) {
         // Calcular índice de 16 direcciones
         int total_clip_idx = getClipIndexFromAngle(player.angle);
 
-        // Seleccionar fila correcta (A o B)
-        // Si el ángulo es mayor o igual a 8, significa que estamos en la segunda mitad del giro,
-        // por lo tanto usamos la siguiente fila (base_row + 1).
         int final_row = base_row;
         int final_clip_idx = total_clip_idx;
 
@@ -258,9 +263,17 @@ void GameRenderer::render(const GameState& state, int player_id) {
         }
     }
 
-    if (puentes_texture) renderer.Copy(*puentes_texture, viewport, screen_rect);
-    if (top_texture) renderer.Copy(*top_texture, viewport, screen_rect);
+    // 4️⃣ Puentes ENCIMA (solo si estoy en nivel 1 = puente)
+    if (puentes_texture && local_player_level == 1) {
+        renderer.Copy(*puentes_texture, viewport, screen_rect);
+    }
 
+    // 5️⃣ Capa TOP (siempre al final)
+    if (top_texture) {
+        renderer.Copy(*top_texture, viewport, screen_rect);
+    }
+
+    // MINIMAP (sin cambios)
     if (minimap_texture && local_player) {
         int minimapSrcX = static_cast<int>(focus_x) - (MINIMAP_SCOPE / 2);
         int minimapSrcY = static_cast<int>(focus_y) - (MINIMAP_SCOPE / 2);

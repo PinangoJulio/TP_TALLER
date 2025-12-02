@@ -6,7 +6,7 @@
 #include <string>
 #include <utility>
 
-#include "car.h"  // ✅ Player tiene un Car
+#include "car.h"
 
 class Player {
 private:
@@ -15,48 +15,45 @@ private:
     std::string name;
 
     // ---- AUTO ASIGNADO ----
-    // Player es DUEÑO de su Car (gestión automática de memoria)
     std::unique_ptr<Car> car;
 
     // ---- ESTADO EN LA CARRERA ----
     int completed_laps;
     int current_checkpoint;
-    int position_in_race;  // 1st, 2nd, 3rd, etc.
+    int position_in_race;
     int score;
     bool finished_race;
+    
+    // ✅ NUEVO: Nivel del jugador (0 = calle, 1 = puente)
+    int current_level;
 
     // ---- ESTADO DEL JUGADOR ----
     bool disconnected;
-    bool is_ready;  // Para el lobby
+    bool is_ready;
 
 public:
     explicit Player(int id, const std::string& name)
         : id(id), name(name), car(nullptr), completed_laps(0), current_checkpoint(0),
-          position_in_race(0), score(0), finished_race(false), disconnected(false), is_ready(false) {
+          position_in_race(0), score(0), finished_race(false), 
+          current_level(0),  // ✅ Inicializar en nivel 0 (calle)
+          disconnected(false), is_ready(false) {
     }
 
     // --- Auto ---
-    // Método para transferir ownership del Car al Player
     void setCarOwnership(std::unique_ptr<Car> new_car) { car = std::move(new_car); }
-
-    // Método legacy para compatibilidad (NO debería usarse en código nuevo)
+    
     void setCar(Car* new_car) {
-        // ⚠️ ADVERTENCIA: No transfiere ownership
-        // Solo se mantiene para compatibilidad con código antiguo
-        (void)new_car;  // Suppress unused warning
+        (void)new_car;
     }
 
     Car* getCar() { return car.get(); }
     const Car* getCar() const { return car.get(); }
 
-    // Helpers para acceder a propiedades del auto
     const std::string& getSelectedCar() const {
         static const std::string empty = "";
         return car ? car->getModelName() : empty;
     }
-    void setSelectedCar(const std::string& /* model */) {
-        // No hace nada, el auto se asigna con setCarOwnership()
-    }
+    void setSelectedCar(const std::string& /* model */) {}
 
     const std::string& getCarType() const {
         static const std::string empty = "";
@@ -86,6 +83,10 @@ public:
         if (car)
             car->setCurrentSpeed(newSpeed);
     }
+    
+    // ✅ NUEVO: Gestión de niveles (calle/puente)
+    int getLevel() const { return current_level; }
+    void setLevel(int level) { current_level = level; }
 
     // --- Vueltas y Checkpoints ---
     int getCompletedLaps() const { return completed_laps; }
@@ -133,7 +134,7 @@ public:
     bool isAlive() const { return car ? !car->isDestroyed() : true; }
     void kill() {
         if (car)
-            car->takeDamage(1000.0f);  // Daño mortal
+            car->takeDamage(1000.0f);
     }
 
     // --- Reset para nueva carrera ---
@@ -143,14 +144,13 @@ public:
         position_in_race = 0;
         finished_race = false;
         disconnected = false;
+        current_level = 0;  // ✅ Resetear a nivel calle
         if (car) {
             car->reset();
         }
     }
 
-    ~Player() {
-        // ✅ unique_ptr libera automáticamente el Car
-    }
+    ~Player() {}
 };
 
 #endif  // PLAYER_H_
