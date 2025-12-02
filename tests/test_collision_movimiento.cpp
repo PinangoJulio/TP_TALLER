@@ -85,9 +85,9 @@ int main(int argc, char* argv[]) {
         SDL2pp::Texture mapTexture(renderer, SDL2pp::Surface(mapSurface));
 
         std::cout << "Cargando sprites de carros..." << std::endl;
-        SDL_Surface* carSurface = IMG_Load("assets/img/map/cars/spriteshit-cars.png");
+        SDL_Surface* carSurface = IMG_Load("assets/img/map/cars/spritesheet-cars.png");
         if (!carSurface) {
-            carSurface = IMG_Load("spriteshit-cars.png");
+            carSurface = IMG_Load("spritesheet-cars.png");
             if (!carSurface) {
                 throw std::runtime_error("Error cargando sprites: " + std::string(IMG_GetError()));
             }

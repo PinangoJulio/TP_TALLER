@@ -51,10 +51,6 @@ void ClientReceiver::run() {
                     break;
                 }
 
-                // --- LIMPIEZA DE MENSAJES DEL LOBBY ("Resaca") ---
-                // Estos mensajes llegaron tarde cuando ya estábamos entrando al juego.
-                // Los leemos para vaciar el socket.
-
                 case 32: // MSG_PLAYER_JOINED_NOTIFICATION
                     {
                         std::string trash_user = protocol.read_string();

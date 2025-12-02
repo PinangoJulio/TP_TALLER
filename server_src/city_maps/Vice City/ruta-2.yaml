@@ -1,0 +1,82 @@
+race:
+  name: "Ruta-2"
+  city: "Vice_City"
+  description: "Circuito Ruta-2 en Vice_City"
+  max_time_seconds: 600
+  total_laps: 3
+
+spawn_points:
+  - { x: 40.0, y: 1836.0, angle: 0.0 }
+  - { x: 40.0, y: 1901.0, angle: 0.0 }
+  - { x: 40.0, y: 1901.0, angle: 0.0 }
+  - { x: 135.0, y: 1656.0, angle: 0.0 }
+  - { x: 135.0, y: 1611.0, angle: 0.0 }
+  - { x: 135.0, y: 1561.0, angle: 0.0 }
+  - { x: 240.0, y: 2126.0, angle: 0.0 }
+  - { x: 325.0, y: 2126.0, angle: 0.0 }
+
+checkpoints:
+  - { id: 0, type: "start", x: 45.0, y: 1771.0, width: 60.0, height: 25.0, angle: 0.0 }
+  - { id: 1, type: "normal", x: 110.0, y: 1771.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 2, type: "normal", x: 230.0, y: 1771.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 3, type: "normal", x: 340.0, y: 1771.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 4, type: "normal", x: 535.0, y: 1771.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 5, type: "normal", x: 535.0, y: 1836.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 6, type: "normal", x: 535.0, y: 1956.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 7, type: "normal", x: 600.0, y: 1956.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 8, type: "normal", x: 725.0, y: 1956.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 9, type: "normal", x: 725.0, y: 2131.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 10, type: "normal", x: 835.0, y: 2131.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 11, type: "normal", x: 1030.0, y: 2131.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 12, type: "normal", x: 1320.0, y: 2141.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 13, type: "normal", x: 1405.0, y: 2191.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 14, type: "normal", x: 1405.0, y: 2306.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 15, type: "normal", x: 1620.0, y: 2306.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 16, type: "normal", x: 1850.0, y: 2306.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 17, type: "normal", x: 2045.0, y: 2306.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 18, type: "normal", x: 2245.0, y: 2306.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 19, type: "normal", x: 2475.0, y: 2306.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 20, type: "normal", x: 2590.0, y: 2286.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 21, type: "normal", x: 2805.0, y: 2286.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 22, type: "normal", x: 2985.0, y: 2286.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 23, type: "normal", x: 3215.0, y: 2286.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 24, type: "normal", x: 3215.0, y: 2186.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 25, type: "normal", x: 3215.0, y: 2016.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 26, type: "normal", x: 3680.0, y: 2016.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 27, type: "normal", x: 3680.0, y: 2251.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 28, type: "normal", x: 3680.0, y: 2366.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 29, type: "normal", x: 3680.0, y: 2536.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 30, type: "normal", x: 3680.0, y: 2746.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 31, type: "normal", x: 3820.0, y: 2746.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 32, type: "normal", x: 4060.0, y: 2771.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 33, type: "normal", x: 4360.0, y: 2771.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 34, type: "normal", x: 4360.0, y: 2901.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 35, type: "normal", x: 4360.0, y: 3066.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 36, type: "normal", x: 4360.0, y: 3211.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 37, type: "normal", x: 4360.0, y: 3346.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 38, type: "normal", x: 4360.0, y: 3591.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 39, type: "normal", x: 4360.0, y: 3851.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 40, type: "normal", x: 4360.0, y: 4081.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 41, type: "normal", x: 4360.0, y: 4251.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 42, type: "normal", x: 4275.0, y: 4251.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 43, type: "normal", x: 4175.0, y: 4251.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 44, type: "normal", x: 4030.0, y: 4251.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 45, type: "normal", x: 3840.0, y: 4251.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 46, type: "normal", x: 3690.0, y: 4251.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 47, type: "normal", x: 3565.0, y: 4251.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 48, type: "normal", x: 3395.0, y: 4251.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 49, type: "normal", x: 3310.0, y: 4251.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 50, type: "normal", x: 3120.0, y: 4251.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 51, type: "normal", x: 2940.0, y: 4251.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 52, type: "normal", x: 2750.0, y: 4251.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 53, type: "normal", x: 2565.0, y: 4251.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 54, type: "normal", x: 2325.0, y: 4251.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 55, type: "normal", x: 2325.0, y: 4326.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 56, type: "normal", x: 2325.0, y: 4411.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 57, type: "normal", x: 2325.0, y: 4556.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 58, type: "normal", x: 2250.0, y: 4556.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 59, type: "normal", x: 2055.0, y: 4556.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 60, type: "normal", x: 1910.0, y: 4556.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 61, type: "normal", x: 1685.0, y: 4556.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 62, type: "normal", x: 1475.0, y: 4556.0, width: 50.0, height: 20.0, angle: 0.0 }
+  - { id: 63, type: "finish", x: 1305.0, y: 4556.0, width: 60.0, height: 25.0, angle: 0.0 }

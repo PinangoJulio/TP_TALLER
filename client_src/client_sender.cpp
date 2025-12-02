@@ -60,7 +60,13 @@ void ClientSender::run() {
             protocol.send_command_client(command);
 
         } catch (const ClosedQueue& e) {
-            std::cerr << "[ClientSender] ❌ Error sending command: " << e.what() << std::endl;
+            // Cola cerrada, salir limpiamente sin reportar error
+            break;
+        } catch (const std::exception& e) {
+            // Solo reportar error si no estamos cerrando intencionalmente
+            if (should_keep_running()) {
+                std::cerr << "[ClientSender]  Error enviando comando: " << e.what() << std::endl;
+            }
             break;
         }
     }

@@ -220,11 +220,15 @@ void LobbyController::onMatchCreated(const QString& matchName, int maxPlayers,
     std::vector<std::pair<std::string, std::string>> race_pairs;
     race_pairs.reserve(races.size());
 
+    // Actualización de rutas (Merge comunicacion_juego)
     for (const auto& race : races) {
-        std::cout << "  Carrera: " << race.cityName.toStdString() << " - "
-                  << race.trackName.toStdString() << std::endl;
+       std::string technicalName = "ruta-" + std::to_string(race.trackIndex + 1);
 
-        race_pairs.emplace_back(race.cityName.toStdString(), race.trackName.toStdString());
+        std::cout << "  Carrera: " << race.cityName.toStdString() << " - "
+                  << technicalName << " (UI: " << race.trackName.toStdString() << ")" << std::endl;
+
+        // Enviamos technicalName en lugar de race.trackName
+        race_pairs.emplace_back(race.cityName.toStdString(), technicalName);
     }
 
     try {
@@ -248,6 +252,12 @@ void LobbyController::onMatchCreated(const QString& matchName, int maxPlayers,
             createMatchWindow->deleteLater();
             createMatchWindow = nullptr;
         }
+
+        //Conectar señales pero NO iniciar listener todavía
+        /*if (!lobbyClient->is_listening()) {
+            std::cout << "[Controller] Conectando señales de notificaciones..." << std::endl;
+            connectNotificationSignals();
+        }*/
 
         std::cout << "[Controller] Abriendo garage..." << std::endl;
         openGarage();
@@ -315,8 +325,8 @@ void LobbyController::onRefreshMatchList() {
 }
 
 void LobbyController::onJoinMatchRequested(const QString& matchId) {
-    std::cout << "[Controller] Usuario quiere unirse a partida con matchId: "
-              << matchId.toStdString() << std::endl;
+    (void)matchId; // Silenciar warning de unused parameter si aplica
+    std::cout << "[Controller] Usuario quiere unirse a partida" << std::endl;
 
     if (!matchSelectionWindow) {
         std::cerr << "[Controller] Error: matchSelectionWindow es nullptr" << std::endl;
@@ -344,7 +354,7 @@ void LobbyController::onJoinMatchRequested(const QString& matchId) {
         std::cout << "[Controller] Unido exitosamente a partida ID: " << currentGameId << std::endl;
 
         // =========================================================================
-        // [FIX] CORRECCIÓN DE ORDEN: Snapshot PRIMERO, Mapas DESPUÉS
+        // Orden correcto: 1. Snapshot -> 2. Mapas
         // =========================================================================
 
         std::vector<QString> snapshotPlayers;
@@ -360,6 +370,12 @@ void LobbyController::onJoinMatchRequested(const QString& matchId) {
         std::cout << "[Controller] Snapshot recibido: " << pendingPlayers.size() << " jugadores"
                   << std::endl;
 
+        matchSelectionWindow->hide();
+        /*if (!lobbyClient->is_listening()) {
+            std::cout << "[Controller] Conectando señales de notificaciones..." << std::endl;
+            connectNotificationSignals();
+        }*/
+        
         // 2. RECIBIR MAPAS (Segundo en el protocolo del server)
         try {
             std::cout << "[Controller] Esperando rutas de mapas..." << std::endl;
