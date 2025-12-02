@@ -68,6 +68,9 @@ public:
                             const std::string& exclude_player = "");
 
     // ---- GAME: Inicio de partida ----
+    //si es el inicio autmatico
+    bool is_match_started(int match_id);
+    //si es con boton
     bool start_match(int match_id);
     Queue<ComandMatchDTO>* get_command_queue(int match_id);
 

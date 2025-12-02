@@ -343,7 +343,10 @@ void LobbyController::onJoinMatchRequested(const QString& matchId) {
 
         std::cout << "[Controller] Unido exitosamente a partida ID: " << currentGameId << std::endl;
 
-     
+        // =========================================================================
+        // [FIX] CORRECCIÓN DE ORDEN: Snapshot PRIMERO, Mapas DESPUÉS
+        // =========================================================================
+
         std::vector<QString> snapshotPlayers;
         std::map<QString, QString> snapshotCars;
 

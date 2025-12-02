@@ -376,6 +376,15 @@ bool MatchesMonitor::start_match(int match_id) {
     return true;
 }
 
+bool MatchesMonitor::is_match_started(int match_id) {
+    std::lock_guard<std::mutex> lock(mtx);
+    auto it = matches.find(match_id);
+    if (it != matches.end()) {
+        return it->second->is_started(); 
+    }
+    return false;
+}
+
 Queue<ComandMatchDTO>* MatchesMonitor::get_command_queue(int match_id) {
     std::lock_guard<std::mutex> lock(mtx);
 
