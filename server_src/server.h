@@ -1,6 +1,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include <atomic>
 #include <string>
 
 #include "acceptor.h"
@@ -8,16 +9,15 @@
 class Server {
 private:
     Acceptor acceptor;
+    std::atomic<bool> shutdown_signal; 
 
     void accept_connection();
 
 public:
-    /* Constructor del Server */
     explicit Server(const char* servicename);
-
     void start();
-
-    ~Server();  // destructor
+    void shutdown(); 
+    ~Server();
 };
 
-#endif  // SERVER_H
+#endif

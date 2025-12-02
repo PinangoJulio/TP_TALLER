@@ -256,16 +256,43 @@ void WaitingRoomWindow::setPlayerCarByName(const QString& name, const QString& c
 }
 
 void WaitingRoomWindow::updateStartButtonState() {
-    // Lógica simplificada: Habilitar botón si el jugador local está listo.
-    // El servidor rechazará la petición si faltan jugadores o no están todos listos.
-    if (localPlayerReady) {
+    int realPlayerCount = 0;
+    int readyPlayerCount = 0;
+
+    // 1. Contar jugadores reales y cuántos están listos
+    for (const auto& player : players) {
+        if (player.name != "Esperando...") {
+            realPlayerCount++;
+            if (player.isReady) {
+                readyPlayerCount++;
+            }
+        }
+    }
+
+    // 2. Definir condiciones
+    bool minPlayersMet = (realPlayerCount >= 2);
+    bool allReady = (realPlayerCount > 0 && realPlayerCount == readyPlayerCount);
+
+    // 3. Actualizar estado del botón y etiqueta
+    if (minPlayersMet && allReady) {
+        // Caso: Se puede iniciar
         startButton->setEnabled(true);
-        statusLabel->setText("Dale a 'Iniciar' cuando todos esten listos.");
+        statusLabel->setText("¡Todos listos! Iniciar partida.");
         statusLabel->setStyleSheet(
             "color:#00FF00; background-color: rgba(0,0,0,150); padding:10px; border-radius:5px;");
     } else {
+        // Caso: No se puede iniciar
         startButton->setEnabled(false);
-        statusLabel->setText("Debes marcarte como LISTO para iniciar.");
+
+        // Mensaje específico según lo que falte
+        if (!localPlayerReady) {
+            statusLabel->setText("Debes marcarte como LISTO.");
+        } else if (!minPlayersMet) {
+            statusLabel->setText("Esperando más jugadores (mínimo 2)...");
+        } else {
+            statusLabel->setText("Esperando a que todos estén listos...");
+        }
+
         statusLabel->setStyleSheet(
             "color:#FFD700; background-color: rgba(0,0,0,150); padding:10px; border-radius:5px;");
     }

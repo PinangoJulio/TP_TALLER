@@ -8,6 +8,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <arpa/inet.h>
 
 #define RUTA_MAPS "server_src/city_maps/"
 
@@ -65,12 +66,16 @@ void Receiver::handle_lobby() {
         auto welcome_msg = "Welcome to Need for Speed 2D, " + username + "!";
         protocol.send_buffer(LobbyProtocol::serialize_welcome(welcome_msg));
 
-        // --- Bucle principal del lobby ---
         bool in_lobby = true;
 
         while (is_running && in_lobby) {
+            // ✅ VERIFICAR SHUTDOWN ANTES DE LEER
+            if (!is_running) {
+                std::cout << "[Receiver " << username << "] 🛑 Server shutdown detected" << std::endl;
+                throw std::runtime_error("Server shutdown");
+            }
+            
             uint8_t msg_type = protocol.read_message_type();
-
             switch (msg_type) {
             // ------------------------------------------------------------
             case MSG_LIST_GAMES: {
@@ -405,6 +410,27 @@ void Receiver::handle_lobby() {
     } catch (const std::exception& e) {
         std::string error_msg = e.what();
 
+        // ✅ DETECTAR SHUTDOWN
+        if (error_msg.find("Server shutdown") != std::string::npos) {
+            std::cout << "[Receiver " << username << "] Server is shutting down" << std::endl;
+            
+            // ✅ ENVIAR MENSAJE AL CLIENTE
+            try {
+                std::vector<uint8_t> shutdown_msg;
+                shutdown_msg.push_back(MSG_ERROR);
+                shutdown_msg.push_back(0xFF); // Código especial
+                std::string msg = "SERVER SHUTDOWN - DISCONNECTING";
+                uint16_t len = htons(msg.size());
+                shutdown_msg.push_back(reinterpret_cast<uint8_t*>(&len)[0]);
+                shutdown_msg.push_back(reinterpret_cast<uint8_t*>(&len)[1]);
+                shutdown_msg.insert(shutdown_msg.end(), msg.begin(), msg.end());
+                
+                protocol.send_buffer(shutdown_msg);
+            } catch (...) {
+                // Ignorar errores al enviar
+            }
+        }
+
         if (error_msg.find("Connection closed") != std::string::npos) {
             std::cout << "[Receiver] Player " << username << " disconnected" << std::endl;
         } else {
@@ -429,28 +455,30 @@ void Receiver::handle_lobby() {
 }
 
 void Receiver::handle_match_messages() {
-    std::cout << "[Receiver]  Game loop started - listening for player commands..." << std::endl;
+    std::cout << "[Receiver] 🎮 Game loop started - listening for player commands..." << std::endl;
 
     try {
         while (is_running) {
+            // ✅ VERIFICAR SHUTDOWN
+            if (!is_running) {
+                std::cout << "[Receiver " << username << "] 🛑 Match interrupted by shutdown" << std::endl;
+                break;
+            }
+            
             ComandMatchDTO comand_match;
             comand_match.player_id = id;
-            std::cout << "[Receiver] Waiting for command from player " << comand_match.player_id
-                      << "..." << std::endl;
 
             try {
-                // hasta recibir un comando del cliente
                 protocol.read_command_client(comand_match);
             } catch (...) {
                 break;
             }
 
             try {
-                // pushear a la queue (GameLoop lo consumirá)
                 commands_queue->try_push(comand_match);
 
                 if (comand_match.command == GameCommand::DISCONNECT) {
-                    std::cout << "[Receiver]Player " << username << " sent DISCONNECT command"
+                    std::cout << "[Receiver] Player " << username << " sent DISCONNECT command"
                               << std::endl;
                     break;
                 }
@@ -479,9 +507,11 @@ void Receiver::run() {
         monitor.delete_player_from_match(id, match_id);
     }
     sender_messages_queue.close();
-    if (match_id != -1) {
-        sender.join();
-    }
+    
+    // CORRECCIÓN: Intentar join siempre que sea posible o si match_id indica que se usó.
+    // Si sender nunca arrancó, thread.joinable() será false y no pasará nada.
+    // Si arrancó y terminó, thread.joinable() es true y NECESITAS hacer join.
+    sender.join();
 
     std::cout << "[Receiver] Player " << username << " fully disconnected" << std::endl;
 }
@@ -494,4 +524,6 @@ bool Receiver::status() {
     return is_running;
 }
 
-Receiver::~Receiver() {}
+Receiver::~Receiver() {
+    sender.join();
+}
