@@ -42,11 +42,6 @@ void GameLoop::run() {
     match_finished = false;
     current_race_index = 0;
 
-    std::cout << "[GameLoop] ═══════════════════════════════════════════════\n";
-    std::cout << "[GameLoop]  THREAD INICIADO\n";
-    std::cout << "[GameLoop]  Esperando carreras y jugadores...\n";
-    std::cout << "[GameLoop] ═══════════════════════════════════════════════\n";
-
     // A) ESPERAR A QUE HAYA CARRERAS CONFIGURADAS
     auto wait_start = std::chrono::steady_clock::now();
     while (is_running.load() && races.empty()) {
@@ -58,7 +53,6 @@ void GameLoop::run() {
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 
-    // B) BARRERA DE INICIO: ESPERAR A QUE Match LLAME A start_game()
     std::cout << "[GameLoop] Carreras listas. PAUSADO esperando señal de inicio (start_game)...\n";
     while (is_running.load() && !is_game_started.load()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -81,9 +75,6 @@ void GameLoop::run() {
         current_map_yaml = first_race->get_map_path();
         current_city_name = first_race->get_city_name();
         current_race_finished = false;
-
-        std::cout << "[GameLoop] 🏁 Preparando primera carrera: " << current_city_name 
-                  << " (Mapa: " << current_map_yaml << ")\n";
         
         // 2. Resetear jugadores con las posiciones spawn del YAML
         reset_players_for_race();
@@ -92,37 +83,35 @@ void GameLoop::run() {
         race_start_time = std::chrono::steady_clock::now();
         std::cout << "[GameLoop]   Cronómetro iniciado\n";
     }
-
-    // Bucle principal: iterar sobre todas las carreras
+    // Loop por cada carrera (ronda)
     while (is_running.load() && !match_finished.load() && current_race_index < races.size()) {
-        
-        // Bucle de la carrera actual
+
+
+        auto next_frame = std::chrono::steady_clock::now();
+        const auto frame_duration = std::chrono::milliseconds(SLEEP);  // 16ms = ~60 FPS
+
         while (is_running.load() && !current_race_finished.load()) {
-            // --- FASE 1: Procesar Comandos ---
+
             procesar_comandos();
 
-            // --- FASE 2: Actualizar Física ---
             actualizar_fisica();
-
-            // --- FASE 3: Detectar Colisiones ---
             detectar_colisiones();
-
-            // --- FASE 4: Actualizar Estado de Carrera ---
             actualizar_estado_carrera();
 
-            // --- FASE 5: Verificar si todos terminaron ---
             if (all_players_finished_race()) {
                 current_race_finished = true;
             }
 
-            // --- FASE 6: Enviar Estado a Jugadores ---
             enviar_estado_a_jugadores();
 
-            // --- Dormir para mantener frecuencia de ticks ---
-            std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP));
-        }
+            next_frame += frame_duration;
+            std::this_thread::sleep_until(next_frame);
 
-        // Finalizar carrera actual
+            auto now = std::chrono::steady_clock::now();
+            if (now > next_frame) {
+                next_frame = now;
+            }
+        }
         finish_current_race();
     }
 

@@ -115,7 +115,7 @@ void Car::move_up(float delta_time) {
     if (is_destroyed)
         return;
 
-    float effective_acceleration = acceleration;
+    float effective_acceleration = acceleration * 5.0f;  // Aumentar aceleración para más respuesta
     if (nitro_active) {
         effective_acceleration *= nitro_boost;
         nitro_amount = std::max(0.0f, nitro_amount - (20.0f * delta_time));
@@ -138,7 +138,7 @@ void Car::move_down(float delta_time) {
     if (is_destroyed)
         return;
 
-    float effective_acceleration = acceleration;
+    float effective_acceleration = acceleration * 5.0f;
     if (nitro_active) {
         effective_acceleration *= nitro_boost;
         nitro_amount = std::max(0.0f, nitro_amount - (20.0f * delta_time));
@@ -161,7 +161,7 @@ void Car::move_left(float delta_time) {
     if (is_destroyed)
         return;
 
-    float effective_acceleration = acceleration;
+    float effective_acceleration = acceleration * 5.0f;
     if (nitro_active) {
         effective_acceleration *= nitro_boost;
         nitro_amount = std::max(0.0f, nitro_amount - (20.0f * delta_time));
@@ -184,7 +184,7 @@ void Car::move_right(float delta_time) {
     if (is_destroyed)
         return;
 
-    float effective_acceleration = acceleration;
+    float effective_acceleration = acceleration * 5.0f;
     if (nitro_active) {
         effective_acceleration *= nitro_boost;
         nitro_amount = std::max(0.0f, nitro_amount - (20.0f * delta_time));
@@ -212,6 +212,30 @@ void Car::brake(float delta_time) {
 
     velocity_x = current_speed * std::cos(angle);
     velocity_y = current_speed * std::sin(angle);
+}
+
+void Car::apply_friction(float delta_time) {
+    if (is_destroyed)
+        return;
+
+    // Aplicar fricción suave: 95% de la velocidad por segundo
+    float friction_factor = std::pow(0.05f, delta_time);  // Más suave que brake
+    current_speed *= friction_factor;
+
+    // Parar completamente si la velocidad es muy baja
+    if (current_speed < 0.5f) {
+        current_speed = 0.0f;
+        velocity_x = 0.0f;
+        velocity_y = 0.0f;
+    } else {
+        // Actualizar componentes de velocidad según el ángulo actual
+        velocity_x = current_speed * std::cos(angle);
+        velocity_y = current_speed * std::sin(angle);
+
+        // Actualizar posición con la nueva velocidad
+        x += velocity_x * delta_time;
+        y += velocity_y * delta_time;
+    }
 }
 
 void Car::turn_left(float delta_time) {
