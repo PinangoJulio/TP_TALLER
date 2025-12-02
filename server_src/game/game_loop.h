@@ -99,6 +99,22 @@ private:
     std::vector<std::tuple<float, float, float>> spawn_points;  // (x, y, angle)
     bool spawns_loaded;
 
+    struct Checkpoint {
+        int id;
+        std::string type;  // "start", "normal", "finish"
+        float x, y;
+        float width, height;
+        float angle;       // grados
+    };
+    std::vector<Checkpoint> checkpoints;
+    std::map<int, int> player_next_checkpoint;           // player_id → índice del próximo cp esperado
+    std::map<int, std::pair<float,float>> player_prev_pos; // posición previa por jugador
+
+    float checkpoint_tol_base = 1.5f;
+    float checkpoint_tol_finish = 3.0f;
+    int checkpoint_lookahead = 3;
+    bool checkpoint_debug_enabled = true; // habilita prints de debug
+
     // ---- TIEMPOS Y RESULTADOS ----
     std::chrono::steady_clock::time_point race_start_time;
 
@@ -114,6 +130,10 @@ private:
     void start_current_race();
     void finish_current_race();
     bool all_players_finished_race() const;
+
+    void load_checkpoints_for_current_race();
+    bool check_player_crossed_checkpoint(int player_id, const Checkpoint& cp);
+    void update_checkpoints();
 
     void procesar_comandos();
     void actualizar_fisica();
