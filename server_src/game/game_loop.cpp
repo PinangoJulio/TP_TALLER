@@ -16,7 +16,7 @@
 GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues)
     : is_running(false), 
       match_finished(false), 
-      is_game_started(false), // ✅ IMPORTANTE: Inicia bloqueado
+      is_game_started(false),
       comandos(comandos), 
       queues_players(queues),
       current_race_index(0), 
@@ -37,15 +37,147 @@ void GameLoop::start_game() {
     is_game_started = true;
 }
 
+static inline bool segment_intersects_obb(float x0, float y0, float x1, float y1,
+                                          float cx, float cy, float w, float h, float angle_deg) {
+    const float ang = angle_deg * (M_PI / 180.0f);
+    const float c = std::cos(-ang);
+    const float s = std::sin(-ang);
+    auto to_local = [&](float x, float y) {
+        float dx = x - cx, dy = y - cy;
+        return std::pair<float,float>{dx * c - dy * s, dx * s + dy * c};
+    };
+    auto p0 = to_local(x0, y0);
+    auto p1 = to_local(x1, y1);
+    float hx = w * 0.5f, hy = h * 0.5f;
+    float dx = p1.first - p0.first;
+    float dy = p1.second - p0.second;
+    float t0 = 0.0f, t1 = 1.0f;
+    auto clip = [&](float p, float q) {
+        if (p == 0) return q >= 0; // paralelo
+        float r = q / p;
+        if (p < 0) { if (r > t1) return false; if (r > t0) t0 = r; }
+        else       { if (r < t0) return false; if (r < t1) t1 = r; }
+        return true;
+    };
+    if (!clip(-dx, p0.first + hx)) return false;
+    if (!clip( dx, hx - p0.first)) return false;
+    if (!clip(-dy, p0.second + hy)) return false;
+    if (!clip( dy, hy - p0.second)) return false;
+    return t0 <= t1;
+}
+
+void GameLoop::load_checkpoints_for_current_race() {
+    checkpoints.clear();
+    try {
+        YAML::Node map = YAML::LoadFile(current_map_yaml);
+        if (!map["checkpoints"] || !map["checkpoints"].IsSequence()) {
+            return; // no prints excepto cruces
+        }
+        for (const auto& node : map["checkpoints"]) {
+            Checkpoint cp{};
+            cp.id = node["id"] ? node["id"].as<int>() : (int)checkpoints.size();
+            cp.type = node["type"] ? node["type"].as<std::string>() : std::string("normal");
+            cp.x = node["x"] ? node["x"].as<float>() : (node["cx"] ? node["cx"].as<float>() : 0.f);
+            cp.y = node["y"] ? node["y"].as<float>() : (node["cy"] ? node["cy"].as<float>() : 0.f);
+            if (node["radius"]) {
+                float r = node["radius"].as<float>();
+                cp.width = cp.height = 2.f * r;
+            } else {
+                cp.width  = node["width"]  ? node["width"].as<float>()  : 150.f;
+                cp.height = node["height"] ? node["height"].as<float>() : 150.f;
+            }
+            cp.angle = 0.0f;
+            checkpoints.push_back(std::move(cp));
+        }
+        std::sort(checkpoints.begin(), checkpoints.end(),
+                  [](const Checkpoint& a, const Checkpoint& b) { return a.id < b.id; });
+    } catch (...) { /* silencioso */ }
+}
+
+bool GameLoop::check_player_crossed_checkpoint(int player_id, const Checkpoint& cp) {
+    auto it = players.find(player_id);
+    if (it == players.end() || !(it->second->getCar())) return false;
+    const float px = it->second->getX();
+    const float py = it->second->getY();
+    float w = cp.width  > 0 ? cp.width  : 150.f;
+    float h = cp.height > 0 ? cp.height : 150.f;
+    float scale = (cp.type == "finish") ? checkpoint_tol_finish : checkpoint_tol_base;
+    w *= scale; h *= scale;
+    auto prev_it = player_prev_pos.find(player_id);
+    if (prev_it != player_prev_pos.end()) {
+        float x0 = prev_it->second.first;
+        float y0 = prev_it->second.second;
+        float x1 = px;
+        float y1 = py;
+        float minx = cp.x - w * 0.5f;
+        float maxx = cp.x + w * 0.5f;
+        float miny = cp.y - h * 0.5f;
+        float maxy = cp.y + h * 0.5f;
+        bool p0_inside = (x0 >= minx && x0 <= maxx && y0 >= miny && y0 <= maxy);
+        bool p1_inside = (x1 >= minx && x1 <= maxx && y1 >= miny && y1 <= maxy);
+        if (p0_inside || p1_inside) return true;
+        float seg_minx = std::min(x0, x1);
+        float seg_maxx = std::max(x0, x1);
+        float seg_miny = std::min(y0, y1);
+        float seg_maxy = std::max(y0, y1);
+        if (seg_maxx >= minx && seg_minx <= maxx && seg_maxy >= miny && seg_miny <= maxy) return true;
+    }
+    float minx = cp.x - w * 0.5f;
+    float maxx = cp.x + w * 0.5f;
+    float miny = cp.y - h * 0.5f;
+    float maxy = cp.y + h * 0.5f;
+    return (px >= minx && px <= maxx && py >= miny && py <= maxy);
+}
+
+void GameLoop::update_checkpoints() {
+    if (checkpoints.empty()) return;
+    for (auto& [pid, player_ptr] : players) {
+        if (!player_ptr || player_ptr->isFinished() || player_ptr->isDisconnected()) continue;
+        if (!player_next_checkpoint.count(pid)) {
+            int first_idx = 0;
+            for (size_t i = 0; i < checkpoints.size(); ++i) {
+                if (checkpoints[i].type != "start") { first_idx = (int)i; break; }
+            }
+            player_next_checkpoint[pid] = first_idx;
+        }
+        int next_idx = player_next_checkpoint[pid];
+        if (next_idx < 0 || next_idx >= (int)checkpoints.size()) continue;
+        // 1) Intentar el esperado
+        if (check_player_crossed_checkpoint(pid, checkpoints[next_idx])) {
+            const auto& cp = checkpoints[next_idx];
+            player_ptr->setCheckpoint(cp.id);
+
+            if (cp.type == "finish") {
+                mark_player_finished(pid);
+            } else {
+                player_next_checkpoint[pid] = std::min(next_idx + 1, (int)checkpoints.size() - 1);
+            }
+            continue;
+        }
+        // 2) Escaneo completo hacia adelante: buscar el primer cp cruzado en el resto
+        bool advanced = false;
+        for (int k = next_idx + 1; k < (int)checkpoints.size(); ++k) {
+            const auto& cp_k = checkpoints[k];
+            if (check_player_crossed_checkpoint(pid, cp_k)) {
+                player_ptr->setCheckpoint(cp_k.id);
+
+                if (cp_k.type == "finish") {
+                    mark_player_finished(pid);
+                } else {
+                    player_next_checkpoint[pid] = std::min(k + 1, (int)checkpoints.size() - 1);
+                }
+                advanced = true;
+                break;
+            }
+        }
+        (void)advanced;
+    }
+}
+
 void GameLoop::run() {
     is_running = true;
     match_finished = false;
     current_race_index = 0;
-
-    std::cout << "[GameLoop] ═══════════════════════════════════════════════\n";
-    std::cout << "[GameLoop]  THREAD INICIADO\n";
-    std::cout << "[GameLoop]  Esperando carreras y jugadores...\n";
-    std::cout << "[GameLoop] ═══════════════════════════════════════════════\n";
 
     // A) ESPERAR A QUE HAYA CARRERAS CONFIGURADAS
     auto wait_start = std::chrono::steady_clock::now();
@@ -58,7 +190,6 @@ void GameLoop::run() {
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 
-    // B) BARRERA DE INICIO: ESPERAR A QUE Match LLAME A start_game()
     std::cout << "[GameLoop] Carreras listas. PAUSADO esperando señal de inicio (start_game)...\n";
     while (is_running.load() && !is_game_started.load()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -81,9 +212,6 @@ void GameLoop::run() {
         current_map_yaml = first_race->get_map_path();
         current_city_name = first_race->get_city_name();
         current_race_finished = false;
-
-        std::cout << "[GameLoop] 🏁 Preparando primera carrera: " << current_city_name 
-                  << " (Mapa: " << current_map_yaml << ")\n";
         
         // 2. Resetear jugadores con las posiciones spawn del YAML
         reset_players_for_race();
@@ -92,37 +220,43 @@ void GameLoop::run() {
         race_start_time = std::chrono::steady_clock::now();
         std::cout << "[GameLoop]   Cronómetro iniciado\n";
     }
-
-    // Bucle principal: iterar sobre todas las carreras
+    // Loop por cada carrera (ronda)
     while (is_running.load() && !match_finished.load() && current_race_index < races.size()) {
-        
-        // Bucle de la carrera actual
+
+
+        auto next_frame = std::chrono::steady_clock::now();
+        const auto frame_duration = std::chrono::milliseconds(SLEEP);  // 16ms = ~60 FPS
+
         while (is_running.load() && !current_race_finished.load()) {
-            // --- FASE 1: Procesar Comandos ---
+
             procesar_comandos();
 
-            // --- FASE 2: Actualizar Física ---
             actualizar_fisica();
-
-            // --- FASE 3: Detectar Colisiones ---
             detectar_colisiones();
-
-            // --- FASE 4: Actualizar Estado de Carrera ---
             actualizar_estado_carrera();
 
-            // --- FASE 5: Verificar si todos terminaron ---
+            // ✅ detección de checkpoints
+            update_checkpoints();
+
             if (all_players_finished_race()) {
                 current_race_finished = true;
             }
 
-            // --- FASE 6: Enviar Estado a Jugadores ---
             enviar_estado_a_jugadores();
 
-            // --- Dormir para mantener frecuencia de ticks ---
-            std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP));
-        }
+            // ✅ actualizar posición previa por jugador
+            for (auto& [id, p] : players) {
+                player_prev_pos[id] = {p->getX(), p->getY()};
+            }
 
-        // Finalizar carrera actual
+            next_frame += frame_duration;
+            std::this_thread::sleep_until(next_frame);
+
+            auto now = std::chrono::steady_clock::now();
+            if (now > next_frame) {
+                next_frame = now;
+            }
+        }
         finish_current_race();
     }
 
@@ -142,6 +276,10 @@ void GameLoop::add_player(int player_id, const std::string& name, const std::str
     try {
         YAML::Node global_config = YAML::LoadFile("config.yaml");
         YAML::Node cars_list = global_config["cars"];
+        float speed_scale = 1.0f;
+        float accel_scale = 1.0f;
+        if (global_config["vehicle_speed_scale"]) speed_scale = global_config["vehicle_speed_scale"].as<float>();
+        if (global_config["vehicle_accel_scale"]) accel_scale = global_config["vehicle_accel_scale"].as<float>();
         bool car_found = false;
         if (cars_list && cars_list.IsSequence()) {
             for (const auto& car_node : cars_list) {
@@ -151,8 +289,8 @@ void GameLoop::add_player(int player_id, const std::string& name, const std::str
                     float handling = car_node["handling"].as<float>();
                     float durability = car_node["durability"].as<float>();
                     float health = car_node["health"] ? car_node["health"].as<float>() : durability;
-                    float max_speed = speed * 1.5f;
-                    float accel_power = acceleration * 0.8f;
+                    float max_speed = speed * speed_scale * 1.5f;
+                    float accel_power = acceleration * accel_scale * 0.8f;
                     float turn_rate = handling * 1.0f / 100.0f;
                     float nitro_boost = 2.0f;
                     float mass = 1000.0f + (durability * 5.0f);
@@ -162,8 +300,9 @@ void GameLoop::add_player(int player_id, const std::string& name, const std::str
                 }
             }
         }
-        if (!car_found) car->load_stats(100.0f, 50.0f, 1.0f, 100.0f, 2.0f, 1000.0f);
+        if (!car_found) car->load_stats(100.0f * speed_scale, 50.0f * accel_scale, 1.0f, 100.0f, 2.0f, 1000.0f);
     } catch (...) {
+        // Valores por defecto con escalas
         car->load_stats(100.0f, 50.0f, 1.0f, 100.0f, 2.0f, 1000.0f);
     }
 
@@ -222,13 +361,62 @@ void GameLoop::procesar_comandos() {
             case GameCommand::BRAKE: car->brake(delta_time * comando.speed_boost); break;
             case GameCommand::TURN_LEFT: car->turn_left(delta_time * comando.turn_intensity); break;
             case GameCommand::TURN_RIGHT: car->turn_right(delta_time * comando.turn_intensity); break;
+
+            case GameCommand::MOVE_UP: car->move_up(delta_time); break;
+            case GameCommand::MOVE_DOWN: car->move_down(delta_time); break;
+            case GameCommand::MOVE_LEFT: car->move_left(delta_time); break;
+            case GameCommand::MOVE_RIGHT: car->move_right(delta_time); break;
+
             case GameCommand::USE_NITRO: car->activateNitro(); break;
             case GameCommand::DISCONNECT: player->disconnect(); break;
             case GameCommand::STOP_ALL: car->setCurrentSpeed(0); car->setVelocity(0,0); break;
-            // Cheats
+
             case GameCommand::CHEAT_INVINCIBLE: car->repair(1000.0f); break;
-            case GameCommand::CHEAT_WIN_RACE: player->markAsFinished(); break;
             case GameCommand::CHEAT_MAX_SPEED: car->setCurrentSpeed(car->getMaxSpeed()); break;
+
+            case GameCommand::CHEAT_WIN_RACE: {
+                int finish_idx = -1;
+                for (size_t i = 0; i < checkpoints.size(); ++i) {
+                    if (checkpoints[i].type == "finish") { finish_idx = (int)i; break; }
+                }
+                if (finish_idx != -1) {
+                    const auto& cp_finish = checkpoints[finish_idx];
+                    player->setPosition(cp_finish.x, cp_finish.y);
+                    player->getCar()->setPosition(cp_finish.x, cp_finish.y);
+                    player->setCheckpoint(cp_finish.id);
+                    player_prev_pos[comando.player_id] = {cp_finish.x, cp_finish.y};
+
+                    // Ganador por cheat: tiempo 0
+                    mark_player_finished_with_time(comando.player_id, 0);
+                    player_next_checkpoint[comando.player_id] = std::min(finish_idx + 1, (int)checkpoints.size() - 1);
+
+                    // Cerrar carrera: marcar tiempos reales actuales para el resto
+                    auto now = std::chrono::steady_clock::now();
+                    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - race_start_time);
+                    uint32_t t_ms = static_cast<uint32_t>(elapsed.count());
+                    for (auto& [other_id, other_player] : players) {
+                        if (other_id == comando.player_id) continue;
+                        if (!other_player->isFinished() && !other_player->isDisconnected()) {
+                            mark_player_finished_with_time(other_id, t_ms);
+                        }
+                    }
+                    // El loop principal detectará all_players_finished_race() y cerrará la carrera
+                } else {
+                    // Sin finish, aplicar mismo criterio
+                    mark_player_finished_with_time(comando.player_id, 0);
+                    auto now = std::chrono::steady_clock::now();
+                    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - race_start_time);
+                    uint32_t t_ms = static_cast<uint32_t>(elapsed.count());
+                    for (auto& [other_id, other_player] : players) {
+                        if (other_id == comando.player_id) continue;
+                        if (!other_player->isFinished() && !other_player->isDisconnected()) {
+                            mark_player_finished_with_time(other_id, t_ms);
+                        }
+                    }
+                }
+                break;
+            }
+
             default: break;
         }
     }
@@ -239,7 +427,9 @@ void GameLoop::actualizar_fisica() {
     // for (auto& [id, player] : players) { if (player->getCar()) player->getCar()->update(SLEEP/1000.0f); }
 }
 void GameLoop::detectar_colisiones() { /* Collision logic here */ }
+
 void GameLoop::actualizar_estado_carrera() { /* Checkpoints logic here */ }
+
 void GameLoop::verificar_ganadores() { /* Win condition logic here */ }
 
 void GameLoop::enviar_estado_a_jugadores() {
@@ -278,23 +468,37 @@ void GameLoop::load_spawn_points_for_current_race() {
                 float y = node["y"].as<float>();
                 float a = node["angle"].as<float>() * (M_PI / 180.0f);
                 spawn_points.emplace_back(x, y, a);
-                std::cout << "[GameLoop]   Spawn point: (" << x << ", " << y << ") angle=" << a << " rad" << std::endl;
             }
-            std::cout << "[GameLoop] ✅ Cargados " << spawn_points.size() << " spawn points" << std::endl;
         } else {
-            std::cerr << "[GameLoop]  'spawn_points' no encontrado o no es secuencia en " << current_map_yaml << std::endl;
+            std::cout << "[GameLoop]  No se encontraron spawn points en el YAML." << std::endl;
         }
     } catch (const std::exception& e) {
-        std::cerr << "[GameLoop] ❌ Error cargando spawns de " << current_map_yaml << ": " << e.what() << std::endl;
+        std::cerr << "[GameLoop]  Error cargando spawns de " << current_map_yaml << ": " << e.what() << std::endl;
     }
 }
 
 void GameLoop::reset_players_for_race() {
-    std::cout << "[GameLoop] >>> RESETEANDO JUGADORES PARA NUEVA CARRERA" << std::endl;
-    std::cout << "[GameLoop]   Mapa actual: " << current_map_yaml << std::endl;
 
     load_spawn_points_for_current_race();
-
+    load_checkpoints_for_current_race();
+    try {
+        YAML::Node cfg = YAML::LoadFile("config.yaml");
+        if (cfg["checkpoint_tolerance_base"]) checkpoint_tol_base = cfg["checkpoint_tolerance_base"].as<float>();
+        if (cfg["checkpoint_tolerance_finish"]) checkpoint_tol_finish = cfg["checkpoint_tolerance_finish"].as<float>();
+        if (cfg["checkpoint_lookahead"]) checkpoint_lookahead = cfg["checkpoint_lookahead"].as<int>();
+        if (cfg["checkpoint_debug_enabled"]) checkpoint_debug_enabled = cfg["checkpoint_debug_enabled"].as<bool>();
+    } catch (...) {}
+    player_next_checkpoint.clear();
+    player_prev_pos.clear();
+    if (!checkpoints.empty()) {
+        int first_idx = 0;
+        for (size_t i = 0; i < checkpoints.size(); ++i) {
+            if (checkpoints[i].type != "start") { first_idx = (int)i; break; }
+        }
+        for (auto& [pid, player] : players) {
+            player_next_checkpoint[pid] = first_idx;
+        }
+    }
     if (spawn_points.empty()) {
         std::cerr << "[GameLoop]   NO HAY SPAWN POINTS! Usando posiciones por defecto" << std::endl;
     }
@@ -306,29 +510,19 @@ void GameLoop::reset_players_for_race() {
             continue;
         }
 
-        // ✅ PRIMERO: Resetear estado del jugador y del auto
         player->resetForNewRace();
         player->getCar()->reset();
 
-        // ✅ SEGUNDO: Asignar posiciones spawn
         float x = 100.f, y = 100.f, a = 0.f;
         if (idx < spawn_points.size()) {
             std::tie(x, y, a) = spawn_points[idx];
-            std::cout << "[GameLoop]   Jugador " << player->getName() << " (ID=" << id
-                      << ") → spawn[" << idx << "]: (" << x << ", " << y << ") angle=" << a << " rad" << std::endl;
-        } else {
-            std::cout << "[GameLoop]    Jugador " << player->getName() << " (ID=" << id
-                      << ") → fallback: (" << x << ", " << y << ")" << std::endl;
         }
 
         player->setPosition(x, y);
         player->setAngle(a);
         player->getCar()->setPosition(x, y);
         player->getCar()->setAngle(a);
-
-        // Verificar que se aplicó correctamente
-        std::cout << "[GameLoop]     Verificación: Player pos=(" << player->getX() << ", " << player->getY()
-                  << ") Car pos=(" << player->getCar()->getX() << ", " << player->getCar()->getY() << ")" << std::endl;
+        player_prev_pos[id] = {x, y};
 
         idx++;
     }
@@ -341,7 +535,6 @@ void GameLoop::start_current_race() {
         current_city_name = races[current_race_index]->get_city_name();
         current_race_finished = false;
         race_start_time = std::chrono::steady_clock::now();
-        std::cout << "[GameLoop] Iniciando carrera: " << current_city_name << "\n";
     }
 }
 
@@ -377,7 +570,6 @@ bool GameLoop::all_players_finished_race() const {
     return true;
 }
 
-// ✅ IMPLEMENTACIÓN COMPLETA PARA EVITAR WARNINGS
 void GameLoop::mark_player_finished(int player_id) {
     auto it = players.find(player_id);
     if (it == players.end()) return;
@@ -403,6 +595,23 @@ void GameLoop::mark_player_finished(int player_id) {
               << (current_race_index + 1) << " en " << (finish_time_ms / 1000.0f) << "s\n";
 
     print_current_race_table();
+}
+
+void GameLoop::mark_player_finished_with_time(int player_id, uint32_t finish_time_ms) {
+    auto it = players.find(player_id);
+    if (it == players.end()) return;
+    Player* player = it->second.get();
+    if (player->isFinished()) return;
+
+    player->markAsFinished();
+
+    if (current_race_index < race_finish_times.size()) {
+        race_finish_times[current_race_index][player_id] = finish_time_ms;
+    }
+    total_times[player_id] += finish_time_ms;
+
+    std::cout << "[GameLoop] " << player->getName() << " terminó la carrera #"
+              << (current_race_index + 1) << " en " << (finish_time_ms / 1000.0f) << "s\n";
 }
 
 void GameLoop::print_current_race_table() const {

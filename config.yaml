@@ -34,6 +34,10 @@ nitro_duration: 5                # seconds (int) - duration of nitro boost
 nitro_cooldown: 10               # seconds (int) - cooldown before nitro can be used again
 nitro_speed_multiplier: 1.5      # float - multiplier for max speed when nitro is active
 
+# ✅ NUEVO: multiplicadores globales para ajustar sensación de velocidad sin recompilar
+vehicle_speed_scale: 3.0         # float - multiplica el campo "speed" de cada auto
+vehicle_accel_scale: 2.5         # float - multiplica el campo "acceleration" de cada auto
+
 # ===============================
 # AVAILABLE CARS CONFIGURATION
 # ===============================
@@ -136,3 +140,11 @@ default_city: "Liberty City"        # string - default city if none is selected
 camera_fov: 90                   # int - field of view for camera (degrees)
 camera_distance: 6.0             # float - distance from camera to car (meters)
 day_night_cycle: true
+
+# ===============================
+# CHECKPOINT SETTINGS
+# ===============================
+
+checkpoint_tolerance_base: 1.5    # float - base tolerance for checkpoint detection
+checkpoint_tolerance_finish: 3.0  # float - tolerance for the finish line checkpoint
+checkpoint_lookahead: 3           # int - number of checkpoints to look ahead for AI prediction

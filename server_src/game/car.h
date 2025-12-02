@@ -101,6 +101,15 @@ public:
     void turn_left(float delta_time);
     void turn_right(float delta_time);
 
+    // ---- MOVIMIENTO EN 4 DIRECCIONES FIJAS ----
+    void move_up(float delta_time);     // Arriba (↑)
+    void move_down(float delta_time);   // Abajo (↓)
+    void move_left(float delta_time);   // Izquierda (←)
+    void move_right(float delta_time);  // Derecha (→)
+
+    // ---- FÍSICA ----
+    void apply_friction(float delta_time);  // Desaceleración gradual
+
     // ---- ESTADO ----
     void setDrifting(bool drifting) { is_drifting = drifting; }
     bool isDrifting() const { return is_drifting; }

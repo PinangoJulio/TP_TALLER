@@ -43,8 +43,9 @@ public:
     uint16_t receive_game_joined();
 
     void receive_room_snapshot();
-    void read_room_snapshot(std::vector<QString>& players, std::map<QString, QString>& cars);
-
+    void read_room_snapshot(std::vector<QString>& players, 
+        std::map<QString, QString>& cars,
+        std::map<QString, bool>& readyStatus);
     void select_car(const std::string& car_name, const std::string& car_type);
     std::string receive_car_confirmation();
 

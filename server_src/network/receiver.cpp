@@ -8,6 +8,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <arpa/inet.h>
 
 #define RUTA_MAPS "server_src/city_maps/"
 
@@ -65,12 +66,16 @@ void Receiver::handle_lobby() {
         auto welcome_msg = "Welcome to Need for Speed 2D, " + username + "!";
         protocol.send_buffer(LobbyProtocol::serialize_welcome(welcome_msg));
 
-        // --- Bucle principal del lobby ---
         bool in_lobby = true;
 
         while (is_running && in_lobby) {
+            // ✅ VERIFICAR SHUTDOWN ANTES DE LEER
+            if (!is_running) {
+                std::cout << "[Receiver " << username << "] 🛑 Server shutdown detected" << std::endl;
+                throw std::runtime_error("Server shutdown");
+            }
+            
             uint8_t msg_type = protocol.read_message_type();
-
             switch (msg_type) {
             // ------------------------------------------------------------
             case MSG_LIST_GAMES: {
@@ -334,9 +339,13 @@ void Receiver::handle_lobby() {
                     break;
                 }
 
-                auto notif =
-                    LobbyProtocol::serialize_player_ready_notification(username, is_ready != 0);
-                monitor.broadcast_to_match(current_match_id, notif, username);
+                // ✅ SOLO hacer broadcast si estamos en lobby (no durante el juego)
+                // Durante el juego, el Sender maneja toda la comunicación
+                if (current_match_id != -1) {
+                    auto notif =
+                        LobbyProtocol::serialize_player_ready_notification(username, is_ready != 0);
+                    monitor.broadcast_to_match(current_match_id, notif, username);
+                }
 
                 break;
             }
@@ -402,8 +411,41 @@ void Receiver::handle_lobby() {
         // INICIAR SENDER (para enviar GameState a este jugador)
         sender.start();
         std::cout << "[Receiver] Sender started for player " << username << std::endl;
+
+        // ✅ Importante: a partir de aquí NO queremos más broadcasts directos a este socket
+        // porque el hilo Sender (ClientMonitor) es el único que debe escribir durante la partida.
+        // Eliminamos el socket del registro de MatchesMonitor para este jugador.
+        try {
+            monitor.unregister_player_socket(match_id, username);
+            std::cout << "[Receiver] Unregistered lobby socket for player " << username
+                      << " (match_id=" << match_id << ")" << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "[Receiver] Warning: could not unregister socket for " << username
+                      << ": " << e.what() << std::endl;
+        }
     } catch (const std::exception& e) {
         std::string error_msg = e.what();
+
+        // ✅ DETECTAR SHUTDOWN
+        if (error_msg.find("Server shutdown") != std::string::npos) {
+            std::cout << "[Receiver " << username << "] Server is shutting down" << std::endl;
+            
+            // ✅ ENVIAR MENSAJE AL CLIENTE
+            try {
+                std::vector<uint8_t> shutdown_msg;
+                shutdown_msg.push_back(MSG_ERROR);
+                shutdown_msg.push_back(0xFF); // Código especial
+                std::string msg = "SERVER SHUTDOWN - DISCONNECTING";
+                uint16_t len = htons(msg.size());
+                shutdown_msg.push_back(reinterpret_cast<uint8_t*>(&len)[0]);
+                shutdown_msg.push_back(reinterpret_cast<uint8_t*>(&len)[1]);
+                shutdown_msg.insert(shutdown_msg.end(), msg.begin(), msg.end());
+                
+                protocol.send_buffer(shutdown_msg);
+            } catch (...) {
+                // Ignorar errores al enviar
+            }
+        }
 
         if (error_msg.find("Connection closed") != std::string::npos) {
             std::cout << "[Receiver] Player " << username << " disconnected" << std::endl;
@@ -429,28 +471,44 @@ void Receiver::handle_lobby() {
 }
 
 void Receiver::handle_match_messages() {
-    std::cout << "[Receiver]  Game loop started - listening for player commands..." << std::endl;
+    std::cout << "[Receiver] 🎮 Game loop started - listening for player commands..." << std::endl;
 
     try {
         while (is_running) {
+            if (!is_running) {
+                std::cout << "[Receiver " << username << "]  Match interrupted by shutdown" << std::endl;
+                break;
+            }
+            
             ComandMatchDTO comand_match;
             comand_match.player_id = id;
-            std::cout << "[Receiver] Waiting for command from player " << comand_match.player_id
-                      << "..." << std::endl;
 
             try {
-                // hasta recibir un comando del cliente
                 protocol.read_command_client(comand_match);
-            } catch (...) {
+            } catch (const std::exception& e) {
+                // Socket cerrado o error de lectura
+                std::string error_msg = e.what();
+                if (error_msg.find("shutdown") != std::string::npos ||
+                    error_msg.find("Connection closed") != std::string::npos ||
+                    !is_running) {
+                    std::cout << "[Receiver " << username << "] Socket closed during shutdown" << std::endl;
+                } else {
+                    std::cerr << "[Receiver " << username << "] Read error: " << error_msg << std::endl;
+                }
+                break;
+            }
+
+            // ✅ Verificar si el servidor está cerrándose antes de procesar
+            if (!is_running) {
+                std::cout << "[Receiver " << username << "] Ignoring command due to shutdown" << std::endl;
                 break;
             }
 
             try {
-                // pushear a la queue (GameLoop lo consumirá)
                 commands_queue->try_push(comand_match);
 
                 if (comand_match.command == GameCommand::DISCONNECT) {
-                    std::cout << "[Receiver]Player " << username << " sent DISCONNECT command"
+                    std::cout << "[Receiver] Player " << username << " sent DISCONNECT command"
                               << std::endl;
                     break;
                 }
@@ -472,16 +530,25 @@ void Receiver::run() {
     handle_lobby();
 
     // VERIFICAR SI PASÓ A FASE DE JUEGO
-
     handle_match_messages();
 
-    if (match_id != -1) {
-        monitor.delete_player_from_match(id, match_id);
+    // ✅ SOLO eliminar del match si el servidor sigue corriendo
+    // (evita acceso a memoria liberada durante shutdown)
+    if (match_id != -1 && is_running) {
+        try {
+            monitor.delete_player_from_match(id, match_id);
+        } catch (const std::exception& e) {
+            std::cerr << "[Receiver] Warning: Could not delete player from match: "
+                      << e.what() << std::endl;
+        }
     }
+
     sender_messages_queue.close();
-    if (match_id != -1) {
-        sender.join();
-    }
+    
+    // CORRECCIÓN: Intentar join siempre que sea posible o si match_id indica que se usó.
+    // Si sender nunca arrancó, thread.joinable() será false y no pasará nada.
+    // Si arrancó y terminó, thread.joinable() es true y NECESITAS hacer join.
+    sender.join();
 
     std::cout << "[Receiver] Player " << username << " fully disconnected" << std::endl;
 }
@@ -494,4 +561,6 @@ bool Receiver::status() {
     return is_running;
 }
 
-Receiver::~Receiver() {}
+Receiver::~Receiver() {
+    sender.join();
+}

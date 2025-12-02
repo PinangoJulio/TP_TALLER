@@ -60,20 +60,42 @@ bool ServerProtocol::read_command_client(ComandMatchDTO& command) {
     int bytes = socket.recvall(&cmd_code, sizeof(cmd_code));
     if (bytes == 0) return false; // conexión cerrada
     if (bytes < 0) return false;  // error de lectura
-    std::cout << "[ServerProtocol] Reading command code: 0x" << std::endl;
+    // Log desactivado para reducir spam en producción
+    // std::cout << "[ServerProtocol] Reading command code: 0x" << std::hex << (int)cmd_code << std::dec << std::endl;
 
     // Interpretar según el código y leer datos adicionales si es necesario
     switch (cmd_code) {
     // ===== COMANDOS SIMPLES (solo 1 byte) =====
         case CMD_ACCELERATE:
-            std::cout << "[ServerProtocol] Reading command code: ACCELERATE" << std::endl;
+            // std::cout << "[ServerProtocol] Reading command code: ACCELERATE" << std::endl;
         command.command = GameCommand::ACCELERATE;
         command.speed_boost = 1.0f;
         break;
 
         case CMD_BRAKE:  //(frenar)
-            std::cout << "[ServerProtocol] Reading command code: BRAKE" << std::endl;
+            // std::cout << "[ServerProtocol] Reading command code: BRAKE" << std::endl;
         command.command = GameCommand::BRAKE;
+        command.speed_boost = 1.0f;
+        break;
+
+    // ===== MOVIMIENTO EN 4 DIRECCIONES FIJAS =====
+    case CMD_MOVE_UP:
+        command.command = GameCommand::MOVE_UP;
+        command.speed_boost = 1.0f;
+        break;
+
+    case CMD_MOVE_DOWN:
+        command.command = GameCommand::MOVE_DOWN;
+        command.speed_boost = 1.0f;
+        break;
+
+    case CMD_MOVE_LEFT:
+        command.command = GameCommand::MOVE_LEFT;
+        command.speed_boost = 1.0f;
+        break;
+
+    case CMD_MOVE_RIGHT:
+        command.command = GameCommand::MOVE_RIGHT;
         command.speed_boost = 1.0f;
         break;
 
@@ -107,7 +129,7 @@ bool ServerProtocol::read_command_client(ComandMatchDTO& command) {
         break;
 
     case CMD_TURN_LEFT: {
-        std::cout << "[ServerProtocol] Reading command code: TURN_LEFT" << std::endl;
+        // std::cout << "[ServerProtocol] Reading command code: TURN_LEFT" << std::endl;
         command.command = GameCommand::TURN_LEFT;
         // Leer intensidad del giro (1 byte: 0-100 = 0.0-1.0)
         uint8_t intensity;
@@ -117,7 +139,7 @@ bool ServerProtocol::read_command_client(ComandMatchDTO& command) {
     }
 
     case CMD_TURN_RIGHT: {
-        std::cout << "[ServerProtocol] Reading command code: TURN_RIGHT" << std::endl;
+        // std::cout << "[ServerProtocol] Reading command code: TURN_RIGHT" << std::endl;
         command.command = GameCommand::TURN_RIGHT;
         // Leer intensidad del giro (1 byte: 0-100 = 0.0-1.0)
         uint8_t intensity;

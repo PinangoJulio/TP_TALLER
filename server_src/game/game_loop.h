@@ -21,19 +21,54 @@
 #include "player.h"
 
 #define NITRO_DURATION 12
-#define SLEEP          250 // Ticks de 250ms (4 updates por segundo)
+#define SLEEP          16 // Ticks de 16ms (~60 updates por segundo para movimiento fluido)
 
 // Forward declaration
 class Race;
 
 /*
- * GameLoop:
- * - Gestiona TODAS las carreras de una partida como "rondas"
- * - Recibe Comandos de jugadores (acelerar, frenar, girar, usar nitro)
- * - Actualiza la física de los autos (Box2D)
- * - Detecta colisiones (contra paredes, otros autos, obstáculos YAML)
- * - Actualiza estado de juego (vueltas, checkpoints, tiempos)
- * - Envía el estado actualizado a los clientes via broadcast
+ * GameLoop - Servidor de juego multijugador
+ * ==========================================
+ *
+ * Arquitectura basada en el patrón estándar de game servers:
+ *
+ *   while (not exit) {
+ *     1. receive_updates_from_clients();     // Leer comandos (ACCELERATE, TURN, etc)
+ *     2. update_game_logic_and_physics();    // Actualizar posiciones, colisiones, checkpoints
+ *     3. broadcast_updates_to_clients();     // Enviar GameState a todos
+ *     4. sleep_and_calc_next_iteration(60);  // Mantener 60 FPS constantes
+ *   }
+ *
+ * Responsabilidades:
+ * ------------------
+ * ✅ Gestiona TODAS las carreras de una partida como "rondas"
+ * ✅ Recibe comandos de jugadores (acelerar, frenar, girar, nitro)
+ * ✅ Actualiza física de los autos (velocidad, dirección, fricción)
+ * ✅ Detecta colisiones (contra paredes, otros autos, obstáculos del YAML)
+ * ✅ Actualiza estado de juego (checkpoints, tiempos, posiciones)
+ * ✅ Envía el estado completo a los clientes vía broadcast (ClientMonitor)
+ * ✅ Mantiene 60 FPS constantes para movimiento fluido
+ *
+ * Flujo de una partida:
+ * ---------------------
+ * 1. Constructor: GameLoop() - Se crea el thread (pero no inicia)
+ * 2. Match llama a add_race() para configurar las carreras
+ * 3. Match llama a add_player() por cada jugador
+ * 4. Match llama a start_game() cuando todos están listos
+ * 5. El thread comienza el loop: receive → update → broadcast → sleep
+ * 6. Al terminar todas las carreras, imprime tabla de posiciones final
+ *
+ * Control de timing:
+ * ------------------
+ * - SLEEP = 16ms (~60 FPS)
+ * - Usa std::this_thread::sleep_until() para evitar acumulación de lag
+ * - Compensa automáticamente si una iteración se atrasa
+ *
+ * Sincronización con clientes:
+ * ----------------------------
+ * - Los clientes también deben correr a ~60 FPS (o múltiplo)
+ * - El cliente interpola entre snapshots para suavizar movimiento
+ * - Todos reciben el MISMO snapshot simultáneamente (broadcast)
  */
 
 class GameLoop : public Thread {
@@ -64,6 +99,22 @@ private:
     std::vector<std::tuple<float, float, float>> spawn_points;  // (x, y, angle)
     bool spawns_loaded;
 
+    struct Checkpoint {
+        int id;
+        std::string type;  // "start", "normal", "finish"
+        float x, y;
+        float width, height;
+        float angle;       // grados
+    };
+    std::vector<Checkpoint> checkpoints;
+    std::map<int, int> player_next_checkpoint;           // player_id → índice del próximo cp esperado
+    std::map<int, std::pair<float,float>> player_prev_pos; // posición previa por jugador
+
+    float checkpoint_tol_base = 1.5f;
+    float checkpoint_tol_finish = 3.0f;
+    int checkpoint_lookahead = 3;
+    bool checkpoint_debug_enabled = true; // habilita prints de debug
+
     // ---- TIEMPOS Y RESULTADOS ----
     std::chrono::steady_clock::time_point race_start_time;
 
@@ -80,6 +131,10 @@ private:
     void finish_current_race();
     bool all_players_finished_race() const;
 
+    void load_checkpoints_for_current_race();
+    bool check_player_crossed_checkpoint(int player_id, const Checkpoint& cp);
+    void update_checkpoints();
+
     void procesar_comandos();
     void actualizar_fisica();
     void detectar_colisiones();
@@ -90,6 +145,7 @@ private:
     GameState create_snapshot();
 
     void mark_player_finished(int player_id);
+    void mark_player_finished_with_time(int player_id, uint32_t finish_time_ms);
     void print_current_race_table() const;
     void print_total_standings() const;
 

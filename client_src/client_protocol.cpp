@@ -276,6 +276,10 @@ void ClientProtocol::serialize_command(const ComandMatchDTO& command,
     switch (command.command) {
         case GameCommand::ACCELERATE:
         case GameCommand::BRAKE:
+        case GameCommand::MOVE_UP:      // Nuevos comandos de movimiento
+        case GameCommand::MOVE_DOWN:
+        case GameCommand::MOVE_LEFT:
+        case GameCommand::MOVE_RIGHT:
         case GameCommand::USE_NITRO:
         case GameCommand::STOP_ALL:
         case GameCommand::DISCONNECT:
@@ -335,10 +339,41 @@ int32_t ClientProtocol::read_int32() {
 // (tu función está perfecta, no hace falta tocarla)
 GameState ClientProtocol::receive_snapshot() {
     uint8_t type = read_message_type();
-    if (type != (uint8_t)ServerMessageType::GAME_STATE_UPDATE)
-        std::cout<< "[ClientProtocol] Warning: Expected GAME_STATE_UPDATE message, got "
+    if (type != (uint8_t)ServerMessageType::GAME_STATE_UPDATE) {
+        std::cout << "[ClientProtocol] Warning: Expected GAME_STATE_UPDATE, got "
                   << static_cast<int>(type) << std::endl;
 
+        // Manejo robusto: no intentes parsear como snapshot un mensaje diferente
+        if (type == 0xFF /* MSG_ERROR */) {
+            try {
+                uint8_t err_code = read_uint8();
+                // En nuestro servidor, para shutdown se envía: 0xFF, 0xFF, uint16 len, string
+                std::string msg = "";
+                try {
+                    uint16_t len_net;
+                    socket.recvall(&len_net, sizeof(len_net));
+                    uint16_t len = ntohs(len_net);
+                    if (len > 0 && len < 4096) {
+                        std::vector<char> buf(len);
+                        socket.recvall(buf.data(), len);
+                        msg.assign(buf.begin(), buf.end());
+                    }
+                } catch (...) {
+                    // Si el formato no coincide, ignoramos el texto
+                }
+                if (err_code == 0xFF) {
+                    throw std::runtime_error(msg.empty() ? "Server shutdown" : msg);
+                } else {
+                    throw std::runtime_error(msg.empty() ? "Server error" : msg);
+                }
+            } catch (const std::exception& e) {
+                throw; // Propaga para que el caller cierre ordenadamente
+            }
+        }
+
+        // Tipo desconocido mientras estamos en juego: abortar para no desincronizar el stream
+        throw std::runtime_error("Unexpected message type while expecting snapshot");
+    }
     GameState state;
 
     // 1. PLAYERS
@@ -381,12 +416,6 @@ GameState ClientProtocol::receive_snapshot() {
         p.is_alive      = read_uint8() != 0;
         p.disconnected  = read_uint8() != 0;
 
-        std::cout << "[ClientProtocol]   🏎️  Player " << p.player_id
-                  << ": pos=(" << p.pos_x << "," << p.pos_y << ") "
-                  << "vel=" << p.speed << " km/h "
-                  << "angle=" << p.angle << "° "
-                  << "hp=" << static_cast<int>(p.health)
-                  << (p.nitro_active ? " ⚡" : "") << std::endl;
     }
 
     // 2. CHECKPOINTS  -- CORRECCIÓN: no hacer resize + push_back (evitaba duplicados)
@@ -500,12 +529,6 @@ RaceInfoDTO ClientProtocol::receive_race_info() {
     socket.recvall(&max_time_net, sizeof(max_time_net));
     race_info.max_time_ms = ntohl(max_time_net);
 
-    std::cout << "[ClientProtocol] ✅ Race info received:" << std::endl;
-    std::cout << "[ClientProtocol]   City: " << race_info.city_name << std::endl;
-    std::cout << "[ClientProtocol]   Race: " << race_info.race_name << std::endl;
-    std::cout << "[ClientProtocol]   Map: " << race_info.map_file_path << std::endl;
-    std::cout << "[ClientProtocol]   Lap " << static_cast<int>(race_info.race_number) << "/"
-              << static_cast<int>(race_info.total_races) << std::endl;
 
     return race_info;
 }
@@ -533,9 +556,8 @@ std::vector<std::string> ClientProtocol::receive_race_paths() {
                   << ": " << path << std::endl;
     }
 
-    std::cout << "[ClientProtocol] ✅ Received " << static_cast<int>(num_races)
+    std::cout << "[ClientProtocol] Received " << static_cast<int>(num_races)
               << " race paths" << std::endl;
 
     return paths;
 }
-

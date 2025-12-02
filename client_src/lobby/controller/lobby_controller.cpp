@@ -1,6 +1,7 @@
 #include "lobby_controller.h"
 
 #include <QTimer>
+#include <QCoreApplication>
 #include <map>
 #include <string>
 #include <utility>
@@ -345,25 +346,23 @@ void LobbyController::onJoinMatchRequested(const QString& matchId) {
 
     try {
         lobbyClient->join_game(gameId);
-
         uint16_t confirmedGameId = lobbyClient->receive_game_joined();
-
         currentGameId = confirmedGameId;
 
-        std::cout << "[Controller] Unido exitosamente a partida ID: " << currentGameId << std::endl;
-
-
-
+        // --- MODIFICACIÓN AQUÍ ---
         std::vector<QString> snapshotPlayers;
         std::map<QString, QString> snapshotCars;
+        std::map<QString, bool> snapshotReady; // <--- Mapa temporal
 
-        lobbyClient->read_room_snapshot(snapshotPlayers, snapshotCars);
+        // Pasamos el tercer parámetro
+        lobbyClient->read_room_snapshot(snapshotPlayers, snapshotCars, snapshotReady);
 
         pendingPlayers = snapshotPlayers;
         pendingCars = snapshotCars;
+        pendingReadyStatus = snapshotReady; // <--- Guardamos en la variable de clase
+        // -------------------------
 
-        std::cout << "[Controller] Snapshot recibido: " << pendingPlayers.size() << " jugadores"
-                  << std::endl;
+        std::cout << "[Controller] Snapshot recibido: " << pendingPlayers.size() << " jugadores" << std::endl;
 
         matchSelectionWindow->hide();
 
@@ -558,6 +557,24 @@ void LobbyController::connectNotificationSignals() {
 
     connect(lobbyClient.get(), &LobbyClient::errorOccurred, this, [this](QString errorMsg) {
         std::cerr << "[Controller] Error: " << errorMsg.toStdString() << std::endl;
+        
+        // ✅ Detectar shutdown del servidor
+        if (errorMsg.contains("SERVER SHUTDOWN") || errorMsg.contains("DISCONNECTING")) {
+            std::cout << "[Controller] 🛑 Server shutdown detected - closing application" << std::endl;
+            
+            // ✅ Cerrar todas las ventanas
+            closeAllWindows();
+            
+            // ✅ Marcar como no exitoso y terminar
+            finishLobby(false);
+            
+            // ✅ Salir de la aplicación Qt
+            QCoreApplication::quit();
+            
+            return;
+        }
+        
+        // Para otros errores, mostrar el mensaje
         QMessageBox::critical(waitingRoomWindow, "Error", errorMsg);
     });
 
@@ -605,23 +622,32 @@ void LobbyController::onBackFromGarage() {
 void LobbyController::openWaitingRoom() {
     std::cout << "[Controller] Inicializando UI de WaitingRoom..." << std::endl;
 
-    uint8_t maxPlayers = 8; // O leerlo de la config de la partida si la tienes guardada
+    uint8_t maxPlayers = 8; 
     waitingRoomWindow = new WaitingRoomWindow(maxPlayers);
 
-    // 1. Cargar jugadores que ya estaban (si nos unimos a una partida empezada)
+    // 1. Cargar jugadores y autos (esto ya lo tenías)
     for (const auto& username : pendingPlayers) {
         waitingRoomWindow->addPlayerByName(username);
         
-        // Si teníamos info de sus autos, ponerla
-        auto it = pendingCars.find(username);
-        if (it != pendingCars.end()) {
-            waitingRoomWindow->setPlayerCarByName(username, it->second);
+        auto itCar = pendingCars.find(username);
+        if (itCar != pendingCars.end()) {
+            waitingRoomWindow->setPlayerCarByName(username, itCar->second);
+        }
+        
+        // ✅ AGREGAR ESTO: Cargar estado Ready
+        auto itReady = pendingReadyStatus.find(username);
+        if (itReady != pendingReadyStatus.end()) {
+             // Solo si está true, porque por defecto ya nacen en false
+            if (itReady->second) {
+                waitingRoomWindow->setPlayerReadyByName(username, true);
+            }
         }
     }
     
     // Limpiar buffers temporales
     pendingPlayers.clear();
     pendingCars.clear();
+    pendingReadyStatus.clear(); // <--- Limpiar también este
 
     // 2. Conectar señales de la ventana
     connect(waitingRoomWindow, &WaitingRoomWindow::readyToggled, this,

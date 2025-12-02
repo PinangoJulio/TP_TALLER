@@ -523,6 +523,7 @@ void Match::stop_match() {
 }
 
 Match::~Match() {
+    stop_match();
     is_active = false;
     gameloop->join();
 }
