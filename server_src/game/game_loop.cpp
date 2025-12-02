@@ -131,6 +131,10 @@ void GameLoop::add_player(int player_id, const std::string& name, const std::str
     try {
         YAML::Node global_config = YAML::LoadFile("config.yaml");
         YAML::Node cars_list = global_config["cars"];
+        float speed_scale = 1.0f;
+        float accel_scale = 1.0f;
+        if (global_config["vehicle_speed_scale"]) speed_scale = global_config["vehicle_speed_scale"].as<float>();
+        if (global_config["vehicle_accel_scale"]) accel_scale = global_config["vehicle_accel_scale"].as<float>();
         bool car_found = false;
         if (cars_list && cars_list.IsSequence()) {
             for (const auto& car_node : cars_list) {
@@ -140,8 +144,8 @@ void GameLoop::add_player(int player_id, const std::string& name, const std::str
                     float handling = car_node["handling"].as<float>();
                     float durability = car_node["durability"].as<float>();
                     float health = car_node["health"] ? car_node["health"].as<float>() : durability;
-                    float max_speed = speed * 1.5f;
-                    float accel_power = acceleration * 0.8f;
+                    float max_speed = speed * speed_scale * 1.5f;
+                    float accel_power = acceleration * accel_scale * 0.8f;
                     float turn_rate = handling * 1.0f / 100.0f;
                     float nitro_boost = 2.0f;
                     float mass = 1000.0f + (durability * 5.0f);
@@ -151,8 +155,9 @@ void GameLoop::add_player(int player_id, const std::string& name, const std::str
                 }
             }
         }
-        if (!car_found) car->load_stats(100.0f, 50.0f, 1.0f, 100.0f, 2.0f, 1000.0f);
+        if (!car_found) car->load_stats(100.0f * speed_scale, 50.0f * accel_scale, 1.0f, 100.0f, 2.0f, 1000.0f);
     } catch (...) {
+        // Valores por defecto con escalas
         car->load_stats(100.0f, 50.0f, 1.0f, 100.0f, 2.0f, 1000.0f);
     }
 
@@ -276,12 +281,12 @@ void GameLoop::load_spawn_points_for_current_race() {
                 spawn_points.emplace_back(x, y, a);
                 std::cout << "[GameLoop]   Spawn point: (" << x << ", " << y << ") angle=" << a << " rad" << std::endl;
             }
-            std::cout << "[GameLoop] ✅ Cargados " << spawn_points.size() << " spawn points" << std::endl;
+            std::cout << "[GameLoop]  Cargados " << spawn_points.size() << " spawn points" << std::endl;
         } else {
             std::cerr << "[GameLoop]  'spawn_points' no encontrado o no es secuencia en " << current_map_yaml << std::endl;
         }
     } catch (const std::exception& e) {
-        std::cerr << "[GameLoop] ❌ Error cargando spawns de " << current_map_yaml << ": " << e.what() << std::endl;
+        std::cerr << "[GameLoop]  Error cargando spawns de " << current_map_yaml << ": " << e.what() << std::endl;
     }
 }
 
@@ -302,11 +307,9 @@ void GameLoop::reset_players_for_race() {
             continue;
         }
 
-        // ✅ PRIMERO: Resetear estado del jugador y del auto
         player->resetForNewRace();
         player->getCar()->reset();
 
-        // ✅ SEGUNDO: Asignar posiciones spawn
         float x = 100.f, y = 100.f, a = 0.f;
         if (idx < spawn_points.size()) {
             std::tie(x, y, a) = spawn_points[idx];

@@ -115,7 +115,7 @@ void Car::move_up(float delta_time) {
     if (is_destroyed)
         return;
 
-    float effective_acceleration = acceleration * 5.0f;  // Aumentar aceleración para más respuesta
+    float effective_acceleration = acceleration;
     if (nitro_active) {
         effective_acceleration *= nitro_boost;
         nitro_amount = std::max(0.0f, nitro_amount - (20.0f * delta_time));
@@ -124,12 +124,23 @@ void Car::move_up(float delta_time) {
         }
     }
 
-    // Acelerar hacia arriba (ángulo = 270° = -π/2)
-    angle = -M_PI / 2.0f;
-    current_speed = std::min(max_speed, current_speed + effective_acceleration * delta_time);
-    velocity_x = 0.0f;
-    velocity_y = -current_speed;  // Negativo = arriba en SDL
+    // Acelerar hacia arriba (dirección Y negativa)
+    velocity_y -= effective_acceleration * delta_time;
 
+    // Limitar velocidad máxima
+    float total_speed = std::sqrt(velocity_x * velocity_x + velocity_y * velocity_y);
+    if (total_speed > max_speed) {
+        float scale = max_speed / total_speed;
+        velocity_x *= scale;
+        velocity_y *= scale;
+    }
+
+    // Actualizar ángulo para que apunte en la dirección del movimiento
+    if (total_speed > 1.0f) {
+        angle = std::atan2(velocity_y, velocity_x);
+    }
+
+    current_speed = total_speed;
     x += velocity_x * delta_time;
     y += velocity_y * delta_time;
 }
@@ -138,7 +149,7 @@ void Car::move_down(float delta_time) {
     if (is_destroyed)
         return;
 
-    float effective_acceleration = acceleration * 5.0f;
+    float effective_acceleration = acceleration;
     if (nitro_active) {
         effective_acceleration *= nitro_boost;
         nitro_amount = std::max(0.0f, nitro_amount - (20.0f * delta_time));
@@ -147,12 +158,23 @@ void Car::move_down(float delta_time) {
         }
     }
 
-    // Acelerar hacia abajo (ángulo = 90° = π/2)
-    angle = M_PI / 2.0f;
-    current_speed = std::min(max_speed, current_speed + effective_acceleration * delta_time);
-    velocity_x = 0.0f;
-    velocity_y = current_speed;  // Positivo = abajo en SDL
+    // Acelerar hacia abajo (dirección Y positiva)
+    velocity_y += effective_acceleration * delta_time;
 
+    // Limitar velocidad máxima
+    float total_speed = std::sqrt(velocity_x * velocity_x + velocity_y * velocity_y);
+    if (total_speed > max_speed) {
+        float scale = max_speed / total_speed;
+        velocity_x *= scale;
+        velocity_y *= scale;
+    }
+
+    // Actualizar ángulo para que apunte en la dirección del movimiento
+    if (total_speed > 1.0f) {
+        angle = std::atan2(velocity_y, velocity_x);
+    }
+
+    current_speed = total_speed;
     x += velocity_x * delta_time;
     y += velocity_y * delta_time;
 }
@@ -161,7 +183,7 @@ void Car::move_left(float delta_time) {
     if (is_destroyed)
         return;
 
-    float effective_acceleration = acceleration * 5.0f;
+    float effective_acceleration = acceleration;
     if (nitro_active) {
         effective_acceleration *= nitro_boost;
         nitro_amount = std::max(0.0f, nitro_amount - (20.0f * delta_time));
@@ -170,12 +192,23 @@ void Car::move_left(float delta_time) {
         }
     }
 
-    // Acelerar hacia la izquierda (ángulo = 180° = π)
-    angle = M_PI;
-    current_speed = std::min(max_speed, current_speed + effective_acceleration * delta_time);
-    velocity_x = -current_speed;  // Negativo = izquierda
-    velocity_y = 0.0f;
+    // Acelerar hacia la izquierda (dirección X negativa)
+    velocity_x -= effective_acceleration * delta_time;
 
+    // Limitar velocidad máxima
+    float total_speed = std::sqrt(velocity_x * velocity_x + velocity_y * velocity_y);
+    if (total_speed > max_speed) {
+        float scale = max_speed / total_speed;
+        velocity_x *= scale;
+        velocity_y *= scale;
+    }
+
+    // Actualizar ángulo para que apunte en la dirección del movimiento
+    if (total_speed > 1.0f) {
+        angle = std::atan2(velocity_y, velocity_x);
+    }
+
+    current_speed = total_speed;
     x += velocity_x * delta_time;
     y += velocity_y * delta_time;
 }
@@ -184,7 +217,7 @@ void Car::move_right(float delta_time) {
     if (is_destroyed)
         return;
 
-    float effective_acceleration = acceleration * 5.0f;
+    float effective_acceleration = acceleration;
     if (nitro_active) {
         effective_acceleration *= nitro_boost;
         nitro_amount = std::max(0.0f, nitro_amount - (20.0f * delta_time));
@@ -193,12 +226,23 @@ void Car::move_right(float delta_time) {
         }
     }
 
-    // Acelerar hacia la derecha (ángulo = 0°)
-    angle = 0.0f;
-    current_speed = std::min(max_speed, current_speed + effective_acceleration * delta_time);
-    velocity_x = current_speed;  // Positivo = derecha
-    velocity_y = 0.0f;
+    // Acelerar hacia la derecha (dirección X positiva)
+    velocity_x += effective_acceleration * delta_time;
 
+    // Limitar velocidad máxima
+    float total_speed = std::sqrt(velocity_x * velocity_x + velocity_y * velocity_y);
+    if (total_speed > max_speed) {
+        float scale = max_speed / total_speed;
+        velocity_x *= scale;
+        velocity_y *= scale;
+    }
+
+    // Actualizar ángulo para que apunte en la dirección del movimiento
+    if (total_speed > 1.0f) {
+        angle = std::atan2(velocity_y, velocity_x);
+    }
+
+    current_speed = total_speed;
     x += velocity_x * delta_time;
     y += velocity_y * delta_time;
 }

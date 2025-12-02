@@ -10,12 +10,12 @@ ClientHandler::ClientHandler(Socket skt, int id, MatchesMonitor& monitor)
 
       void ClientHandler::send_shutdown_message(const std::vector<uint8_t>& msg) {
         try {
-            std::cout << "[ClientHandler " << client_id << "] 📤 Sending shutdown message..." << std::endl;
+            std::cout << "[ClientHandler " << client_id << "] Sending shutdown message..." << std::endl;
             
             // Enviar mensaje directamente por el socket
             skt.sendall(msg.data(), msg.size());
             
-            std::cout << "[ClientHandler " << client_id << "] ✅ Shutdown message sent" << std::endl;
+            std::cout << "[ClientHandler " << client_id << "] Shutdown message sent" << std::endl;
         } catch (const std::exception& e) {
             std::cerr << "[ClientHandler " << client_id 
                       << "] Error sending shutdown: " << e.what() << std::endl;
@@ -27,21 +27,25 @@ void ClientHandler::run_threads() {
 }
 
 void ClientHandler::stop_connection() {
-    std::cout << "[ClientHandler " << client_id << "] 🛑 Shutdown signal received" << std::endl;
-    
+    std::cout << "[ClientHandler " << client_id << "]  Shutdown signal received" << std::endl;
+
     is_alive = false;
     
     // Cerrar colas
     try {
         messages_queue.close();
     } catch (...) {}
-    
-    // ✅ NO cerrar el socket aquí - ya se usó para enviar el mensaje de shutdown
-    // El socket se cerrará en el destructor
-    
+
+    // Matar receiver primero
     receiver.kill();
     
-    std::cout << "[ClientHandler " << client_id << "] ✅ Shutdown initiated" << std::endl;
+    try {
+        skt.shutdown(SHUT_RDWR);
+    } catch (...) {
+        // Ignorar errores si ya estaba cerrado
+    }
+
+    std::cout << "[ClientHandler " << client_id << "]  Shutdown initiated" << std::endl;
 }
 
 bool ClientHandler::is_running() {
@@ -53,14 +57,20 @@ ClientHandler::~ClientHandler() {
     
     stop_connection();
     
+    // Hacer join del receiver
     try {
-        skt.shutdown(SHUT_RDWR);
+        receiver.join();
+    } catch (const std::exception& e) {
+        std::cerr << "[ClientHandler " << client_id << "] Error joining receiver: "
+                  << e.what() << std::endl;
+    }
+
+    // Cerrar el socket completamente (si no se cerró ya)
+    try {
         skt.close();
-    } catch (...) {}
-    
-    // CORRECCIÓN: Llamar a join() SIEMPRE.
-    // El método receiver.join() ya verifica internamente si es joinable.
-    receiver.join();
-    
-    std::cout << "[ClientHandler " << client_id << "] ✅ Destroyed" << std::endl;
+    } catch (...) {
+        // Ignorar si ya estaba cerrado
+    }
+
+    std::cout << "[ClientHandler " << client_id << "] Destroyed" << std::endl;
 }

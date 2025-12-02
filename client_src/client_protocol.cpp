@@ -339,24 +339,40 @@ int32_t ClientProtocol::read_int32() {
 // (tu función está perfecta, no hace falta tocarla)
 GameState ClientProtocol::receive_snapshot() {
     uint8_t type = read_message_type();
-    
-    // ✅ DETECTAR MENSAJE DE SHUTDOWN
-    if (type == MSG_ERROR) {
-        uint8_t error_code = read_uint8();
-        if (error_code == 0xFF) {
-            std::string error_msg = read_string();
-            std::cout << "\n==================================================" << std::endl;
-            std::cout << "    ⚠️  " << error_msg << std::endl;
-            std::cout << "==================================================" << std::endl;
-            
-            // ✅ Lanzar excepción específica
-            throw std::runtime_error("Server shutdown");
-        }
-    }
-    
     if (type != (uint8_t)ServerMessageType::GAME_STATE_UPDATE) {
-        std::cout << "[ClientProtocol] Warning: Expected GAME_STATE_UPDATE, got " 
+        std::cout << "[ClientProtocol] Warning: Expected GAME_STATE_UPDATE, got "
                   << static_cast<int>(type) << std::endl;
+
+        // Manejo robusto: no intentes parsear como snapshot un mensaje diferente
+        if (type == 0xFF /* MSG_ERROR */) {
+            try {
+                uint8_t err_code = read_uint8();
+                // En nuestro servidor, para shutdown se envía: 0xFF, 0xFF, uint16 len, string
+                std::string msg = "";
+                try {
+                    uint16_t len_net;
+                    socket.recvall(&len_net, sizeof(len_net));
+                    uint16_t len = ntohs(len_net);
+                    if (len > 0 && len < 4096) {
+                        std::vector<char> buf(len);
+                        socket.recvall(buf.data(), len);
+                        msg.assign(buf.begin(), buf.end());
+                    }
+                } catch (...) {
+                    // Si el formato no coincide, ignoramos el texto
+                }
+                if (err_code == 0xFF) {
+                    throw std::runtime_error(msg.empty() ? "Server shutdown" : msg);
+                } else {
+                    throw std::runtime_error(msg.empty() ? "Server error" : msg);
+                }
+            } catch (const std::exception& e) {
+                throw; // Propaga para que el caller cierre ordenadamente
+            }
+        }
+
+        // Tipo desconocido mientras estamos en juego: abortar para no desincronizar el stream
+        throw std::runtime_error("Unexpected message type while expecting snapshot");
     }
     GameState state;
 
@@ -557,4 +573,3 @@ std::vector<std::string> ClientProtocol::receive_race_paths() {
 
     return paths;
 }
-

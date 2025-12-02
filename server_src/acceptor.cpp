@@ -49,6 +49,21 @@ void Acceptor::notify_shutdown_to_all_clients() {
     }
     
     std::cout << "[Acceptor] ✅ Shutdown notifications sent" << std::endl;
+
+    // ✅ IMPORTANTE: Detener todas las conexiones inmediatamente
+    // Esto previene que los receivers procesen DISCONNECT después del shutdown
+    std::cout << "[Acceptor] 🛑 Stopping all client connections..." << std::endl;
+    for (auto* client : clients_connected) {
+        if (client) {
+            try {
+                client->stop_connection();
+            } catch (const std::exception& e) {
+                std::cerr << "[Acceptor] Error stopping client "
+                          << client->get_id() << ": " << e.what() << std::endl;
+            }
+        }
+    }
+    std::cout << "[Acceptor] ✅ All connections stopped" << std::endl;
 }
 
 // ✅ NUEVO: close_socket

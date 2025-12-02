@@ -339,9 +339,13 @@ void Receiver::handle_lobby() {
                     break;
                 }
 
-                auto notif =
-                    LobbyProtocol::serialize_player_ready_notification(username, is_ready != 0);
-                monitor.broadcast_to_match(current_match_id, notif, username);
+                // ✅ SOLO hacer broadcast si estamos en lobby (no durante el juego)
+                // Durante el juego, el Sender maneja toda la comunicación
+                if (current_match_id != -1) {
+                    auto notif =
+                        LobbyProtocol::serialize_player_ready_notification(username, is_ready != 0);
+                    monitor.broadcast_to_match(current_match_id, notif, username);
+                }
 
                 break;
             }
@@ -407,6 +411,18 @@ void Receiver::handle_lobby() {
         // INICIAR SENDER (para enviar GameState a este jugador)
         sender.start();
         std::cout << "[Receiver] Sender started for player " << username << std::endl;
+
+        // ✅ Importante: a partir de aquí NO queremos más broadcasts directos a este socket
+        // porque el hilo Sender (ClientMonitor) es el único que debe escribir durante la partida.
+        // Eliminamos el socket del registro de MatchesMonitor para este jugador.
+        try {
+            monitor.unregister_player_socket(match_id, username);
+            std::cout << "[Receiver] Unregistered lobby socket for player " << username
+                      << " (match_id=" << match_id << ")" << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "[Receiver] Warning: could not unregister socket for " << username
+                      << ": " << e.what() << std::endl;
+        }
     } catch (const std::exception& e) {
         std::string error_msg = e.what();
 
@@ -470,7 +486,22 @@ void Receiver::handle_match_messages() {
 
             try {
                 protocol.read_command_client(comand_match);
-            } catch (...) {
+            } catch (const std::exception& e) {
+                // Socket cerrado o error de lectura
+                std::string error_msg = e.what();
+                if (error_msg.find("shutdown") != std::string::npos ||
+                    error_msg.find("Connection closed") != std::string::npos ||
+                    !is_running) {
+                    std::cout << "[Receiver " << username << "] Socket closed during shutdown" << std::endl;
+                } else {
+                    std::cerr << "[Receiver " << username << "] Read error: " << error_msg << std::endl;
+                }
+                break;
+            }
+
+            // ✅ Verificar si el servidor está cerrándose antes de procesar
+            if (!is_running) {
+                std::cout << "[Receiver " << username << "] Ignoring command due to shutdown" << std::endl;
                 break;
             }
 
@@ -500,12 +531,19 @@ void Receiver::run() {
     handle_lobby();
 
     // VERIFICAR SI PASÓ A FASE DE JUEGO
-
     handle_match_messages();
 
-    if (match_id != -1) {
-        monitor.delete_player_from_match(id, match_id);
+    // ✅ SOLO eliminar del match si el servidor sigue corriendo
+    // (evita acceso a memoria liberada durante shutdown)
+    if (match_id != -1 && is_running) {
+        try {
+            monitor.delete_player_from_match(id, match_id);
+        } catch (const std::exception& e) {
+            std::cerr << "[Receiver] Warning: Could not delete player from match: "
+                      << e.what() << std::endl;
+        }
     }
+
     sender_messages_queue.close();
     
     // CORRECCIÓN: Intentar join siempre que sea posible o si match_id indica que se usó.

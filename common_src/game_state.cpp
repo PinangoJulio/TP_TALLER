@@ -1,5 +1,7 @@
 #include "game_state.h"
 
+#include <iostream>
+
 // Incluir las clases del servidor SOLO en este .cpp
 #include "../server_src/game/car.h"
 #include "../server_src/game/player.h"
@@ -19,6 +21,12 @@ GameState::GameState(const std::vector<Player*>& player_list, const std::string&
         info.username = player_ptr->getName();
         info.car_name = player_ptr->getSelectedCar();
         info.car_type = player_ptr->getCarType();
+
+        // ✅ DEBUG
+        std::cout << "[GameState] Player " << info.player_id
+                  << ": username='" << info.username
+                  << "' car='" << info.car_name
+                  << "' type='" << info.car_type << "'" << std::endl;
 
         // Posición y física
         info.pos_x = player_ptr->getX();
