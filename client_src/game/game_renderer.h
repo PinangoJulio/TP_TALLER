@@ -13,11 +13,15 @@ class GameRenderer {
 private:
     SDL2pp::Renderer& renderer;
 
-    // Texturas
+    // Texturas del mapa
     std::unique_ptr<SDL2pp::Texture> map_texture;
     std::unique_ptr<SDL2pp::Texture> puentes_texture;
     std::unique_ptr<SDL2pp::Texture> top_texture;
-    std::unique_ptr<SDL2pp::Texture> car_texture;
+    
+    // Texturas de autos por tamaño
+    std::unique_ptr<SDL2pp::Texture> car_texture_32;
+    std::unique_ptr<SDL2pp::Texture> car_texture_40;
+    std::unique_ptr<SDL2pp::Texture> car_texture_50;
     
     // Textura del Minimapa
     std::unique_ptr<SDL2pp::Texture> minimap_texture;
@@ -25,20 +29,26 @@ private:
     // Collision Manager para lógica visual
     std::unique_ptr<CollisionManager> collision_manager;
 
-    // ✅ Clips de animación: [modelo][ángulo] → SDL2pp::Rect
-    std::map<int, std::map<int, SDL2pp::Rect>> car_clips;
+    // Clips de animación por tamaño: [fila][dirección] → SDL2pp::Rect
+    std::map<int, std::map<int, SDL2pp::Rect>> car_clips_32;
+    std::map<int, std::map<int, SDL2pp::Rect>> car_clips_40;
+    std::map<int, std::map<int, SDL2pp::Rect>> car_clips_50;
     
-    // ✅ Mapper: nombre del auto → índice de modelo
-    std::map<std::string, int> car_name_to_model;
+    // Estructura para info de cada auto
+    struct CarInfo {
+        int texture_id;  // 0=32px, 1=40px, 2=50px
+        int row;         // Fila en su spritesheet
+        int size;        // Tamaño del sprite
+    };
+    
+    // Mapper: nombre del auto → info del auto
+    std::map<std::string, CarInfo> car_info_map;
 
     // Dimensiones de la IMAGEN del mapa (se llenan al cargar la carrera)
     int map_width;
     int map_height;
 
     int getClipIndexFromAngle(float angle_radians);
-    
-    // ✅ Helper para obtener modelo desde nombre
-    int getCarModelFromName(const std::string& car_name);
 
 public:
     // Constantes fijas de pantalla (700x700)
