@@ -4,8 +4,7 @@ ClientReceiver::ClientReceiver(ClientProtocol& protocol, Queue<GameState>& queue
     : protocol(protocol), snapshots_queue(queue), client_id(-1) {}
 
     void ClientReceiver::run() {
-        std::cout << "[ClientReceiver] 📡 Thread iniciado, esperando snapshots..." << std::endl;
-    
+
         while (should_keep_running()) {
             GameState game_state_snapshot;
             try {
@@ -29,20 +28,17 @@ ClientReceiver::ClientReceiver(ClientProtocol& protocol, Queue<GameState>& queue
             } catch (const std::runtime_error& e) {
                 std::string error_msg = e.what();
                 
-                // 
                 if (error_msg.find("Server shutdown") != std::string::npos) {
-                    std::cout << "[ClientReceiver] 🛑 Server shutdown detected - stopping client" << std::endl;
-                    
-                    // 
+
                     snapshots_queue.close();
                     this->stop();
                     
-                    // 
+                    // ✅ Re-lanzar la excepción para que Client::start() la capture
                     throw;
                 }
                 
                 if (should_keep_running()) {
-                    std::cerr << "[ClientReceiver]   Error recibiendo snapshot: " << e.what() << std::endl;
+                    std::cerr << "[ClientReceiver]  Error recibiendo snapshot: " << e.what() << std::endl;
                 }
                 break;
             }
@@ -52,7 +48,6 @@ ClientReceiver::ClientReceiver(ClientProtocol& protocol, Queue<GameState>& queue
             } catch (const ClosedQueue&) {
                 break;
             } catch (const std::exception& e) {
-                
                 if (should_keep_running()) {
                      std::cerr << "[ClientReceiver] Warning al pushear snapshot: " << e.what() << std::endl;
                 }
@@ -60,7 +55,6 @@ ClientReceiver::ClientReceiver(ClientProtocol& protocol, Queue<GameState>& queue
             }
         }
     
-        std::cout << "[ClientReceiver] 📡 Thread finalizado" << std::endl;
     }
 
 ClientReceiver::~ClientReceiver() {

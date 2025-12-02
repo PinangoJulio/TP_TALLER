@@ -3,12 +3,7 @@
 
 Server::Server(const char* servicename) 
     : acceptor(servicename), shutdown_signal(false) {
-    std::cout << "==================================================" << std::endl;
-    std::cout << "    NEED FOR SPEED 2D - SERVER" << std::endl;
-    std::cout << "==================================================" << std::endl;
-    std::cout << "Port: " << servicename << std::endl;
-    std::cout << "Press 'q' + Enter to stop" << std::endl;
-    std::cout << "==================================================" << std::endl;
+
 }
 
 void Server::accept_connection() {
@@ -19,14 +14,10 @@ void Server::accept_connection() {
 
 void Server::shutdown() {
     if (shutdown_signal) {
-        std::cout << "[Server] ⚠️ Shutdown already in progress" << std::endl;
         return;
     }
     
-    std::cout << "\n==================================================" << std::endl;
-    std::cout << "    🛑 SERVER SHUTDOWN INITIATED" << std::endl;
-    std::cout << "==================================================" << std::endl;
-    
+
     shutdown_signal = true;
     
     
@@ -34,7 +25,6 @@ void Server::shutdown() {
     acceptor.stop_accepting();
     
     // 2. Notificar a TODOS los clientes conectados
-    std::cout << "[Server] Sending shutdown notifications to all clients..." << std::endl;
     acceptor.notify_shutdown_to_all_clients();
     
     // 3. Dar tiempo para que los mensajes lleguen
