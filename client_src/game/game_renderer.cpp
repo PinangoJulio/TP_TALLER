@@ -1,67 +1,55 @@
 #include "game_renderer.h"
-#include <iostream>
-#include <cmath>
-#include <algorithm> 
-#include <cctype>    
+
 #include <SDL2/SDL_image.h>
 #include <yaml-cpp/yaml.h>
-#include <fstream> 
+
+#include <algorithm>
+#include <cctype>
+#include <cmath>
+#include <fstream>
+#include <iostream>
 
 const float RAD_TO_DEG = 180.0f / M_PI;
 
 GameRenderer::GameRenderer(SDL2pp::Renderer& renderer_ref)
     : renderer(renderer_ref), map_width(0), map_height(0) {
-
-    // --- CORRECCIÓN DEL CRASH (Helper de carga segura) ---
     auto load_safe = [&](const std::string& path) -> std::unique_ptr<SDL2pp::Texture> {
         SDL_Surface* surf = IMG_Load(path.c_str());
         if (!surf) {
-            std::cerr << "[GameRenderer] ⚠️  AVISO: No se encontró la textura: " << path 
+            std::cerr << "[GameRenderer] ⚠️  AVISO: No se encontró la textura: " << path
                       << "\n -> Verifica que el archivo exista." << std::endl;
-            return nullptr; 
+            return nullptr;
         }
         return std::make_unique<SDL2pp::Texture>(renderer, SDL2pp::Surface(surf));
     };
 
-    // 1. CARGA DE TEXTURAS (Segura)
     car_texture_32 = load_safe("assets/img/map/cars/spritesheet-cars-32.png");
-    car_texture_40 = load_safe("assets/img/map/cars/spritesheet-cars-40.png"); 
+    car_texture_40 = load_safe("assets/img/map/cars/spritesheet-cars-40.png");
     car_texture_50 = load_safe("assets/img/map/cars/spritesheet-cars-50.png");
 
-    // 2. CONFIGURACIÓN DE INFO DE AUTOS (CORREGIDO: SALTOS DE 2 FILAS)
-    
-    // Autos de 32px
-    car_info_map["J-Classic 600"]   = {0, 0, 32};
-    
-    // Autos de 40px (Cada auto ocupa 2 filas, saltamos de 2 en 2)
-    // El segundo número es el ÍNDICE de la fila donde EMPIEZA el auto.
-    car_info_map["Stallion GT"]     = {1, 0, 40};  // Ocupa filas 0 y 1
-    car_info_map["Cavallo V8"]      = {1, 2, 40};  // Ocupa filas 2 y 3 (Empieza en 2)
-    car_info_map["Leyenda Urbana"]  = {1, 4, 40};  // Ocupa filas 4 y 5 (Empieza en 4)
-    car_info_map["Brisa"]           = {1, 6, 40};  // Ocupa filas 6 y 7 (Empieza en 6)
-    car_info_map["Nómada"]          = {1, 8, 40};  // Ocupa filas 8 y 9 (Empieza en 8)
-    
-    // Autos de 50px
-    car_info_map["Senator"]         = {2, 0, 50};
+    car_info_map["J-Classic 600"] = {0, 0, 32};
 
-    // 3. GENERACIÓN DE CLIPS (Aumentados los límites de los bucles)
-    
-    // 32px (Asumimos 1 auto = 2 filas)
+    car_info_map["Stallion GT"] = {1, 0, 40};     // Ocupa filas 0 y 1
+    car_info_map["Cavallo V8"] = {1, 2, 40};      // Ocupa filas 2 y 3 (Empieza en 2)
+    car_info_map["Leyenda Urbana"] = {1, 4, 40};  // Ocupa filas 4 y 5 (Empieza en 4)
+    car_info_map["Brisa"] = {1, 6, 40};           // Ocupa filas 6 y 7 (Empieza en 6)
+    car_info_map["Nómada"] = {1, 8, 40};          // Ocupa filas 8 y 9 (Empieza en 8)
+
+    // Autos de 50px
+    car_info_map["Senator"] = {2, 0, 50};
+
     for (int row = 0; row < 2; ++row) {
         for (int dir = 0; dir < 8; ++dir) {
             car_clips_32[row][dir] = SDL2pp::Rect(dir * 32, row * 32, 32, 32);
         }
     }
-    
-    // 40px (5 autos * 2 filas = 10 filas)
-    // Cargamos las 10 filas del archivo para tener todos los autos disponibles
+
     for (int row = 0; row < 10; ++row) {
         for (int dir = 0; dir < 8; ++dir) {
             car_clips_40[row][dir] = SDL2pp::Rect(dir * 40, row * 40, 40, 40);
         }
     }
-    
-    // 50px (Asumimos 1 auto = 2 filas)
+
     for (int row = 0; row < 2; ++row) {
         for (int dir = 0; dir < 8; ++dir) {
             car_clips_50[row][dir] = SDL2pp::Rect(dir * 50, row * 50, 50, 50);
@@ -77,36 +65,39 @@ void GameRenderer::init_race(const std::string& yaml_path) {
         YAML::Node config = YAML::LoadFile(yaml_path);
 
         if (!config["race"] || !config["race"]["city"] || !config["race"]["name"]) {
-            throw std::runtime_error("El archivo YAML no tiene los campos 'race.city' o 'race.name'");
+            throw std::runtime_error(
+                "El archivo YAML no tiene los campos 'race.city' o 'race.name'");
         }
 
-        std::string raw_city = config["race"]["city"].as<std::string>(); 
-        std::string raw_name = config["race"]["name"].as<std::string>(); 
+        std::string raw_city = config["race"]["city"].as<std::string>();
+        std::string raw_name = config["race"]["name"].as<std::string>();
 
         auto normalize_path_name = [](std::string s) {
             std::transform(s.begin(), s.end(), s.begin(),
-                [](unsigned char c){ return std::tolower(c); });
+                           [](unsigned char c) { return std::tolower(c); });
             std::replace(s.begin(), s.end(), '_', '-');
             std::replace(s.begin(), s.end(), ' ', '-');
             return s;
         };
 
-        std::string city_name = normalize_path_name(raw_city); 
+        std::string city_name = normalize_path_name(raw_city);
         std::string route_name = normalize_path_name(raw_name);
 
-        std::cout << "[GameRenderer] Info -> Ciudad: " << city_name << " | Ruta: " << route_name << std::endl;
+        std::cout << "[GameRenderer] Info -> Ciudad: " << city_name << " | Ruta: " << route_name
+                  << std::endl;
 
         std::string visual_base = "assets/img/map/cities/";
         std::string map_file = visual_base + city_name + ".png";
 
         std::string layer_root = "assets/img/map/layers/" + city_name + "/";
         std::string collision_file = layer_root + "camino.png";
-        std::string bridges_mask   = layer_root + "puentes.png";
-        std::string ramps_file     = layer_root + "rampas.png";
-        std::string top_file       = layer_root + "top.png";
+        std::string bridges_mask = layer_root + "puentes.png";
+        std::string ramps_file = layer_root + "rampas.png";
+        std::string top_file = layer_root + "top.png";
         std::string bridges_visual = layer_root + "puentes-top.png";
 
-        std::string minimap_file = "assets/img/map/cities/caminos/" + city_name + "/" + route_name + "/debug_resultado_v5.png";
+        std::string minimap_file = "assets/img/map/cities/caminos/" + city_name + "/" + route_name +
+                                   "/debug_resultado_v5.png";
 
         std::cout << "[GameRenderer] Cargando Assets..." << std::endl;
 
@@ -120,7 +111,8 @@ void GameRenderer::init_race(const std::string& yaml_path) {
 
         SDL_Surface* surfPuentes = IMG_Load(bridges_visual.c_str());
         if (surfPuentes) {
-            puentes_texture = std::make_unique<SDL2pp::Texture>(renderer, SDL2pp::Surface(surfPuentes));
+            puentes_texture =
+                std::make_unique<SDL2pp::Texture>(renderer, SDL2pp::Surface(surfPuentes));
         } else {
             puentes_texture.reset();
         }
@@ -137,18 +129,21 @@ void GameRenderer::init_race(const std::string& yaml_path) {
             minimap_texture = std::make_unique<SDL2pp::Texture>(renderer, SDL2pp::Surface(surfMini));
             std::cout << "[GameRenderer] Minimapa cargado correctamente." << std::endl;
         } else {
-            std::cerr << "[GameRenderer] ⚠️  No se pudo cargar el minimapa: " << minimap_file << std::endl;
+            std::cerr << "[GameRenderer] ⚠️  No se pudo cargar el minimapa: " << minimap_file
+                      << std::endl;
             minimap_texture.reset();
         }
 
         std::ifstream f(collision_file);
         if (f.good()) {
-             collision_manager = std::make_unique<CollisionManager>(collision_file, bridges_mask, ramps_file);
+            collision_manager =
+                std::make_unique<CollisionManager>(collision_file, bridges_mask, ramps_file);
         } else {
-             std::cerr << "[GameRenderer] ⚠️  No se encontró collision mask: " << collision_file << std::endl;
+            std::cerr << "[GameRenderer] ⚠️  No se encontró collision mask: " << collision_file
+                      << std::endl;
         }
 
-        // Cargar checkpoints (Se mantiene tu lógica)
+        // Cargar checkpoints 
         load_checkpoints_from_yaml(yaml_path);
 
         std::cout << "[GameRenderer] ✅ Inicialización completada" << std::endl;
@@ -161,11 +156,12 @@ void GameRenderer::init_race(const std::string& yaml_path) {
 
 int GameRenderer::getClipIndexFromAngle(float angle_radians) {
     float degrees = angle_radians * RAD_TO_DEG;
-    while (degrees < 0) degrees += 360;
-    while (degrees >= 360) degrees -= 360;
-    
-    // CORRECCIÓN: 16 direcciones (360 / 16 = 22.5 grados por sector)
-    // El offset de 11.25 centra el ángulo en el sprite.
+    while (degrees < 0)
+        degrees += 360;
+    while (degrees >= 360)
+        degrees -= 360;
+
+   
     int index = static_cast<int>((degrees + 11.25f) / 22.5f) % 16;
     return index;
 }
@@ -192,10 +188,14 @@ void GameRenderer::render(const GameState& state, int player_id) {
     int cam_x = static_cast<int>(focus_x) - SCREEN_WIDTH / 2;
     int cam_y = static_cast<int>(focus_y) - SCREEN_HEIGHT / 2;
 
-    if (cam_x < 0) cam_x = 0;
-    if (cam_y < 0) cam_y = 0;
-    if (cam_x > map_width - SCREEN_WIDTH) cam_x = map_width - SCREEN_WIDTH;
-    if (cam_y > map_height - SCREEN_HEIGHT) cam_y = map_height - SCREEN_HEIGHT;
+    if (cam_x < 0)
+        cam_x = 0;
+    if (cam_y < 0)
+        cam_y = 0;
+    if (cam_x > map_width - SCREEN_WIDTH)
+        cam_x = map_width - SCREEN_WIDTH;
+    if (cam_y > map_height - SCREEN_HEIGHT)
+        cam_y = map_height - SCREEN_HEIGHT;
 
     SDL2pp::Rect viewport(cam_x, cam_y, SCREEN_WIDTH, SCREEN_HEIGHT);
     SDL2pp::Rect screen_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -205,12 +205,13 @@ void GameRenderer::render(const GameState& state, int player_id) {
 
     renderer.Copy(*map_texture, viewport, screen_rect);
 
-    // Renderizar checkpoints (Se mantiene tu lógica)
+    // Renderizar checkpoints 
     render_checkpoints(viewport, cam_x, cam_y);
 
-    // Renderizar Jugadores (Lógica corregida para 2 filas / 16 direcciones)
+    // Renderizar Jugadores 
     for (const auto& player : state.players) {
-        if (!player.is_alive) continue;
+        if (!player.is_alive)
+            continue;
 
         int screen_x = static_cast<int>(player.pos_x) - cam_x;
         int screen_y = static_cast<int>(player.pos_y) - cam_y;
@@ -223,13 +224,11 @@ void GameRenderer::render(const GameState& state, int player_id) {
 
         int texture_id = it->second.texture_id;
         int base_row = it->second.row;
-        
+
         // Calcular índice de 16 direcciones
         int total_clip_idx = getClipIndexFromAngle(player.angle);
 
-        // Seleccionar fila correcta (A o B)
-        // Si el ángulo es mayor o igual a 8, significa que estamos en la segunda mitad del giro,
-        // por lo tanto usamos la siguiente fila (base_row + 1).
+      
         int final_row = base_row;
         int final_clip_idx = total_clip_idx;
 
@@ -258,25 +257,28 @@ void GameRenderer::render(const GameState& state, int player_id) {
         }
     }
 
-    if (puentes_texture) renderer.Copy(*puentes_texture, viewport, screen_rect);
-    if (top_texture) renderer.Copy(*top_texture, viewport, screen_rect);
+    if (puentes_texture)
+        renderer.Copy(*puentes_texture, viewport, screen_rect);
+    if (top_texture)
+        renderer.Copy(*top_texture, viewport, screen_rect);
 
     if (minimap_texture && local_player) {
         int minimapSrcX = static_cast<int>(focus_x) - (MINIMAP_SCOPE / 2);
         int minimapSrcY = static_cast<int>(focus_y) - (MINIMAP_SCOPE / 2);
 
-        if (minimapSrcX < 0) minimapSrcX = 0;
-        if (minimapSrcY < 0) minimapSrcY = 0;
-        if (minimapSrcX + MINIMAP_SCOPE > map_width) minimapSrcX = map_width - MINIMAP_SCOPE;
-        if (minimapSrcY + MINIMAP_SCOPE > map_height) minimapSrcY = map_height - MINIMAP_SCOPE;
+        if (minimapSrcX < 0)
+            minimapSrcX = 0;
+        if (minimapSrcY < 0)
+            minimapSrcY = 0;
+        if (minimapSrcX + MINIMAP_SCOPE > map_width)
+            minimapSrcX = map_width - MINIMAP_SCOPE;
+        if (minimapSrcY + MINIMAP_SCOPE > map_height)
+            minimapSrcY = map_height - MINIMAP_SCOPE;
 
         SDL2pp::Rect minimapSrc(minimapSrcX, minimapSrcY, MINIMAP_SCOPE, MINIMAP_SCOPE);
-        SDL2pp::Rect minimapDest(
-            SCREEN_WIDTH - MINIMAP_SIZE - MINIMAP_MARGIN,
-            SCREEN_HEIGHT - MINIMAP_SIZE - MINIMAP_MARGIN,
-            MINIMAP_SIZE,
-            MINIMAP_SIZE
-        );
+        SDL2pp::Rect minimapDest(SCREEN_WIDTH - MINIMAP_SIZE - MINIMAP_MARGIN,
+                                 SCREEN_HEIGHT - MINIMAP_SIZE - MINIMAP_MARGIN, MINIMAP_SIZE,
+                                 MINIMAP_SIZE);
 
         renderer.SetDrawColor(0, 0, 0, 255);
         renderer.FillRect(minimapDest);
@@ -303,13 +305,13 @@ void GameRenderer::render(const GameState& state, int player_id) {
 
 void GameRenderer::load_checkpoints_from_yaml(const std::string& yaml_path) {
     std::cout << "[GameRenderer] Cargando checkpoints desde: " << yaml_path << std::endl;
-    
+
     checkpoints.clear();
     spawn_points.clear();
-    
+
     try {
         YAML::Node config = YAML::LoadFile(yaml_path);
-        
+
         if (config["checkpoints"] && config["checkpoints"].IsSequence()) {
             for (const auto& cp : config["checkpoints"]) {
                 Checkpoint checkpoint;
@@ -320,14 +322,15 @@ void GameRenderer::load_checkpoints_from_yaml(const std::string& yaml_path) {
                 checkpoint.width = cp["width"].as<float>();
                 checkpoint.height = cp["height"].as<float>();
                 checkpoint.angle = cp["angle"] ? cp["angle"].as<float>() : 0.0f;
-                
+
                 checkpoints.push_back(checkpoint);
             }
-            std::cout << "[GameRenderer]  Cargados " << checkpoints.size() << " checkpoints" << std::endl;
+            std::cout << "[GameRenderer]  Cargados " << checkpoints.size() << " checkpoints"
+                      << std::endl;
         }
-        
+
         if (config["spawn_points"] && config["spawn_points"].IsSequence()) {
-            // FIX: Eliminada variable 'spawn_num' no usada
+            
             for (const auto& sp : config["spawn_points"]) {
                 SpawnPoint spawn;
                 spawn.x = sp["x"].as<float>();
@@ -335,69 +338,74 @@ void GameRenderer::load_checkpoints_from_yaml(const std::string& yaml_path) {
                 spawn.angle = sp["angle"].as<float>();
                 spawn_points.push_back(spawn);
             }
-            std::cout << "[GameRenderer] Cargados " << spawn_points.size() << " spawn points" << std::endl;
+            std::cout << "[GameRenderer] Cargados " << spawn_points.size() << " spawn points"
+                      << std::endl;
         }
-        
+
     } catch (const std::exception& e) {
         std::cerr << "[GameRenderer]  Error cargando checkpoints: " << e.what() << std::endl;
     }
 }
 
 void GameRenderer::render_checkpoints(const SDL2pp::Rect& viewport, int cam_x, int cam_y) {
-    (void)viewport; // FIX: Silenciar warning de parámetro no usado
+    (void)viewport;  
 
     for (const auto& cp : checkpoints) {
         int screen_x = static_cast<int>(cp.x) - cam_x;
         int screen_y = static_cast<int>(cp.y) - cam_y;
-        
+
         if (screen_x + cp.width < -50 || screen_x - cp.width > SCREEN_WIDTH + 50 ||
             screen_y + cp.height < -50 || screen_y - cp.height > SCREEN_HEIGHT + 50) {
             continue;
         }
-        
-        SDL2pp::Rect checkpoint_rect(
-            screen_x - cp.width / 2,
-            screen_y - cp.height / 2,
-            cp.width,
-            cp.height
-        );
-        
-        if (cp.type == "start") renderer.SetDrawColor(0, 255, 0, 255);
-        else if (cp.type == "finish") renderer.SetDrawColor(255, 0, 0, 255);
-        else renderer.SetDrawColor(255, 255, 0, 255);
-        
+
+        SDL2pp::Rect checkpoint_rect(screen_x - cp.width / 2, screen_y - cp.height / 2, cp.width,
+                                     cp.height);
+
+        if (cp.type == "start")
+            renderer.SetDrawColor(0, 255, 0, 255);
+        else if (cp.type == "finish")
+            renderer.SetDrawColor(255, 0, 0, 255);
+        else
+            renderer.SetDrawColor(255, 255, 0, 255);
+
         renderer.DrawRect(checkpoint_rect);
-        
-        // Bordes gruesos
-        SDL2pp::Rect inner_rect1(checkpoint_rect.x + 1, checkpoint_rect.y + 1, checkpoint_rect.w - 2, checkpoint_rect.h - 2);
+
+       
+        SDL2pp::Rect inner_rect1(checkpoint_rect.x + 1, checkpoint_rect.y + 1, checkpoint_rect.w - 2,
+                                 checkpoint_rect.h - 2);
         renderer.DrawRect(inner_rect1);
-        SDL2pp::Rect inner_rect2(checkpoint_rect.x + 2, checkpoint_rect.y + 2, checkpoint_rect.w - 4, checkpoint_rect.h - 4);
+        SDL2pp::Rect inner_rect2(checkpoint_rect.x + 2, checkpoint_rect.y + 2, checkpoint_rect.w - 4,
+                                 checkpoint_rect.h - 4);
         renderer.DrawRect(inner_rect2);
-        
+
         // Indicador numérico
         int center_x = screen_x;
         int center_y = screen_y;
         int circle_radius = 12;
-        
+
         renderer.SetDrawColor(255, 255, 255, 255);
         for (int w = -circle_radius; w <= circle_radius; w++) {
             for (int h = -circle_radius; h <= circle_radius; h++) {
-                if ((w*w + h*h) <= circle_radius * circle_radius) {
+                if ((w * w + h * h) <= circle_radius * circle_radius) {
                     renderer.DrawPoint(center_x + w, center_y + h);
                 }
             }
         }
-        
-        if (cp.type == "start") renderer.SetDrawColor(0, 255, 0, 255);
-        else if (cp.type == "finish") renderer.SetDrawColor(255, 0, 0, 255);
-        else renderer.SetDrawColor(255, 255, 0, 255);
-        
+
+        if (cp.type == "start")
+            renderer.SetDrawColor(0, 255, 0, 255);
+        else if (cp.type == "finish")
+            renderer.SetDrawColor(255, 0, 0, 255);
+        else
+            renderer.SetDrawColor(255, 255, 0, 255);
+
         for (int angle = 0; angle < 360; angle += 1) {
             int x = center_x + circle_radius * std::cos(angle * M_PI / 180.0f);
             int y = center_y + circle_radius * std::sin(angle * M_PI / 180.0f);
             renderer.DrawPoint(x, y);
         }
-        
+
         renderer.SetDrawColor(0, 0, 0, 255);
         if (cp.id < 10) {
             for (int i = 0; i < (cp.id % 10); i++) {
