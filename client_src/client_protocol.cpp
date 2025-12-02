@@ -276,6 +276,10 @@ void ClientProtocol::serialize_command(const ComandMatchDTO& command,
     switch (command.command) {
         case GameCommand::ACCELERATE:
         case GameCommand::BRAKE:
+        case GameCommand::MOVE_UP:      // Nuevos comandos de movimiento
+        case GameCommand::MOVE_DOWN:
+        case GameCommand::MOVE_LEFT:
+        case GameCommand::MOVE_RIGHT:
         case GameCommand::USE_NITRO:
         case GameCommand::STOP_ALL:
         case GameCommand::DISCONNECT:

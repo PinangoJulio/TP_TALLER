@@ -110,6 +110,99 @@ void Car::accelerate(float delta_time) {
     update(delta_time);
 }
 
+// Nuevos métodos para movimiento en 4 direcciones fijas
+void Car::move_up(float delta_time) {
+    if (is_destroyed)
+        return;
+
+    float effective_acceleration = acceleration;
+    if (nitro_active) {
+        effective_acceleration *= nitro_boost;
+        nitro_amount = std::max(0.0f, nitro_amount - (20.0f * delta_time));
+        if (nitro_amount <= 0) {
+            deactivateNitro();
+        }
+    }
+
+    // Acelerar hacia arriba (ángulo = 270° = -π/2)
+    angle = -M_PI / 2.0f;
+    current_speed = std::min(max_speed, current_speed + effective_acceleration * delta_time);
+    velocity_x = 0.0f;
+    velocity_y = -current_speed;  // Negativo = arriba en SDL
+
+    x += velocity_x * delta_time;
+    y += velocity_y * delta_time;
+}
+
+void Car::move_down(float delta_time) {
+    if (is_destroyed)
+        return;
+
+    float effective_acceleration = acceleration;
+    if (nitro_active) {
+        effective_acceleration *= nitro_boost;
+        nitro_amount = std::max(0.0f, nitro_amount - (20.0f * delta_time));
+        if (nitro_amount <= 0) {
+            deactivateNitro();
+        }
+    }
+
+    // Acelerar hacia abajo (ángulo = 90° = π/2)
+    angle = M_PI / 2.0f;
+    current_speed = std::min(max_speed, current_speed + effective_acceleration * delta_time);
+    velocity_x = 0.0f;
+    velocity_y = current_speed;  // Positivo = abajo en SDL
+
+    x += velocity_x * delta_time;
+    y += velocity_y * delta_time;
+}
+
+void Car::move_left(float delta_time) {
+    if (is_destroyed)
+        return;
+
+    float effective_acceleration = acceleration;
+    if (nitro_active) {
+        effective_acceleration *= nitro_boost;
+        nitro_amount = std::max(0.0f, nitro_amount - (20.0f * delta_time));
+        if (nitro_amount <= 0) {
+            deactivateNitro();
+        }
+    }
+
+    // Acelerar hacia la izquierda (ángulo = 180° = π)
+    angle = M_PI;
+    current_speed = std::min(max_speed, current_speed + effective_acceleration * delta_time);
+    velocity_x = -current_speed;  // Negativo = izquierda
+    velocity_y = 0.0f;
+
+    x += velocity_x * delta_time;
+    y += velocity_y * delta_time;
+}
+
+void Car::move_right(float delta_time) {
+    if (is_destroyed)
+        return;
+
+    float effective_acceleration = acceleration;
+    if (nitro_active) {
+        effective_acceleration *= nitro_boost;
+        nitro_amount = std::max(0.0f, nitro_amount - (20.0f * delta_time));
+        if (nitro_amount <= 0) {
+            deactivateNitro();
+        }
+    }
+
+    // Acelerar hacia la derecha (ángulo = 0°)
+    angle = 0.0f;
+    current_speed = std::min(max_speed, current_speed + effective_acceleration * delta_time);
+    velocity_x = current_speed;  // Positivo = derecha
+    velocity_y = 0.0f;
+
+    x += velocity_x * delta_time;
+    y += velocity_y * delta_time;
+}
+
 void Car::brake(float delta_time) {
     if (is_destroyed)
         return;

@@ -4,20 +4,22 @@
 
 ClientEventHandler::ClientEventHandler(Queue<ComandMatchDTO>& cmd_queue, int p_id, bool& running)
     : command_queue(cmd_queue), player_id(p_id), is_running(running),
-      valid_keys({SDL_SCANCODE_W,      // Acelerar
-                  SDL_SCANCODE_S,      // Frenar
-                  SDL_SCANCODE_A,      // Girar izquierda
-                  SDL_SCANCODE_D,      // Girar derecha
+      valid_keys({SDL_SCANCODE_UP,     // Mover arriba
+                  SDL_SCANCODE_DOWN,   // Mover abajo
+                  SDL_SCANCODE_LEFT,   // Mover izquierda
+                  SDL_SCANCODE_RIGHT,  // Mover derecha
                   SDL_SCANCODE_SPACE,  // Nitro
                   SDL_SCANCODE_ESCAPE,
                   SDL_SCANCODE_F1, // Cheats
+                  SDL_SCANCODE_F2,
+                  SDL_SCANCODE_F4,
                   SDL_SCANCODE_P
       }) {
     std::cout << "[EventHandler] Inicializado para player " << player_id << std::endl;
 }
 
 
-// PROCESAR MOVIMIENTO (WASD + SPACE)
+// PROCESAR MOVIMIENTO (FLECHAS + SPACE)
 
 
 void ClientEventHandler::process_movement(const SDL_Event& event) {
@@ -33,52 +35,46 @@ void ClientEventHandler::process_movement(const SDL_Event& event) {
     }
 
     // Detectar estado actual de teclas
-    bool w = pressed_keys.count(SDL_SCANCODE_W);
-    bool s = pressed_keys.count(SDL_SCANCODE_S);
-    bool a = pressed_keys.count(SDL_SCANCODE_A);
-    bool d = pressed_keys.count(SDL_SCANCODE_D);
+    bool up = pressed_keys.count(SDL_SCANCODE_UP);
+    bool down = pressed_keys.count(SDL_SCANCODE_DOWN);
+    bool left = pressed_keys.count(SDL_SCANCODE_LEFT);
+    bool right = pressed_keys.count(SDL_SCANCODE_RIGHT);
     bool space = pressed_keys.count(SDL_SCANCODE_SPACE);
 
-    // Enviar comandos según combinaciones
+    // Enviar comandos según teclas presionadas
+    // Nota: Las 4 direcciones son mutuamente exclusivas (solo se procesa una a la vez)
 
-    // Acelerar (W)
-    if (w) {
+    // Mover arriba (↑)
+    if (up) {
         ComandMatchDTO cmd;
         cmd.player_id = player_id;
-        cmd.command = GameCommand::ACCELERATE;
+        cmd.command = GameCommand::MOVE_UP;
         cmd.speed_boost = 1.0f;
         command_queue.try_push(cmd);
-        std::cout << "[EventHandler]  ACCELERATE enviado" << std::endl;
     }
-
-    // Frenar (S)
-    if (s) {
+    // Mover abajo (↓)
+    else if (down) {
         ComandMatchDTO cmd;
         cmd.player_id = player_id;
-        cmd.command = GameCommand::BRAKE;
+        cmd.command = GameCommand::MOVE_DOWN;
         cmd.speed_boost = 1.0f;
         command_queue.try_push(cmd);
-        std::cout << "[EventHandler] BRAKE enviado" << std::endl;
     }
-
-    // Girar izquierda (A)
-    if (a) {
+    // Mover izquierda (←)
+    else if (left) {
         ComandMatchDTO cmd;
         cmd.player_id = player_id;
-        cmd.command = GameCommand::TURN_LEFT;
-        cmd.turn_intensity = 1.0f;
+        cmd.command = GameCommand::MOVE_LEFT;
+        cmd.speed_boost = 1.0f;
         command_queue.try_push(cmd);
-        std::cout << "[EventHandler]   TURN_LEFT enviado" << std::endl;
     }
-
-    // Girar derecha (D)
-    if (d) {
+    // Mover derecha (→)
+    else if (right) {
         ComandMatchDTO cmd;
         cmd.player_id = player_id;
-        cmd.command = GameCommand::TURN_RIGHT;
-        cmd.turn_intensity = 1.0f;
+        cmd.command = GameCommand::MOVE_RIGHT;
+        cmd.speed_boost = 1.0f;
         command_queue.try_push(cmd);
-        std::cout << "[EventHandler]  TURN_RIGHT enviado" << std::endl;
     }
 
     // Nitro (SPACE)
@@ -87,7 +83,6 @@ void ClientEventHandler::process_movement(const SDL_Event& event) {
         cmd.player_id = player_id;
         cmd.command = GameCommand::USE_NITRO;
         command_queue.try_push(cmd);
-        std::cout << "[EventHandler] ⚡ USE_NITRO enviado" << std::endl;
     }
 
     // Si no hay ninguna tecla presionada, detener

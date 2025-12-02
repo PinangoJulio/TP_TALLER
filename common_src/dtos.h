@@ -74,6 +74,13 @@ struct PlayerRoomState {
 #define CMD_TURN_LEFT  0x03
 #define CMD_TURN_RIGHT 0x04
 #define CMD_USE_NITRO  0x05
+
+// Movimiento en 4 direcciones fijas
+#define CMD_MOVE_UP    0x06
+#define CMD_MOVE_DOWN  0x07
+#define CMD_MOVE_LEFT  0x08
+#define CMD_MOVE_RIGHT 0x09
+
 #define CMD_STOP_ALL   0x30
 #define CMD_DISCONNECT 0xFF
 
@@ -97,6 +104,12 @@ enum class GameCommand : uint8_t {
     BRAKE = CMD_BRAKE,
     TURN_LEFT = CMD_TURN_LEFT,
     TURN_RIGHT = CMD_TURN_RIGHT,
+
+    // Movimiento en 4 direcciones fijas (teclas de flecha)
+    MOVE_UP = CMD_MOVE_UP,       // Arriba (↑)
+    MOVE_DOWN = CMD_MOVE_DOWN,   // Abajo (↓)
+    MOVE_LEFT = CMD_MOVE_LEFT,   // Izquierda (←)
+    MOVE_RIGHT = CMD_MOVE_RIGHT, // Derecha (→)
 
     // Power-ups y habilidades
     USE_NITRO = CMD_USE_NITRO,

@@ -222,6 +222,13 @@ void GameLoop::procesar_comandos() {
             case GameCommand::BRAKE: car->brake(delta_time * comando.speed_boost); break;
             case GameCommand::TURN_LEFT: car->turn_left(delta_time * comando.turn_intensity); break;
             case GameCommand::TURN_RIGHT: car->turn_right(delta_time * comando.turn_intensity); break;
+
+            // Movimiento en 4 direcciones fijas
+            case GameCommand::MOVE_UP: car->move_up(delta_time); break;
+            case GameCommand::MOVE_DOWN: car->move_down(delta_time); break;
+            case GameCommand::MOVE_LEFT: car->move_left(delta_time); break;
+            case GameCommand::MOVE_RIGHT: car->move_right(delta_time); break;
+
             case GameCommand::USE_NITRO: car->activateNitro(); break;
             case GameCommand::DISCONNECT: player->disconnect(); break;
             case GameCommand::STOP_ALL: car->setCurrentSpeed(0); car->setVelocity(0,0); break;
