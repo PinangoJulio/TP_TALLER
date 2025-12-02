@@ -3,9 +3,24 @@
 #include <utility>
 #include <sys/socket.h>
 
+
 ClientHandler::ClientHandler(Socket skt, int id, MatchesMonitor& monitor)
     : skt(std::move(skt)), client_id(id), protocol(this->skt), monitor(monitor), is_alive(true),
       messages_queue(), receiver(protocol, this->client_id, messages_queue, is_alive, monitor) {}
+
+      void ClientHandler::send_shutdown_message(const std::vector<uint8_t>& msg) {
+        try {
+            std::cout << "[ClientHandler " << client_id << "] 📤 Sending shutdown message..." << std::endl;
+            
+            // Enviar mensaje directamente por el socket
+            skt.sendall(msg.data(), msg.size());
+            
+            std::cout << "[ClientHandler " << client_id << "] ✅ Shutdown message sent" << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "[ClientHandler " << client_id 
+                      << "] Error sending shutdown: " << e.what() << std::endl;
+        }
+    }
 
 void ClientHandler::run_threads() {
     receiver.start();
@@ -16,23 +31,14 @@ void ClientHandler::stop_connection() {
     
     is_alive = false;
     
-    // Cerrar las colas para desbloquear los threads
+    // Cerrar colas
     try {
         messages_queue.close();
-    } catch (...) {
-        // Ya estaba cerrada
-    }
+    } catch (...) {}
     
-    // Cerrar el socket para desbloquear recv()
-    try {
-        skt.shutdown(SHUT_RDWR);
-        skt.close();
-        std::cout << "[ClientHandler " << client_id << "] Socket closed" << std::endl;
-    } catch (const std::exception& e) {
-        std::cerr << "[ClientHandler " << client_id << "] Error closing socket: " << e.what() << std::endl;
-    }
+    // ✅ NO cerrar el socket aquí - ya se usó para enviar el mensaje de shutdown
+    // El socket se cerrará en el destructor
     
-    // Detener el receiver
     receiver.kill();
     
     std::cout << "[ClientHandler " << client_id << "] ✅ Shutdown initiated" << std::endl;
@@ -47,9 +53,13 @@ ClientHandler::~ClientHandler() {
     
     stop_connection();
     
-    // Esperar a que termine el receiver
+    // ✅ AHORA SÍ cerrar el socket
+    try {
+        skt.shutdown(SHUT_RDWR);
+        skt.close();
+    } catch (...) {}
+    
     if (receiver.is_alive()) {
-        std::cout << "[ClientHandler " << client_id << "] Waiting for receiver..." << std::endl;
         receiver.join();
     }
     

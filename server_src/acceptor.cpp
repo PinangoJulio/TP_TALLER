@@ -1,32 +1,85 @@
+// server_src/acceptor.cpp
+
 #include "acceptor.h"
-
 #include <sys/socket.h>
-
 #include <string>
 #include <utility>
+#include <thread>
+#include <chrono>
+#include <arpa/inet.h>
 
+// ✅ Constructor actualizado
 Acceptor::Acceptor(const char* servicename)
-    : socket(servicename), client_counter(0), clients_connected(), is_running(true) {
+    : socket(servicename), 
+      client_counter(0), 
+      clients_connected(), 
+      is_running(true),
+      is_accepting(false)
+{
     std::cout << "[Acceptor] Socket created on port " << servicename << std::endl;
+}
+
+// ✅ NUEVO: notify_shutdown_to_all_clients
+void Acceptor::notify_shutdown_to_all_clients() {
+    std::lock_guard<std::mutex> lock(clients_mutex);
+    
+    std::cout << "[Acceptor] 📢 Notifying " << clients_connected.size() 
+              << " clients about shutdown..." << std::endl;
+    
+    // Crear mensaje de shutdown
+    std::vector<uint8_t> shutdown_msg;
+    shutdown_msg.push_back(0xFF); // MSG_ERROR
+    shutdown_msg.push_back(0xFF); // Código especial
+    std::string msg = "SERVER SHUTDOWN - DISCONNECTING";
+    uint16_t len = htons(msg.size());
+    shutdown_msg.push_back(reinterpret_cast<uint8_t*>(&len)[0]);
+    shutdown_msg.push_back(reinterpret_cast<uint8_t*>(&len)[1]);
+    shutdown_msg.insert(shutdown_msg.end(), msg.begin(), msg.end());
+    
+    // Enviar a todos
+    for (auto* client : clients_connected) {
+        if (client) {
+            try {
+                client->send_shutdown_message(shutdown_msg);
+            } catch (const std::exception& e) {
+                std::cerr << "[Acceptor] Error notifying client " 
+                          << client->get_id() << ": " << e.what() << std::endl;
+            }
+        }
+    }
+    
+    std::cout << "[Acceptor] ✅ Shutdown notifications sent" << std::endl;
+}
+
+// ✅ NUEVO: close_socket
+void Acceptor::close_socket() {
+    try {
+        socket.shutdown(SHUT_RDWR);
+        socket.close();
+        std::cout << "[Acceptor] ✅ Socket closed" << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "[Acceptor] Error closing socket: " << e.what() << std::endl;
+    }
 }
 
 void Acceptor::manage_clients_connections(MatchesMonitor& monitor) {
     Socket client_socket = socket.accept();
-    ClientHandler* new_client =
-        new ClientHandler(std::move(client_socket), ++client_counter, monitor);
-
-    new_client->run_threads();  // ✅ INICIAR THREADS
-
+    ClientHandler* new_client = new ClientHandler(std::move(client_socket), ++client_counter, monitor);
+    new_client->run_threads();
+    
+    std::lock_guard<std::mutex> lock(clients_mutex);  // ✅ Proteger
+    clients_connected.push_back(new_client);
+    
     std::cout << "==================================================" << std::endl;
     std::cout << "[Acceptor] New connection accepted" << std::endl;
     std::cout << "           Client ID: " << client_counter << std::endl;
-    std::cout << "           Total clients: " << (clients_connected.size() + 1) << std::endl;
+    std::cout << "           Total clients: " << clients_connected.size() << std::endl;
     std::cout << "==================================================" << std::endl;
-
-    clients_connected.push_back(new_client);
 }
-// iteramos por la lista de clientes y eliminamos aquellas que ya esten desconectados
+
 void Acceptor::clear_disconnected_clients() {
+    std::lock_guard<std::mutex> lock(clients_mutex);  // ✅ Proteger
+    
     size_t before = clients_connected.size();
 
     for (auto it = clients_connected.begin(); it != clients_connected.end();) {
@@ -36,9 +89,8 @@ void Acceptor::clear_disconnected_clients() {
             delete *it;
             it = clients_connected.erase(it);
 
-            // 🔥 LOG de desconexión
-            std::cout << "[Acceptor] Client " << client_id << " disconnected and cleaned up"
-                      << std::endl;
+            std::cout << "[Acceptor] Client " << client_id 
+                      << " disconnected and cleaned up" << std::endl;
         } else {
             ++it;
         }
@@ -51,8 +103,10 @@ void Acceptor::clear_disconnected_clients() {
 }
 
 void Acceptor::clear_all_connections() {
-    std::cout << "[Acceptor] Clearing all " << clients_connected.size() << " connections..."
-              << std::endl;
+    std::lock_guard<std::mutex> lock(clients_mutex);  // ✅ Proteger
+    
+    std::cout << "[Acceptor] Clearing all " << clients_connected.size() 
+              << " connections..." << std::endl;
 
     for (auto* ch : clients_connected) {
         ch->stop_connection();
@@ -64,51 +118,39 @@ void Acceptor::clear_all_connections() {
 }
 
 void Acceptor::stop_accepting() {
-    is_running = false;
     std::cout << "[Acceptor] Stop signal received" << std::endl;
+    is_running = false;
+    is_accepting = false;
 }
 
 void Acceptor::run() {
     MatchesMonitor monitor;
+    is_accepting = true;  // ✅ Activar
+    
     try {
-        while (is_running) {
+        while (is_running && is_accepting) {  // ✅ Chequear ambos
             manage_clients_connections(monitor);
             clear_disconnected_clients();
         }
     } catch (const std::exception& e) {
-        if (is_running) {
+        if (is_running && is_accepting) {
             std::cerr << "[Acceptor] Error occurred: " << e.what() << std::endl;
         }
-        is_running = false;
     }
 
-    clear_all_connections();
     std::cout << "[Acceptor] Thread stopped" << std::endl;
 }
 
 void Acceptor::stop() {
-    std::cout << "[Acceptor] 🛑 SHUTDOWN: Disconnecting all clients..." << std::endl;
+    std::cout << "[Acceptor] 🛑 SHUTDOWN: Stopping acceptor..." << std::endl;
     
     is_running = false;
+    is_accepting = false;
     
-    // 1. Detener todos los clientes ANTES de cerrar el socket
-    for (auto* client : clients_connected) {
-        if (client) {
-            std::cout << "[Acceptor]   Stopping client " << client->get_id() << "..." << std::endl;
-            client->stop_connection();
-        }
-    }
-    
-    // 2. Cerrar el socket (esto desbloquea accept())
-    try {
-        socket.shutdown(SHUT_RDWR);
-        socket.close();
-        std::cout << "[Acceptor] ✅ Socket closed" << std::endl;
-    } catch (const std::exception& e) {
-        std::cerr << "[Acceptor] Error closing socket: " << e.what() << std::endl;
-    }
+    // NO cerrar socket aquí - se hace desde Server::shutdown()
 }
 
+// ✅ DESTRUCTOR IMPLEMENTADO
 Acceptor::~Acceptor() {
     std::cout << "[Acceptor] Destructor called" << std::endl;
     
@@ -123,6 +165,7 @@ Acceptor::~Acceptor() {
     }
     
     // Limpiar clientes
+    std::lock_guard<std::mutex> lock(clients_mutex);
     for (auto* client : clients_connected) {
         if (client) {
             delete client;

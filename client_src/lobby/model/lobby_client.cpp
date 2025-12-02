@@ -264,13 +264,49 @@ void LobbyClient::notification_listener() {
                     std::cout << "[LobbyClient] Listener stopped gracefully (socket closed)" << std::endl;
                     break;
                 }
+                
+                // ✅ Verificar si es shutdown del servidor
+                std::string error_msg = e.what();
+                if (error_msg.find("Connection closed") != std::string::npos) {
+                    std::cout << "[LobbyClient] 🛑 Server closed connection" << std::endl;
+                    connected = false;
+                    listening = false;
+                    
+                    // ✅ Emitir señal de error para que el controller lo maneje
+                    emit errorOccurred("SERVER SHUTDOWN - DISCONNECTING");
+                    break;
+                }
+                
                 std::cerr << "[LobbyClient] ❌ Error reading message type: " << e.what() << std::endl;
                 throw;
             }
 
-            std::cout << "[LobbyClient] Processing message type: " << static_cast<int>(msg_type)
-                      << std::endl;
-
+            // ✅ Detectar mensaje de shutdown
+            if (msg_type == MSG_ERROR) {
+                uint8_t error_code = protocol.read_uint8();
+                std::string error_msg = protocol.read_string();
+                
+                std::cout << "[LobbyClient] Error " << static_cast<int>(error_code) 
+                          << ": " << error_msg << std::endl;
+                
+                // ✅ Si es código de shutdown (0xFF)
+                if (error_code == 0xFF) {
+                    std::cout << "[LobbyClient] 🛑 SERVER SHUTDOWN DETECTED" << std::endl;
+                    
+                    connected = false;
+                    listening = false;
+                    
+                    // ✅ Emitir señal y salir inmediatamente
+                    emit errorOccurred(QString::fromStdString(error_msg));
+                    
+                    std::cout << "[LobbyClient] Exiting notification listener..." << std::endl;
+                    return; // ✅ Salir del thread
+                }
+                
+                emit errorOccurred(QString::fromStdString(error_msg));
+                continue;
+            }
+                     
             switch (msg_type) {
             case MSG_PLAYER_JOINED_NOTIFICATION: {
                 std::string user = protocol.read_string();

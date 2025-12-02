@@ -1,6 +1,7 @@
 #include "lobby_controller.h"
 
 #include <QTimer>
+#include <QCoreApplication>
 #include <map>
 #include <string>
 #include <utility>
@@ -558,6 +559,24 @@ void LobbyController::connectNotificationSignals() {
 
     connect(lobbyClient.get(), &LobbyClient::errorOccurred, this, [this](QString errorMsg) {
         std::cerr << "[Controller] Error: " << errorMsg.toStdString() << std::endl;
+        
+        // ✅ Detectar shutdown del servidor
+        if (errorMsg.contains("SERVER SHUTDOWN") || errorMsg.contains("DISCONNECTING")) {
+            std::cout << "[Controller] 🛑 Server shutdown detected - closing application" << std::endl;
+            
+            // ✅ Cerrar todas las ventanas
+            closeAllWindows();
+            
+            // ✅ Marcar como no exitoso y terminar
+            finishLobby(false);
+            
+            // ✅ Salir de la aplicación Qt
+            QCoreApplication::quit();
+            
+            return;
+        }
+        
+        // Para otros errores, mostrar el mensaje
         QMessageBox::critical(waitingRoomWindow, "Error", errorMsg);
     });
 

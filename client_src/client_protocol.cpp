@@ -339,11 +339,13 @@ GameState ClientProtocol::receive_snapshot() {
     // ✅ DETECTAR MENSAJE DE SHUTDOWN
     if (type == MSG_ERROR) {
         uint8_t error_code = read_uint8();
-        if (error_code == 0xFF) { // Código especial de shutdown
+        if (error_code == 0xFF) {
             std::string error_msg = read_string();
             std::cout << "\n==================================================" << std::endl;
             std::cout << "    ⚠️  " << error_msg << std::endl;
             std::cout << "==================================================" << std::endl;
+            
+            // ✅ Lanzar excepción específica
             throw std::runtime_error("Server shutdown");
         }
     }
@@ -352,7 +354,6 @@ GameState ClientProtocol::receive_snapshot() {
         std::cout << "[ClientProtocol] Warning: Expected GAME_STATE_UPDATE, got " 
                   << static_cast<int>(type) << std::endl;
     }
-    
     GameState state;
 
     // 1. PLAYERS

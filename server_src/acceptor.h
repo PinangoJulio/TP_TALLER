@@ -20,6 +20,8 @@ private:
     void manage_clients_connections(MatchesMonitor& monitor);
     void clear_disconnected_clients();
     void clear_all_connections();
+    std::atomic<bool> is_accepting; // ✅ NUEVO
+    std::mutex clients_mutex; // ✅ NUEVO - proteger la lista
 
 public:
     explicit Acceptor(const char* servicename);
@@ -29,5 +31,7 @@ public:
     void stop_accepting();
 
     virtual ~Acceptor();
+    void notify_shutdown_to_all_clients(); // ✅ NUEVO
+    void close_socket(); // ✅ NUEVO
 };
 #endif  // SERVER_ACCEPTOR_H

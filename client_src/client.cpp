@@ -23,7 +23,7 @@ using namespace SDL2pp;
 
 Client::Client(const char* hostname, const char* servname)
     : protocol(hostname, servname), username("Player"),
-      player_id(-1), races_paths() , active(true), command_queue(), snapshot_queue(),
+      player_id(-1), races_paths(), active(true), command_queue(), snapshot_queue(),
       sender(protocol, command_queue), receiver(protocol, snapshot_queue), threads_started(false) {
     std::cout << "[Client] Cliente inicializado para " << username << std::endl;
     player_id = protocol.receive_client_id();
@@ -31,114 +31,134 @@ Client::Client(const char* hostname, const char* servname)
 }
 
 void Client::start() {
-    // ---------------------------------------------------------
-    // FASE 1: LOBBY (QT)
-    // ---------------------------------------------------------
-    std::cout << "[Client] Iniciando fase de lobby Qt..." << std::endl;
+    try {
+        // ---------------------------------------------------------
+        // FASE 1: LOBBY (QT)
+        // ---------------------------------------------------------
+        std::cout << "[Client] Iniciando fase de lobby Qt..." << std::endl;
 
-    LobbyController controller(this->protocol);
-    QEventLoop lobbyLoop;
-    
-    QObject::connect(&controller, &LobbyController::lobbyFinished, &lobbyLoop, [&](bool success) {
-        std::cout << "[Client] Lobby terminado (success=" << success << ")" << std::endl;
-        if (!success) {
-            active = false;
+        LobbyController controller(this->protocol);
+        QEventLoop lobbyLoop;
+        
+        QObject::connect(&controller, &LobbyController::lobbyFinished, &lobbyLoop, [&](bool success) {
+            std::cout << "[Client] Lobby terminado (success=" << success << ")" << std::endl;
+            if (!success) {
+                active = false;
+            }
+            lobbyLoop.quit();
+        });
+
+        controller.start();
+        lobbyLoop.exec();
+
+        // ✅ Verificar si fue shutdown del servidor
+        if (!active) {
+            std::cout << "[Client] Abortando inicio de juego (server shutdown o error)." << std::endl;
+            return;
         }
-        lobbyLoop.quit();
-    });
+        
+        username = controller.getPlayerName().toStdString();
+        races_paths = controller.getRacePaths();
 
-    controller.start();
-    lobbyLoop.exec(); // Bloquea hasta fin del lobby
+        controller.closeAllWindows();
+        QCoreApplication::processEvents();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    if (!active) {
-        std::cout << "[Client] Abortando inicio de juego." << std::endl;
-        return;
-    }
-    
-    username = controller.getPlayerName().toStdString();
-    races_paths = controller.getRacePaths();
+        // ---------------------------------------------------------
+        // FASE 2: COMUNICACIÓN
+        // ---------------------------------------------------------
+        std::cout << "[Client] Iniciando threads de comunicación..." << std::endl;
+        sender.start();
+        receiver.start();
+        threads_started = true;
 
-    controller.closeAllWindows();
-    QCoreApplication::processEvents();
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        // ---------------------------------------------------------
+        // FASE 3: SDL Y JUEGO
+        // ---------------------------------------------------------
+        SDL sdl(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+        if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
+            std::cerr << "Error SDL_image: " << IMG_GetError() << std::endl;
+        }
 
-    // ---------------------------------------------------------
-    // FASE 2: COMUNICACIÓN
-    // ---------------------------------------------------------
-    std::cout << "[Client] Iniciando threads de comunicación..." << std::endl;
-    sender.start();
-    receiver.start();
-    threads_started = true;
+        Window window(NFS_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
+                      GameRenderer::SCREEN_WIDTH, GameRenderer::SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+        
+        Renderer renderer(window, -1, SDL_RENDERER_ACCELERATED);
+        GameRenderer game_renderer(renderer);
+        
+        if (!races_paths.empty()) {
+            std::cout << "[Client] Cargando primera carrera: " << races_paths[0] << std::endl;
+            game_renderer.init_race(races_paths[0]);
+        } else {
+            std::cerr << "[Client] ⚠️ ALERTA: No se recibieron rutas de carreras!" << std::endl;
+        }
 
-    // ---------------------------------------------------------
-    // FASE 3: SDL Y JUEGO
-    // ---------------------------------------------------------
-    SDL sdl(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
-    if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
-        std::cerr << "Error SDL_image: " << IMG_GetError() << std::endl;
-    }
+        ClientEventHandler event_handler(command_queue, player_id, active);
 
-    // ✅ CORRECCIÓN: Usar constantes del Renderer para el tamaño de ventana
-    Window window(NFS_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
-                  GameRenderer::SCREEN_WIDTH, GameRenderer::SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-    
-    Renderer renderer(window, -1, SDL_RENDERER_ACCELERATED);
+        // ---------------------------------------------------------
+        // FASE 4: GAME LOOP
+        // ---------------------------------------------------------
+        int ms_per_frame = 1000 / FPS;
+        GameState current_snapshot; 
+        bool race_finished = false;
 
-    // ✅ CORRECCIÓN: Constructor simplificado (sin argumentos de tamaño)
-    GameRenderer game_renderer(renderer);
-    
-    // Cargar la primera carrera si existe
-    if (!races_paths.empty()) {
-        std::cout << "[Client] Cargando primera carrera: " << races_paths[0] << std::endl;
-        game_renderer.init_race(races_paths[0]);
-    } else {
-        std::cerr << "[Client] ⚠️ ALERTA: No se recibieron rutas de carreras!" << std::endl;
-    }
+        std::cout << "[Client] Entrando al game loop..." << std::endl;
 
-    ClientEventHandler event_handler(command_queue, player_id, active);
+        while (active) {
+            auto t1 = std::chrono::steady_clock::now();
 
-    // ---------------------------------------------------------
-    // FASE 4: GAME LOOP
-    // ---------------------------------------------------------
-    int ms_per_frame = 1000 / FPS;
-    GameState current_snapshot; 
-    bool race_finished = false;
+            // 1. Red - ✅ Detectar errores de servidor
+            GameState new_snapshot;
+            while (snapshot_queue.try_pop(new_snapshot)) {
+                current_snapshot = new_snapshot;
+                InfoPlayer* local = current_snapshot.findPlayer(player_id);
+                if (local && local->race_finished) {
+                    race_finished = true;
+                }
+            }
+        
+            // 2. Input
+            event_handler.handle_events();
 
-    std::cout << "[Client] Entrando al game loop..." << std::endl;
+            // 3. Render
+            game_renderer.render(current_snapshot, player_id);
 
-    while (active) {
-        auto t1 = std::chrono::steady_clock::now();
+            // 4. Timing
+            auto t2 = std::chrono::steady_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+            if (elapsed < ms_per_frame) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(ms_per_frame - elapsed));
+            }
 
-        // 1. Red
-        GameState new_snapshot;
-        while (snapshot_queue.try_pop(new_snapshot)) {
-            current_snapshot = new_snapshot;
-            InfoPlayer* local = current_snapshot.findPlayer(player_id);
-            if (local && local->race_finished) {
-                race_finished = true;
+            if (race_finished) {
+                std::cout << "[Client] Carrera terminada. Saliendo..." << std::endl;
+                std::this_thread::sleep_for(std::chrono::seconds(3));
+                active = false;
             }
         }
-    
-        // 2. Input
-        event_handler.handle_events();
-
-        // 3. Render
-        game_renderer.render(current_snapshot, player_id);
-
-        // 4. Timing
-        auto t2 = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-        if (elapsed < ms_per_frame) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(ms_per_frame - elapsed));
-        }
-
-        if (race_finished) {
-            std::cout << "[Client] Carrera terminada. Saliendo..." << std::endl;
-            std::this_thread::sleep_for(std::chrono::seconds(3));
+        
+    } catch (const std::runtime_error& e) {
+        std::string error_msg = e.what();
+        
+        // ✅ Detectar shutdown del servidor
+        if (error_msg.find("Server shutdown") != std::string::npos) {
+            std::cout << "\n==================================================" << std::endl;
+            std::cout << "    ⚠️  SERVER CERRADO - SALIENDO DEL JUEGO" << std::endl;
+            std::cout << "==================================================" << std::endl;
+            
+            active = false;
+            
+            // Si estamos en SDL, cerrarlo
+            SDL_Quit();
+            
+        } else {
+            std::cerr << "[Client] Error durante ejecución: " << error_msg << std::endl;
             active = false;
         }
     }
 }
+
+
 Client::~Client() {
     std::cout << "[Client] Destructor llamado" << std::endl;
 
