@@ -104,6 +104,8 @@ void Car::setCurrentSpeed(float speed) {
 void Car::accelerate(float delta_time) {
     if (is_destroyed || B2_IS_NULL(bodyId)) return; 
 
+    b2Body_SetLinearDamping(bodyId, 0.5f); 
+
     float currentSpeed = getCurrentSpeed();
 
     if (currentSpeed < max_speed) {
@@ -120,7 +122,7 @@ void Car::accelerate(float delta_time) {
         b2Vec2 forceVec = { direction.x * force, direction.y * force };
         b2Body_ApplyForceToCenter(bodyId, forceVec, true);
     } else {
-        // Límite de velocidad suave
+        // Límite de velocidad
         b2Vec2 velocity = b2Body_GetLinearVelocity(bodyId);
         float scale = max_speed / currentSpeed;
         b2Vec2 clampedVel = { velocity.x * scale, velocity.y * scale };
@@ -194,4 +196,38 @@ void Car::reset() {
     nitro_active = false;
     drifting = false;
     colliding = false;
+}
+
+//derrape
+void Car::updatePhysics() {
+    if (B2_IS_NULL(bodyId)) return;
+
+    // 1. Obtener velocidad y ángulo actuales
+    b2Vec2 velocity = b2Body_GetLinearVelocity(bodyId);
+    float angle = getAngle();
+
+    // 2. Calcular vectores de dirección
+    // 0 grados = Derecha.
+    b2Vec2 rightNormal = { std::sin(angle), -std::cos(angle) };
+
+    // 3. Calcular velocidad lateral 
+    float lateralSpeed = b2Dot(velocity, rightNormal);
+
+    // 4. Aplicar impulso contrario para "matar" la velocidad lateral
+    float grip = 0.90f;
+    
+    // Si estás derrapando (drifting = true), bajamos el grip
+    if (drifting) grip = 0.5f;
+
+    float impulseMagnitude = -lateralSpeed * weight * grip; 
+    
+    // Como 'weight' es alto (1000), reducimos la escala del impulso.
+    impulseMagnitude *= 0.05f; 
+
+    b2Vec2 impulse = { rightNormal.x * impulseMagnitude, rightNormal.y * impulseMagnitude };
+    
+    b2Body_ApplyLinearImpulseToCenter(bodyId, impulse, true);
+    
+    // 5. Matar rotación residual (Angular Damping extra)
+    b2Body_SetAngularDamping(bodyId, 5.0f);
 }

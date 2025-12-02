@@ -66,6 +66,7 @@ public:
     void deactivateNitro();
     void rechargeNitro(float amount); 
     void reset();
+    void updatePhysics();
 
     // Estado
     float getHealth() const { return current_health; }

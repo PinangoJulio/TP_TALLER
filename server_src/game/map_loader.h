@@ -8,9 +8,12 @@
 #include "obstacle.h"
 #include "checkpoint_manager.h"
 
-// Factor de conversión: 30 píxeles = 1 metro
-// Ajusta esto si tus autos quedan muy grandes o chicos
+// 30 píxeles = 1 metro
 const float PPM = 30.0f; 
+static const uint16_t CATEGORY_CAR    = 0x0001;
+static const uint16_t CATEGORY_ROAD   = 0x0002;
+static const uint16_t CATEGORY_WALL   = 0x0004;
+static const uint16_t CATEGORY_SENSOR = 0x0008;
 
 struct SpawnPoint {
     float x;
@@ -23,9 +26,11 @@ private:
     std::vector<SpawnPoint> spawn_points;
     std::vector<CheckpointData> checkpoints;
 
-    void load_layer_polygons(b2WorldId world, const YAML::Node& layerNode, bool is_sensor);
+void load_layer_polygons(b2WorldId world, const YAML::Node& layerNode, bool is_sensor);
+void load_layer_chains(b2WorldId world, const YAML::Node& layerNode);
 
 public:
+
     MapLoader() = default;
     
     void load_map(b2WorldId world, ObstacleManager& obstacle_manager, const std::string& map_path);

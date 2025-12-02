@@ -1,7 +1,7 @@
 #include "map_loader.h"
-#include <yaml-cpp/yaml.h>
 #include <iostream>
 #include <filesystem>
+#include <yaml-cpp/yaml.h>
 
 void MapLoader::load_map(b2WorldId world, ObstacleManager& obstacle_manager, const std::string& map_path) {
     std::cout << "[MapLoader] Loading geometry from: " << map_path << std::endl;
@@ -12,19 +12,27 @@ void MapLoader::load_map(b2WorldId world, ObstacleManager& obstacle_manager, con
     
     YAML::Node map = YAML::LoadFile(map_path);
     
-    // 1. Cargar Capas de Polígonos (Nivel 0, Puentes, Rampas)
-    if (map["nivel0"]) {
+    // 1. INTENTAR CARGAR PAREDES NUEVAS (Del Script Python - walls_chain)
+    if (map["walls_chain"]) {
+        std::cout << "[MapLoader] ✅ Usando capa optimizada 'walls_chain'...\n";
+        load_layer_chains(world, map["walls_chain"]);
+    } 
+    else if (map["nivel0"]) {
+        // 2. FALLBACK: Si no hay walls_chain, cargamos nivel0 pero como ROAD (piso)
+        // Esto evita que el auto se quede pegado al nacer.
+        std::cout << "[MapLoader] ⚠️ Usando capa 'nivel0' (modo compatibilidad)...\n";
         load_layer_polygons(world, map["nivel0"], false);
     }
+
+    // Cargar otras capas
     if (map["puentes"]) {
         load_layer_polygons(world, map["puentes"], false);
     }
     if (map["rampas"]) {
-        // Las rampas se cargan como sensores (aunque por ahora la lógica física sea igual)
-        load_layer_polygons(world, map["rampas"], true); 
+        load_layer_polygons(world, map["rampas"], true); // is_sensor = true
     }
     
-    // Compatibilidad con formato viejo de obstáculos
+    // Paredes legacy (rectángulos manuales)
     if (map["walls"]) {
         for (const auto& wall : map["walls"]) {
             obstacle_manager.create_wall(world, 
@@ -37,69 +45,26 @@ void MapLoader::load_map(b2WorldId world, ObstacleManager& obstacle_manager, con
     }
 }
 
-void MapLoader::load_race_config(const std::string& race_path) {
-    std::cout << "[MapLoader] Loading race config from: " << race_path << std::endl;
-    
-    if (!std::filesystem::exists(race_path)) {
-        throw std::runtime_error("Race file not found: " + race_path);
-    }
-
-    YAML::Node race = YAML::LoadFile(race_path);
-    
-    // Cargar Checkpoints
-    if (race["checkpoints"]) {
-        checkpoints.clear(); 
-        for (const auto& cp_node : race["checkpoints"]) {
-            CheckpointData cp;
-            cp.id = cp_node["id"].as<int>();
-            // Convertir píxeles a metros
-            cp.x = cp_node["x"].as<float>() / PPM;
-            cp.y = cp_node["y"].as<float>() / PPM;
-            
-            // Usar valores por defecto si no están en el YAML
-            float w = cp_node["width"] ? cp_node["width"].as<float>() : 100.0f;
-            float h = cp_node["height"] ? cp_node["height"].as<float>() : 100.0f;
-            
-            cp.width = w / PPM;
-            cp.height = h / PPM;
-            cp.angle = cp_node["angle"] ? cp_node["angle"].as<float>() : 0.0f;
-            
-            checkpoints.push_back(cp);
-        }
-        std::cout << "[MapLoader] Loaded " << checkpoints.size() << " checkpoints." << std::endl;
-    }
-
-    // Cargar Spawn Points
-    if (race["spawn_points"]) {
-        spawn_points.clear();
-        for (const auto& sp : race["spawn_points"]) {
-            SpawnPoint s;
-            s.x = sp["x"].as<float>() / PPM;
-            s.y = sp["y"].as<float>() / PPM;
-            s.angle = sp["angle"] ? sp["angle"].as<float>() : 0.0f;
-            spawn_points.push_back(s);
-        }
-    }
-}
-
-void MapLoader::load_layer_polygons(b2WorldId world, const YAML::Node& layerNode, bool is_sensor) {
-    // CORRECCIÓN: Silenciamos el warning de variable no usada
-    (void)is_sensor; 
-
+void MapLoader::load_layer_chains(b2WorldId world, const YAML::Node& layerNode) {
     int count = 0;
-    for (const auto& polygon : layerNode) {
+    for (const auto& chain : layerNode) {
         std::vector<b2Vec2> points;
-        
-        // Cada 'polygon' es una lista de pares [x, y]
-        for (const auto& point : polygon) {
+        for (const auto& point : chain) {
             float x = point[0].as<float>();
             float y = point[1].as<float>();
-            
-            // Convertir a metros
             points.push_back({x / PPM, y / PPM}); 
         }
 
-        if (points.size() < 3) continue; // Necesitamos al menos un triángulo
+        if (points.size() < 2) continue;
+
+        while (points.size() < 4) {
+            b2Vec2 pLast = points.back();
+            b2Vec2 pPrev = points[points.size() - 2];
+            
+            b2Vec2 midPoint = { (pLast.x + pPrev.x) * 0.5f, (pLast.y + pPrev.y) * 0.5f };
+            
+            points.insert(points.end() - 1, midPoint);
+        }
 
         b2BodyDef bodyDef = b2DefaultBodyDef();
         bodyDef.position = {0.0f, 0.0f}; 
@@ -108,13 +73,109 @@ void MapLoader::load_layer_polygons(b2WorldId world, const YAML::Node& layerNode
         b2ChainDef chainDef = b2DefaultChainDef();
         chainDef.points = points.data();
         chainDef.count = points.size();
-        chainDef.isLoop = true; 
-        // Nota: En Box2D v3 las Chains no tienen propiedad isSensor directa en el Def,
-        // se manejan con filtros o shapes hijos si se requiere.
+        chainDef.isLoop = false; 
         
+        // Categoría WALL
+        chainDef.filter.categoryBits = CATEGORY_WALL;
+        chainDef.filter.maskBits = CATEGORY_CAR; 
+
         b2CreateChain(bodyId, &chainDef);
-        
         count++;
     }
-    std::cout << "   -> Loaded layer polygons: " << count << std::endl;
+    std::cout << "   -> Loaded wall chains: " << count << std::endl;
+}
+
+void MapLoader::load_layer_polygons(b2WorldId world, const YAML::Node& layerNode, bool is_sensor) {
+    int count = 0;
+    for (const auto& polygon : layerNode) {
+        std::vector<b2Vec2> points;
+        for (const auto& point : polygon) {
+            float x = point[0].as<float>();
+            float y = point[1].as<float>();
+            points.push_back({x / PPM, y / PPM}); 
+        }
+
+        if (points.size() < 3) continue;
+
+        b2BodyDef bodyDef = b2DefaultBodyDef();
+        bodyDef.type = b2_staticBody;
+        bodyDef.position = {0.0f, 0.0f}; 
+        b2BodyId bodyId = b2CreateBody(world, &bodyDef);
+
+        b2ChainDef chainDef = b2DefaultChainDef();
+        chainDef.points = points.data();
+        chainDef.count = points.size();
+        chainDef.isLoop = true; // Polígono cerrado
+        
+        // CONFIGURACIÓN DE FILTROS
+        if (is_sensor) {
+            // Rampas/Sensores
+            chainDef.filter.categoryBits = CATEGORY_SENSOR;
+        } else {
+            // Nivel0 (Piso visual)
+            // Le damos categoría ROAD. El auto IGNORA esta categoría, así que no se traba.
+            chainDef.filter.categoryBits = CATEGORY_ROAD;
+            chainDef.filter.maskBits = 0; 
+        }
+        
+        b2CreateChain(bodyId, &chainDef);
+        count++;
+    }
+    if (count > 0) std::cout << "   -> Loaded polygons: " << count << std::endl;
+}
+
+void MapLoader::load_race_config(const std::string& race_path) {
+    std::cout << "[MapLoader] Loading race config from: " << race_path << std::endl;
+    
+    if (!std::filesystem::exists(race_path)) {
+        throw std::runtime_error("Race configuration file not found: " + race_path);
+    }
+
+    YAML::Node race = YAML::LoadFile(race_path);
+    
+    // 1. CARGAR CHECKPOINTS
+    if (race["checkpoints"]) {
+        checkpoints.clear(); 
+        for (const auto& cp_node : race["checkpoints"]) {
+            CheckpointData cp;
+            cp.id = cp_node["id"].as<int>();
+            
+            // Conversión: Píxeles -> Metros (Box2D)
+            cp.x = cp_node["x"].as<float>() / PPM;
+            cp.y = cp_node["y"].as<float>() / PPM;
+            
+            // Valores por defecto si faltan en el YAML
+            float w = cp_node["width"] ? cp_node["width"].as<float>() : 100.0f;
+            float h = cp_node["height"] ? cp_node["height"].as<float>() : 100.0f;
+            
+            cp.width = w / PPM;
+            cp.height = h / PPM;
+            
+            // El ángulo en YAML suele estar en grados, Box2D usa radianes
+            cp.angle = cp_node["angle"] ? cp_node["angle"].as<float>() : 0.0f;
+            
+            checkpoints.push_back(cp);
+        }
+        std::cout << "[MapLoader] Loaded " << checkpoints.size() << " checkpoints." << std::endl;
+    }
+
+    // 2. CARGAR SPAWN POINTS
+    if (race["spawn_points"]) {
+        spawn_points.clear();
+        for (const auto& sp : race["spawn_points"]) {
+            SpawnPoint s;
+            
+            // Conversión: Píxeles -> Metros
+            s.x = sp["x"].as<float>() / PPM;
+            s.y = sp["y"].as<float>() / PPM;
+            
+            float angle_deg = sp["angle"] ? sp["angle"].as<float>() : 0.0f;
+            // Convertir grados a radianes si es necesario (depende de tu YAML, aquí asumimos radianes o directo)
+            // Si el YAML está en grados: s.angle = angle_deg * (M_PI / 180.0f);
+            s.angle = angle_deg; 
+            
+            spawn_points.push_back(s);
+        }
+        std::cout << "[MapLoader] Loaded " << spawn_points.size() << " spawn points." << std::endl;
+    }
 }
