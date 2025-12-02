@@ -235,7 +235,6 @@ void GameLoop::run() {
             detectar_colisiones();
             actualizar_estado_carrera();
 
-            // ✅ detección de checkpoints
             update_checkpoints();
 
             if (all_players_finished_race()) {
@@ -244,7 +243,6 @@ void GameLoop::run() {
 
             enviar_estado_a_jugadores();
 
-            // ✅ actualizar posición previa por jugador
             for (auto& [id, p] : players) {
                 player_prev_pos[id] = {p->getX(), p->getY()};
             }

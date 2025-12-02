@@ -8,7 +8,6 @@
 #include <chrono>
 #include <arpa/inet.h>
 
-// ✅ Constructor actualizado
 Acceptor::Acceptor(const char* servicename)
     : socket(servicename), 
       client_counter(0), 
@@ -19,11 +18,10 @@ Acceptor::Acceptor(const char* servicename)
     std::cout << "[Acceptor] Socket created on port " << servicename << std::endl;
 }
 
-// ✅ NUEVO: notify_shutdown_to_all_clients
 void Acceptor::notify_shutdown_to_all_clients() {
     std::lock_guard<std::mutex> lock(clients_mutex);
     
-    std::cout << "[Acceptor] 📢 Notifying " << clients_connected.size() 
+    std::cout << "[Acceptor] Notifying " << clients_connected.size()
               << " clients about shutdown..." << std::endl;
     
     // Crear mensaje de shutdown
@@ -48,11 +46,10 @@ void Acceptor::notify_shutdown_to_all_clients() {
         }
     }
     
-    std::cout << "[Acceptor] ✅ Shutdown notifications sent" << std::endl;
+    std::cout << "[Acceptor] Shutdown notifications sent" << std::endl;
 
-    // ✅ IMPORTANTE: Detener todas las conexiones inmediatamente
     // Esto previene que los receivers procesen DISCONNECT después del shutdown
-    std::cout << "[Acceptor] 🛑 Stopping all client connections..." << std::endl;
+    std::cout << "[Acceptor] Stopping all client connections..." << std::endl;
     for (auto* client : clients_connected) {
         if (client) {
             try {
@@ -63,15 +60,14 @@ void Acceptor::notify_shutdown_to_all_clients() {
             }
         }
     }
-    std::cout << "[Acceptor] ✅ All connections stopped" << std::endl;
+    std::cout << "[Acceptor]All connections stopped" << std::endl;
 }
 
-// ✅ NUEVO: close_socket
 void Acceptor::close_socket() {
     try {
         socket.shutdown(SHUT_RDWR);
         socket.close();
-        std::cout << "[Acceptor] ✅ Socket closed" << std::endl;
+        std::cout << "[Acceptor]  Socket closed" << std::endl;
     } catch (const std::exception& e) {
         std::cerr << "[Acceptor] Error closing socket: " << e.what() << std::endl;
     }
@@ -82,7 +78,7 @@ void Acceptor::manage_clients_connections(MatchesMonitor& monitor) {
     ClientHandler* new_client = new ClientHandler(std::move(client_socket), ++client_counter, monitor);
     new_client->run_threads();
     
-    std::lock_guard<std::mutex> lock(clients_mutex);  // ✅ Proteger
+    std::lock_guard<std::mutex> lock(clients_mutex);
     clients_connected.push_back(new_client);
     
     std::cout << "==================================================" << std::endl;
@@ -93,7 +89,7 @@ void Acceptor::manage_clients_connections(MatchesMonitor& monitor) {
 }
 
 void Acceptor::clear_disconnected_clients() {
-    std::lock_guard<std::mutex> lock(clients_mutex);  // ✅ Proteger
+    std::lock_guard<std::mutex> lock(clients_mutex);
     
     size_t before = clients_connected.size();
 
@@ -118,7 +114,7 @@ void Acceptor::clear_disconnected_clients() {
 }
 
 void Acceptor::clear_all_connections() {
-    std::lock_guard<std::mutex> lock(clients_mutex);  // ✅ Proteger
+    std::lock_guard<std::mutex> lock(clients_mutex);
     
     std::cout << "[Acceptor] Clearing all " << clients_connected.size() 
               << " connections..." << std::endl;
@@ -140,10 +136,10 @@ void Acceptor::stop_accepting() {
 
 void Acceptor::run() {
     MatchesMonitor monitor;
-    is_accepting = true;  // ✅ Activar
+    is_accepting = true;
     
     try {
-        while (is_running && is_accepting) {  // ✅ Chequear ambos
+        while (is_running && is_accepting) {
             manage_clients_connections(monitor);
             clear_disconnected_clients();
         }
@@ -157,7 +153,7 @@ void Acceptor::run() {
 }
 
 void Acceptor::stop() {
-    std::cout << "[Acceptor] 🛑 SHUTDOWN: Stopping acceptor..." << std::endl;
+    std::cout << "[Acceptor]  SHUTDOWN: Stopping acceptor..." << std::endl;
     
     is_running = false;
     is_accepting = false;
@@ -165,7 +161,6 @@ void Acceptor::stop() {
     // NO cerrar socket aquí - se hace desde Server::shutdown()
 }
 
-// ✅ DESTRUCTOR IMPLEMENTADO
 Acceptor::~Acceptor() {
     std::cout << "[Acceptor] Destructor called" << std::endl;
     
@@ -188,5 +183,5 @@ Acceptor::~Acceptor() {
     }
     clients_connected.clear();
     
-    std::cout << "[Acceptor] ✅ Destructor completed" << std::endl;
+    std::cout << "[Acceptor] Destructor completed" << std::endl;
 }
