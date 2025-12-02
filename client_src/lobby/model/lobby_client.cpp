@@ -306,7 +306,7 @@ void LobbyClient::notification_listener() {
                 emit errorOccurred(QString::fromStdString(error_msg));
                 continue;
             }
-                     
+
             switch (msg_type) {
             case MSG_PLAYER_JOINED_NOTIFICATION: {
                 std::string user = protocol.read_string();
@@ -399,55 +399,36 @@ void LobbyClient::notification_listener() {
     std::cout << "[LobbyClient] Notification listener exited" << std::endl;
 }
 
-void LobbyClient::read_room_snapshot(std::vector<QString>& players,
-                                     std::map<QString, QString>& cars) {
-    std::cout << "[LobbyClient] Reading room snapshot manually..." << std::endl;
-
-    while (true) {
-        uint8_t msg_type;
-
-        try {
-            msg_type = protocol.read_message_type();
-        } catch (const std::exception& e) {
-            std::cerr << "[LobbyClient] Error reading snapshot: " << e.what() << std::endl;
-            break;
-        }
-
-        std::cout << "[LobbyClient] Snapshot msg type: " << static_cast<int>(msg_type) << std::endl;
+void LobbyClient::read_room_snapshot(std::vector<QString>& players, 
+                                     std::map<QString, QString>& cars,
+                                     std::map<QString, bool>& readyStatus) {
+    bool reading = true;
+    while (reading) {
+        // Use read_message_type(), which internally calls read_uint8()
+        uint8_t msg_type = protocol.read_message_type();
 
         if (msg_type == MSG_ROOM_SNAPSHOT) {
-            uint8_t count1 = protocol.read_uint8();
-            uint8_t count2 = protocol.read_uint8();
-
-            if (count1 == 0 && count2 == 0) {
-                std::cout << "[LobbyClient] ✅ END OF SNAPSHOT detected" << std::endl;
-                break;  // Fin del snapshot
-            }
+            // Read padding bytes (0,0) sent by server
+            protocol.read_uint8(); // Corrected: read_uint8 instead of receive_uint8
+            protocol.read_uint8(); // Corrected: read_uint8 instead of receive_uint8
+            reading = false;
+        } 
+        else if (msg_type == MSG_PLAYER_JOINED_NOTIFICATION) { // Corrected constant
+            std::string name = protocol.read_string(); // Corrected: read_string
+            players.push_back(QString::fromStdString(name));
+        } 
+        else if (msg_type == MSG_CAR_SELECTED_NOTIFICATION) { // Corrected constant
+            std::string name = protocol.read_string(); // Corrected: read_string
+            std::string carName = protocol.read_string(); // Corrected: read_string
+            std::string carType = protocol.read_string(); // Corrected: read_string
+            cars[QString::fromStdString(name)] = QString::fromStdString(carName);
         }
-
-        // Procesar mensajes de snapshot
-        if (msg_type == MSG_PLAYER_JOINED_NOTIFICATION) {
-            std::string user = protocol.read_string();
-            players.push_back(QString::fromStdString(user));
-            std::cout << "[LobbyClient]   Snapshot player: " << user << std::endl;
-
-        } else if (msg_type == MSG_CAR_SELECTED_NOTIFICATION) {
-            std::string user = protocol.read_string();
-            std::string car_name = protocol.read_string();
-            std::string car_type = protocol.read_string();
-            cars[QString::fromStdString(user)] = QString::fromStdString(car_name);
-            std::cout << "[LobbyClient]   Snapshot car: " << user << " -> " << car_name << std::endl;
-
-        } else if (msg_type == MSG_PLAYER_READY_NOTIFICATION) {
-            std::string user = protocol.read_string();
-            uint8_t is_ready = protocol.read_uint8();
-            std::cout << "[LobbyClient]   Snapshot ready: " << user << " -> "
-                      << (is_ready ? "YES" : "NO") << std::endl;
+        else if (msg_type == MSG_PLAYER_READY_NOTIFICATION) { // Corrected constant
+            std::string name = protocol.read_string(); // Corrected: read_string
+            uint8_t isReady = protocol.read_uint8(); // Corrected: read_uint8
+            readyStatus[QString::fromStdString(name)] = (isReady != 0);
         }
     }
-
-    std::cout << "[LobbyClient] Snapshot read complete: " << players.size() << " players"
-              << std::endl;
 }
 
 // Recibir rutas YAML de las carreras

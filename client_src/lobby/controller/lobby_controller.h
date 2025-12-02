@@ -52,6 +52,7 @@ private:
     int selectedCarIndex;
     std::vector<QString> pendingPlayers;
     std::map<QString, QString> pendingCars;
+    std::map<QString, bool> pendingReadyStatus;
     std::vector<std::string> racePaths;  // Rutas YAML de las carreras
 
     // Estado del ciclo de lobby
