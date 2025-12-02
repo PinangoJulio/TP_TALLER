@@ -141,19 +141,17 @@ void MapLoader::load_race_config(const std::string& race_path) {
             cp.id = cp_node["id"].as<int>();
             
             // Conversión: Píxeles -> Metros (Box2D)
-            cp.x = cp_node["x"].as<float>() / PPM;
-            cp.y = cp_node["y"].as<float>() / PPM;
+            cp.x = cp_node["x"].as<float>();
+            cp.y = cp_node["y"].as<float>();
             
             // Valores por defecto si faltan en el YAML
-            float w = cp_node["width"] ? cp_node["width"].as<float>() : 100.0f;
-            float h = cp_node["height"] ? cp_node["height"].as<float>() : 100.0f;
+            cp.width = cp_node["width"] ? cp_node["width"].as<float>() : 50.0f;
+            cp.height = cp_node["height"] ? cp_node["height"].as<float>() : 50.0f;
+        
             
-            cp.width = w / PPM;
-            cp.height = h / PPM;
-            
-            // El ángulo en YAML suele estar en grados, Box2D usa radianes
-            cp.angle = cp_node["angle"] ? cp_node["angle"].as<float>() : 0.0f;
-            
+            float angle_deg = cp_node["angle"] ? cp_node["angle"].as<float>() : 0.0f;
+            cp.angle = angle_deg * (M_PI / 180.0f);
+
             checkpoints.push_back(cp);
         }
         std::cout << "[MapLoader] Loaded " << checkpoints.size() << " checkpoints." << std::endl;
@@ -165,14 +163,15 @@ void MapLoader::load_race_config(const std::string& race_path) {
         for (const auto& sp : race["spawn_points"]) {
             SpawnPoint s;
             
-            // Conversión: Píxeles -> Metros
-            s.x = sp["x"].as<float>() / PPM;
-            s.y = sp["y"].as<float>() / PPM;
+            s.x = sp["x"].as<float>();
+            s.y = sp["y"].as<float>();
             
             float angle_deg = sp["angle"] ? sp["angle"].as<float>() : 0.0f;
-            // Convertir grados a radianes si es necesario (depende de tu YAML, aquí asumimos radianes o directo)
-            // Si el YAML está en grados: s.angle = angle_deg * (M_PI / 180.0f);
-            s.angle = angle_deg; 
+            // Convertir grados a radianes para Box2D
+            s.angle = angle_deg * (M_PI / 180.0f);
+            
+            std::cout << "[MapLoader]   Spawn: (" << s.x << ", " << s.y 
+                      << ")px, " << angle_deg << "° -> " << s.angle << " rad\n";
             
             spawn_points.push_back(s);
         }

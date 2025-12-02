@@ -310,12 +310,24 @@ void GameLoop::reset_players_for_race() {
     }*/
     
     const auto& spawns = mapLoader.get_spawn_points();
+        std::cout << "[GameLoop] 📍 Spawn points disponibles: " << spawns.size() << "\n";
+
+    if (spawns.empty()) {
+        std::cerr << "[GameLoop] ❌ ERROR CRÍTICO: NO HAY SPAWN POINTS!\n";
+        std::cerr << "[GameLoop]    Mapa actual: " << current_map_yaml << "\n";
+        std::cerr << "[GameLoop]    Los autos se posicionarán en (0, 0)\n";
+    } else {
+        std::cout << "[GameLoop] ✅ Spawns cargados correctamente:\n";
+        for (size_t i = 0; i < spawns.size(); ++i) {
+            std::cout << "[GameLoop]    [" << i << "] x=" << spawns[i].x 
+                      << " y=" << spawns[i].y 
+                      << " angle=" << spawns[i].angle << "\n";
+        }
+    }
+
     size_t spawn_idx = 0;
-    size_t player_count = 0;
 
     for (auto& [id, player_ptr] : players) {
-        player_count++;
-
         Player* player = player_ptr.get();
         Car* car = player->getCar();
         if (!car) {
@@ -342,24 +354,33 @@ void GameLoop::reset_players_for_race() {
             std::cout << "[GameLoop] ✅ Usando spawn[" << spawn_idx << "]: (" 
                   << spawn_x << ", " << spawn_y << ")\n";
         } else {
-            spawn_x = 100.f + 50.f * static_cast<float>(spawn_idx);
-            spawn_y = 200.f;
+            spawn_x = 3000.f + 100.f * static_cast<float>(spawn_idx);
+            spawn_y = 2000.f;
             spawn_angle = 0.f;
         }
+
+        std::cout << "[GameLoop]   " << player->getName() 
+                  << " → spawn PÍXELES: (" << spawn_x << ", " << spawn_y
+                  << ") ángulo: " << spawn_angle << " rad\n";
+
+
+        // CONVERTIR A METROS solo para Box2D
+        float spawn_x_m = spawn_x / PPM;
+        float spawn_y_m = spawn_y / PPM;
 
         // Crear cuerpo físico Box2D
         b2BodyDef bodyDef = b2DefaultBodyDef();
         bodyDef.type = b2_dynamicBody;
-        bodyDef.position = {spawn_x, spawn_y};
+        bodyDef.position = {spawn_x_m, spawn_y_m};
         bodyDef.rotation = b2MakeRot(spawn_angle);
         bodyDef.linearDamping = 1.0f; 
         bodyDef.angularDamping = 3.0f;
         
         b2BodyId carBodyId = b2CreateBody(worldId, &bodyDef);
         
-        b2Polygon box = b2MakeBox(1.0f, 2.0f);
+        b2Polygon box = b2MakeBox(0.5f, 0.5f);
         b2ShapeDef shapeDef = b2DefaultShapeDef();
-        shapeDef.density = 10.0f;
+        shapeDef.density = 20.0f;
 
         // === FILTROS DE COLISIÓN ===
         shapeDef.filter.categoryBits = CATEGORY_CAR;
@@ -433,23 +454,7 @@ void GameLoop::run() {
     std::cout << "[GameLoop] ═══════════════════════════════════════════════\n";
 
     print_match_info();
-    if (!races.empty()) {
-        // 1. Obtener datos de la primera carrera
-        const auto& first_race = races[0];
-        current_map_yaml = first_race->get_map_path();
-        current_city_name = first_race->get_city_name();
-        current_race_finished = false;
-
-        std::cout << "[GameLoop] 🏁 Preparando primera carrera: " << current_city_name 
-                  << " (Mapa: " << current_map_yaml << ")\n";
-        
-        // 2. Resetear jugadores con las posiciones spawn del YAML
-        reset_players_for_race();
-        
-        // 3. Marcar inicio oficial de tiempos
-        race_start_time = std::chrono::steady_clock::now();
-        std::cout << "[GameLoop]   Cronómetro iniciado\n";
-    }
+    
     // Bucle principal: iterar sobre todas las carreras
     while (is_running.load() && !match_finished.load() && current_race_index < static_cast<int>(races.size())) {
         // Iniciar carrera actual

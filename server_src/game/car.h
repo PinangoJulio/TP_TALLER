@@ -95,6 +95,7 @@ public:
     void turn_right(float delta_time);
     void stop(); 
     void updatePhysics();
+    void alignWithVelocity();
 
     // ---- ESTADO ----
     bool isDrifting() const { return drifting; }

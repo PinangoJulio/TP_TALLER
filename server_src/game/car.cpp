@@ -57,13 +57,17 @@ void Car::setBodyId(b2BodyId newBody) {
 float Car::getX() const {
     if (B2_IS_NULL(bodyId)) return 0.0f; 
     b2Vec2 pos = b2Body_GetPosition(bodyId);
-    return pos.x;
+    float meters_x = pos.x;
+    float pixels_x = meters_x * 30.0f;  // Convertir metros a píxeles
+    return pixels_x;
 }
 
 float Car::getY() const {
     if (B2_IS_NULL(bodyId)) return 0.0f; 
     b2Vec2 pos = b2Body_GetPosition(bodyId);
-    return pos.y;
+    float meters_y = pos.y;
+    float pixels_y = meters_y * 30.0f;  // Convertir metros a píxeles
+    return pixels_y;
 }
 
 float Car::getAngle() const {
@@ -90,7 +94,11 @@ float Car::getVelocityY() const {
 
 void Car::setPosition(float nx, float ny) {
     if (B2_IS_NULL(bodyId)) return;
-    b2Vec2 currentPos = {nx, ny};
+
+    float meters_x = nx / 30.0f;  // nx = pixel_x
+    float meters_y = ny / 30.0f;  // ny = pixel_y
+    
+    b2Vec2 currentPos = {meters_x, meters_y};
     b2Rot currentRot = b2Body_GetRotation(bodyId);
     b2Body_SetTransform(bodyId, currentPos, currentRot);
 }
@@ -198,18 +206,20 @@ void Car::brake(float delta_time) {
 
 void Car::turn_left(float delta_time) {
     if (is_destroyed || B2_IS_NULL(bodyId)) return;
-    if (getCurrentSpeed() < 1.0f) return;
-
+    
+    float turn_power = 0.3f * delta_time; 
+    
     float current_ang = b2Body_GetAngularVelocity(bodyId);
-    b2Body_SetAngularVelocity(bodyId, current_ang - (handling * delta_time));
+    b2Body_SetAngularVelocity(bodyId, current_ang - turn_power);
 }
 
 void Car::turn_right(float delta_time) {
     if (is_destroyed || B2_IS_NULL(bodyId)) return;
-    if (getCurrentSpeed() < 1.0f) return;
 
+    float turn_power = 0.3f * delta_time;  // Reducido de 1.5f
+    
     float current_ang = b2Body_GetAngularVelocity(bodyId);
-    b2Body_SetAngularVelocity(bodyId, current_ang + (handling * delta_time));
+    b2Body_SetAngularVelocity(bodyId, current_ang + turn_power);
 }
 
 void Car::stop() {
@@ -226,7 +236,9 @@ void Car::stop() {
 void Car::updatePhysics() {
     if (B2_IS_NULL(bodyId)) return;
 
-    // 1. Obtener velocidad y ángulo actuales
+
+    alignWithVelocity();
+    /*// 1. Obtener velocidad y ángulo actuales
     b2Vec2 velocity = b2Body_GetLinearVelocity(bodyId);
     float angle = getAngle();
     current_speed = b2Length(velocity);  // Actualizar velocidad actual
@@ -252,9 +264,10 @@ void Car::updatePhysics() {
     b2Vec2 impulse = { rightNormal.x * impulseMagnitude, rightNormal.y * impulseMagnitude };
     
     b2Body_ApplyLinearImpulseToCenter(bodyId, impulse, true);
-    
+    */
     // 5. Matar rotación residual (Angular Damping extra)
-    b2Body_SetAngularDamping(bodyId, 5.0f);
+    b2Body_SetLinearDamping(bodyId, 0.2f);
+    b2Body_SetAngularDamping(bodyId, 1.0f);
 }
 
 // ==========================================================
@@ -272,4 +285,32 @@ void Car::reset() {
     current_speed = 0.0f;
 
     std::cout << "[Car] " << model_name << " reseteado" << std::endl;
+}
+
+void Car::alignWithVelocity() {
+    if (B2_IS_NULL(bodyId)) return;
+    
+    b2Vec2 velocity = b2Body_GetLinearVelocity(bodyId);
+    float speed = b2Length(velocity);
+    
+    // Solo alinear si se está moviendo
+    if (speed > 0.5f) {
+        // Calcular ángulo de la velocidad
+        float target_angle = std::atan2(velocity.y, velocity.x);
+        
+        // Obtener ángulo actual
+        float current_angle = getAngle();
+        
+        // Calcular diferencia
+        float angle_diff = target_angle - current_angle;
+        
+        // Normalizar diferencia (-π a π)
+        while (angle_diff > M_PI) angle_diff -= 2.0f * M_PI;
+        while (angle_diff < -M_PI) angle_diff += 2.0f * M_PI;
+        
+        // Aplicar torque para girar hacia la dirección del movimiento
+        float torque = angle_diff * 100.0f;  // Fuerza de alineación
+        
+        b2Body_ApplyTorque(bodyId, torque, true);
+    }
 }

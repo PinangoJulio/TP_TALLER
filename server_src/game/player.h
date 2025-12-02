@@ -19,6 +19,9 @@ private:
     // Player es DUEÑO de su Car (gestión automática de memoria)
     std::unique_ptr<Car> car;
 
+    float last_known_x;
+    float last_known_y;
+
     // ---- ESTADO EN LA CARRERA ----
     int completed_laps;
     int current_checkpoint;
@@ -35,6 +38,8 @@ public:
         : id(id), name(name), 
           selected_car_name(""),
           car(nullptr), 
+          last_known_x(0.0f), 
+          last_known_y(0.0f), 
           completed_laps(0), 
           current_checkpoint(0),
           position_in_race(0), 
@@ -77,11 +82,18 @@ public:
     const std::string& getName() const { return name; }
 
     // ---- POSICIÓN (DELEGADO AL CAR) ----
-    float getX() const { return car ? car->getX() : 0.0f; }
-    float getY() const { return car ? car->getY() : 0.0f; }
-    void setPosition(float newX, float newY) {
-        if (car)
-            car->setPosition(newX, newY);
+    float getX() const { 
+        return car ? car->getX() : last_known_x;  // Delegar al car
+    }
+    
+    float getY() const { 
+        return car ? car->getY() : last_known_y; 
+    }
+    
+    void setPosition(float x, float y) {
+        last_known_x = x;
+        last_known_y = y;
+        if (car) car->setPosition(x, y);
     }
 
     float getAngle() const { return car ? car->getAngle() : 0.0f; }
