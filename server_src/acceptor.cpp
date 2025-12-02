@@ -103,55 +103,32 @@ void Acceptor::stop() {
     try {
         socket.shutdown(SHUT_RDWR);
         socket.close();
-        std::cout << "[Acceptor] Socket closed" << std::endl;
+        std::cout << "[Acceptor] ✅ Socket closed" << std::endl;
     } catch (const std::exception& e) {
         std::cerr << "[Acceptor] Error closing socket: " << e.what() << std::endl;
     }
-    
-    // 3. Esperar que terminen los threads de los clientes
-    std::cout << "[Acceptor] Waiting for " << clients_connected.size() 
-              << " clients to finish..." << std::endl;
-    
-    for (auto* client : clients_connected) {
-        if (client) {
-            try {
-                // Dar tiempo para que el cliente procese la desconexión
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                delete client;
-            } catch (const std::exception& e) {
-                std::cerr << "[Acceptor] Error deleting client: " << e.what() << std::endl;
-            }
-        }
-    }
-    
-    clients_connected.clear();
-    
-    std::cout << "[Acceptor] ✅ All clients disconnected" << std::endl;
 }
 
 Acceptor::~Acceptor() {
-    std::cout << "[Acceptor] Destructor: stopping all client connections..." << std::endl;
-
-    // Primero detener todos los clients
-    for (auto& ch : clients_connected) {
-        if (ch) {
-            ch->stop_connection();
-        }
+    std::cout << "[Acceptor] Destructor called" << std::endl;
+    
+    // No llamar a stop() si ya se llamó
+    if (is_running) {
+        stop();
     }
-
-    std::cout << "[Acceptor] Destructor: waiting for all clients to finish..." << std::endl;
-
-    // Ahora hacer join y eliminar
-    for (auto& ch : clients_connected) {
-        if (ch) {
-            delete ch;  // El destructor de ClientHandler hace join del receiver
+    
+    // Esperar a que termine el thread
+    if (this->is_alive()) {
+        this->join();
+    }
+    
+    // Limpiar clientes
+    for (auto* client : clients_connected) {
+        if (client) {
+            delete client;
         }
     }
     clients_connected.clear();
-
-    std::cout << "[Acceptor] Destructor: stopping acceptor thread..." << std::endl;
-    // cppcheck-suppress virtualCallInConstructor
-    stop();
-    this->join();
-    std::cout << "[Acceptor] Destructor completed" << std::endl;
+    
+    std::cout << "[Acceptor] ✅ Destructor completed" << std::endl;
 }

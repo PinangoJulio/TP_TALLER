@@ -353,12 +353,6 @@ GameState ClientProtocol::receive_snapshot() {
                   << static_cast<int>(type) << std::endl;
     }
     
-    
-    
-    if (type != (uint8_t)ServerMessageType::GAME_STATE_UPDATE)
-        std::cout<< "[ClientProtocol] Warning: Expected GAME_STATE_UPDATE message, got "
-                  << static_cast<int>(type) << std::endl;
-
     GameState state;
 
     // 1. PLAYERS

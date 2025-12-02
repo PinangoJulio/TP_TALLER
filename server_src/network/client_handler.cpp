@@ -1,6 +1,7 @@
 #include "client_handler.h"
 
 #include <utility>
+#include <sys/socket.h>
 
 ClientHandler::ClientHandler(Socket skt, int id, MatchesMonitor& monitor)
     : skt(std::move(skt)), client_id(id), protocol(this->skt), monitor(monitor), is_alive(true),
@@ -22,10 +23,19 @@ void ClientHandler::stop_connection() {
         // Ya estaba cerrada
     }
     
+    // Cerrar el socket para desbloquear recv()
+    try {
+        skt.shutdown(SHUT_RDWR);
+        skt.close();
+        std::cout << "[ClientHandler " << client_id << "] Socket closed" << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "[ClientHandler " << client_id << "] Error closing socket: " << e.what() << std::endl;
+    }
+    
     // Detener el receiver
     receiver.kill();
     
-    std::cout << "[ClientHandler " << client_id << "] Shutdown initiated" << std::endl;
+    std::cout << "[ClientHandler " << client_id << "] ✅ Shutdown initiated" << std::endl;
 }
 
 bool ClientHandler::is_running() {

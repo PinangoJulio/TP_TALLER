@@ -1,4 +1,3 @@
-// server_src/server.cpp
 #include "server.h"
 #include <iostream>
 
@@ -19,15 +18,24 @@ void Server::accept_connection() {
 }
 
 void Server::shutdown() {
+    if (shutdown_signal) {
+        std::cout << "[Server] ⚠️ Shutdown already in progress" << std::endl;
+        return;
+    }
+    
     std::cout << "\n==================================================" << std::endl;
     std::cout << "    🛑 SERVER SHUTDOWN INITIATED" << std::endl;
     std::cout << "==================================================" << std::endl;
     
     shutdown_signal = true;
     
-    // 1. Detener el acceptor (no acepta más conexiones)
-    std::cout << "[Server] Stopping acceptor..." << std::endl;
+    // 1. Detener el acceptor (esto cierra el socket y mata a todos los clientes)
+    std::cout << "[Server] Stopping acceptor and disconnecting all clients..." << std::endl;
     acceptor.stop();
+    
+    // 2. Esperar a que termine el thread del acceptor
+    std::cout << "[Server] Waiting for acceptor thread to finish..." << std::endl;
+    acceptor.join();
     
     std::cout << "[Server] ✅ Server shutdown complete" << std::endl;
     std::cout << "==================================================" << std::endl;

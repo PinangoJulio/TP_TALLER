@@ -66,17 +66,16 @@ void Receiver::handle_lobby() {
         auto welcome_msg = "Welcome to Need for Speed 2D, " + username + "!";
         protocol.send_buffer(LobbyProtocol::serialize_welcome(welcome_msg));
 
-        // --- Bucle principal del lobby ---
         bool in_lobby = true;
 
         while (is_running && in_lobby) {
-            uint8_t msg_type = protocol.read_message_type();
+            // ✅ VERIFICAR SHUTDOWN ANTES DE LEER
             if (!is_running) {
                 std::cout << "[Receiver " << username << "] 🛑 Server shutdown detected" << std::endl;
                 throw std::runtime_error("Server shutdown");
             }
-        
-
+            
+            uint8_t msg_type = protocol.read_message_type();
             switch (msg_type) {
             // ------------------------------------------------------------
             case MSG_LIST_GAMES: {
@@ -411,6 +410,7 @@ void Receiver::handle_lobby() {
     } catch (const std::exception& e) {
         std::string error_msg = e.what();
 
+        // ✅ DETECTAR SHUTDOWN
         if (error_msg.find("Server shutdown") != std::string::npos) {
             std::cout << "[Receiver " << username << "] Server is shutting down" << std::endl;
             
@@ -455,32 +455,30 @@ void Receiver::handle_lobby() {
 }
 
 void Receiver::handle_match_messages() {
-    std::cout << "[Receiver]  Game loop started - listening for player commands..." << std::endl;
+    std::cout << "[Receiver] 🎮 Game loop started - listening for player commands..." << std::endl;
 
     try {
         while (is_running) {
+            // ✅ VERIFICAR SHUTDOWN
             if (!is_running) {
                 std::cout << "[Receiver " << username << "] 🛑 Match interrupted by shutdown" << std::endl;
                 break;
             }
+            
             ComandMatchDTO comand_match;
             comand_match.player_id = id;
-            std::cout << "[Receiver] Waiting for command from player " << comand_match.player_id
-                      << "..." << std::endl;
 
             try {
-                // hasta recibir un comando del cliente
                 protocol.read_command_client(comand_match);
             } catch (...) {
                 break;
             }
 
             try {
-                // pushear a la queue (GameLoop lo consumirá)
                 commands_queue->try_push(comand_match);
 
                 if (comand_match.command == GameCommand::DISCONNECT) {
-                    std::cout << "[Receiver]Player " << username << " sent DISCONNECT command"
+                    std::cout << "[Receiver] Player " << username << " sent DISCONNECT command"
                               << std::endl;
                     break;
                 }
