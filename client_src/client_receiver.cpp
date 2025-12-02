@@ -51,6 +51,12 @@ ClientReceiver::ClientReceiver(ClientProtocol& protocol, Queue<GameState>& queue
                 snapshots_queue.try_push(game_state_snapshot);
             } catch (const ClosedQueue&) {
                 break;
+            } catch (const std::exception& e) {
+                // ✅ FIX: Capturar error genérico de cola cerrada para salir limpiamente
+                if (should_keep_running()) {
+                     std::cerr << "[ClientReceiver] Warning al pushear snapshot: " << e.what() << std::endl;
+                }
+                break;
             }
         }
     

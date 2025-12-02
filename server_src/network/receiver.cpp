@@ -524,4 +524,6 @@ bool Receiver::status() {
     return is_running;
 }
 
-Receiver::~Receiver() {}
+Receiver::~Receiver() {
+    sender.join();
+}

@@ -168,8 +168,14 @@ Client::~Client() {
         sender.stop();
         receiver.stop();
 
-        command_queue.close();
-        snapshot_queue.close();
+        // ✅ FIX: Evitar crash si las colas ya estaban cerradas (por el Receiver)
+        try {
+            command_queue.close();
+        } catch (...) {}
+
+        try {
+            snapshot_queue.close();
+        } catch (...) {}
 
         // ✅ TIMEOUT para evitar hang infinito
         auto wait_start = std::chrono::steady_clock::now();
