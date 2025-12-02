@@ -12,39 +12,57 @@ const float RAD_TO_DEG = 180.0f / M_PI;
 GameRenderer::GameRenderer(SDL2pp::Renderer& renderer_ref)
     : renderer(renderer_ref), map_width(0), map_height(0) {
 
-    // Cargar 3 spritesheets separados por tamaño
-    car_texture_32 = std::make_unique<SDL2pp::Texture>(renderer, 
-        SDL2pp::Surface(IMG_Load("assets/img/map/cars/spritesheet-cars-32.png")));
-    
-    car_texture_40 = std::make_unique<SDL2pp::Texture>(renderer, 
-        SDL2pp::Surface(IMG_Load("assets/img/map/cars/spritesheet-cars-40.png")));
-    
-    car_texture_50 = std::make_unique<SDL2pp::Texture>(renderer, 
-        SDL2pp::Surface(IMG_Load("assets/img/map/cars/spritesheet-cars-50.png")));
+    // --- CORRECCIÓN DEL CRASH (Helper de carga segura) ---
+    auto load_safe = [&](const std::string& path) -> std::unique_ptr<SDL2pp::Texture> {
+        SDL_Surface* surf = IMG_Load(path.c_str());
+        if (!surf) {
+            std::cerr << "[GameRenderer] ⚠️  AVISO: No se encontró la textura: " << path 
+                      << "\n -> Verifica que el archivo exista." << std::endl;
+            return nullptr; 
+        }
+        return std::make_unique<SDL2pp::Texture>(renderer, SDL2pp::Surface(surf));
+    };
 
-    // Mapper de nombres a info del auto
+    // 1. CARGA DE TEXTURAS (Segura)
+    car_texture_32 = load_safe("assets/img/map/cars/spritesheet-cars-32.png");
+    car_texture_40 = load_safe("assets/img/map/cars/spritesheet-cars-40.png"); 
+    car_texture_50 = load_safe("assets/img/map/cars/spritesheet-cars-50.png");
+
+    // 2. CONFIGURACIÓN DE INFO DE AUTOS (CORREGIDO: SALTOS DE 2 FILAS)
+    
+    // Autos de 32px
     car_info_map["J-Classic 600"]   = {0, 0, 32};
-    car_info_map["Stallion GT"]     = {1, 0, 40};
-    car_info_map["Cavallo V8"]      = {1, 1, 40};
-    car_info_map["Leyenda Urbana"]  = {1, 2, 40};
-    car_info_map["Brisa"]           = {1, 3, 40};
-    car_info_map["Nómada"]          = {1, 4, 40};
+    
+    // Autos de 40px (Cada auto ocupa 2 filas, saltamos de 2 en 2)
+    // El segundo número es el ÍNDICE de la fila donde EMPIEZA el auto.
+    car_info_map["Stallion GT"]     = {1, 0, 40};  // Ocupa filas 0 y 1
+    car_info_map["Cavallo V8"]      = {1, 2, 40};  // Ocupa filas 2 y 3 (Empieza en 2)
+    car_info_map["Leyenda Urbana"]  = {1, 4, 40};  // Ocupa filas 4 y 5 (Empieza en 4)
+    car_info_map["Brisa"]           = {1, 6, 40};  // Ocupa filas 6 y 7 (Empieza en 6)
+    car_info_map["Nómada"]          = {1, 8, 40};  // Ocupa filas 8 y 9 (Empieza en 8)
+    
+    // Autos de 50px
     car_info_map["Senator"]         = {2, 0, 50};
 
-    // Generar clips para cada spritesheet (8 orientaciones por fila)
-    for (int row = 0; row < 1; ++row) {
+    // 3. GENERACIÓN DE CLIPS (Aumentados los límites de los bucles)
+    
+    // 32px (Asumimos 1 auto = 2 filas)
+    for (int row = 0; row < 2; ++row) {
         for (int dir = 0; dir < 8; ++dir) {
             car_clips_32[row][dir] = SDL2pp::Rect(dir * 32, row * 32, 32, 32);
         }
     }
     
-    for (int row = 0; row < 5; ++row) {
+    // 40px (5 autos * 2 filas = 10 filas)
+    // Cargamos las 10 filas del archivo para tener todos los autos disponibles
+    for (int row = 0; row < 10; ++row) {
         for (int dir = 0; dir < 8; ++dir) {
             car_clips_40[row][dir] = SDL2pp::Rect(dir * 40, row * 40, 40, 40);
         }
     }
     
-    for (int row = 0; row < 1; ++row) {
+    // 50px (Asumimos 1 auto = 2 filas)
+    for (int row = 0; row < 2; ++row) {
         for (int dir = 0; dir < 8; ++dir) {
             car_clips_50[row][dir] = SDL2pp::Rect(dir * 50, row * 50, 50, 50);
         }
@@ -130,7 +148,7 @@ void GameRenderer::init_race(const std::string& yaml_path) {
              std::cerr << "[GameRenderer] ⚠️  No se encontró collision mask: " << collision_file << std::endl;
         }
 
-        // Cargar checkpoints
+        // Cargar checkpoints (Se mantiene tu lógica)
         load_checkpoints_from_yaml(yaml_path);
 
         std::cout << "[GameRenderer] ✅ Inicialización completada" << std::endl;
@@ -146,8 +164,9 @@ int GameRenderer::getClipIndexFromAngle(float angle_radians) {
     while (degrees < 0) degrees += 360;
     while (degrees >= 360) degrees -= 360;
     
-    // 8 direcciones
-    int index = static_cast<int>((degrees + 22.5f) / 45.0f) % 8;
+    // CORRECCIÓN: 16 direcciones (360 / 16 = 22.5 grados por sector)
+    // El offset de 11.25 centra el ángulo en el sprite.
+    int index = static_cast<int>((degrees + 11.25f) / 22.5f) % 16;
     return index;
 }
 
@@ -186,9 +205,10 @@ void GameRenderer::render(const GameState& state, int player_id) {
 
     renderer.Copy(*map_texture, viewport, screen_rect);
 
-    // Renderizar checkpoints
+    // Renderizar checkpoints (Se mantiene tu lógica)
     render_checkpoints(viewport, cam_x, cam_y);
 
+    // Renderizar Jugadores (Lógica corregida para 2 filas / 16 direcciones)
     for (const auto& player : state.players) {
         if (!player.is_alive) continue;
 
@@ -197,26 +217,39 @@ void GameRenderer::render(const GameState& state, int player_id) {
 
         auto it = car_info_map.find(player.car_name);
         if (it == car_info_map.end()) {
-            std::cerr << "[GameRenderer] ⚠️ Auto desconocido: " << player.car_name << std::endl;
+            // std::cerr << "Auto desconocido: " << player.car_name << std::endl;
             continue;
         }
 
         int texture_id = it->second.texture_id;
-        int row = it->second.row;
-        int clip_idx = getClipIndexFromAngle(player.angle);
+        int base_row = it->second.row;
+        
+        // Calcular índice de 16 direcciones
+        int total_clip_idx = getClipIndexFromAngle(player.angle);
+
+        // Seleccionar fila correcta (A o B)
+        // Si el ángulo es mayor o igual a 8, significa que estamos en la segunda mitad del giro,
+        // por lo tanto usamos la siguiente fila (base_row + 1).
+        int final_row = base_row;
+        int final_clip_idx = total_clip_idx;
+
+        if (total_clip_idx >= 8) {
+            final_row = base_row + 1;
+            final_clip_idx = total_clip_idx - 8;
+        }
 
         SDL2pp::Texture* texture = nullptr;
         SDL2pp::Rect clip;
 
         if (texture_id == 0) {
             texture = car_texture_32.get();
-            clip = car_clips_32[row][clip_idx];
+            clip = car_clips_32[final_row][final_clip_idx];
         } else if (texture_id == 1) {
             texture = car_texture_40.get();
-            clip = car_clips_40[row][clip_idx];
+            clip = car_clips_40[final_row][final_clip_idx];
         } else if (texture_id == 2) {
             texture = car_texture_50.get();
-            clip = car_clips_50[row][clip_idx];
+            clip = car_clips_50[final_row][final_clip_idx];
         }
 
         if (texture) {
