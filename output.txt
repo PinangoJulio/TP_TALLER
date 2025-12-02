@@ -22,7 +22,7 @@ Press 'q' + Enter to stop
 [Match] >>> Creando GameLoop...
 [GameLoop] Constructor OK. Listo para gestionar múltiples carreras.
 [Match] >>> Iniciando GameLoop (thread)...
-[Match] ✅ GameLoop iniciado y esperando jugadores
+[Match]   GameLoop iniciado y esperando jugadores
 [Match] Jugador agregado: julio 1 (id=1, total=1)
 
 ╔════════════════════════════════════════════════════════════╗
@@ -31,7 +31,7 @@ Press 'q' + Enter to stop
 ║ ID:   1 │ julio 1         │ [SIN AUTO]           │ ✗ NOT READY ║
 ╚════════════════════════════════════════════════════════════╝
 
-[MatchesMonitor] ✅ Match created: ID=1 Host=julio 1 (player_id=1)
+[MatchesMonitor]   Match created: ID=1 Host=julio 1 (player_id=1)
 [MatchesMonitor] Socket registered: julio 1 in match 1
 [Receiver]   Race 1: Liberty City - ruta-1
 [Receiver]   Race 2: Liberty City - ruta-1
@@ -42,7 +42,7 @@ Press 'q' + Enter to stop
 [Match] Configuradas 3 carreras en GameLoop
 [MatchesMonitor] Carreras agregadas a match 1
 [Receiver] Game created with ID: 1
-[ServerProtocol] ✅ Sent 3 race paths to client
+[ServerProtocol]   Sent 3 race paths to client
 [Receiver] Sent 3 race paths to julio 1
 [GameLoop] Carreras listas. PAUSADO esperando señal de inicio (start_game)...
 [Receiver] julio 1 selected car: Cavallo V8 (sport)
@@ -51,7 +51,7 @@ Press 'q' + Enter to stop
 [Car] Creado: Cavallo V8 (sport)
 [Car] Stats cargados para Cavallo V8: Max Speed=135 Accel=68 Handling=0.7 HP=80
 [GameLoop] Jugador agregado: julio 1 (ID: 1)
-[Match] ✅ Jugador julio 1 agregado al GameLoop exitosamente
+[Match]   Jugador julio 1 agregado al GameLoop exitosamente
 
 ╔════════════════════════════════════════════════════════════╗
 ║  MATCH #1 - JUGADORES (1/2)                          ║
@@ -59,11 +59,11 @@ Press 'q' + Enter to stop
 ║ ID: 1   │ julio 1         │ Cavallo V8 (sport)   │ ✗ NOT READY ║
 ╚════════════════════════════════════════════════════════════╝
 
-[Receiver] ✅ ACK sent to julio 1
+[Receiver]   ACK sent to julio 1
 [MatchesMonitor] Broadcasting to match 1 (excluding: julio 1)
 [MatchesMonitor]   Skipping julio 1 (sender)
 [MatchesMonitor] Broadcast completed: 0 messages sent to match 1
-[Receiver] ✅ Broadcast triggered (excluding julio 1)
+[Receiver]   Broadcast triggered (excluding julio 1)
 ==================================================
 [Acceptor] New connection accepted
            Client ID: 2
@@ -84,16 +84,16 @@ Press 'q' + Enter to stop
 ║ ID: 2   │ julio 2         │ [SIN AUTO]           │ ✗ NOT READY ║
 ╚════════════════════════════════════════════════════════════╝
 
-[MatchesMonitor] ✅ julio 2 (id=2) joined match 1
+[MatchesMonitor]   julio 2 (id=2) joined match 1
 [Receiver] julio 2 joined match 1
 [Receiver] Sending room snapshot to julio 2 (1 existing players)
 [Receiver]   → Player exists: julio 1
 [Receiver]   → Car: Cavallo V8
-[Receiver] ✅ Snapshot sent with END marker to julio 2
-[ServerProtocol] ✅ Sent 3 race paths to client
+[Receiver]   Snapshot sent with END marker to julio 2
+[ServerProtocol]   Sent 3 race paths to client
 [Receiver] Sent 3 race paths to julio 2
 [MatchesMonitor] Broadcasting to match 1 (excluding: julio 2)
-[MatchesMonitor] ✅ Sent to julio 1
+[MatchesMonitor]   Sent to julio 1
 [MatchesMonitor]   Skipping julio 2 (sender)
 [MatchesMonitor] Broadcast completed: 1 messages sent to match 1
 [Receiver] Broadcasted join notification (excluding julio 2)
@@ -103,7 +103,7 @@ Press 'q' + Enter to stop
 [Car] Creado: J-Classic 600 (classic)
 [Car] Stats cargados para J-Classic 600: Max Speed=105 Accel=48 Handling=0.65 HP=100
 [GameLoop] Jugador agregado: julio 2 (ID: 2)
-[Match] ✅ Jugador julio 2 agregado al GameLoop exitosamente
+[Match]   Jugador julio 2 agregado al GameLoop exitosamente
 
 ╔════════════════════════════════════════════════════════════╗
 ║  MATCH #1 - JUGADORES (2/2)                          ║
@@ -112,12 +112,12 @@ Press 'q' + Enter to stop
 ║ ID: 2   │ julio 2         │ J-Classic 600 (class │ ✗ NOT READY ║
 ╚════════════════════════════════════════════════════════════╝
 
-[Receiver] ✅ ACK sent to julio 2
+[Receiver]   ACK sent to julio 2
 [MatchesMonitor] Broadcasting to match 1 (excluding: julio 2)
-[MatchesMonitor] ✅ Sent to julio 1
+[MatchesMonitor]   Sent to julio 1
 [MatchesMonitor]   Skipping julio 2 (sender)
 [MatchesMonitor] Broadcast completed: 1 messages sent to match 1
-[Receiver] ✅ Broadcast triggered (excluding julio 2)
+[Receiver]   Broadcast triggered (excluding julio 2)
 [Receiver] julio 1 set ready: YES
 [Match] julio 1 is now READY
 
@@ -130,7 +130,7 @@ Press 'q' + Enter to stop
 
 [MatchesMonitor] Broadcasting to match 1 (excluding: julio 1)
 [MatchesMonitor]   Skipping julio 1 (sender)
-[MatchesMonitor] ✅ Sent to julio 2
+[MatchesMonitor]   Sent to julio 2
 [MatchesMonitor] Broadcast completed: 1 messages sent to match 1
 [Receiver] julio 2 set ready: YES
 [Match] julio 2 is now READY
@@ -143,26 +143,26 @@ Press 'q' + Enter to stop
 ╚════════════════════════════════════════════════════════════╝
 
 [MatchesMonitor] Broadcasting to match 1 (excluding: julio 2)
-[MatchesMonitor] ✅ Sent to julio 1
+[MatchesMonitor]   Sent to julio 1
 [MatchesMonitor]   Skipping julio 2 (sender)
 [MatchesMonitor] Broadcast completed: 1 messages sent to match 1
 [Receiver] julio 1 starting game 1
 [MatchesMonitor] Starting match 1
 [Match] ════════════════════════════════════════════
 [Match] 🏁 Petición de START recibida para Match 1
-[Match] ✅ Condiciones cumplidas. Iniciando simulación...
+[Match]   Condiciones cumplidas. Iniciando simulación...
 [GameLoop] >>> SEÑAL DE INICIO RECIBIDA. Desbloqueando simulación.
 [Match] 🚀 Clientes notificados. ¡Juego en marcha!
 [Match] ════════════════════════════════════════════
-[Receiver] ✅ Game 1 started successfully!
+[Receiver]   Game 1 started successfully!
 [Receiver] 📡 Broadcasting MSG_GAME_STARTED to all players...
-[Receiver]   ✅ Sent to julio 1 (requester)
+[Receiver]     Sent to julio 1 (requester)
 [MatchesMonitor] Broadcasting to match 1 (excluding: julio 1)
 [MatchesMonitor]   Skipping julio 1 (sender)
-[MatchesMonitor] ✅ Sent to julio 2
+[MatchesMonitor]   Sent to julio 2
 [MatchesMonitor] Broadcast completed: 1 messages sent to match 1
-[Receiver]   ✅ Broadcasted to other players
-[Receiver] ✅ Exiting lobby loop for julio 1 (match_id=1, is_running=1)
+[Receiver]     Broadcasted to other players
+[Receiver]   Exiting lobby loop for julio 1 (match_id=1, is_running=1)
 [Receiver] Sender started for player julio 1
 [Receiver] 🎮 Game loop started - listening for player commands...
 [GameLoop] ═══════════════════════════════════════════════
@@ -182,7 +182,7 @@ Match info: 2 players, 3 races.
 [GameLoop]   Spawn point: (4275, 81) angle=0 rad
 [GameLoop]   Spawn point: (4275, 101) angle=0 rad
 [GameLoop]   Spawn point: (4195, 86) angle=0 rad
-[GameLoop] ✅ Cargados 8 spawn points
+[GameLoop]   Cargados 8 spawn points
 [Car] Cavallo V8 reseteado
 [Car] Cavallo V8 reseteado
 [GameLoop]   Jugador julio 1 (ID=1) → spawn[0]: (4440, 81) angle=0 rad
@@ -194,7 +194,7 @@ Match info: 2 players, 3 races.
 [GameLoop] <<< Reseteo completado
 [GameLoop]   Cronómetro iniciado
 [Receiver] Unknown message type: 9
-[Receiver] ✅ Exiting lobby loop for julio 2 (match_id=1, is_running=1)
+[Receiver]   Exiting lobby loop for julio 2 (match_id=1, is_running=1)
 [Receiver] Sender started for player julio 2
 [Receiver] 🎮 Game loop started - listening for player commands...
 
@@ -288,8 +288,8 @@ Confirmando creación de partida:
 [ClientProtocol]   Race 1: server_src/city_maps/Liberty City/ruta-1.yaml
 [ClientProtocol]   Race 2: server_src/city_maps/Liberty City/ruta-1.yaml
 [ClientProtocol]   Race 3: server_src/city_maps/Liberty City/ruta-1.yaml
-[ClientProtocol] ✅ Received 3 race paths
-[Controller] ✅ Received 3 race paths from server
+[ClientProtocol]   Received 3 race paths
+[Controller]   Received 3 race paths from server
 [Controller] Abriendo garage...
 [Controller] Abriendo ventana de garage...
 qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
@@ -300,14 +300,14 @@ qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 [GarageWindow] Auto cargado: Senator (tipo: classic)
 [GarageWindow] Auto cargado: Nómada (tipo: truck)
 [GarageWindow] Auto cargado: Stallion GT (tipo: sport)
-[GarageWindow] ✅ 7 autos cargados desde config.yaml
+[GarageWindow]   7 autos cargados desde config.yaml
 Auto seleccionado: Cavallo V8 (sport)
 [Controller] Auto seleccionado: Cavallo V8
 [Controller] Enviando selección de auto...
 [Protocol] Selected car: Cavallo V8 (sport)
 [Controller] Esperando confirmación (ACK)...
 [LobbyClient] Server confirmed car: Cavallo V8 (sport)
-[Controller] ✅ Auto confirmado por servidor: Cavallo V8
+[Controller]   Auto confirmado por servidor: Cavallo V8
 [Controller] Iniciando listener de notificaciones...
 [LobbyClient] Notification listener started
 [Controller] Abriendo sala de espera...
@@ -315,19 +315,19 @@ Auto seleccionado: Cavallo V8 (sport)
 qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 [LobbyClient] 🔄 Notification listener STARTED and ACTIVE
 [LobbyClient] 🔍 Waiting for message... (blocking on recv)
-[LobbyClient] ✅ Message received! Type: 0x20
+[LobbyClient]   Message received! Type: 0x20
 [LobbyClient] Player joined: julio 2
 [LobbyClient] 🔍 Waiting for message... (blocking on recv)
 [Controller] Notification: Player joined: julio 2
-[LobbyClient] ✅ Message received! Type: 0x23
+[LobbyClient]   Message received! Type: 0x23
 [LobbyClient] Player julio 2 selected J-Classic 600
 [LobbyClient] 🔍 Waiting for message... (blocking on recv)
 [Controller] Notification: Player julio 2 selected J-Classic 600
 [Controller] Jugador marcado como: LISTO
-[Controller] ✅ Local ready state updated for julio 1
+[Controller]   Local ready state updated for julio 1
 [Protocol] Set ready: YES
 Estado listo local: SI
-[LobbyClient] ✅ Message received! Type: 0x22
+[LobbyClient]   Message received! Type: 0x22
 [LobbyClient] Player julio 2 is now READY
 [LobbyClient] 🔍 Waiting for message... (blocking on recv)
 [Controller] 🔔 Notification: Player julio 2 ready: 1 (local: julio 1)
@@ -335,16 +335,16 @@ Iniciando partida...
 [Controller] ════════════════════════════════════════════
 [Controller] 🎮 Solicitando inicio de partida al servidor...
 [Controller]   Verificando listener...
-[Controller]   Listener activo: SÍ ✅
+[Controller]   Listener activo: SÍ  
 [Controller]   Enviando start_game(currentGameId=1)...
 [Protocol] Start game request sent for ID: 1
-[Controller] ✅ Solicitud enviada. Esperando MSG_GAME_STARTED...
+[Controller]   Solicitud enviada. Esperando MSG_GAME_STARTED...
 [Controller]   (El listener debe capturar el mensaje automáticamente)
 [Controller] ════════════════════════════════════════════
-[LobbyClient] ✅ Message received! Type: 0x14
+[LobbyClient]   Message received! Type: 0x14
 [LobbyClient] 🚀🚀🚀 MSG_GAME_STARTED RECEIVED! 🚀🚀🚀
 [LobbyClient] Listener stopped, exiting thread...
-[Controller] ✅ Señal de inicio confirmada por el servidor. Pasando a SDL...
+[Controller]   Señal de inicio confirmada por el servidor. Pasando a SDL...
 [LobbyClient] Stopping notification listener...
 [LobbyClient] Listener will stop on next message (no blocking join)
 [Client] Lobby terminado (success=1)
@@ -458,8 +458,8 @@ qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 [ClientProtocol]   Race 1: server_src/city_maps/Liberty City/ruta-1.yaml
 [ClientProtocol]   Race 2: server_src/city_maps/Liberty City/ruta-1.yaml
 [ClientProtocol]   Race 3: server_src/city_maps/Liberty City/ruta-1.yaml
-[ClientProtocol] ✅ Received 3 race paths
-[Controller] ✅ Received 3 race paths from server
+[ClientProtocol]   Received 3 race paths
+[Controller]   Received 3 race paths from server
 [Controller] Abriendo garage...
 [Controller] Abriendo ventana de garage...
 qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
@@ -470,14 +470,14 @@ qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 [GarageWindow] Auto cargado: Senator (tipo: classic)
 [GarageWindow] Auto cargado: Nómada (tipo: truck)
 [GarageWindow] Auto cargado: Stallion GT (tipo: sport)
-[GarageWindow] ✅ 7 autos cargados desde config.yaml
+[GarageWindow]   7 autos cargados desde config.yaml
 Auto seleccionado: J-Classic 600 (classic)
 [Controller] Auto seleccionado: J-Classic 600
 [Controller] Enviando selección de auto...
 [Protocol] Selected car: J-Classic 600 (classic)
 [Controller] Esperando confirmación (ACK)...
 [LobbyClient] Server confirmed car: J-Classic 600 (classic)
-[Controller] ✅ Auto confirmado por servidor: J-Classic 600
+[Controller]   Auto confirmado por servidor: J-Classic 600
 [Controller] Iniciando listener de notificaciones...
 [LobbyClient] Notification listener started
 [Controller] Abriendo sala de espera...
@@ -485,18 +485,18 @@ Auto seleccionado: J-Classic 600 (classic)
 qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 [LobbyClient] 🔄 Notification listener STARTED and ACTIVE
 [LobbyClient] 🔍 Waiting for message... (blocking on recv)
-[LobbyClient] ✅ Message received! Type: 0x22
+[LobbyClient]   Message received! Type: 0x22
 [LobbyClient] Player julio 1 is now READY
 [Controller] 🔔 Notification: Player julio 1 ready: 1 (local: julio 2)
 [LobbyClient] 🔍 Waiting for message... (blocking on recv)
 [Controller] Jugador marcado como: LISTO
-[Controller] ✅ Local ready state updated for julio 2
+[Controller]   Local ready state updated for julio 2
 [Protocol] Set ready: YES
 Estado listo local: SI
-[LobbyClient] ✅ Message received! Type: 0x14
+[LobbyClient]   Message received! Type: 0x14
 [LobbyClient] 🚀🚀🚀 MSG_GAME_STARTED RECEIVED! 🚀🚀🚀
 [LobbyClient] Listener stopped, exiting thread...
-[Controller] ✅ Señal de inicio confirmada por el servidor. Pasando a SDL...
+[Controller]   Señal de inicio confirmada por el servidor. Pasando a SDL...
 [LobbyClient] Stopping notification listener...
 [LobbyClient] Listener will stop on next message (no blocking join)
 [Client] Lobby terminado (success=1)

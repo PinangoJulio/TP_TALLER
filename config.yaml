@@ -34,7 +34,7 @@ nitro_duration: 5                # seconds (int) - duration of nitro boost
 nitro_cooldown: 10               # seconds (int) - cooldown before nitro can be used again
 nitro_speed_multiplier: 1.5      # float - multiplier for max speed when nitro is active
 
-# ✅ NUEVO: multiplicadores globales para ajustar sensación de velocidad sin recompilar
+
 vehicle_speed_scale: 3.0         # float - multiplica el campo "speed" de cada auto
 vehicle_accel_scale: 2.5         # float - multiplica el campo "acceleration" de cada auto
 
@@ -95,7 +95,7 @@ cars:
     acceleration: 50
     handling: 55
     durability: 90
-    health: 9999  # ✅ Vida casi infinita (tanque)
+    health: 9999  
 
   - name: "Stallion GT"
     image_path: "assets/img/lobby/autos/carro-rojo-2.png"

@@ -70,7 +70,7 @@ void LobbyClient::join_game(uint16_t game_id) {
 uint16_t LobbyClient::receive_game_joined() {
     uint8_t type = protocol.read_message_type();
     
-    // [FIX] Manejo explícito de error si la sala está llena
+    
     if (type == MSG_ERROR) {
         std::string error_msg;
         read_error_details(error_msg);
@@ -197,12 +197,12 @@ void LobbyClient::start_listening() {
         return;
     }
 
-    // FIX: Si hay un thread anterior, asegurarse de que terminó
+    
     if (notification_thread.joinable()) {
         std::cout << "[LobbyClient] ⚠️  Previous listener thread still exists, joining..."
                   << std::endl;
         notification_thread.join();
-        std::cout << "[LobbyClient] ✅ Previous thread cleaned up" << std::endl;
+        std::cout << "[LobbyClient]   Previous thread cleaned up" << std::endl;
     }
 
     listening.store(true);
@@ -210,7 +210,7 @@ void LobbyClient::start_listening() {
     std::cout << "[LobbyClient] Notification listener started" << std::endl;
 }
 
-// [FIX] Modificado para no matar el socket si no es necesario
+
 void LobbyClient::stop_listening(bool shutdown_connection) {
     std::cout << "[LobbyClient] Stopping notification listener..." << std::endl;
 
@@ -237,7 +237,7 @@ void LobbyClient::stop_listening(bool shutdown_connection) {
             }
         }
     } else {
-        // ✅ NO hacer join() si el socket sigue abierto
+        
         // El thread está bloqueado en recv() y se detendrá solo cuando:
         // - Llegue el próximo mensaje del servidor
         // - Se cierre la conexión
@@ -257,7 +257,7 @@ void LobbyClient::notification_listener() {
             
             try {
                 msg_type = protocol.read_message_type();
-                std::cout << "[LobbyClient] ✅ Message received! Type: 0x" 
+                std::cout << "[LobbyClient]   Message received! Type: 0x" 
                           << std::hex << static_cast<int>(msg_type) << std::dec << std::endl;
             } catch (const std::exception& e) {
                 if (!listening.load()) {
@@ -265,23 +265,23 @@ void LobbyClient::notification_listener() {
                     break;
                 }
                 
-                // ✅ Verificar si es shutdown del servidor
+                
                 std::string error_msg = e.what();
                 if (error_msg.find("Connection closed") != std::string::npos) {
                     std::cout << "[LobbyClient] 🛑 Server closed connection" << std::endl;
                     connected = false;
                     listening = false;
                     
-                    // ✅ Emitir señal de error para que el controller lo maneje
+                    
                     emit errorOccurred("SERVER SHUTDOWN - DISCONNECTING");
                     break;
                 }
                 
-                std::cerr << "[LobbyClient] ❌ Error reading message type: " << e.what() << std::endl;
+                std::cerr << "[LobbyClient]   Error reading message type: " << e.what() << std::endl;
                 throw;
             }
 
-            // ✅ Detectar mensaje de shutdown
+            
             if (msg_type == MSG_ERROR) {
                 uint8_t error_code = protocol.read_uint8();
                 std::string error_msg = protocol.read_string();
@@ -289,18 +289,18 @@ void LobbyClient::notification_listener() {
                 std::cout << "[LobbyClient] Error " << static_cast<int>(error_code) 
                           << ": " << error_msg << std::endl;
                 
-                // ✅ Si es código de shutdown (0xFF)
+                
                 if (error_code == 0xFF) {
                     std::cout << "[LobbyClient] 🛑 SERVER SHUTDOWN DETECTED" << std::endl;
                     
                     connected = false;
                     listening = false;
                     
-                    // ✅ Emitir señal y salir inmediatamente
+                    
                     emit errorOccurred(QString::fromStdString(error_msg));
                     
                     std::cout << "[LobbyClient] Exiting notification listener..." << std::endl;
-                    return; // ✅ Salir del thread
+                    return; 
                 }
                 
                 emit errorOccurred(QString::fromStdString(error_msg));
@@ -391,7 +391,7 @@ void LobbyClient::notification_listener() {
         }
     } catch (const std::exception& e) {
         if (listening.load()) {
-            std::cerr << "[LobbyClient] ❌ FATAL: Notification listener error: " << e.what() << std::endl;
+            std::cerr << "[LobbyClient]   FATAL: Notification listener error: " << e.what() << std::endl;
         }
         connected = false;
     }
@@ -404,28 +404,28 @@ void LobbyClient::read_room_snapshot(std::vector<QString>& players,
                                      std::map<QString, bool>& readyStatus) {
     bool reading = true;
     while (reading) {
-        // Use read_message_type(), which internally calls read_uint8()
+      
         uint8_t msg_type = protocol.read_message_type();
 
         if (msg_type == MSG_ROOM_SNAPSHOT) {
-            // Read padding bytes (0,0) sent by server
-            protocol.read_uint8(); // Corrected: read_uint8 instead of receive_uint8
-            protocol.read_uint8(); // Corrected: read_uint8 instead of receive_uint8
+         
+            protocol.read_uint8(); 
+            protocol.read_uint8(); 
             reading = false;
         } 
-        else if (msg_type == MSG_PLAYER_JOINED_NOTIFICATION) { // Corrected constant
-            std::string name = protocol.read_string(); // Corrected: read_string
+        else if (msg_type == MSG_PLAYER_JOINED_NOTIFICATION) { 
+            std::string name = protocol.read_string(); 
             players.push_back(QString::fromStdString(name));
         } 
-        else if (msg_type == MSG_CAR_SELECTED_NOTIFICATION) { // Corrected constant
-            std::string name = protocol.read_string(); // Corrected: read_string
-            std::string carName = protocol.read_string(); // Corrected: read_string
-            std::string carType = protocol.read_string(); // Corrected: read_string
+        else if (msg_type == MSG_CAR_SELECTED_NOTIFICATION) { 
+            std::string name = protocol.read_string(); 
+            std::string carName = protocol.read_string(); 
+            std::string carType = protocol.read_string(); 
             cars[QString::fromStdString(name)] = QString::fromStdString(carName);
         }
-        else if (msg_type == MSG_PLAYER_READY_NOTIFICATION) { // Corrected constant
-            std::string name = protocol.read_string(); // Corrected: read_string
-            uint8_t isReady = protocol.read_uint8(); // Corrected: read_uint8
+        else if (msg_type == MSG_PLAYER_READY_NOTIFICATION) { 
+            std::string name = protocol.read_string(); 
+            uint8_t isReady = protocol.read_uint8(); 
             readyStatus[QString::fromStdString(name)] = (isReady != 0);
         }
     }

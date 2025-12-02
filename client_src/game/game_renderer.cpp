@@ -146,7 +146,7 @@ void GameRenderer::init_race(const std::string& yaml_path) {
         // Cargar checkpoints 
         load_checkpoints_from_yaml(yaml_path);
 
-        std::cout << "[GameRenderer] ✅ Inicialización completada" << std::endl;
+        std::cout << "[GameRenderer]   Inicialización completada" << std::endl;
         std::cout << "[GameRenderer] ═══════════════════════════════════════" << std::endl;
 
     } catch (const std::exception& e) {

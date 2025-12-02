@@ -112,7 +112,7 @@ sudo cp -r server_src/city_maps/* $TP_ROOT_DIR/recorridos/
 ## ----------------------------------------------------
 ## [4/4] Finalización
 ## ----------------------------------------------------
-echo "[4/4] Instalación completada con éxito ✅"
+echo "[4/4] Instalación completada con éxito  "
 echo ""
 echo "==================================================="
 echo "           INSTALACIÓN COMPLETADA"

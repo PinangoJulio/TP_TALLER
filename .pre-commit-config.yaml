@@ -8,7 +8,7 @@ repos:
   # 1. FORMATEO DE CÓDIGO (clang-format)
   # ========================================
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v17.0.6  # ✅ Versión estable compatible con C++20
+    rev: v17.0.6  #   Versión estable compatible con C++20
     hooks:
       - id: clang-format
         files: ^(.*[.]cpp|.*[.]h|.*[.]hpp)$
@@ -26,7 +26,7 @@ repos:
   # 2. LINTING DE ESTILO (cpplint)
   # ========================================
   - repo: https://github.com/cpplint/cpplint
-    rev: 1.6.1  # ✅ Última versión
+    rev: 1.6.1  #   Última versión
     hooks:
       - id: cpplint
         files: ^(.*[.]cpp|.*[.]h|.*[.]hpp)$
@@ -44,7 +44,7 @@ repos:
   # 3. ANÁLISIS ESTÁTICO (cppcheck) - DESACTIVADO POR RENDIMIENTO
   # ========================================
   # - repo: https://github.com/pocc/pre-commit-hooks
-  #   rev: v1.3.5  # ✅ Tag oficial en lugar de SHA
+  #   rev: v1.3.5  #   Tag oficial en lugar de SHA
   #   hooks:
   #     - id: cppcheck
   #       files: ^(.*[.]cpp|.*[.]h|.*[.]hpp)$
@@ -56,15 +56,15 @@ repos:
   #         - "--suppress=unusedFunction"
   #         - "--suppress=unmatchedSuppression"
   #         - "--suppress=unusedStructMember"
-  #         - "--suppress=passedByValue"  # ✅ Para evitar warnings en DTOs
-  #         - "--suppress=constParameter"  # ✅ Para parámetros que no se modifican
-  #         - "--suppress=unusedVariable"  # ✅ Para structured bindings donde no se usa la clave
-  #         - "--suppress=unassignedVariable"  # ✅ Para structured bindings en iteraciones
-  #         - "--suppress=useStlAlgorithm"  # ✅ Permitir loops tradicionales cuando son más claros
+  #         - "--suppress=passedByValue"  #   Para evitar warnings en DTOs
+  #         - "--suppress=constParameter"  #   Para parámetros que no se modifican
+  #         - "--suppress=unusedVariable"  #   Para structured bindings donde no se usa la clave
+  #         - "--suppress=unassignedVariable"  #   Para structured bindings en iteraciones
+  #         - "--suppress=useStlAlgorithm"  #   Permitir loops tradicionales cuando son más claros
   #         - "--language=c++"
   #         - "--std=c++20"
   #         - "--error-exitcode=1"
-  #         - "-I./common_src"  # ✅ Incluir directorios de headers
+  #         - "-I./common_src"  #   Incluir directorios de headers
   #         - "-I./server_src"
   #         - "-I./client_src"
   #       exclude: |
@@ -89,9 +89,9 @@ repos:
         files: ^(.*[.]cpp|.*[.]h|.*[.]hpp|.*[.]yaml|.*[.]yml)$
       - id: check-yaml
         files: ^(.*[.]yaml|.*[.]yml)$
-        exclude: ^config.yaml$  # ✅ Evitar validar config.yaml si tiene sintaxis especial
+        exclude: ^config.yaml$  #   Evitar validar config.yaml si tiene sintaxis especial
       - id: check-added-large-files
-        args: ['--maxkb=1000']  # ✅ No permitir archivos > 1MB
+        args: ['--maxkb=1000']  #   No permitir archivos > 1MB
 
   # ========================================
   # 5. CMAKE FORMATTING (opcional)

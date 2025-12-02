@@ -52,7 +52,7 @@ void Client::start() {
         controller.start();
         lobbyLoop.exec();
 
-        // ✅ Verificar si fue shutdown del servidor
+        
         if (!active) {
             std::cout << "[Client] Abortando inicio de juego (server shutdown o error)." << std::endl;
             return;
@@ -170,7 +170,7 @@ void Client::start() {
     } catch (const std::runtime_error& e) {
         std::string error_msg = e.what();
         
-        // ✅ Detectar shutdown del servidor
+        
         if (error_msg.find("Server shutdown") != std::string::npos) {
             std::cout << "\n==================================================" << std::endl;
             std::cout << "    ⚠️  SERVER CERRADO - SALIENDO DEL JUEGO" << std::endl;
@@ -198,7 +198,7 @@ Client::~Client() {
         sender.stop();
         receiver.stop();
 
-        // ✅ FIX: Evitar crash si las colas ya estaban cerradas (por el Receiver)
+        
         try {
             command_queue.close();
         } catch (...) {}
@@ -207,7 +207,7 @@ Client::~Client() {
             snapshot_queue.close();
         } catch (...) {}
 
-        // ✅ TIMEOUT para evitar hang infinito
+        
         auto wait_start = std::chrono::steady_clock::now();
         const int TIMEOUT_SECONDS = 5;
         
@@ -224,7 +224,7 @@ Client::~Client() {
         sender.join();
         receiver.join();
 
-        std::cout << "[Client] ✅ Threads finalizados" << std::endl;
+        std::cout << "[Client]   Threads finalizados" << std::endl;
     }
 
     std::cout << "[Client] Destructor completado" << std::endl;

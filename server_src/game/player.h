@@ -6,7 +6,7 @@
 #include <string>
 #include <utility>
 
-#include "car.h"  // ✅ Player tiene un Car
+#include "car.h"  //   Player tiene un Car
 
 class Player {
 private:
@@ -149,7 +149,7 @@ public:
     }
 
     ~Player() {
-        // ✅ unique_ptr libera automáticamente el Car
+        
     }
 };
 

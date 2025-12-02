@@ -12,13 +12,10 @@ struct RaceConfigQt {
     int trackIndex;
     QString trackName;
 
-    // Conversión a RaceConfig del servidor (cuando se envíe al servidor)
-    // ServerRaceConfig toServerConfig() const {
-    //     return {cityName.toStdString(), trackName.toStdString()};
-    // }
+   
 };
 
-// Alias para compatibilidad con código existente del cliente
+
 using RaceConfig = RaceConfigQt;
 
 #endif  // COMMON_TYPES_H

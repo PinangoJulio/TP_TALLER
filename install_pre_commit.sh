@@ -18,7 +18,7 @@ NC='\033[0m' # No Color
 # 1. Verificar si estamos en el directorio correcto
 # ========================================
 if [ ! -f ".pre-commit-config.yaml" ]; then
-    echo -e "${RED}❌ Error: .pre-commit-config.yaml no encontrado${NC}"
+    echo -e "${RED}  Error: .pre-commit-config.yaml no encontrado${NC}"
     echo "   Ejecuta este script desde la raíz del proyecto"
     exit 1
 fi
@@ -123,7 +123,7 @@ fi
 
 echo ""
 echo "=================================================="
-echo -e "${GREEN}✅ Instalación completada${NC}"
+echo -e "${GREEN}  Instalación completada${NC}"
 echo "=================================================="
 echo ""
 echo " Para más información, lee: PRE_COMMIT_SETUP.md"

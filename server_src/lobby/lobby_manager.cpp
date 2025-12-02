@@ -180,15 +180,15 @@ void LobbyManager::broadcast_to_game(uint16_t game_id, const std::vector<uint8_t
 
         try {
             if (!socket_ptr) {
-                std::cerr << "[LobbyManager] ❌ Null socket for " << username << std::endl;
+                std::cerr << "[LobbyManager]   Null socket for " << username << std::endl;
                 continue;
             }
 
             socket_ptr->sendall(buffer.data(), buffer.size());
-            std::cout << "[LobbyManager] ✅ Sent to " << username << std::endl;
+            std::cout << "[LobbyManager]   Sent to " << username << std::endl;
 
         } catch (const std::exception& e) {
-            std::cerr << "[LobbyManager] ❌ Error broadcasting to " << username << ": " << e.what()
+            std::cerr << "[LobbyManager]   Error broadcasting to " << username << ": " << e.what()
                       << std::endl;
         }
     }

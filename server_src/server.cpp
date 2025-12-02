@@ -29,7 +29,7 @@ void Server::shutdown() {
     
     shutdown_signal = true;
     
-    // ✅ ORDEN CORRECTO:
+    
     // 1. Señalizar cierre (para que dejen de aceptar nuevas conexiones)
     acceptor.stop_accepting();
     
@@ -50,7 +50,7 @@ void Server::shutdown() {
         acceptor.join();
     }
     
-    std::cout << "[Server] ✅ Server shutdown complete" << std::endl;
+    std::cout << "[Server]   Server shutdown complete" << std::endl;
 }
 
 void Server::start() {

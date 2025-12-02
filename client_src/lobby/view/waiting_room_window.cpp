@@ -449,7 +449,7 @@ void WaitingRoomWindow::onReadyClicked() {
 void WaitingRoomWindow::onStartClicked() {
     std::cout << "Iniciando partida..." << std::endl;
     
-    // ✅ Deshabilitar el botón para evitar doble clic
+   
     startButton->setEnabled(false);
     startButton->setText("Iniciando...");
     

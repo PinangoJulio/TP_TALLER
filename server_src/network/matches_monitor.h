@@ -19,10 +19,10 @@ private:
     std::mutex mtx;
     std::map<int, std::unique_ptr<Match>> matches;
 
-    // ✅ Gestión de sockets por partida (match_id → {player_name → Socket*})
+    
     std::map<int, std::map<std::string, Socket*>> player_sockets;
 
-    // ✅ Lookup inverso: player_name → match_id
+    
     std::map<std::string, int> player_to_match;
 
 public:

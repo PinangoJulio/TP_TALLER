@@ -44,7 +44,7 @@ private slots:
 private:
     void setupUI();
     void loadCars();
-    void loadDefaultCars();  // ✅ Método de fallback para cargar autos hardcodeados
+    void loadDefaultCars();  //   Método de fallback para cargar autos hardcodeados
     void updateCarDisplay();
     void createStatLabels();
     void drawStatBar(QPainter& painter, int x, int y, int width, int value, const QString& label);

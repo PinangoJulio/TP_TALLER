@@ -69,7 +69,7 @@ void Receiver::handle_lobby() {
         bool in_lobby = true;
 
         while (is_running && in_lobby) {
-            // ✅ VERIFICAR SHUTDOWN ANTES DE LEER
+            
             if (!is_running) {
                 std::cout << "[Receiver " << username << "] 🛑 Server shutdown detected" << std::endl;
                 throw std::runtime_error("Server shutdown");
@@ -118,7 +118,7 @@ void Receiver::handle_lobby() {
                 // Crear la partida (el host se agrega automáticamente)
                 int new_match_id =
                     monitor.create_match(max_players, username, id, sender_messages_queue);
-                if (new_match_id < 0) {  // ✅ CORRECTO: create_match retorna -1 en error
+                if (new_match_id < 0) {  
                     protocol.send_buffer(
                         LobbyProtocol::serialize_error(ERR_ALREADY_IN_GAME, "Error creating match"));
                     break;
@@ -140,7 +140,7 @@ void Receiver::handle_lobby() {
                               << "\n";
                 }
 
-                // ✅ GUARDAR LAS CARRERAS
+                
                 monitor.add_races_to_match(match_id, races);
 
                 protocol.send_buffer(LobbyProtocol::serialize_game_created(match_id));
@@ -231,7 +231,7 @@ void Receiver::handle_lobby() {
                 end_marker.push_back(0);
                 protocol.send_buffer(end_marker);
 
-                std::cout << "[Receiver] ✅ Snapshot sent with END marker to " << username
+                std::cout << "[Receiver]   Snapshot sent with END marker to " << username
                           << std::endl;
 
                 // ENVIAR YAML AL CLIENTE
@@ -274,13 +274,13 @@ void Receiver::handle_lobby() {
 
                 // Enviar ACK al cliente
                 protocol.send_buffer(LobbyProtocol::serialize_car_selected_ack(car_name, car_type));
-                std::cout << "[Receiver] ✅ ACK sent to " << username << std::endl;
+                std::cout << "[Receiver]   ACK sent to " << username << std::endl;
 
                 // Broadcast a TODOS EXCEPTO al que seleccionó
                 auto notif =
                     LobbyProtocol::serialize_car_selected_notification(username, car_name, car_type);
                 monitor.broadcast_to_match(current_match_id, notif, username);
-                std::cout << "[Receiver] ✅ Broadcast triggered (excluding " << username << ")"
+                std::cout << "[Receiver]   Broadcast triggered (excluding " << username << ")"
                           << std::endl;
 
                 break;
@@ -297,7 +297,7 @@ void Receiver::handle_lobby() {
                     break;
                 }
 
-                // ✅ ENVIAR NOTIFICACIÓN DE SALIDA **ANTES** DE ELIMINAR
+                
                 auto left_notif = LobbyProtocol::serialize_player_left_notification(username);
                 monitor.broadcast_to_match(game_id, left_notif, username);
 
@@ -339,7 +339,7 @@ void Receiver::handle_lobby() {
                     break;
                 }
 
-                // ✅ SOLO hacer broadcast si estamos en lobby (no durante el juego)
+                
                 // Durante el juego, el Sender maneja toda la comunicación
                 if (current_match_id != -1) {
                     auto notif =
@@ -368,13 +368,13 @@ void Receiver::handle_lobby() {
                     break;
                 }
 
-                // ✅ INICIAR EL MATCH (sin enviar mensajes)
+                
                 monitor.start_match(game_id);
 
-                std::cout << "[Receiver] ✅ Game " << game_id << " started successfully!"
+                std::cout << "[Receiver]   Game " << game_id << " started successfully!"
                           << std::endl;
 
-                // ✅ AHORA ENVIAR MSG_GAME_STARTED A TODOS (ya no hay lock)
+                
                 std::cout << "[Receiver] 📡 Broadcasting MSG_GAME_STARTED to all players..."
                           << std::endl;
                 std::vector<uint8_t> start_msg = {
@@ -382,13 +382,13 @@ void Receiver::handle_lobby() {
 
                 // Enviar al jugador que solicitó el inicio
                 protocol.send_buffer(start_msg);
-                std::cout << "[Receiver]   ✅ Sent to " << username << " (requester)" << std::endl;
+                std::cout << "[Receiver]     Sent to " << username << " (requester)" << std::endl;
 
                 // Broadcast a todos los demás
                 monitor.broadcast_to_match(game_id, start_msg, username);
-                std::cout << "[Receiver]   ✅ Broadcasted to other players" << std::endl;
+                std::cout << "[Receiver]     Broadcasted to other players" << std::endl;
 
-                // ✅ TRANSICIÓN AL JUEGO
+                
                 in_lobby = false;
 
                 break;
@@ -402,7 +402,7 @@ void Receiver::handle_lobby() {
             }
         }
 
-        std::cout << "[Receiver] ✅ Exiting lobby loop for " << username << " (match_id=" << match_id
+        std::cout << "[Receiver]   Exiting lobby loop for " << username << " (match_id=" << match_id
                   << ", is_running=" << is_running << ")" << std::endl;
 
         // OBTENER QUEUE DE COMANDOS DEL MATCH
@@ -412,7 +412,7 @@ void Receiver::handle_lobby() {
         sender.start();
         std::cout << "[Receiver] Sender started for player " << username << std::endl;
 
-        // ✅ Importante: a partir de aquí NO queremos más broadcasts directos a este socket
+        
         // porque el hilo Sender (ClientMonitor) es el único que debe escribir durante la partida.
         // Eliminamos el socket del registro de MatchesMonitor para este jugador.
         try {
@@ -426,11 +426,11 @@ void Receiver::handle_lobby() {
     } catch (const std::exception& e) {
         std::string error_msg = e.what();
 
-        // ✅ DETECTAR SHUTDOWN
+        
         if (error_msg.find("Server shutdown") != std::string::npos) {
             std::cout << "[Receiver " << username << "] Server is shutting down" << std::endl;
             
-            // ✅ ENVIAR MENSAJE AL CLIENTE
+            
             try {
                 std::vector<uint8_t> shutdown_msg;
                 shutdown_msg.push_back(MSG_ERROR);
@@ -460,9 +460,9 @@ void Receiver::handle_lobby() {
 
             try {
                 monitor.leave_match(username);
-                std::cout << "[Receiver] ✅ " << username << " cleaned up successfully" << std::endl;
+                std::cout << "[Receiver]   " << username << " cleaned up successfully" << std::endl;
             } catch (const std::exception& cleanup_error) {
-                std::cerr << "[Receiver] ❌ Failed to cleanup: " << cleanup_error.what()
+                std::cerr << "[Receiver]   Failed to cleanup: " << cleanup_error.what()
                           << std::endl;
             }
         }
@@ -498,7 +498,7 @@ void Receiver::handle_match_messages() {
                 break;
             }
 
-            // ✅ Verificar si el servidor está cerrándose antes de procesar
+            
             if (!is_running) {
                 std::cout << "[Receiver " << username << "] Ignoring command due to shutdown" << std::endl;
                 break;
@@ -532,7 +532,7 @@ void Receiver::run() {
     // VERIFICAR SI PASÓ A FASE DE JUEGO
     handle_match_messages();
 
-    // ✅ SOLO eliminar del match si el servidor sigue corriendo
+    
     // (evita acceso a memoria liberada durante shutdown)
     if (match_id != -1 && is_running) {
         try {

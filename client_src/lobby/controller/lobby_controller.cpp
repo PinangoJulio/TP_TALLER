@@ -133,7 +133,7 @@ void LobbyController::onBackFromNameInput() {
 }
 
 void LobbyController::handleNetworkError(const std::exception& e) {
-    std::cerr << "[Controller] ❌ Error: " << e.what() << std::endl;
+    std::cerr << "[Controller]   Error: " << e.what() << std::endl;
 
     QWidget* currentWindow = lobbyWindow;
 
@@ -238,13 +238,13 @@ void LobbyController::onMatchCreated(const QString& matchName, int maxPlayers,
         currentGameId = lobbyClient->receive_game_created();
         std::cout << "[Controller] Partida creada con ID: " << currentGameId << std::endl;
 
-        // ✅ Recibir rutas YAML de las carreras
+        
         try {
             racePaths = lobbyClient->receive_race_paths();
-            std::cout << "[Controller] ✅ Received " << racePaths.size()
+            std::cout << "[Controller]   Received " << racePaths.size()
                       << " race paths from server" << std::endl;
         } catch (const std::exception& e) {
-            std::cerr << "[Controller] ❌ Error receiving race paths: " << e.what() << std::endl;
+            std::cerr << "[Controller]   Error receiving race paths: " << e.what() << std::endl;
         }
 
         if (createMatchWindow) {
@@ -370,13 +370,13 @@ void LobbyController::onJoinMatchRequested(const QString& matchId) {
             std::cout << "[Controller] Conectando señales de notificaciones..." << std::endl;
             connectNotificationSignals();
         }*/
-        // ✅ Recibir rutas YAML de las carreras
+        
         try {
             racePaths = lobbyClient->receive_race_paths();
-            std::cout << "[Controller] ✅ Received " << racePaths.size()
+            std::cout << "[Controller]   Received " << racePaths.size()
                       << " race paths from server" << std::endl;
         } catch (const std::exception& e) {
-            std::cerr << "[Controller] ❌ Error receiving race paths: " << e.what() << std::endl;
+            std::cerr << "[Controller]   Error receiving race paths: " << e.what() << std::endl;
         }
 
         std::cout << "[Controller] Abriendo garage..." << std::endl;
@@ -441,7 +441,7 @@ void LobbyController::onCarSelected(const CarInfo& car) {
 
         std::cout << "[Controller] Esperando confirmación (ACK)..." << std::endl;
         std::string car_confirmed = lobbyClient->receive_car_confirmation();
-        std::cout << "[Controller] ✅ Auto confirmado por servidor: " << car_confirmed << std::endl;
+        std::cout << "[Controller]   Auto confirmado por servidor: " << car_confirmed << std::endl;
 
         // 1. Cerrar Garage
         if (garageWindow) {
@@ -543,7 +543,7 @@ void LobbyController::connectNotificationSignals() {
 
     // CONEXIÓN CLAVE PARA EL INICIO:
     connect(lobbyClient.get(), &LobbyClient::gameStartedNotification, this, [this]() {
-        std::cout << "[Controller] ✅ Señal de inicio confirmada por el servidor. Pasando a SDL..." << std::endl;
+        std::cout << "[Controller]   Señal de inicio confirmada por el servidor. Pasando a SDL..." << std::endl;
         
         // Detener el listener sin cerrar el socket (false), 
         // porque Client::start() necesita usar ese socket para el juego.
@@ -558,17 +558,17 @@ void LobbyController::connectNotificationSignals() {
     connect(lobbyClient.get(), &LobbyClient::errorOccurred, this, [this](QString errorMsg) {
         std::cerr << "[Controller] Error: " << errorMsg.toStdString() << std::endl;
         
-        // ✅ Detectar shutdown del servidor
+        
         if (errorMsg.contains("SERVER SHUTDOWN") || errorMsg.contains("DISCONNECTING")) {
             std::cout << "[Controller] 🛑 Server shutdown detected - closing application" << std::endl;
             
-            // ✅ Cerrar todas las ventanas
+            
             closeAllWindows();
             
-            // ✅ Marcar como no exitoso y terminar
+            
             finishLobby(false);
             
-            // ✅ Salir de la aplicación Qt
+            
             QCoreApplication::quit();
             
             return;
@@ -603,7 +603,7 @@ void LobbyController::onBackFromGarage() {
             std::cout << "[Controller] Enviando leave_game para partida " << currentGameId
                       << std::endl;
             lobbyClient->leave_game(currentGameId);
-            std::cout << "[Controller] ✅ Leave confirmado" << std::endl;
+            std::cout << "[Controller]   Leave confirmado" << std::endl;
 
         } catch (const std::exception& e) {
             std::cerr << "[Controller] ️ Error al abandonar partida: " << e.what() << std::endl;
@@ -634,7 +634,7 @@ void LobbyController::openWaitingRoom() {
             waitingRoomWindow->setPlayerCarByName(username, itCar->second);
         }
         
-        // ✅ AGREGAR ESTO: Cargar estado Ready
+        
         auto itReady = pendingReadyStatus.find(username);
         if (itReady != pendingReadyStatus.end()) {
              // Solo si está true, porque por defecto ya nacen en false
@@ -671,7 +671,7 @@ void LobbyController::onPlayerReadyToggled(bool isReady) {
         // PRIMERO marcar localmente
         if (waitingRoomWindow) {
             waitingRoomWindow->setPlayerReadyByName(playerName, isReady);
-            std::cout << "[Controller] ✅ Local ready state updated for " << playerName.toStdString()
+            std::cout << "[Controller]   Local ready state updated for " << playerName.toStdString()
                       << std::endl;
         }
 
@@ -692,20 +692,20 @@ void LobbyController::onStartGameRequested() {
         if (lobbyClient) {
             std::cout << "[Controller]   Verificando listener..." << std::endl;
             std::cout << "[Controller]   Listener activo: " 
-                      << (lobbyClient->is_listening() ? "SÍ ✅" : "NO ❌") << std::endl;
+                      << (lobbyClient->is_listening() ? "SÍ  " : "NO  ") << std::endl;
             
             std::cout << "[Controller]   Enviando start_game(currentGameId=" 
                       << currentGameId << ")..." << std::endl;
             lobbyClient->start_game(currentGameId);
             
-            std::cout << "[Controller] ✅ Solicitud enviada. Esperando MSG_GAME_STARTED..." << std::endl;
+            std::cout << "[Controller]   Solicitud enviada. Esperando MSG_GAME_STARTED..." << std::endl;
             std::cout << "[Controller]   (El listener debe capturar el mensaje automáticamente)" << std::endl;
         } else {
-            std::cerr << "[Controller] ❌ ERROR: lobbyClient es nullptr" << std::endl;
+            std::cerr << "[Controller]   ERROR: lobbyClient es nullptr" << std::endl;
         }
         
     } catch (const std::exception& e) {
-        std::cerr << "[Controller] ❌ Error al solicitar inicio: " << e.what() << std::endl;
+        std::cerr << "[Controller]   Error al solicitar inicio: " << e.what() << std::endl;
         handleNetworkError(e);
     }
     

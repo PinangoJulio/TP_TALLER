@@ -419,7 +419,7 @@ bool ServerProtocol::send_race_paths(const std::vector<std::string>& yaml_paths)
     // 4. Enviar buffer
     socket.sendall(buffer.data(), buffer.size());
 
-    std::cout << "[ServerProtocol] ✅ Sent " << yaml_paths.size()
+    std::cout << "[ServerProtocol]   Sent " << yaml_paths.size()
               << " race paths to client" << std::endl;
 
     return true;

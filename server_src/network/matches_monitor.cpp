@@ -12,7 +12,7 @@ int MatchesMonitor::create_match(int max_players, const std::string& host_name, 
                                  Queue<GameState>& sender_message_queue) {
     std::lock_guard<std::mutex> lock(mtx);
 
-    // ✅ Validar que el host no esté ya en otra partida
+  
     if (player_to_match.find(host_name) != player_to_match.end()) {
         std::cerr << "[MatchesMonitor] Player '" << host_name << "' is already in match "
                   << player_to_match[host_name] << std::endl;
@@ -23,25 +23,25 @@ int MatchesMonitor::create_match(int max_players, const std::string& host_name, 
 
     std::unique_ptr<Match> match = std::make_unique<Match>(host_name, match_id, max_players);
 
-    // ✅ PRIMERO: Insertar el match en el mapa
+  
     matches.emplace(match_id, std::move(match));
 
-    // ✅ SEGUNDO: Obtener referencia al match ya insertado
+  
     auto& inserted_match = matches[match_id];
 
-    // ✅ TERCERO: Configurar callback de broadcast
+  
     inserted_match->set_broadcast_callback(
         [this, match_id](const std::vector<uint8_t>& buffer, int /*exclude_player_id*/) {
             this->broadcast_to_match(match_id, buffer, "");
         });
 
-    // ✅ CUARTO: Agregar el host como primer jugador
+  
     inserted_match->add_player(player_id, host_name, sender_message_queue);
 
-    // ✅ QUINTO: Registrar en el lookup
+  
     player_to_match[host_name] = match_id;
 
-    std::cout << "[MatchesMonitor] ✅ Match created: ID=" << match_id << " Host=" << host_name
+    std::cout << "[MatchesMonitor]   Match created: ID=" << match_id << " Host=" << host_name
               << " (player_id=" << player_id << ")" << std::endl;
 
     return match_id;
@@ -54,7 +54,7 @@ bool MatchesMonitor::join_match(int match_id, const std::string& player_name, in
     std::cout << "[MatchesMonitor] join_match() called: player=" << player_name
               << " (id=" << player_id << "), match_id=" << match_id << std::endl;
 
-    // ✅ Validar que el jugador NO esté ya en otra partida
+    
     if (player_to_match.find(player_name) != player_to_match.end()) {
         std::cerr << "[MatchesMonitor] Player '" << player_name << "' is already in match "
                   << player_to_match[player_name] << std::endl;
@@ -79,10 +79,10 @@ bool MatchesMonitor::join_match(int match_id, const std::string& player_name, in
 
     if (success) {
         player_to_match[player_name] = match_id;
-        std::cout << "[MatchesMonitor] ✅ " << player_name << " (id=" << player_id
+        std::cout << "[MatchesMonitor]   " << player_name << " (id=" << player_id
                   << ") joined match " << match_id << std::endl;
     } else {
-        std::cerr << "[MatchesMonitor] ❌ Failed to add " << player_name << " to match " << match_id
+        std::cerr << "[MatchesMonitor]   Failed to add " << player_name << " to match " << match_id
                   << std::endl;
     }
 
@@ -101,7 +101,7 @@ bool MatchesMonitor::leave_match(const std::string& player_name) {
 
     int match_id = it->second;
 
-    // ✅ Desregistrar socket ANTES de eliminar del match
+  
     unregister_player_socket(match_id, player_name);
 
     // Eliminar del lookup
@@ -124,9 +124,9 @@ bool MatchesMonitor::leave_match(const std::string& player_name) {
     // Eliminar del match
     match_it->second->remove_player(player_id);
 
-    std::cout << "[MatchesMonitor] ✅ " << player_name << " left match " << match_id << std::endl;
+    std::cout << "[MatchesMonitor]   " << player_name << " left match " << match_id << std::endl;
 
-    // ✅ Si el match quedó vacío, eliminarlo
+   
     if (match_it->second->is_empty()) {
         std::cout << "[MatchesMonitor] Match " << match_id << " is empty, deleting..." << std::endl;
         player_sockets.erase(match_id);
@@ -340,16 +340,16 @@ void MatchesMonitor::broadcast_to_match(int match_id, const std::vector<uint8_t>
 
         try {
             if (!socket) {
-                std::cerr << "[MatchesMonitor] ❌ Null socket for " << player_name << std::endl;
+                std::cerr << "[MatchesMonitor]   Null socket for " << player_name << std::endl;
                 continue;
             }
 
             socket->sendall(buffer.data(), buffer.size());
-            std::cout << "[MatchesMonitor] ✅ Sent to " << player_name << std::endl;
+            std::cout << "[MatchesMonitor]   Sent to " << player_name << std::endl;
             sent_count++;
 
         } catch (const std::exception& e) {
-            std::cerr << "[MatchesMonitor] ❌ Error broadcasting to " << player_name << ": "
+            std::cerr << "[MatchesMonitor]   Error broadcasting to " << player_name << ": "
                       << e.what() << std::endl;
         }
     }

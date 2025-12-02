@@ -29,8 +29,8 @@ public:
     void run_threads();
     bool is_running();
     void stop_connection();
-    void force_disconnect(); // ✅ NUEVO
-    void send_shutdown_message(const std::vector<uint8_t>& msg); // ✅ NUEVO
+    void force_disconnect(); //   NUEVO
+    void send_shutdown_message(const std::vector<uint8_t>& msg); //   NUEVO
 
     Queue<GameState>& get_message_queue() { return messages_queue; }
     int get_id() const { return client_id; }

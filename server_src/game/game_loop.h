@@ -41,13 +41,13 @@ class Race;
  *
  * Responsabilidades:
  * ------------------
- * ✅ Gestiona TODAS las carreras de una partida como "rondas"
- * ✅ Recibe comandos de jugadores (acelerar, frenar, girar, nitro)
- * ✅ Actualiza física de los autos (velocidad, dirección, fricción)
- * ✅ Detecta colisiones (contra paredes, otros autos, obstáculos del YAML)
- * ✅ Actualiza estado de juego (checkpoints, tiempos, posiciones)
- * ✅ Envía el estado completo a los clientes vía broadcast (ClientMonitor)
- * ✅ Mantiene 60 FPS constantes para movimiento fluido
+ *   Gestiona TODAS las carreras de una partida como "rondas"
+ *   Recibe comandos de jugadores (acelerar, frenar, girar, nitro)
+ *   Actualiza física de los autos (velocidad, dirección, fricción)
+ *   Detecta colisiones (contra paredes, otros autos, obstáculos del YAML)
+ *   Actualiza estado de juego (checkpoints, tiempos, posiciones)
+ *   Envía el estado completo a los clientes vía broadcast (ClientMonitor)
+ *   Mantiene 60 FPS constantes para movimiento fluido
  *
  * Flujo de una partida:
  * ---------------------
@@ -77,7 +77,7 @@ private:
     std::atomic<bool> is_running;
     std::atomic<bool> match_finished;  // Todas las carreras completadas
     
-    // ✅ NUEVO: Control de inicio sincronizado
+    
     std::atomic<bool> is_game_started;
 
     // ---- COMUNICACIÓN ----
@@ -152,7 +152,7 @@ private:
 public:
     GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues);
   
-    // ✅ NUEVO: Método para desbloquear el loop
+    
     void start_game();
 
     // ---- CONFIGURACIÓN DE CARRERAS ----

@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
         return 0;
 
     } catch (std::exception& e) {
-        std::cerr << "❌ Fallo fatal del Cliente: " << e.what() << std::endl;
+        std::cerr << "  Fallo fatal del Cliente: " << e.what() << std::endl;
 
         QMessageBox::critical(nullptr, "Error Fatal",
                               QString("No se pudo iniciar el cliente:\n%1").arg(e.what()));

@@ -29,20 +29,20 @@ ClientReceiver::ClientReceiver(ClientProtocol& protocol, Queue<GameState>& queue
             } catch (const std::runtime_error& e) {
                 std::string error_msg = e.what();
                 
-                // ✅ Detectar shutdown y propagar
+                // 
                 if (error_msg.find("Server shutdown") != std::string::npos) {
                     std::cout << "[ClientReceiver] 🛑 Server shutdown detected - stopping client" << std::endl;
                     
-                    // ✅ NO hacer try_push - cerrar la cola y salir
+                    // 
                     snapshots_queue.close();
                     this->stop();
                     
-                    // ✅ Re-lanzar la excepción para que Client::start() la capture
+                    // 
                     throw;
                 }
                 
                 if (should_keep_running()) {
-                    std::cerr << "[ClientReceiver] ❌ Error recibiendo snapshot: " << e.what() << std::endl;
+                    std::cerr << "[ClientReceiver]   Error recibiendo snapshot: " << e.what() << std::endl;
                 }
                 break;
             }
@@ -52,7 +52,7 @@ ClientReceiver::ClientReceiver(ClientProtocol& protocol, Queue<GameState>& queue
             } catch (const ClosedQueue&) {
                 break;
             } catch (const std::exception& e) {
-                // ✅ FIX: Capturar error genérico de cola cerrada para salir limpiamente
+                
                 if (should_keep_running()) {
                      std::cerr << "[ClientReceiver] Warning al pushear snapshot: " << e.what() << std::endl;
                 }

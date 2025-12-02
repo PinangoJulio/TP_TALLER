@@ -87,7 +87,7 @@ public:
 
     // ---- LOBBY: Snapshot ----
     std::map<int, PlayerLobbyInfo> get_players_snapshot() const;
-    const std::map<int, PlayerLobbyInfo>& get_players() const;  // ✅ Alias para compatibilidad
+    const std::map<int, PlayerLobbyInfo>& get_players() const;  //   Alias para compatibilidad
 
     // ---- LOBBY: Carreras ----
     void set_race_configs(const std::vector<ServerRaceConfig>& configs);

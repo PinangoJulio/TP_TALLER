@@ -15,7 +15,7 @@ Match::Match(std::string host_name, int code, int max_players)
       state(MatchState::WAITING), players_queues(), command_queue(),
       max_players(max_players) {
 
-    // ✅ CREAR E INICIAR GAMELOOP INMEDIATAMENTE
+   
     std::cout << "[Match] Creado: " << this->host_name << " (code=" << code
               << ", max_players=" << max_players << ")\n";
 
@@ -25,7 +25,7 @@ Match::Match(std::string host_name, int code, int max_players)
     std::cout << "[Match] >>> Iniciando GameLoop (thread)...\n";
     gameloop->start();
 
-    std::cout << "[Match] ✅ GameLoop iniciado y esperando jugadores\n";
+    std::cout << "[Match]   GameLoop iniciado y esperando jugadores\n";
 }
 
 // ============================================
@@ -169,9 +169,9 @@ bool Match::set_player_car(int player_id, const std::string& car_name, const std
         std::cout << "[Match] >>> Registrando " << it->second.name << " en GameLoop con auto "
                   << car_name << "\n";
         gameloop->add_player(player_id, it->second.name, car_name, car_type);
-        std::cout << "[Match] ✅ Jugador " << it->second.name << " agregado al GameLoop exitosamente\n";
+        std::cout << "[Match]   Jugador " << it->second.name << " agregado al GameLoop exitosamente\n";
     } else {
-        std::cerr << "[Match] ❌ ERROR: GameLoop no existe, no se pudo registrar jugador\n";
+        std::cerr << "[Match]   ERROR: GameLoop no existe, no se pudo registrar jugador\n";
     }
 
     print_players_info();
@@ -291,7 +291,7 @@ void Match::set_race_configs(const std::vector<ServerRaceConfig>& configs) {
     std::lock_guard<std::mutex> lock(mtx);
     race_configs = configs;
 
-    // ✅ Crear las races y agregarlas al GameLoop
+   
     std::vector<std::unique_ptr<Race>> new_races;
 
     for (size_t i = 0; i < configs.size(); ++i) {
@@ -323,7 +323,7 @@ void Match::set_race_configs(const std::vector<ServerRaceConfig>& configs) {
 //     std::cout << "[Match]  Enviando MSG_GAME_STARTED a todos los jugadores..." << std::endl;
 
 //     if (!broadcast_callback) {
-//         std::cerr << "[Match] ❌ No hay broadcast_callback configurado" << std::endl;
+//         std::cerr << "[Match]   No hay broadcast_callback configurado" << std::endl;
 //         return;
 //     }
 
@@ -340,7 +340,7 @@ void Match::set_race_configs(const std::vector<ServerRaceConfig>& configs) {
     
 //     broadcast_callback(buffer, -1);
 
-//     std::cout << "[Match] ✅ MSG_GAME_STARTED broadcast completado" << std::endl;
+//     std::cout << "[Match]   MSG_GAME_STARTED broadcast completado" << std::endl;
 //     std::cout << "[Match] ════════════════════════════════════════════" << std::endl;
 // }
 
@@ -351,7 +351,7 @@ void Match::send_game_started_confirmation() {
 
 void Match::send_race_info_to_all_players() {
     if (race_configs.empty()) {
-        std::cerr << "[Match] ❌ No hay carreras configuradas para enviar info" << std::endl;
+        std::cerr << "[Match]   No hay carreras configuradas para enviar info" << std::endl;
         return;
     }
 
@@ -386,7 +386,7 @@ void Match::send_race_info_to_all_players() {
     std::cout << "[Match]   Mapa: " << race_info.map_file_path << std::endl;
 
     if (!broadcast_callback) {
-        std::cerr << "[Match] ❌ No hay broadcast_callback configurado" << std::endl;
+        std::cerr << "[Match]   No hay broadcast_callback configurado" << std::endl;
         return;
     }
 
@@ -435,7 +435,7 @@ void Match::send_race_info_to_all_players() {
     // Enviar a todos los jugadores (sin excluir a nadie)
     broadcast_callback(buffer, -1);
 
-    std::cout << "[Match] ✅ Información de carrera enviada a " << players_info.size()
+    std::cout << "[Match]   Información de carrera enviada a " << players_info.size()
               << " jugadores" << std::endl;
 }
 
@@ -455,9 +455,9 @@ void Match::send_race_info_to_all_players() {
  * 4. MatchesMonitor llama Match::start_match() ← AQUÍ ESTAMOS
  *
  * ESTE MÉTODO:
- * ✅ Valida que todos estén listos
- * ✅ Envía info de la PRIMERA carrera a los clientes (mapa YAML, ciudad, etc.)
- * ✅ Notifica al GameLoop que comience la primera carrera
+ *   Valida que todos estén listos
+ *   Envía info de la PRIMERA carrera a los clientes (mapa YAML, ciudad, etc.)
+ *   Notifica al GameLoop que comience la primera carrera
  *
  * GAMELOOP:
  * - YA ESTÁ CORRIENDO desde el constructor de Match
@@ -482,7 +482,7 @@ void Match::start_match() {
 
     // 2. Validación Crítica: ¿Están todos listos y hay mapa?
     if (!can_start()) {
-        std::cout << "[Match] ❌ No se puede iniciar: Faltan jugadores o no están todos listos." << std::endl;
+        std::cout << "[Match]   No se puede iniciar: Faltan jugadores o no están todos listos." << std::endl;
         // Opcional: Podrías enviar un mensaje de error al cliente que intentó iniciar
         return;
     }
@@ -491,7 +491,7 @@ void Match::start_match() {
     state = MatchState::STARTED;
     is_active.store(true);
 
-    std::cout << "[Match] ✅ Condiciones cumplidas. Iniciando simulación..." << std::endl;
+    std::cout << "[Match]   Condiciones cumplidas. Iniciando simulación..." << std::endl;
 
     // 4. Despertar al GameLoop
     // Esto hace que GameLoop salga de su pausa, ejecute reset_players_for_race()
@@ -499,7 +499,7 @@ void Match::start_match() {
     if (gameloop) {
         gameloop->start_game();
     } else {
-        std::cerr << "[Match] ❌ ERROR CRÍTICO: GameLoop es null" << std::endl;
+        std::cerr << "[Match]   ERROR CRÍTICO: GameLoop es null" << std::endl;
         return;
     }
     

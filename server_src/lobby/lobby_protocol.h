@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "../../common_src/dtos.h"  // ✅ Usar los enums de common
+#include "../../common_src/dtos.h"  //   Usar los enums de common
 
 // Estructura para información de una partida
 struct GameInfo {
@@ -29,7 +29,7 @@ std::vector<uint8_t> serialize_game_joined(uint16_t game_id);
 std::vector<uint8_t> serialize_error(LobbyErrorCode error_code, const std::string& message);
 std::vector<uint8_t> serialize_game_started(uint16_t game_id);
 
-// ✅ AGREGADO: Funciones faltantes
+
 std::vector<uint8_t> serialize_select_car(uint8_t car_index);
 std::vector<uint8_t> serialize_start_game(uint16_t game_id);
 std::vector<uint8_t> serialize_leave_game(uint16_t game_id);

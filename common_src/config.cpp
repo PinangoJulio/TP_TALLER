@@ -50,7 +50,7 @@ YAML::Node Configuration::get_node(const std::string& field) {
     }
 }
 
-// ✅ Ahora sí, recién acá las instanciaciones explícitas
+
 template std::string Configuration::get<std::string>(const std::string& field);
 template int Configuration::get<int>(const std::string& field);
 template float Configuration::get<float>(const std::string& field);

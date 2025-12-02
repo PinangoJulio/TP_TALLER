@@ -31,11 +31,11 @@ void GarageWindow::loadCars() {
     const char* path_config = "config.yaml";
     Configuration::load_path(path_config);
 
-    // ✅ Limpiar el vector
+   
     cars.clear();
 
     try {
-        // ✅ Cargar la cantidad de autos desde el YAML
+       
         auto carsNode = Configuration::get_node("cars");
 
         if (!carsNode.IsDefined() || !carsNode.IsSequence()) {
@@ -47,7 +47,7 @@ void GarageWindow::loadCars() {
             return;
         }
 
-        // ✅ Iterar sobre cada auto en el YAML
+       
         for (size_t i = 0; i < carsNode.size(); i++) {
             YAML::Node carNode = carsNode[i];
 
@@ -66,7 +66,7 @@ void GarageWindow::loadCars() {
                       << " (tipo: " << car.type.toStdString() << ")" << std::endl;
         }
 
-        std::cout << "[GarageWindow] ✅ " << cars.size() << " autos cargados desde config.yaml"
+        std::cout << "[GarageWindow]   " << cars.size() << " autos cargados desde config.yaml"
                   << std::endl;
 
     } catch (const std::exception& e) {
