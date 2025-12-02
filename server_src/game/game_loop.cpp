@@ -17,15 +17,17 @@
 // ==========================================================
 
 GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues)
-    : is_running(false), match_finished(false), started_signal(false),
+    : is_running(false), 
+      match_finished(false), 
+      start_game_signal(false), // Señal de inicio
       comandos(comandos), queues_players(queues),
       current_race_index(0), current_race_finished(false), 
-      spawns_loaded(false) // Inicializar variables
+      spawns_loaded(false)
 {
     // Conectar sistemas de física
     collisionHandler.set_obstacle_manager(&obstacleManager);
     
-    // Crear un mundo inicial (aunque se recreará en start_current_race) para evitar crash
+    // Crear un mundo inicial
     b2WorldDef worldDef = b2DefaultWorldDef();
     worldDef.gravity = {0.0f, 0.0f};
     worldId = b2CreateWorld(&worldDef);
@@ -40,7 +42,7 @@ GameLoop::~GameLoop() {
 }
 
 // ==========================================================
-// GESTIÓN DE JUGADORES (LOBBY)
+// GESTIÓN DE JUGADORES
 // ==========================================================
 
 void GameLoop::add_player(int player_id, const std::string& name, const std::string& car_name,
@@ -116,8 +118,7 @@ void GameLoop::set_player_ready(int player_id, bool ready) {
 // ==========================================================
 
 void GameLoop::add_race(const std::string& city, const std::string& yaml_path) {
-    // Método legacy para cumplir interfaz.
-    (void)city; (void)yaml_path;
+    (void)city; (void)yaml_path; // Legacy interface
 }
 
 void GameLoop::set_races(std::vector<std::unique_ptr<Race>> race_configs) {
@@ -126,13 +127,14 @@ void GameLoop::set_races(std::vector<std::unique_ptr<Race>> race_configs) {
     std::cout << "[GameLoop] Configuradas " << races.size() << " carreras\n";
 }
 
+// ✅ CORRECCIÓN 1: Renombrado a begin_match para coincidir con header
 void GameLoop::begin_match() {
-    started_signal = true;
-    std::cout << "[GameLoop] Señal de largada recibida.\n";
+    start_game_signal = true;
+    std::cout << "[GameLoop] >>> SEÑAL DE INICIO RECIBIDA. Desbloqueando simulación.\n";
 }
 
 // ==========================================================
-// PREPARACIÓN DE CARRERA (CARGA Y FÍSICA)
+// PREPARACIÓN DE CARRERA
 // ==========================================================
 
 void GameLoop::start_current_race() {
@@ -140,16 +142,15 @@ void GameLoop::start_current_race() {
 
     const auto& race = races[current_race_index];
     
-    // Obtener rutas del objeto Race
     current_city_name = race->get_city_name();
-    current_map_yaml = race->get_map_path();         // Mapa Base (Paredes)
-    std::string race_config_path = race->get_race_path(); // Configuración (Checkpoints)
+    current_map_yaml = race->get_map_path();         
+    std::string race_config_path = race->get_race_path(); 
 
     std::cout << "\n>>> INICIANDO CARRERA " << (current_race_index + 1) << "\n";
     std::cout << "    Base: " << current_map_yaml << "\n";
     std::cout << "    Config: " << race_config_path << "\n";
 
-    // 1. Reiniciar Mundo Box2D
+    // Reiniciar Box2D
     if (b2World_IsValid(worldId)) {
         b2DestroyWorld(worldId);
     }
@@ -157,7 +158,7 @@ void GameLoop::start_current_race() {
     worldDef.gravity = {0.0f, 0.0f};
     worldId = b2CreateWorld(&worldDef);
 
-    // 2. Cargar Mapas
+    // Cargar Mapas
     try {
         std::cout << "[GameLoop] Cargando geometría...\n";
         mapLoader.load_map(worldId, obstacleManager, current_map_yaml);
@@ -168,7 +169,6 @@ void GameLoop::start_current_race() {
         checkpointManager.load_checkpoints(mapLoader.get_checkpoints());
     } catch (const std::exception& e) {
         std::cerr << "[GameLoop] ❌ ERROR cargando mapa: " << e.what() << "\n";
-        // No retornamos para intentar seguir aunque sea roto, o puedes hacer return;
     }
 
     current_race_finished = false;
@@ -186,17 +186,15 @@ void GameLoop::reset_players_for_race() {
         Car* car = player->getCar();
         if (!car) continue;
 
-        // 1. Calcular posición spawn
         float spawn_x = 100.0f, spawn_y = 100.0f, spawn_angle = 0.0f;
         if (spawn_idx < spawns.size()) {
             spawn_x = spawns[spawn_idx].x;
             spawn_y = spawns[spawn_idx].y;
             spawn_angle = spawns[spawn_idx].angle;
         } else {
-            spawn_x += (spawn_idx * 10.0f); // Fallback para evitar superposición
+            spawn_x += (spawn_idx * 10.0f);
         }
 
-        // 2. Crear Cuerpo Físico
         b2BodyDef bodyDef = b2DefaultBodyDef();
         bodyDef.type = b2_dynamicBody;
         bodyDef.position = {spawn_x, spawn_y};
@@ -209,24 +207,19 @@ void GameLoop::reset_players_for_race() {
         b2Polygon box = b2MakeBox(1.0f, 2.0f);
         b2ShapeDef shapeDef = b2DefaultShapeDef();
         shapeDef.density = 1.0f;
-        // shapeDef.friction = 0.3f; // Comentado por compatibilidad
         b2CreatePolygonShape(carBodyId, &shapeDef, &box);
         
-        // Guardar ID jugador en UserData para colisiones
         b2Body_SetUserData(carBodyId, reinterpret_cast<void*>(static_cast<uintptr_t>(id)));
 
-        // 3. Recrear Auto con el nuevo cuerpo
         std::string model = car->getModelName();
         std::string type = car->getCarType();
         auto newCar = std::make_unique<Car>(model, type, carBodyId);
         
-        // Restaurar stats (usamos valores seguros o podrías guardarlos antes)
         newCar->load_stats(120.0f, 50.0f, 2.0f, 100.0f, 2.0f, 1000.0f); 
 
         player->setCarOwnership(std::move(newCar));
         player->resetForNewRace();
 
-        // Registrar en managers
         collisionHandler.register_car(id, player->getCar());
         checkpointManager.register_player(id);
 
@@ -244,11 +237,14 @@ void GameLoop::run() {
     match_finished = false;
     current_race_index = 0;
 
-    std::cout << "[GameLoop] Thread iniciado. Esperando señal de Match...\n";
+    std::cout << "[GameLoop] ═══════════════════════════════════════════════\n";
+    std::cout << "[GameLoop]  THREAD INICIADO\n";
+    std::cout << "[GameLoop]  Esperando carreras, jugadores y SEÑAL DE INICIO...\n";
+    std::cout << "[GameLoop] ═══════════════════════════════════════════════\n";
 
-    // Esperar señal de inicio (Evita Race Condition de jugadores uniéndose tarde)
-    while (is_running.load() && (!started_signal.load() || races.empty())) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    // Esperar señal de inicio (start_game_signal)
+    while (is_running.load() && (!start_game_signal.load() || races.empty())) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 
     if (!is_running.load()) return;
@@ -256,13 +252,11 @@ void GameLoop::run() {
     std::cout << "[GameLoop] PARTIDA INICIADA. Carreras: " << races.size() << "\n";
     print_match_info();
 
-    // Bucle de Torneo
     while (is_running.load() && !match_finished.load() && current_race_index < static_cast<int>(races.size())) {
         
         start_current_race();
         reset_players_for_race();
 
-        // Bucle de Carrera (Tick)
         while (is_running.load() && !current_race_finished.load()) {
             auto start_time = std::chrono::steady_clock::now();
 
@@ -371,6 +365,12 @@ void GameLoop::finish_current_race() {
         print_total_standings();
     } else {
         std::this_thread::sleep_for(std::chrono::seconds(3));
+        
+        // Preparar siguiente carrera si existe
+        if (current_race_index < static_cast<int>(races.size())) {
+            start_current_race();
+            reset_players_for_race();
+        }
     }
 }
 
@@ -383,10 +383,11 @@ bool GameLoop::all_players_finished_race() const {
 }
 
 bool GameLoop::all_players_disconnected() const {
+    int connected = 0;
     for (const auto& [id, player_ptr] : players) {
-        if (!player_ptr->isDisconnected()) return false;
+        if (!player_ptr->isDisconnected()) connected++;
     }
-    return true;
+    return connected <= 1; // Terminar si queda 0 o 1
 }
 
 void GameLoop::mark_player_finished(int player_id) {
@@ -400,27 +401,33 @@ void GameLoop::mark_player_finished(int player_id) {
     auto now = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - race_start_time).count();
     
-    race_finish_times[current_race_index][player_id] = elapsed;
+    // ✅ CORRECCIÓN 2: Casteo seguro para evitar warning signed/unsigned
+    if (static_cast<size_t>(current_race_index) < race_finish_times.size()) {
+        race_finish_times[current_race_index][player_id] = elapsed;
+    }
     total_times[player_id] += elapsed;
     
     std::cout << "[GameLoop] " << p->getName() << " terminó en " << (elapsed/1000.0f) << "s\n";
+    print_current_race_table();
 }
 
-void GameLoop::verificar_ganadores() { } // Placeholder
+void GameLoop::verificar_ganadores() { } 
+void GameLoop::load_spawn_points_for_current_race() { } 
 
-void GameLoop::load_spawn_points_for_current_race() { } // Placeholder
-
-// Debug Prints
 void GameLoop::print_current_race_table() const {
-    std::cout << "--- Resultados Carrera ---\n";
-    const auto& times = race_finish_times[current_race_index];
-    for(auto const& [id, time] : times) {
-        std::cout << "ID: " << id << " Tiempo: " << (time/1000.0f) << "s\n";
+    std::cout << "\n--- RESULTADOS CARRERA " << (current_race_index + 1) << " ---\n";
+    
+    // ✅ CORRECCIÓN 3: Casteo seguro
+    if (static_cast<size_t>(current_race_index) < race_finish_times.size()) {
+        const auto& times = race_finish_times[current_race_index];
+        for(auto const& [id, time] : times) {
+            std::cout << "ID: " << id << " Tiempo: " << (time/1000.0f) << "s\n";
+        }
     }
 }
 
 void GameLoop::print_total_standings() const {
-    std::cout << "--- Tabla General ---\n";
+    std::cout << "\n--- TABLA GENERAL ---\n";
     for(auto const& [id, time] : total_times) {
         std::cout << "ID: " << id << " Total: " << (time/1000.0f) << "s\n";
     }

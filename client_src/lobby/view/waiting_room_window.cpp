@@ -256,27 +256,16 @@ void WaitingRoomWindow::setPlayerCarByName(const QString& name, const QString& c
 }
 
 void WaitingRoomWindow::updateStartButtonState() {
-    int activePlayers = 0;
-    bool allReady = true;
-    for (const auto& p : players) {
-        if (p.name != "Esperando...") {
-            activePlayers++;
-            if (!p.isReady)
-                allReady = false;
-        }
-    }
-    bool canStart = (activePlayers >= 2) && allReady;
-    startButton->setEnabled(canStart);
-    if (canStart) {
-        statusLabel->setText("Todos listos! El host puede iniciar");
+    // Lógica simplificada: Habilitar botón si el jugador local está listo.
+    // El servidor rechazará la petición si faltan jugadores o no están todos listos.
+    if (localPlayerReady) {
+        startButton->setEnabled(true);
+        statusLabel->setText("Dale a 'Iniciar' cuando todos esten listos.");
         statusLabel->setStyleSheet(
             "color:#00FF00; background-color: rgba(0,0,0,150); padding:10px; border-radius:5px;");
-    } else if (activePlayers < 2) {
-        statusLabel->setText("Esperando mas jugadores...");
-        statusLabel->setStyleSheet(
-            "color:#FFD700; background-color: rgba(0,0,0,150); padding:10px; border-radius:5px;");
     } else {
-        statusLabel->setText("Esperando que todos esten listos...");
+        startButton->setEnabled(false);
+        statusLabel->setText("Debes marcarte como LISTO para iniciar.");
         statusLabel->setStyleSheet(
             "color:#FFD700; background-color: rgba(0,0,0,150); padding:10px; border-radius:5px;");
     }
@@ -420,15 +409,25 @@ void WaitingRoomWindow::onNextPage() {
 void WaitingRoomWindow::onReadyClicked() {
     localPlayerReady = readyButton->isChecked();
     readyButton->setText(localPlayerReady ? "Cancelar" : "Listo!");
+    
+    // Emitir señal al controller para avisar al servidor
     emit readyToggled(localPlayerReady);
-    std::cout << "Estado listo: " << (localPlayerReady ? "SI" : "NO") << std::endl;
+    
+    std::cout << "Estado listo local: " << (localPlayerReady ? "SI" : "NO") << std::endl;
+    
+    // Actualizar la interfaz inmediatamente
+    updateStartButtonState(); 
 }
 
 void WaitingRoomWindow::onStartClicked() {
     std::cout << "Iniciando partida..." << std::endl;
+    
+    // ✅ Deshabilitar el botón para evitar doble clic
+    startButton->setEnabled(false);
+    startButton->setText("Iniciando...");
+    
     emit startGameRequested();
 }
-
 void WaitingRoomWindow::onBackClicked() {
     auto reply = QMessageBox::question(this, "Salir de la Partida",
                                        "¿Estás seguro de que quieres salir?\n\nSi eres el único "

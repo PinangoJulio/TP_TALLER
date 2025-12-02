@@ -7,7 +7,8 @@
 #include <atomic>
 #include <vector>
 #include <chrono>
-#include <box2d/box2d.h>
+#include <tuple> // Traído de origin
+#include <box2d/box2d.h> // Traído de HEAD (Física)
 
 #include "../../common_src/queue.h"
 #include "../../common_src/dtos.h"
@@ -24,16 +25,19 @@
 
 class Race;
 
+// Constantes de Física (HEAD) - Necesarias para suavidad
 #define TIME_STEP (1.0f / 60.0f)
 #define SUB_STEPS 4
-#define SLEEP 16
+#define SLEEP 16 
 
 class GameLoop : public Thread { 
 private:
     // ---- ESTADO DE CONTROL ----
     std::atomic<bool> is_running;
     std::atomic<bool> match_finished;
-    std::atomic<bool> started_signal; 
+    
+    // Señal para desbloquear el loop cuando el Match lo ordene
+    std::atomic<bool> start_game_signal; 
 
     // ---- COMUNICACIÓN ----
     Queue<ComandMatchDTO>& comandos;
@@ -59,7 +63,6 @@ private:
     std::string current_city_name;
     std::chrono::steady_clock::time_point race_start_time;
     
-    // CORRECCIÓN: Variable que faltaba
     bool spawns_loaded;
     
     // Estadísticas
@@ -102,7 +105,9 @@ public:
     void delete_player_from_match(int player_id);
     void set_player_ready(int player_id, bool ready);
 
+    // Método llamado por Match::start_match para desbloquear el loop
     void begin_match(); 
+    
     void run() override;
     void stop_match();
     bool is_alive() const override { return is_running.load(); }
