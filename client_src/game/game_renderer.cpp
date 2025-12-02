@@ -10,25 +10,41 @@
 const float RAD_TO_DEG = 180.0f / M_PI;
 
 GameRenderer::GameRenderer(SDL2pp::Renderer& renderer_ref)
-    : renderer(renderer_ref),
-      map_width(0),
-      map_height(0) {
+    : renderer(renderer_ref), map_width(0), map_height(0) {
 
-    // Cargar spritesheet de autos
     car_texture = std::make_unique<SDL2pp::Texture>(renderer, 
         SDL2pp::Surface(IMG_Load("assets/img/map/cars/spritesheet-cars.png")));
 
-    // Inicializar clips
-    car_clips[0] = SDL2pp::Rect(32, 0, 32, 32);
-    car_clips[1] = SDL2pp::Rect(64, 0, 32, 32);
-    car_clips[2] = SDL2pp::Rect(96, 0, 32, 32);
-    car_clips[3] = SDL2pp::Rect(128, 0, 32, 32);
-    car_clips[4] = SDL2pp::Rect(160, 0, 32, 32);
-    car_clips[5] = SDL2pp::Rect(192, 0, 32, 32);
-    car_clips[6] = SDL2pp::Rect(224, 0, 32, 32);
-    car_clips[7] = SDL2pp::Rect(0, 0, 32, 32);
-}
+    // Mapper de nombres
+    car_name_to_model["J-Classic 600"] = 0;
+    car_name_to_model["Stallion GT"] = 1;
+    car_name_to_model["Cavallo V8"] = 2;
+    car_name_to_model["Leyenda Urbana"] = 3;
+    car_name_to_model["Brisa"] = 4;
+    car_name_to_model["Nómada"] = 5;
+    car_name_to_model["Senator"] = 6;
 
+    // Solo 4 direcciones por modelo: derecha, abajo, izquierda, arriba
+    for (int model = 0; model < 7; ++model) {
+        int base_row = model * 2;
+        
+        car_clips[model][0] = SDL2pp::Rect(0, base_row * 32, 32, 32);           // Derecha
+        car_clips[model][1] = SDL2pp::Rect(3 * 32, base_row * 32, 32, 32);      // Abajo
+        car_clips[model][2] = SDL2pp::Rect(0, (base_row + 1) * 32, 32, 32);     // Izquierda
+        car_clips[model][3] = SDL2pp::Rect(3 * 32, (base_row + 1) * 32, 32, 32);
+    }
+}// Función helper para obtener el modelo desde el nombre
+int GameRenderer::getCarModelFromName(const std::string& car_name) {
+    auto it = car_name_to_model.find(car_name);
+    if (it != car_name_to_model.end()) {
+        return it->second;
+    }
+    
+    // Default: J-Classic 600 (fila 0)
+    std::cerr << "[GameRenderer] ⚠️ Auto desconocido: '" << car_name 
+              << "'. Usando J-Classic por defecto." << std::endl;
+    return 0;
+}
 void GameRenderer::init_race(const std::string& yaml_path) {
     std::cout << "[GameRenderer] Inicializando carrera. Config: " << yaml_path << std::endl;
 
@@ -125,9 +141,13 @@ int GameRenderer::getClipIndexFromAngle(float angle_radians) {
     float degrees = angle_radians * RAD_TO_DEG;
     while (degrees < 0) degrees += 360;
     while (degrees >= 360) degrees -= 360;
-    int index = static_cast<int>((degrees + 22.5f) / 45.0f); 
-    return (index + 2) % 8;
+    
+   
+    int index = static_cast<int>((degrees + 45) / 90) % 4;
+    
+    return index;
 }
+
 
 void GameRenderer::render(const GameState& state, int player_id) {
     if (!map_texture) {
@@ -137,7 +157,7 @@ void GameRenderer::render(const GameState& state, int player_id) {
         return;
     }
 
-    //  Identificar jugador local
+    // Identificar jugador local
     const InfoPlayer* local_player = nullptr;
     for (const auto& p : state.players) {
         if (p.player_id == player_id) {
@@ -146,35 +166,11 @@ void GameRenderer::render(const GameState& state, int player_id) {
         }
     }
 
-    // // Debug: Imprimir estado cada cierto tiempo si no se encuentra el jugador o el minimapa
-    // static int debug_timer = 0;
-    // debug_timer++;
-    // if (debug_timer > 120) { // Cada ~2 segundos a 60fps
-    //     if (!local_player) {
-    //         std::cout << "[GameRenderer Debug] ⚠️ Local player NOT FOUND. ID buscado: " << player_id 
-    //                   << ". Jugadores en estado: " << state.players.size() << std::endl;
-    //         for(const auto& p : state.players) std::cout << " - PID: " << p.player_id << std::endl;
-    //     } else if (!minimap_texture) {
-    //         std::cout << "[GameRenderer Debug] ⚠️ Minimap texture is NULL" << std::endl;
-    //     }
-    //     debug_timer = 0;
-    // }
+    // Definir foco de la cámara 
+    float focus_x = local_player ? local_player->pos_x : 0;
+    float focus_y = local_player ? local_player->pos_y : 0;
 
-    //Definir foco de la cámara 
-    float focus_x = 0;
-    float focus_y = 0;
-
-    if (local_player) {
-        focus_x = local_player->pos_x;
-        focus_y = local_player->pos_y;
-    } else {
-        // Si no hay jugador, centramos en el medio del mapa para ver algo, o en (0,0)
-        
-        focus_x = 0;
-        focus_y = 0;
-    }
-
-    // 3. Calcular Viewport de Cámara Principal
+    // Calcular Viewport de Cámara Principal
     int cam_x = static_cast<int>(focus_x) - SCREEN_WIDTH / 2;
     int cam_y = static_cast<int>(focus_y) - SCREEN_HEIGHT / 2;
 
@@ -190,20 +186,22 @@ void GameRenderer::render(const GameState& state, int player_id) {
     renderer.SetDrawColor(0, 0, 0, 255);
     renderer.Clear();
 
-    // --- RENDERIZADO PRINCIPAL ---
-    
     // Mapa Base
     renderer.Copy(*map_texture, viewport, screen_rect);
 
-    //Jugadores
+    // Jugadores
     for (const auto& player : state.players) {
         int screen_x = static_cast<int>(player.pos_x) - cam_x;
         int screen_y = static_cast<int>(player.pos_y) - cam_y;
 
         int clip_idx = getClipIndexFromAngle(player.angle);
-        if (car_clips.find(clip_idx) == car_clips.end()) clip_idx = 0;
+        int model = getCarModelFromName(player.car_name);
         
-        SDL2pp::Rect clip = car_clips[clip_idx];
+        // Validación
+        if (car_clips.find(model) == car_clips.end()) model = 0;
+        if (car_clips[model].find(clip_idx) == car_clips[model].end()) clip_idx = 0;
+        
+        SDL2pp::Rect clip = car_clips[model][clip_idx];
         SDL2pp::Rect dest(screen_x - clip.w / 2, screen_y - clip.h / 2, clip.w, clip.h);
 
         if (player.is_alive) {
@@ -211,27 +209,21 @@ void GameRenderer::render(const GameState& state, int player_id) {
         }
     }
 
-    //  Capas superiores (Puentes y Top)
+    // Capas superiores
     if (puentes_texture) renderer.Copy(*puentes_texture, viewport, screen_rect);
     if (top_texture) renderer.Copy(*top_texture, viewport, screen_rect);
 
-
-    // RENDERIZADO DEL MINIMAPA
-    if (minimap_texture) { // Renderizar minimapa aunque no haya jugador (mostrará la zona de la cámara)
-        
-       
+    // Minimapa (tu código existente)
+    if (minimap_texture && local_player) {
         int minimapSrcX = static_cast<int>(focus_x) - (MINIMAP_SCOPE / 2);
         int minimapSrcY = static_cast<int>(focus_y) - (MINIMAP_SCOPE / 2);
 
-        // Clamp del viewport del minimapa para no salir de la textura
         if (minimapSrcX < 0) minimapSrcX = 0;
         if (minimapSrcY < 0) minimapSrcY = 0;
         if (minimapSrcX + MINIMAP_SCOPE > map_width) minimapSrcX = map_width - MINIMAP_SCOPE;
         if (minimapSrcY + MINIMAP_SCOPE > map_height) minimapSrcY = map_height - MINIMAP_SCOPE;
 
         SDL2pp::Rect minimapSrc(minimapSrcX, minimapSrcY, MINIMAP_SCOPE, MINIMAP_SCOPE);
-
-        // Posición en pantalla 
         SDL2pp::Rect minimapDest(
             SCREEN_WIDTH - MINIMAP_SIZE - MINIMAP_MARGIN,
             SCREEN_HEIGHT - MINIMAP_SIZE - MINIMAP_MARGIN,
@@ -239,43 +231,26 @@ void GameRenderer::render(const GameState& state, int player_id) {
             MINIMAP_SIZE
         );
 
-        // Fondo negro (marco de seguridad)
         renderer.SetDrawColor(0, 0, 0, 255);
         renderer.FillRect(minimapDest);
-
-        // Dibujar textura del minimapa (camino pintado)
         renderer.Copy(*minimap_texture, minimapSrc, minimapDest);
-
-        // Borde blanco del minimapa
         renderer.SetDrawColor(255, 255, 255, 255);
         renderer.DrawRect(minimapDest);
 
-        // Dibujar al jugador - SOLO SI EXISTE
-        if (local_player) {
-            // Factor de escala
-            float scale = (float)MINIMAP_SIZE / (float)MINIMAP_SCOPE;
+        float scale = (float)MINIMAP_SIZE / (float)MINIMAP_SCOPE;
+        float playerRelX = local_player->pos_x - minimapSrcX;
+        float playerRelY = local_player->pos_y - minimapSrcY;
+        int dotX = minimapDest.x + (playerRelX * scale);
+        int dotY = minimapDest.y + (playerRelY * scale);
 
-            // Posición relativa del jugador respecto al recorte
-            float playerRelX = local_player->pos_x - minimapSrcX;
-            float playerRelY = local_player->pos_y - minimapSrcY;
-
-            // Posición final en pantalla
-            int dotX = minimapDest.x + (playerRelX * scale);
-            int dotY = minimapDest.y + (playerRelY * scale);
-
-            // Borde del punto 
-            renderer.SetDrawColor(255, 255, 255, 255); 
-            int borderSize = 8;
-            SDL2pp::Rect playerBorder(dotX - borderSize / 2, dotY - borderSize / 2, borderSize, borderSize);
-            renderer.FillRect(playerBorder);
-
-            // Interior del punto 
-            renderer.SetDrawColor(0, 255, 255, 255); 
-            int innerSize = 6;                       
-            SDL2pp::Rect playerInner(dotX - innerSize / 2, dotY - innerSize / 2, innerSize, innerSize);
-            renderer.FillRect(playerInner);
-        }
+        renderer.SetDrawColor(255, 255, 255, 255);
+        SDL2pp::Rect playerBorder(dotX - 4, dotY - 4, 8, 8);
+        renderer.FillRect(playerBorder);
+        renderer.SetDrawColor(0, 255, 255, 255);
+        SDL2pp::Rect playerInner(dotX - 3, dotY - 3, 6, 6);
+        renderer.FillRect(playerInner);
     }
 
     renderer.Present();
 }
+

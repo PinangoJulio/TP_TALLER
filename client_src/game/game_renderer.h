@@ -25,14 +25,20 @@ private:
     // Collision Manager para lógica visual
     std::unique_ptr<CollisionManager> collision_manager;
 
-    // Clips de animación de los autos
-    std::map<int, SDL2pp::Rect> car_clips;
+    // ✅ Clips de animación: [modelo][ángulo] → SDL2pp::Rect
+    std::map<int, std::map<int, SDL2pp::Rect>> car_clips;
+    
+    // ✅ Mapper: nombre del auto → índice de modelo
+    std::map<std::string, int> car_name_to_model;
 
     // Dimensiones de la IMAGEN del mapa (se llenan al cargar la carrera)
     int map_width;
     int map_height;
 
     int getClipIndexFromAngle(float angle_radians);
+    
+    // ✅ Helper para obtener modelo desde nombre
+    int getCarModelFromName(const std::string& car_name);
 
 public:
     // Constantes fijas de pantalla (700x700)
@@ -40,9 +46,9 @@ public:
     static const int SCREEN_HEIGHT = 700;
 
     // Constantes del Minimapa
-    static const int MINIMAP_SIZE = 200;   // Tamaño en px en pantalla
-    static const int MINIMAP_MARGIN = 20;  // Margen desde el borde
-    static const int MINIMAP_SCOPE = 1000; // Cuánto terreno real cubre el minimapa
+    static const int MINIMAP_SIZE = 200;   
+    static const int MINIMAP_MARGIN = 20;  
+    static const int MINIMAP_SCOPE = 1000; 
 
     explicit GameRenderer(SDL2pp::Renderer& renderer);
 
