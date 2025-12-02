@@ -416,12 +416,6 @@ GameState ClientProtocol::receive_snapshot() {
         p.is_alive      = read_uint8() != 0;
         p.disconnected  = read_uint8() != 0;
 
-        std::cout << "[ClientProtocol]   🏎️  Player " << p.player_id
-                  << ": pos=(" << p.pos_x << "," << p.pos_y << ") "
-                  << "vel=" << p.speed << " km/h "
-                  << "angle=" << p.angle << "° "
-                  << "hp=" << static_cast<int>(p.health)
-                  << (p.nitro_active ? " ⚡" : "") << std::endl;
     }
 
     // 2. CHECKPOINTS  -- CORRECCIÓN: no hacer resize + push_back (evitaba duplicados)
@@ -535,12 +529,6 @@ RaceInfoDTO ClientProtocol::receive_race_info() {
     socket.recvall(&max_time_net, sizeof(max_time_net));
     race_info.max_time_ms = ntohl(max_time_net);
 
-    std::cout << "[ClientProtocol] ✅ Race info received:" << std::endl;
-    std::cout << "[ClientProtocol]   City: " << race_info.city_name << std::endl;
-    std::cout << "[ClientProtocol]   Race: " << race_info.race_name << std::endl;
-    std::cout << "[ClientProtocol]   Map: " << race_info.map_file_path << std::endl;
-    std::cout << "[ClientProtocol]   Lap " << static_cast<int>(race_info.race_number) << "/"
-              << static_cast<int>(race_info.total_races) << std::endl;
 
     return race_info;
 }
@@ -568,7 +556,7 @@ std::vector<std::string> ClientProtocol::receive_race_paths() {
                   << ": " << path << std::endl;
     }
 
-    std::cout << "[ClientProtocol] ✅ Received " << static_cast<int>(num_races)
+    std::cout << "[ClientProtocol] Received " << static_cast<int>(num_races)
               << " race paths" << std::endl;
 
     return paths;

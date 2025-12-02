@@ -18,6 +18,7 @@
 
 #define NFS_TITLE      "Need for Speed 2D"
 #define FPS            60
+#define RANKING_SECONDS 5
 
 using namespace SDL2pp;
 
@@ -101,39 +102,68 @@ void Client::start() {
         int ms_per_frame = 1000 / FPS;
         GameState current_snapshot; 
         bool race_finished = false;
+        bool ranking_phase = false;
+        auto ranking_start = std::chrono::steady_clock::time_point{};
+        size_t current_race_index = 0;
 
         std::cout << "[Client] Entrando al game loop..." << std::endl;
 
         while (active) {
             auto t1 = std::chrono::steady_clock::now();
 
-            // 1. Red - ✅ Detectar errores de servidor
+            // 1. Consumir snapshots y evaluar estado global
             GameState new_snapshot;
             while (snapshot_queue.try_pop(new_snapshot)) {
                 current_snapshot = new_snapshot;
-                InfoPlayer* local = current_snapshot.findPlayer(player_id);
-                if (local && local->race_finished) {
-                    race_finished = true;
-                }
             }
-        
-            // 2. Input
-            event_handler.handle_events();
 
-            // 3. Render
+            // Verificar si todos terminaron (ignorar desconectados/no vivos)
+            bool all_finished = true;
+            int vivos = 0;
+            for (const auto& p : current_snapshot.players) {
+                if (!p.is_alive) continue; // tratar desconectados como no requeridos
+                vivos++;
+                if (!p.race_finished) { all_finished = false; }
+            }
+
+            // 2. Entrada solo si no estamos en ranking
+            if (!ranking_phase) {
+                event_handler.handle_events();
+            }
+
+            // 3. Render normal (podría agregar overlay de ranking si ranking_phase)
             game_renderer.render(current_snapshot, player_id);
 
-            // 4. Timing
+            // 4. Activar ranking solo cuando TODOS terminaron
+            if (all_finished && vivos > 0 && !ranking_phase && !race_finished) {
+                race_finished = true;      // carrera global finalizada
+                ranking_phase = true;      // entrar a ranking
+                ranking_start = std::chrono::steady_clock::now();
+                std::cout << "[Client] Todos los jugadores terminaron. Mostrando ranking " << RANKING_SECONDS << "s..." << std::endl;
+            }
+
+            // 5. Permanecer en ranking y luego iniciar siguiente carrera
+            if (ranking_phase) {
+                auto elapsed_rank = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - ranking_start).count();
+                if (elapsed_rank >= RANKING_SECONDS) {
+                    ranking_phase = false;
+                    race_finished = false;
+                    if (current_race_index + 1 < races_paths.size()) {
+                        current_race_index++;
+                        std::cout << "[Client] Iniciando siguiente carrera tras ranking: " << races_paths[current_race_index] << std::endl;
+                        game_renderer.init_race(races_paths[current_race_index]);
+                    } else {
+                        std::cout << "[Client] Partida completa. Cerrando cliente." << std::endl;
+                        active = false;
+                    }
+                }
+            }
+
+            // 6. Timing
             auto t2 = std::chrono::steady_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
             if (elapsed < ms_per_frame) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(ms_per_frame - elapsed));
-            }
-
-            if (race_finished) {
-                std::cout << "[Client] Carrera terminada. Saliendo..." << std::endl;
-                std::this_thread::sleep_for(std::chrono::seconds(3));
-                active = false;
             }
         }
         

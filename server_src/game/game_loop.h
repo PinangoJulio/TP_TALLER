@@ -145,6 +145,7 @@ private:
     GameState create_snapshot();
 
     void mark_player_finished(int player_id);
+    void mark_player_finished_with_time(int player_id, uint32_t finish_time_ms);
     void print_current_race_table() const;
     void print_total_standings() const;
 

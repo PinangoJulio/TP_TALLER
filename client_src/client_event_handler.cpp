@@ -4,13 +4,13 @@
 
 ClientEventHandler::ClientEventHandler(Queue<ComandMatchDTO>& cmd_queue, int p_id, bool& running)
     : command_queue(cmd_queue), player_id(p_id), is_running(running),
-      valid_keys({SDL_SCANCODE_UP,     // Mover arriba
-                  SDL_SCANCODE_DOWN,   // Mover abajo
-                  SDL_SCANCODE_LEFT,   // Mover izquierda
-                  SDL_SCANCODE_RIGHT,  // Mover derecha
-                  SDL_SCANCODE_SPACE,  // Nitro
+      valid_keys({SDL_SCANCODE_UP,
+                  SDL_SCANCODE_DOWN,
+                  SDL_SCANCODE_LEFT,
+                  SDL_SCANCODE_RIGHT,
+                  SDL_SCANCODE_SPACE,
                   SDL_SCANCODE_ESCAPE,
-                  SDL_SCANCODE_F1, // Cheats
+                  SDL_SCANCODE_W,   // Cheat ganar
                   SDL_SCANCODE_F2,
                   SDL_SCANCODE_F4,
                   SDL_SCANCODE_P
@@ -108,28 +108,25 @@ void ClientEventHandler::process_cheats(const SDL_Event& event) {
 
     switch (event.key.keysym.scancode) {
     case SDL_SCANCODE_F2:
-        // Invencibilidad
         cmd.command = GameCommand::CHEAT_INVINCIBLE;
         command_queue.try_push(cmd);
         std::cout << "[EventHandler] CHEAT: Invencibilidad activada" << std::endl;
         break;
 
-    case SDL_SCANCODE_F1:
-        // Ganar carrera instantáneamente
+    case SDL_SCANCODE_W:
+        // Ganar carrera instantáneamente (nuevo mapeo)
         cmd.command = GameCommand::CHEAT_WIN_RACE;
         command_queue.try_push(cmd);
-        std::cout << "[EventHandler] CHEAT: Ganar carrera" << std::endl;
+        std::cout << "[EventHandler] CHEAT: Ganar carrera (W)" << std::endl;
         break;
 
     case SDL_SCANCODE_P:
-        // Perder carrera (auto destruido)
         cmd.command = GameCommand::CHEAT_LOSE_RACE;
         command_queue.try_push(cmd);
         std::cout << "[EventHandler] CHEAT: Perder carrera" << std::endl;
         break;
 
     case SDL_SCANCODE_F4:
-        // Velocidad máxima instantánea
         cmd.command = GameCommand::CHEAT_MAX_SPEED;
         command_queue.try_push(cmd);
         std::cout << "[EventHandler] CHEAT: Velocidad máxima" << std::endl;
@@ -180,4 +177,3 @@ void ClientEventHandler::handle_events() {
         process_movement(event);
     }
 }
-

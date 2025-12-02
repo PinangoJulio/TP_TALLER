@@ -290,7 +290,7 @@ void GameRenderer::load_checkpoints_from_yaml(const std::string& yaml_path) {
                 
                 checkpoints.push_back(checkpoint);
             }
-            std::cout << "[GameRenderer] ✅ Cargados " << checkpoints.size() << " checkpoints" << std::endl;
+            std::cout << "[GameRenderer]  Cargados " << checkpoints.size() << " checkpoints" << std::endl;
         }
         
         if (config["spawn_points"] && config["spawn_points"].IsSequence()) {
@@ -302,11 +302,11 @@ void GameRenderer::load_checkpoints_from_yaml(const std::string& yaml_path) {
                 spawn.angle = sp["angle"].as<float>();
                 spawn_points.push_back(spawn);
             }
-            std::cout << "[GameRenderer] ✅ Cargados " << spawn_points.size() << " spawn points" << std::endl;
+            std::cout << "[GameRenderer] Cargados " << spawn_points.size() << " spawn points" << std::endl;
         }
         
     } catch (const std::exception& e) {
-        std::cerr << "[GameRenderer] ❌ Error cargando checkpoints: " << e.what() << std::endl;
+        std::cerr << "[GameRenderer]  Error cargando checkpoints: " << e.what() << std::endl;
     }
 }
 

@@ -27,8 +27,6 @@ void ClientHandler::run_threads() {
 }
 
 void ClientHandler::stop_connection() {
-    std::cout << "[ClientHandler " << client_id << "]  Shutdown signal received" << std::endl;
-
     is_alive = false;
     
     // Cerrar colas
