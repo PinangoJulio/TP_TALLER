@@ -53,15 +53,14 @@ ClientHandler::~ClientHandler() {
     
     stop_connection();
     
-    // ✅ AHORA SÍ cerrar el socket
     try {
         skt.shutdown(SHUT_RDWR);
         skt.close();
     } catch (...) {}
     
-    if (receiver.is_alive()) {
-        receiver.join();
-    }
+    // CORRECCIÓN: Llamar a join() SIEMPRE.
+    // El método receiver.join() ya verifica internamente si es joinable.
+    receiver.join();
     
     std::cout << "[ClientHandler " << client_id << "] ✅ Destroyed" << std::endl;
 }

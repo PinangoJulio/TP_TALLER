@@ -1,5 +1,5 @@
 Terminal 1: Server
-jjulio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL 2/TP_TALLER$ ./server config.yaml
+julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL 2/TP_TALLER$ ./server config.yaml
 [Acceptor] Socket created on port 8080
 ==================================================
     NEED FOR SPEED 2D - SERVER
@@ -14,154 +14,88 @@ Press 'q' + Enter to stop
            Client ID: 1
            Total clients: 1
 ==================================================
-[Receiver] Player connected: julio1
-[Receiver] julio1 requested games list
-[Receiver] Sending 0 games to julio1
-[Receiver] julio1 creating game: sala 1 (max: 2, races: 3)
-[Match] Creado: julio1 (code=1, max_players=2)
+[Receiver] Player connected: julio 1
+[Receiver] julio 1 requested games list
+[Receiver] Sending 0 games to julio 1
+[Receiver] julio 1 creating game: sala 1 (max: 2, races: 3)
+[Match] Creado: julio 1 (code=1, max_players=2)
 [Match] >>> Creando GameLoop...
 [GameLoop] Constructor OK. Listo para gestionar múltiples carreras.
 [Match] >>> Iniciando GameLoop (thread)...
 [Match] ✅ GameLoop iniciado y esperando jugadores
-[Match] Jugador agregado: julio1 (id=1, total=1)
+[Match] Jugador agregado: julio 1 (id=1, total=1)
 
 ╔════════════════════════════════════════════════════════════╗
 ║  MATCH #1 - JUGADORES (1/2)                          ║
 ╠════════════════════════════════════════════════════════════╣
-║ ID:   1 │ julio1          │ [SIN AUTO]           │ ✗ NOT READY ║
+║ ID:   1 │ julio 1         │ [SIN AUTO]           │ ✗ NOT READY ║
 ╚════════════════════════════════════════════════════════════╝
 
-[MatchesMonitor] ✅ Match created: ID=1 Host=julio1 (player_id=1)
-[MatchesMonitor] Socket registered: julio1 in match 1
+[MatchesMonitor] ✅ Match created: ID=1 Host=julio 1 (player_id=1)
+[MatchesMonitor] Socket registered: julio 1 in match 1
 [GameLoop] ═══════════════════════════════════════════════
 [GameLoop]  THREAD INICIADO
 [GameLoop]  Esperando carreras y jugadores...
 [GameLoop] ═══════════════════════════════════════════════
-[Receiver]   Race 1: San Andreas - ruta-1
+[Receiver]   Race 1: Liberty City - ruta-1
 [Receiver]   Race 2: San Andreas - ruta-1
-[Receiver]   Race 3: Vice City - ruta-2
+[Receiver]   Race 3: Liberty City - ruta-1
+[Race] Configuración creada: Liberty City - server_src/city_maps/Liberty City/ruta-1.yaml[Match] Carrera agregada: Liberty City -> server_src/city_maps/Liberty City/ruta-1.yaml
 [Race] Configuración creada: San Andreas - server_src/city_maps/San Andreas/ruta-1.yaml[Match] Carrera agregada: San Andreas -> server_src/city_maps/San Andreas/ruta-1.yaml
-[Race] Configuración creada: San Andreas - server_src/city_maps/San Andreas/ruta-1.yaml[Match] Carrera agregada: San Andreas -> server_src/city_maps/San Andreas/ruta-1.yaml
-[Race] Configuración creada: Vice City - server_src/city_maps/Vice City/ruta-2.yaml[Match] Carrera agregada: Vice City -> server_src/city_maps/Vice City/ruta-2.yaml
+[Race] Configuración creada: Liberty City - server_src/city_maps/Liberty City/ruta-1.yaml[Match] Carrera agregada: Liberty City -> server_src/city_maps/Liberty City/ruta-1.yaml
 [Match] Configuradas 3 carreras en GameLoop
 [MatchesMonitor] Carreras agregadas a match 1
 [Receiver] Game created with ID: 1
 [ServerProtocol] ✅ Sent 3 race paths to client
-[Receiver] Sent 3 race paths to julio1
+[Receiver] Sent 3 race paths to julio 1
 [GameLoop] Carreras listas. PAUSADO esperando señal de inicio (start_game)...
-[Receiver] julio1 selected car: Brisa (sport)
-[Match] Jugador julio1 eligió auto Brisa (sport)
-[Match] >>> Registrando julio1 en GameLoop con auto Brisa
-[Car] Creado: Brisa (sport)
-[Car] Stats cargados para Brisa: Max Speed=135 Accel=68 Handling=0.7 HP=80
-[GameLoop] Jugador agregado: julio1 (ID: 1)
-[Match] ✅ Jugador julio1 agregado al GameLoop exitosamente
+[Receiver] julio 1 selected car: Leyenda Urbana (classic)
+[Match] Jugador julio 1 eligió auto Leyenda Urbana (classic)
+[Match] >>> Registrando julio 1 en GameLoop con auto Leyenda Urbana
+[Car] Creado: Leyenda Urbana (classic)
+[Car] Stats cargados para Leyenda Urbana: Max Speed=105 Accel=48 Handling=0.65 HP=100
+[GameLoop] Jugador agregado: julio 1 (ID: 1)
+[Match] ✅ Jugador julio 1 agregado al GameLoop exitosamente
 
 ╔════════════════════════════════════════════════════════════╗
 ║  MATCH #1 - JUGADORES (1/2)                          ║
 ╠════════════════════════════════════════════════════════════╣
-║ ID: 1   │ julio1          │ Brisa (sport)        │ ✗ NOT READY ║
+║ ID: 1   │ julio 1         │ Leyenda Urbana (clas │ ✗ NOT READY ║
 ╚════════════════════════════════════════════════════════════╝
 
-[Receiver] ✅ ACK sent to julio1
-[MatchesMonitor] Broadcasting to match 1 (excluding: julio1)
-[MatchesMonitor]   Skipping julio1 (sender)
+[Receiver] ✅ ACK sent to julio 1
+[MatchesMonitor] Broadcasting to match 1 (excluding: julio 1)
+[MatchesMonitor]   Skipping julio 1 (sender)
 [MatchesMonitor] Broadcast completed: 0 messages sent to match 1
-[Receiver] ✅ Broadcast triggered (excluding julio1)
-==================================================
-[Acceptor] New connection accepted
-           Client ID: 2
-           Total clients: 2
-==================================================
-[Receiver] Player connected: julio2
-[Receiver] julio2 requested games list
-[Receiver] Sending 1 games to julio2
-[Receiver] julio2 joining game 1
-[MatchesMonitor] Socket registered: julio2 in match 1
-[MatchesMonitor] join_match() called: player=julio2 (id=2), match_id=1
-[Match] Jugador agregado: julio2 (id=2, total=2)
-
-╔════════════════════════════════════════════════════════════╗
-║  MATCH #1 - JUGADORES (2/2)                          ║
-╠════════════════════════════════════════════════════════════╣
-║ ID: 1   │ julio1          │ Brisa (sport)        │ ✗ NOT READY ║
-║ ID: 2   │ julio2          │ [SIN AUTO]           │ ✗ NOT READY ║
-╚════════════════════════════════════════════════════════════╝
-
-[MatchesMonitor] ✅ julio2 (id=2) joined match 1
-[Receiver] julio2 joined match 1
-[Receiver] Sending room snapshot to julio2 (1 existing players)
-[Receiver]   → Player exists: julio1
-[Receiver]   → Car: Brisa
-[Receiver] ✅ Snapshot sent with END marker to julio2
-[ServerProtocol] ✅ Sent 3 race paths to client
-[Receiver] Sent 3 race paths to julio2
-[MatchesMonitor] Broadcasting to match 1 (excluding: julio2)
-[MatchesMonitor] ✅ Sent to julio1
-[MatchesMonitor]   Skipping julio2 (sender)
-[MatchesMonitor] Broadcast completed: 1 messages sent to match 1
-[Receiver] Broadcasted join notification (excluding julio2)
-[Receiver] julio2 selected car: Nómada (truck)
-[Match] Jugador julio2 eligió auto Nómada (truck)
-[Match] >>> Registrando julio2 en GameLoop con auto Nómada
-[Car] Creado: Nómada (truck)
-[Car] Stats cargados para Nómada: Max Speed=90 Accel=40 Handling=0.55 HP=9999
-[GameLoop] Jugador agregado: julio2 (ID: 2)
-[Match] ✅ Jugador julio2 agregado al GameLoop exitosamente
-
-╔════════════════════════════════════════════════════════════╗
-║  MATCH #1 - JUGADORES (2/2)                          ║
-╠════════════════════════════════════════════════════════════╣
-║ ID: 1   │ julio1          │ Brisa (sport)        │ ✗ NOT READY ║
-║ ID: 2   │ julio2          │ Nómada (truck)      │ ✗ NOT READY ║
-╚════════════════════════════════════════════════════════════╝
-
-[Receiver] ✅ ACK sent to julio2
-[MatchesMonitor] Broadcasting to match 1 (excluding: julio2)
-[MatchesMonitor] ✅ Sent to julio1
-[MatchesMonitor]   Skipping julio2 (sender)
-[MatchesMonitor] Broadcast completed: 1 messages sent to match 1
-[Receiver] ✅ Broadcast triggered (excluding julio2)
+[Receiver] ✅ Broadcast triggered (excluding julio 1)
 q
 
 ==================================================
     🛑 SERVER SHUTDOWN INITIATED
 ==================================================
-[Server] Stopping acceptor and disconnecting all clients...
-[Acceptor] 🛑 SHUTDOWN: Disconnecting all clients...
-[Acceptor]   Stopping client 1...
-[ClientHandler 1] 🛑 Shutdown signal received
-[ClientHandler 1] Socket closed
-[ClientHandler 1] ✅ Shutdown initiated
-[Acceptor]   Stopping client 2...
-[ClientHandler 2] 🛑 Shutdown signal received
-[ClientHandler 2] Socket closed
-[ClientHandler 2] ✅ Shutdown initiated
+[Acceptor] Stop signal received
+[Server] Sending shutdown notifications to all clients...
+[Acceptor] 📢 Notifying 1 clients about shutdown...
+[ClientHandler 1] 📤 Sending shutdown message...
+[ClientHandler 1] ✅ Shutdown message sent
+[Acceptor] ✅ Shutdown notifications sent
+[Receiver] Player julio 1 disconnected
+[Receiver] Cleaning up julio 1 from match 1 (disconnect)
+[MatchesMonitor] Socket unregistered: julio 1 from match 1
+[Match] Jugador eliminado: julio 1 (id=1, restantes=0)
+[MatchesMonitor] ✅ julio 1 left match 1
+[MatchesMonitor] Match 1 is empty, deleting...
+[Server] Closing acceptor socket...
 [Acceptor] ✅ Socket closed
-[Server] Waiting for acceptor thread to finish...
-[Receiver] Player julio2 disconnected
-[Receiver] Cleaning up julio2 from match 1 (disconnect)
-[Receiver] Player julio1 disconnected
-[MatchesMonitor] Socket unregistered: julio2 from match 1
-[Acceptor] Clearing all 2 connections...
-[Receiver] Cleaning up julio1 from match 1 (disconnect)
-[ClientHandler 1] 🛑 Shutdown signal received
-[ClientHandler 1] Error closing socket: socket shutdown failedBad file descriptor
-[ClientHandler 1] ✅ Shutdown initiated
+[Server] Waiting for acceptor thread...
+[Acceptor] Thread stopped
+[Server] ✅ Server shutdown complete
+[Acceptor] Destructor called
 [ClientHandler 1] Destructor called
 [ClientHandler 1] 🛑 Shutdown signal received
-[ClientHandler 1] Error closing socket: socket shutdown failedBad file descriptor
 [ClientHandler 1] ✅ Shutdown initiated
-[ClientHandler 1] Waiting for receiver...
-[Match] Jugador eliminado: julio2 (id=2, restantes=1)
-[MatchesMonitor] ✅ julio2 left match 1
-[Receiver] ✅ julio2 cleaned up successfully
-[MatchesMonitor] Socket unregistered: julio1 from match 1
-[Match] Jugador eliminado: julio1 (id=1, restantes=0)
-[MatchesMonitor] ✅ julio1 left match 1
-[MatchesMonitor] Match 1 is empty, deleting...
-[Receiver] 🎮 Game loop started - listening for player commands...
-[Receiver] Player julio2 exited match 1
+
+
 
 
 
@@ -202,20 +136,20 @@ QWidget::setLayout: Cannot set layout to 0
 [Controller] Conectado exitosamente
 [Controller] Mostrando ventana de ingreso de nombre
 qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
-Nombre de jugador confirmado: julio1
-[Controller] Usuario confirmó nombre: julio1
-[Protocol] DEBUG: Username: 'julio1' (length: 6)
-[Protocol] DEBUG: Buffer size: 9 bytes
-[Protocol] DEBUG: Buffer content: 01 00 06 6A 75 6C 69 6F 31 
-[Protocol] DEBUG: Length encoded in buffer: 6
-[Protocol] Sent username: julio1
+Nombre de jugador confirmado: julio 1
+[Controller] Usuario confirmó nombre: julio 1
+[Protocol] DEBUG: Username: 'julio 1' (length: 7)
+[Protocol] DEBUG: Buffer size: 10 bytes
+[Protocol] DEBUG: Buffer content: 01 00 07 6A 75 6C 69 6F 20 31 
+[Protocol] DEBUG: Length encoded in buffer: 7
+[Protocol] Sent username: julio 1
 [Controller] Nombre enviado al servidor
 [Controller] Esperando mensaje de bienvenida...
 [LobbyClient] DEBUG: Waiting for welcome message...
 [LobbyClient] DEBUG: Received type: 16
 [LobbyClient] DEBUG: Reading welcome string...
-[LobbyClient] Received welcome: Welcome to Need for Speed 2D, julio1!
-[Controller] Bienvenida recibida: Welcome to Need for Speed 2D, julio1!
+[LobbyClient] Received welcome: Welcome to Need for Speed 2D, julio 1!
+[Controller] Bienvenida recibida: Welcome to Need for Speed 2D, julio 1!
 [Controller] Abriendo ventana de selección de partidas
 qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 [Controller] Solicitando lista de partidas al servidor...
@@ -226,29 +160,29 @@ qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 Creando nueva partida...
 [Controller] Usuario quiere crear nueva partida
 qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
-Carrera 1 configurada: San Andreas - Southshore District
+Carrera 1 configurada: Liberty City - Montline Parkway
+Carrera 3 configurada: Liberty City - Montline Parkway
 Carrera 2 configurada: San Andreas - Southshore District
-Carrera 3 configurada: Vice City - Tropical U
 Confirmando creación de partida:
   Nombre: sala 1
   Jugadores: 2
   Carreras: 3
-  Carrera 1: San Andreas - Southshore District
+  Carrera 1: Liberty City - Montline Parkway
   Carrera 2: San Andreas - Southshore District
-  Carrera 3: Vice City - Tropical U
+  Carrera 3: Liberty City - Montline Parkway
 [Controller] Usuario confirmó creación de partida:
   Nombre: sala 1
   Jugadores máximos: 2
   Número de carreras: 3
+  Carrera: Liberty City - ruta-1 (UI: Montline Parkway)
   Carrera: San Andreas - ruta-1 (UI: Southshore District)
-  Carrera: San Andreas - ruta-1 (UI: Southshore District)
-  Carrera: Vice City - ruta-2 (UI: Tropical U)
+  Carrera: Liberty City - ruta-1 (UI: Montline Parkway)
 [Protocol] Requested to create game: sala 1 (max players: 2, races: 3)
 [LobbyClient] Game created with ID: 1
 [Controller] Partida creada con ID: 1
-[ClientProtocol]   Race 1: server_src/city_maps/San Andreas/ruta-1.yaml
+[ClientProtocol]   Race 1: server_src/city_maps/Liberty City/ruta-1.yaml
 [ClientProtocol]   Race 2: server_src/city_maps/San Andreas/ruta-1.yaml
-[ClientProtocol]   Race 3: server_src/city_maps/Vice City/ruta-2.yaml
+[ClientProtocol]   Race 3: server_src/city_maps/Liberty City/ruta-1.yaml
 [ClientProtocol] ✅ Received 3 race paths
 [Controller] ✅ Received 3 race paths from server
 [Controller] Abriendo garage...
@@ -262,13 +196,13 @@ qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
 [GarageWindow] Auto cargado: Nómada (tipo: truck)
 [GarageWindow] Auto cargado: Stallion GT (tipo: sport)
 [GarageWindow] ✅ 7 autos cargados desde config.yaml
-Auto seleccionado: Brisa (sport)
-[Controller] Auto seleccionado: Brisa
+Auto seleccionado: Leyenda Urbana (classic)
+[Controller] Auto seleccionado: Leyenda Urbana
 [Controller] Enviando selección de auto...
-[Protocol] Selected car: Brisa (sport)
+[Protocol] Selected car: Leyenda Urbana (classic)
 [Controller] Esperando confirmación (ACK)...
-[LobbyClient] Server confirmed car: Brisa (sport)
-[Controller] ✅ Auto confirmado por servidor: Brisa
+[LobbyClient] Server confirmed car: Leyenda Urbana (classic)
+[Controller] ✅ Auto confirmado por servidor: Leyenda Urbana
 [Controller] Iniciando listener de notificaciones...
 [LobbyClient] Notification listener started
 [Controller] Abriendo sala de espera...
@@ -276,19 +210,26 @@ Auto seleccionado: Brisa (sport)
 [LobbyClient] 🔄 Notification listener STARTED and ACTIVE
 [LobbyClient] 🔍 Waiting for message... (blocking on recv)
 qt.gui.imageio: libpng warning: iCCP: known incorrect sRGB profile
-[LobbyClient] ✅ Message received! Type: 0x20
-[LobbyClient] Processing message type: 32
-[LobbyClient] Player joined: julio2
-[LobbyClient] 🔍 Waiting for message... (blocking on recv)
-[Controller] Notification: Player joined: julio2
-[LobbyClient] ✅ Message received! Type: 0x23
-[LobbyClient] Processing message type: 35
-[LobbyClient] Player julio2 selected Nómada
-[LobbyClient] 🔍 Waiting for message... (blocking on recv)
-[Controller] Notification: Player julio2 selected Nómada
-[LobbyClient] ❌ Error reading message type: Connection closed by server
-[LobbyClient] ❌ FATAL: Notification listener error: Connection closed by server
-[LobbyClient] Notification listener exited
+[LobbyClient] ✅ Message received! Type: 0xff
+[LobbyClient] Error 255: SERVER SHUTDOWN - DISCONNECTING
+[LobbyClient] 🛑 SERVER SHUTDOWN DETECTED
+[LobbyClient] Exiting notification listener...
+[Controller] Error: SERVER SHUTDOWN - DISCONNECTING
+[Controller] 🛑 Server shutdown detected - closing application
+[Controller] Cerrando ventanas de Qt para iniciar el juego...
+[Controller] Todas las ventanas Qt cerradas
+[Client] Lobby terminado (success=0)
+[Client] Abortando inicio de juego (server shutdown o error).
+[Controller] Destructor llamado
+[LobbyClient] Stopping notification listener...
+[ClientProtocol] Socket shutdown completed
+[LobbyClient] Socket shutdown forced
+[LobbyClient] Joining listener thread...
+[LobbyClient] Listener thread joined
+=== Cliente finalizado ===
+[Client] Destructor llamado
+[Client] Destructor completado
+julio@julio-VirtualBox:~/Escritorio/TALLER/TP FINAL 2/TP_TALLER$
 
 
 

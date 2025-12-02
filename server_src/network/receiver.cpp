@@ -507,9 +507,11 @@ void Receiver::run() {
         monitor.delete_player_from_match(id, match_id);
     }
     sender_messages_queue.close();
-    if (match_id != -1) {
-        sender.join();
-    }
+    
+    // CORRECCIÓN: Intentar join siempre que sea posible o si match_id indica que se usó.
+    // Si sender nunca arrancó, thread.joinable() será false y no pasará nada.
+    // Si arrancó y terminó, thread.joinable() es true y NECESITAS hacer join.
+    sender.join();
 
     std::cout << "[Receiver] Player " << username << " fully disconnected" << std::endl;
 }
