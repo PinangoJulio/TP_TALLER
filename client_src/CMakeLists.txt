@@ -20,6 +20,8 @@ target_sources(client
     game/collision_manager.cpp
     game/game_renderer.cpp
     client_event_handler.cpp
+    lobby/Rankings/final_ranking.cpp
+
     
     #threads/protocol
     client_receiver.cpp
@@ -38,6 +40,7 @@ target_sources(client
     lobby/view/create_match_window.h
     lobby/view/garage_window.h
     lobby/view/waiting_room_window.h
+    lobby/Rankings/final_ranking.h
     
     # controller
     lobby/controller/lobby_controller.h
