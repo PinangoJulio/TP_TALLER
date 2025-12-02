@@ -74,21 +74,23 @@ void GameLoop::run() {
 
     print_match_info();
 
-    // 🔧 CORRECCIÓN AQUÍ: Inicializar variables de mapa ANTES de resetear jugadores
+    // 🔧 CORRECCIÓN: Inicializar variables de mapa ANTES de resetear jugadores
     if (!races.empty()) {
-        // 1. Obtener datos de la primera carrera manualmente
+        // 1. Obtener datos de la primera carrera
         const auto& first_race = races[0];
         current_map_yaml = first_race->get_map_path();
         current_city_name = first_race->get_city_name();
-        
+        current_race_finished = false;
+
         std::cout << "[GameLoop] 🏁 Preparando primera carrera: " << current_city_name 
                   << " (Mapa: " << current_map_yaml << ")\n";
         
-        // 2. Ahora sí resetear jugadores (ya existe current_map_yaml para cargar spawns)
+        // 2. Resetear jugadores con las posiciones spawn del YAML
         reset_players_for_race();
         
         // 3. Marcar inicio oficial de tiempos
-        start_current_race();
+        race_start_time = std::chrono::steady_clock::now();
+        std::cout << "[GameLoop]   Cronómetro iniciado\n";
     }
 
     // Bucle principal: iterar sobre todas las carreras
@@ -265,38 +267,72 @@ void GameLoop::set_races(std::vector<std::unique_ptr<Race>> race_configs) {
 
 void GameLoop::load_spawn_points_for_current_race() {
     spawn_points.clear();
+
+    std::cout << "[GameLoop] >>> Cargando spawns desde: " << current_map_yaml << std::endl;
+
     try {
         YAML::Node map = YAML::LoadFile(current_map_yaml);
-        if (map["spawn_points"]) {
+        if (map["spawn_points"] && map["spawn_points"].IsSequence()) {
             for (const auto& node : map["spawn_points"]) {
                 float x = node["x"].as<float>();
                 float y = node["y"].as<float>();
                 float a = node["angle"].as<float>() * (M_PI / 180.0f);
                 spawn_points.emplace_back(x, y, a);
+                std::cout << "[GameLoop]   Spawn point: (" << x << ", " << y << ") angle=" << a << " rad" << std::endl;
             }
+            std::cout << "[GameLoop] ✅ Cargados " << spawn_points.size() << " spawn points" << std::endl;
+        } else {
+            std::cerr << "[GameLoop]  'spawn_points' no encontrado o no es secuencia en " << current_map_yaml << std::endl;
         }
-    } catch (...) {
-        std::cerr << "[GameLoop] Error cargando spawns de " << current_map_yaml << "\n";
+    } catch (const std::exception& e) {
+        std::cerr << "[GameLoop] ❌ Error cargando spawns de " << current_map_yaml << ": " << e.what() << std::endl;
     }
 }
 
 void GameLoop::reset_players_for_race() {
+    std::cout << "[GameLoop] >>> RESETEANDO JUGADORES PARA NUEVA CARRERA" << std::endl;
+    std::cout << "[GameLoop]   Mapa actual: " << current_map_yaml << std::endl;
+
     load_spawn_points_for_current_race();
+
+    if (spawn_points.empty()) {
+        std::cerr << "[GameLoop]   NO HAY SPAWN POINTS! Usando posiciones por defecto" << std::endl;
+    }
+
     size_t idx = 0;
     for (auto& [id, player] : players) {
-        if (!player->getCar()) continue;
+        if (!player->getCar()) {
+            std::cout << "[GameLoop]   Jugador " << id << " no tiene auto, saltando..." << std::endl;
+            continue;
+        }
+
+        // ✅ PRIMERO: Resetear estado del jugador y del auto
         player->resetForNewRace();
-        
+        player->getCar()->reset();
+
+        // ✅ SEGUNDO: Asignar posiciones spawn
         float x = 100.f, y = 100.f, a = 0.f;
-        if (idx < spawn_points.size()) std::tie(x, y, a) = spawn_points[idx];
-        
+        if (idx < spawn_points.size()) {
+            std::tie(x, y, a) = spawn_points[idx];
+            std::cout << "[GameLoop]   Jugador " << player->getName() << " (ID=" << id
+                      << ") → spawn[" << idx << "]: (" << x << ", " << y << ") angle=" << a << " rad" << std::endl;
+        } else {
+            std::cout << "[GameLoop]    Jugador " << player->getName() << " (ID=" << id
+                      << ") → fallback: (" << x << ", " << y << ")" << std::endl;
+        }
+
         player->setPosition(x, y);
         player->setAngle(a);
         player->getCar()->setPosition(x, y);
         player->getCar()->setAngle(a);
-        player->getCar()->reset();
+
+        // Verificar que se aplicó correctamente
+        std::cout << "[GameLoop]     Verificación: Player pos=(" << player->getX() << ", " << player->getY()
+                  << ") Car pos=(" << player->getCar()->getX() << ", " << player->getCar()->getY() << ")" << std::endl;
+
         idx++;
     }
+    std::cout << "[GameLoop] <<< Reseteo completado" << std::endl;
 }
 
 void GameLoop::start_current_race() {
