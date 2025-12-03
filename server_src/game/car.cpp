@@ -4,16 +4,32 @@
 #include <cmath>
 #include <iostream>
 
+#include <box2d/box2d.h>
+#include "physics_constants.h"
 // ==========================================================
 // CONSTRUCTOR
 // ==========================================================
 
 Car::Car(const std::string& model, const std::string& type)
-    : model_name(model), car_type(type), max_speed(100.0f), acceleration(50.0f), handling(1.0f),
-      max_durability(100.0f), nitro_boost(1.5f), weight(1000.0f), current_speed(0.0f),
-      current_health(100.0f), nitro_amount(100.0f), nitro_active(false), x(0.0f), y(0.0f),
-      angle(0.0f), velocity_x(0.0f), velocity_y(0.0f), is_drifting(false), is_colliding(false),
-      is_destroyed(false) {
+    : model_name(model), car_type(type), 
+      max_speed(100.0f), acceleration(50.0f), handling(1.0f),
+      max_durability(100.0f), nitro_boost(1.5f), weight(1000.0f), 
+      current_speed(0.0f), current_health(100.0f), nitro_amount(100.0f), 
+      nitro_active(false), x(0.0f), y(0.0f), angle(0.0f), 
+      velocity_x(0.0f), velocity_y(0.0f), 
+      is_drifting(false), is_colliding(false), is_destroyed(false),
+      has_physics_body(false), car_size_px(40.0f) {
+
+    body_id = b2_nullBodyId;
+
+    if (type == "classic" || type == "small") {
+        car_size_px = CAR_SMALL_SIZE;
+    } else if (type == "sport" || type == "medium") {
+        car_size_px = CAR_MEDIUM_SIZE;
+    } else {
+        car_size_px = CAR_LARGE_SIZE;
+    }
+
     std::cout << "[Car] Creado: " << model << " (" << type << ")" << std::endl;
 }
 
@@ -327,3 +343,93 @@ void Car::reset() {
 
     std::cout << "[Car] " << model_name << " reseteado" << std::endl;
 }
+
+//BOX2D
+
+// ============================================
+// MÉTODOS BOX2D V3
+// ============================================
+
+void Car::createPhysicsBody(b2WorldId world_id, float spawn_x, float spawn_y, float spawn_angle) {
+    if (!b2World_IsValid(world_id)) {
+        std::cerr << "[Car] ERROR: Invalid world ID!" << std::endl;
+        return;
+    }
+    
+    // Si ya existía un body, destruirlo
+    if (has_physics_body && B2_IS_NON_NULL(body_id)) {
+        b2DestroyBody(body_id);
+        body_id = b2_nullBodyId;
+        has_physics_body = false;
+    }
+    
+    // Convertir píxeles a metros
+    float spawn_x_m = pixelsToMeters(spawn_x);
+    float spawn_y_m = pixelsToMeters(spawn_y);
+    
+    std::cout << "[Car " << model_name << "] Creating physics body:" << std::endl;
+    std::cout << "  Pixels: (" << spawn_x << ", " << spawn_y << ")" << std::endl;
+    std::cout << "  Meters: (" << spawn_x_m << ", " << spawn_y_m << ")" << std::endl;
+    
+    // Definir el cuerpo (Box2D v3)
+    b2BodyDef bodyDef = b2DefaultBodyDef();
+    bodyDef.type = b2_dynamicBody;
+    bodyDef.position = {spawn_x_m, spawn_y_m};
+    bodyDef.rotation = b2MakeRot(spawn_angle);
+    bodyDef.linearDamping = 1.0f;
+    bodyDef.angularDamping = 2.0f;
+    
+    body_id = b2CreateBody(world_id, &bodyDef);
+    
+    // Crear forma (cuadrado)
+    float half_size_m = pixelsToMeters(car_size_px) / 2.0f;
+    b2Polygon boxShape = b2MakeBox(half_size_m, half_size_m);
+    
+    std::cout << "  Box2D size: " << (half_size_m * 2.0f) << "m x " << (half_size_m * 2.0f) << "m" << std::endl;
+    
+    // Definir propiedades físicas (Box2D v3)
+    b2ShapeDef shapeDef = b2DefaultShapeDef();
+    shapeDef.density = 1.0f;
+    shapeDef.friction = 0.3f;
+    shapeDef.restitution = 0.1f;
+    
+    b2CreatePolygonShape(body_id, &shapeDef, &boxShape);
+    
+    has_physics_body = true;
+    
+    // Sincronizar variables internas
+    x = spawn_x;
+    y = spawn_y;
+    angle = spawn_angle;
+    
+    std::cout << "  Body created successfully!" << std::endl;
+}
+
+void Car::syncFromPhysics() {
+    if (!has_physics_body || B2_IS_NULL(body_id)) return;
+    
+    // Leer posición
+    b2Vec2 pos_m = b2Body_GetPosition(body_id);
+    x = metersToPixels(pos_m.x);
+    y = metersToPixels(pos_m.y);
+    
+    // Leer rotación
+    b2Rot rotation = b2Body_GetRotation(body_id);
+    angle = b2Rot_GetAngle(rotation);
+    
+    // Leer velocidad
+    b2Vec2 vel_m = b2Body_GetLinearVelocity(body_id);
+    velocity_x = metersToPixels(vel_m.x);
+    velocity_y = metersToPixels(vel_m.y);
+    
+    current_speed = std::sqrt(velocity_x * velocity_x + velocity_y * velocity_y);
+}
+
+void Car::destroyPhysicsBody(b2WorldId world_id) {
+    if (has_physics_body && B2_IS_NON_NULL(body_id) && b2World_IsValid(world_id)) {
+        b2DestroyBody(body_id);
+        body_id = b2_nullBodyId;
+        has_physics_body = false;
+    }
+}
+

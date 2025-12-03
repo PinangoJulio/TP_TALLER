@@ -9,6 +9,7 @@
 #include <utility>
 #include <yaml-cpp/yaml.h>
 
+
 #include "../../common_src/config.h"
 #include "race.h"
 
@@ -21,8 +22,16 @@ GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues)
       queues_players(queues),
       current_race_index(0), 
       current_race_finished(false), 
-      spawns_loaded(false)
+      spawns_loaded(false),
+      physics_world_created(false)
 {
+
+    b2WorldDef worldDef = b2DefaultWorldDef();
+    worldDef.gravity = {0.0f, 0.0f};
+
+    physics_world_id = b2CreateWorld(&worldDef);
+    physics_world_created = b2World_IsValid(physics_world_id);
+
     std::cout << "[GameLoop] Constructor OK. Listo para gestionar múltiples carreras.\n";
 }
 

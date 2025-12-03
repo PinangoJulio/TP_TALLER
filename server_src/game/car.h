@@ -4,42 +4,47 @@
 #include <cstddef>
 #include <string>
 
+// FORWARD DECLARATIONS (en vez de #include <box2d/box2d.h>)
+struct b2BodyId;
+struct b2WorldId;
+
+// Solo incluir las constantes (no dependen de Box2D)
+#include "physics_constants.h"
+
 /*
  * Car: Representa un auto con física y stats
- * - Maneja posición, velocidad, ángulo (física)
- * - Stats específicos del modelo (cargados desde config.yaml)
- * - Salud, nitro, estado
- * - Encapsula el cuerpo de Box2D cuando se implemente
  */
 class Car {
 private:
     // ---- IDENTIFICACIÓN ----
-    std::string model_name;  // Ej: "Leyenda Urbana", "Stallion GT"
-    std::string car_type;    // Ej: "classic", "sport", "muscle"
+    std::string model_name;
+    std::string car_type;
 
-    // ---- STATS DEL AUTO (cargar desde config.yaml) ----
-    float max_speed;       // Velocidad máxima
-    float acceleration;    // Aceleración
-    float handling;        // Manejo (giro)
-    float max_durability;  // Durabilidad máxima (HP)
-    float nitro_boost;     // Multiplicador de nitro
-    float weight;          // Peso (afecta física)
+    // ---- STATS ----
+    float max_speed;
+    float acceleration;
+    float handling;
+    float max_durability;
+    float nitro_boost;
+    float weight;
 
     // ---- ESTADO ACTUAL ----
-    float current_speed;   // Velocidad actual
-    float current_health;  // Salud actual
-    float nitro_amount;    // Cantidad de nitro restante (0-100)
-    bool nitro_active;     // Si está usando nitro
+    float current_speed;
+    float current_health;
+    float nitro_amount;
+    bool nitro_active;
 
     // ---- FÍSICA Y POSICIÓN ----
-    float x;           // Posición X
-    float y;           // Posición Y
-    float angle;       // Ángulo de rotación (radianes)
-    float velocity_x;  // Velocidad en X
-    float velocity_y;  // Velocidad en Y
+    float x;
+    float y;
+    float angle;
+    float velocity_x;
+    float velocity_y;
 
-    // ---- BOX2D (cuando se implemente) ----
-    // b2Body* body;             // Cuerpo de Box2D
+    // ---- BOX2D v3 (IDs opacos, no necesitan definición completa) ----
+    b2BodyId body_id;
+    bool has_physics_body;
+    float car_size_px;
 
     // ---- ESTADO ----
     bool is_drifting;
@@ -50,7 +55,7 @@ public:
     // ---- CONSTRUCTOR ----
     Car(const std::string& model, const std::string& type);
 
-    // ---- CONFIGURAR STATS (desde config.yaml) ----
+    // ---- CONFIGURAR STATS ----
     void load_stats(float max_spd, float accel, float hand, float durability, float nitro,
                     float wgt);
 
@@ -101,14 +106,14 @@ public:
     void turn_left(float delta_time);
     void turn_right(float delta_time);
 
-    // ---- MOVIMIENTO EN 4 DIRECCIONES FIJAS ----
-    void move_up(float delta_time);     // Arriba (↑)
-    void move_down(float delta_time);   // Abajo (↓)
-    void move_left(float delta_time);   // Izquierda (←)
-    void move_right(float delta_time);  // Derecha (→)
+    // ---- MOVIMIENTO EN 4 DIRECCIONES ----
+    void move_up(float delta_time);
+    void move_down(float delta_time);
+    void move_left(float delta_time);
+    void move_right(float delta_time);
 
     // ---- FÍSICA ----
-    void apply_friction(float delta_time);  // Desaceleración gradual
+    void apply_friction(float delta_time);
 
     // ---- ESTADO ----
     void setDrifting(bool drifting) { is_drifting = drifting; }
@@ -116,6 +121,13 @@ public:
 
     void setColliding(bool colliding) { is_colliding = colliding; }
     bool isColliding() const { return is_colliding; }
+
+    // ---- BOX2D v3 ----
+    void createPhysicsBody(b2WorldId world_id, float spawn_x_px, float spawn_y_px, float spawn_angle);
+    void syncFromPhysics();
+    void destroyPhysicsBody(b2WorldId world_id);
+    b2BodyId getBodyId() const { return body_id; }
+    bool hasPhysicsBody() const { return has_physics_body; }
 
     // ---- RESET ----
     void reset();

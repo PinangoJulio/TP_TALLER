@@ -39,6 +39,6 @@ target_sources(server
     network/sender.h
     network/client_monitor.h
     network/matches_monitor.h
-)
 
 # Ejecutable temporal del lobby (para testing)
+)

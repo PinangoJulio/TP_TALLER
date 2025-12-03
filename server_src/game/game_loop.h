@@ -11,6 +11,7 @@
 #include <thread>
 #include <vector>
 #include <tuple>
+#include <box2d/box2d.h>
 
 #include "../../common_src/dtos.h"
 #include "../../common_src/game_state.h"
@@ -19,6 +20,7 @@
 #include "../network/client_monitor.h"
 #include "car.h"
 #include "player.h"
+#include "physics_constants.h"
 
 #define NITRO_DURATION 12
 #define SLEEP          16 // Ticks de 16ms (~60 updates por segundo para movimiento fluido)
@@ -148,6 +150,12 @@ private:
     void mark_player_finished_with_time(int player_id, uint32_t finish_time_ms);
     void print_current_race_table() const;
     void print_total_standings() const;
+
+    b2WorldId physics_world_id;
+    bool physics_world_created;
+    const float TIME_STEP = 1.0f / 60.0f;
+    const int32 VELOCITY_ITERATIONS = 8;
+    const int32 POSITION_ITERATIONS = 3;
 
 public:
     GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues);
