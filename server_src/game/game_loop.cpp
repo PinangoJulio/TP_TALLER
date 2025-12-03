@@ -21,9 +21,10 @@ GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues)
       queues_players(queues),
       current_race_index(0), 
       current_race_finished(false), 
-      spawns_loaded(false)
+      spawns_loaded(false),
+      collision_manager(nullptr) 
 {
-    std::cout << "[GameLoop] Constructor OK. Listo para gestionar múltiples carreras.\n";
+    std::cout << "[GameLoop] Constructor OK.\n";
 }
 
 GameLoop::~GameLoop() {
@@ -429,11 +430,88 @@ void GameLoop::procesar_comandos() {
         }
     }
 }
+void GameLoop::actualizar_fisica() {
+    float dt = SLEEP / 1000.0f; // Delta time en segundos
 
-void GameLoop::actualizar_fisica() { 
-    // Integración Box2D
-    // for (auto& [id, player] : players) { if (player->getCar()) player->getCar()->update(SLEEP/1000.0f); }
+    for (auto& [id, player] : players) {
+        Car* car = player->getCar();
+        if (!car || car->isDestroyed()) continue;
+
+        // 1. Obtener estado actual
+        float old_x = car->getX();
+        float old_y = car->getY();
+        // Nivel actual (necesitas agregar este campo a Player o Car, asumimos 0 por defecto o gestionado)
+        // Por ahora lo simulamos localmente o lo agregamos a la clase Car más adelante.
+        int current_level = 0; // TODO: Obtener del player->getLevel();
+
+        // 2. Pre-calcular siguiente posición basada en velocidad actual
+        // El método car->update() actualiza la posición interna. 
+        // Para integrar con colisiones, necesitamos separar "calcular movimiento" de "aplicar movimiento".
+        // Como Car::update ya modifica x/y, vamos a guardar el estado previo, dejar que update corra,
+        // y si hay colisión, revertir o corregir.
+        
+        car->update(dt); // El auto se mueve "ciegamente"
+        
+        float new_x = car->getX();
+        float new_y = car->getY();
+
+        // 3. Verificar colisión con el mapa
+        if (collision_manager) {
+            CollisionResult col = collision_manager->checkCollision(
+                (int)old_x, (int)old_y, current_level, (int)new_x, (int)new_y
+            );
+
+            if (col.is_wall) {
+                // ¡COLISIÓN!
+                // Revertir a la posición anterior
+                car->setPosition(old_x, old_y);
+                car->setColliding(true);
+
+                // Aplicar rebote simple (física arcade)
+                // V_new = V_old - 2 * (V_old . N) * N
+                float vx = car->getVelocityX();
+                float vy = car->getVelocityY();
+                
+                // Producto punto
+                float dot = vx * col.normal_x + vy * col.normal_y;
+                
+                // Factor de rebote (elasticidad), 0.5 rebota la mitad, 1.0 rebota todo
+                float elasticity = 0.5f; 
+
+                float new_vx = vx - (1.0f + elasticity) * dot * col.normal_x;
+                float new_vy = vy - (1.0f + elasticity) * dot * col.normal_y;
+
+                // Aplicar nueva velocidad
+                car->setVelocity(new_vx, new_vy);
+                
+                // Reducir un poco la velocidad por el impacto (fricción de choque)
+                float current_speed = car->getCurrentSpeed();
+                car->setCurrentSpeed(current_speed * 0.5f); // Pierde 50% de velocidad
+                
+                // Opcional: Daño por choque a alta velocidad
+                if (current_speed > 50.0f) {
+                    car->takeDamage(10.0f);
+                }
+
+            } else {
+                car->setColliding(false);
+                
+                // Manejo de rampas / cambio de nivel
+                // Si entra a una rampa, podríamos cambiar lógica de nivel para el futuro
+                if (col.is_on_ramp) {
+                    // Lógica simple: si voy rápido y es rampa, asumo que quiero cruzar
+                    // Aquí podrías implementar lógica más compleja de dirección
+                }
+            }
+        }
+        
+        // Sincronizar Player wrapper con Car
+        player->setPosition(car->getX(), car->getY());
+        player->setAngle(car->getAngle());
+        player->setSpeed(car->getCurrentSpeed());
+    }
 }
+
 void GameLoop::detectar_colisiones() { /* Collision logic here */ }
 
 void GameLoop::actualizar_estado_carrera() { /* Checkpoints logic here */ }
@@ -495,6 +573,43 @@ void GameLoop::load_spawn_points_for_current_race() {
 
 void GameLoop::reset_players_for_race() {
 
+      // 1. CARGAR COLLISION MANAGER PARA EL MAPA ACTUAL
+    // Construimos las rutas de las imágenes basándonos en la ciudad y nombre de carrera
+    // Se asume estructura: server_src/city_maps/City/Race.yaml
+    // Imágenes esperadas: server_src/city_maps/City/layers/camino.png, etc.
+    // O si están en el mismo yaml, las leemos de ahí.
+    
+    // Para simplificar y dado que usas una estructura como "ruta-1.yaml", 
+    // voy a intentar deducir las rutas o leerlas de un patrón común.
+    // AJUSTA ESTAS RUTAS SEGÚN TU ESTRUCTURA DE CARPETAS REAL.
+    
+    // Ejemplo basado en tu create_match_window:
+    // assets/img/map/layers/vice-city/camino.png
+    
+    // Normalizar nombre de ciudad para rutas (minusculas, guiones)
+    std::string city_clean = current_city_name; 
+    // Aquí deberías tener una función utilitaria para limpiar strings igual que en el cliente
+    // Por ahora asumo que viene limpia o uso una lógica simple:
+    std::transform(city_clean.begin(), city_clean.end(), city_clean.begin(), ::tolower);
+    std::replace(city_clean.begin(), city_clean.end(), ' ', '-');
+    std::replace(city_clean.begin(), city_clean.end(), '_', '-');
+
+    // Rutas relativas al ejecutable del servidor
+    std::string base_path = "assets/img/map/layers/" + city_clean + "/";
+    std::string path_camino = base_path + "camino.png";
+    std::string path_puentes = base_path + "puentes.png";
+    std::string path_rampas = base_path + "rampas.png"; // Opcional
+
+    std::cout << "[GameLoop] Cargando colisiones desde: " << base_path << std::endl;
+    
+    try {
+        collision_manager = std::make_unique<CollisionManager>(path_camino, path_puentes, path_rampas);
+    } catch (const std::exception& e) {
+        std::cerr << "[GameLoop] ⚠️ Error cargando CollisionManager: " << e.what() << std::endl;
+        std::cerr << "[GameLoop] -> Se jugará SIN colisiones de mapa." << std::endl;
+        collision_manager = nullptr;
+    }
+
     load_spawn_points_for_current_race();
     load_checkpoints_for_current_race();
     try {
@@ -504,6 +619,7 @@ void GameLoop::reset_players_for_race() {
         if (cfg["checkpoint_lookahead"]) checkpoint_lookahead = cfg["checkpoint_lookahead"].as<int>();
         if (cfg["checkpoint_debug_enabled"]) checkpoint_debug_enabled = cfg["checkpoint_debug_enabled"].as<bool>();
     } catch (...) {}
+
     player_next_checkpoint.clear();
     player_prev_pos.clear();
     if (!checkpoints.empty()) {

@@ -136,14 +136,14 @@ void GameRenderer::init_race(const std::string& yaml_path) {
             minimap_texture.reset();
         }
 
-        std::ifstream f(collision_file);
-        if (f.good()) {
-            collision_manager =
-                std::make_unique<CollisionManager>(collision_file, bridges_mask, ramps_file);
-        } else {
-            std::cerr << "[GameRenderer] ⚠️  No se encontró collision mask: " << collision_file
-                      << std::endl;
-        }
+        // std::ifstream f(collision_file);
+        // if (f.good()) {
+        //     collision_manager =
+        //         std::make_unique<CollisionManager>(collision_file, bridges_mask, ramps_file);
+        // } else {
+        //     std::cerr << "[GameRenderer] ⚠️  No se encontró collision mask: " << collision_file
+        //               << std::endl;
+        // }
 
         // Cargar checkpoints 
         load_checkpoints_from_yaml(yaml_path);

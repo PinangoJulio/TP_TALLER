@@ -8,7 +8,8 @@ target_sources(taller_common
     config.cpp
     lobby_protocol.cpp
     game_state.cpp
-
+    collision_manager.cpp
+    
     PUBLIC
     # .h files
     socket.h
@@ -22,5 +23,6 @@ target_sources(taller_common
     lobby_protocol.h
     game_protocol.h
     game_state.h
+    collision_manager.h
     #common_types.h
 )
