@@ -3,11 +3,10 @@
 
 #include <cstddef>
 #include <string>
+#include <box2d/box2d.h> 
 
-// FORWARD DECLARATIONS (en vez de #include <box2d/box2d.h>)
 struct b2BodyId;
 struct b2WorldId;
-
 
 /*
  * Car: Representa un auto con física y stats
@@ -39,9 +38,10 @@ private:
     float velocity_x;
     float velocity_y;
 
-    // ---- BOX2D v3 ----
-    void* physics_body_data; 
-    bool has_physics_body;
+    // ---- BOX2D v3 (CORREGIDO) ----
+    // Eliminamos physics_body_data y void* porque causaban errores.
+    // Usamos directamente el ID nativo de Box2D v3.
+    b2BodyId bodyId; 
     float car_size_px;
 
     // ---- ESTADO ----
@@ -124,8 +124,8 @@ public:
     void createPhysicsBody(void* world_id, float spawn_x_px, float spawn_y_px, float spawn_angle);
     void syncFromPhysics();
     void destroyPhysicsBody(void* world_id);
-    bool hasPhysicsBody() const { return has_physics_body; }
-    void* getPhysicsBodyData() { return physics_body_data; }
+    bool hasPhysicsBody() const { return B2_IS_NON_NULL(bodyId); }
+    b2BodyId getBodyId() { return this->bodyId; }
 
     // ---- RESET ----
     void reset();

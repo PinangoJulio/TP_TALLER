@@ -21,11 +21,13 @@
 #include "car.h"
 #include "player.h"
 #include "physics_constants.h"
+#include "map_loader.h"             
+#include "obstacle_manager.h"   
+#include "checkpoints.h"    
 
 #define NITRO_DURATION 12
-#define SLEEP          16 // Ticks de 16ms (~60 updates por segundo para movimiento fluido)
+#define SLEEP          16 // ~60 FPS
 
-// Forward declaration
 class Race;
 
 /*
@@ -77,54 +79,53 @@ class GameLoop : public Thread {
 private:
     // ---- ESTADO ----
     std::atomic<bool> is_running;
-    std::atomic<bool> match_finished;  // Todas las carreras completadas
-    
-    
+    std::atomic<bool> match_finished;
     std::atomic<bool> is_game_started;
 
     // ---- COMUNICACIÓN ----
-    Queue<ComandMatchDTO>& comandos;  // Comandos de jugadores (ACCELERATE, BRAKE, etc)
-    ClientMonitor& queues_players;    // Queues para broadcast a jugadores
+    Queue<ComandMatchDTO>& comandos;
+    ClientMonitor& queues_players;
 
     // ---- JUGADORES Y AUTOS ----
-    std::map<int, std::unique_ptr<Player>> players;  // player_id → Player (contiene Car)
+    std::map<int, std::unique_ptr<Player>> players;
     bool all_players_disconnected() const;
 
     // ---- CARRERAS (RONDAS) ----
-    std::vector<std::unique_ptr<Race>> races;  // Todas las carreras de la partida
-    size_t current_race_index;                 // Carrera actual (0-based)
-    std::atomic<bool> current_race_finished;   // Carrera actual terminada
+    std::vector<std::unique_ptr<Race>> races;
+    size_t current_race_index;
+    std::atomic<bool> current_race_finished;
 
     // ---- CONFIGURACIÓN CARRERA ACTUAL ----
     std::string current_map_yaml;
     std::string current_city_name;
     std::vector<std::tuple<float, float, float>> spawn_points;  // (x, y, angle)
     bool spawns_loaded;
+    std::map<int, int> player_laps;          
 
-    struct Checkpoint {
-        int id;
-        std::string type;  // "start", "normal", "finish"
-        float x, y;
-        float width, height;
-        float angle;       // grados
-    };
+
     std::vector<Checkpoint> checkpoints;
-    std::map<int, int> player_next_checkpoint;           // player_id → índice del próximo cp esperado
-    std::map<int, std::pair<float,float>> player_prev_pos; // posición previa por jugador
+    std::map<int, int> player_next_checkpoint;
+    std::map<int, std::pair<float,float>> player_prev_pos;
 
     float checkpoint_tol_base = 1.5f;
     float checkpoint_tol_finish = 3.0f;
     int checkpoint_lookahead = 3;
-    bool checkpoint_debug_enabled = true; // habilita prints de debug
+    bool checkpoint_debug_enabled = true;
 
     // ---- TIEMPOS Y RESULTADOS ----
     std::chrono::steady_clock::time_point race_start_time;
-
-    // Tiempos de finalización por carrera: race_index → (player_id → tiempo_ms)
     std::vector<std::map<int, uint32_t>> race_finish_times;
-
-    // Tabla general acumulada: player_id → tiempo_total_ms
     std::map<int, uint32_t> total_times;
+    std::map<int, uint32_t> player_lap_times;
+
+    // ---- BOX2D v3 ----
+    b2WorldId physics_world_id;
+    const float TIME_STEP = 1.0f / 60.0f;
+    const int32_t VELOCITY_ITERATIONS = 8;
+    const int32_t POSITION_ITERATIONS = 3;
+
+    MapLoader mapLoader;
+    ObstacleManager obstacleManager;
 
     // ---- MÉTODOS PRIVADOS ----
     void load_spawn_points_for_current_race();
@@ -151,16 +152,12 @@ private:
     void print_current_race_table() const;
     void print_total_standings() const;
 
-    b2WorldId physics_world_id;
-    bool physics_world_created;
-    const float TIME_STEP = 1.0f / 60.0f;
-    const int32_t VELOCITY_ITERATIONS = 8;
-    const int32_t POSITION_ITERATIONS = 3;
+    // ✅ NUEVO: Cargar mapa en Box2D
+    void load_map_for_current_race();
 
 public:
     GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues);
   
-    
     void start_game();
 
     // ---- CONFIGURACIÓN DE CARRERAS ----

@@ -8,12 +8,16 @@
 #include <thread>
 #include <utility>
 #include <yaml-cpp/yaml.h>
+#include <box2d/box2d.h>
 
 
 #include "../../common_src/config.h"
 #include "race.h"
 
-// 1. Inicializar is_game_started en false
+// ==========================================================
+// CONSTRUCTOR
+// ==========================================================
+
 GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues)
     : is_running(false), 
       match_finished(false), 
@@ -22,25 +26,33 @@ GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues)
       queues_players(queues),
       current_race_index(0), 
       current_race_finished(false), 
-      spawns_loaded(false),
-      physics_world_created(false)
+      spawns_loaded(false)
 {
 
     b2WorldDef worldDef = b2DefaultWorldDef();
-    worldDef.gravity = {0.0f, 0.0f};
+    worldDef.gravity = {0.0f, 0.0f}; // Sin gravedad (vista top-down)
 
     physics_world_id = b2CreateWorld(&worldDef);
-    physics_world_created = b2World_IsValid(physics_world_id);
 
-    std::cout << "[GameLoop] Constructor OK. Listo para gestionar múltiples carreras.\n";
+    if (b2World_IsValid(physics_world_id)) {
+        std::cout << "[GameLoop] Box2D World creado exitosamente\n";
+    }
+
+    std::cout << "[GameLoop] Constructor OK. Listo para gestionar carreras.\n";
 }
 
 GameLoop::~GameLoop() {
     is_running = false;
+    
+    //Para box2d
+    if (b2World_IsValid(physics_world_id)) {
+        b2DestroyWorld(physics_world_id);
+        std::cout << "[GameLoop] Box2D World destruido\n";
+    }
+    
     players.clear();
 }
 
-// 2. Implementación del método para desbloquear el loop
 void GameLoop::start_game() {
     std::cout << "[GameLoop] >>> SEÑAL DE INICIO RECIBIDA. Desbloqueando simulación.\n";
     is_game_started = true;
@@ -214,24 +226,26 @@ void GameLoop::run() {
 
     print_match_info();
 
-    // 🔧 CORRECCIÓN: Inicializar variables de mapa ANTES de resetear jugadores
+    // Inicializar variables de mapa ANTES de resetear jugadores
     if (!races.empty()) {
-        // 1. Obtener datos de la primera carrera
+        // Obtener datos de la primera carrera
         const auto& first_race = races[0];
         current_map_yaml = first_race->get_map_path();
         current_city_name = first_race->get_city_name();
         current_race_finished = false;
         
-        // 2. Resetear jugadores con las posiciones spawn del YAML
+        //Crear mapa box2d
+        load_map_for_current_race();
+
+        // Resetear jugadores con las posiciones spawn del YAML
         reset_players_for_race();
         
-        // 3. Marcar inicio oficial de tiempos
+        // Marcar inicio oficial de tiempos
         race_start_time = std::chrono::steady_clock::now();
         std::cout << "[GameLoop]   Cronómetro iniciado\n";
     }
     // Loop por cada carrera (ronda)
     while (is_running.load() && !match_finished.load() && current_race_index < races.size()) {
-
 
         auto next_frame = std::chrono::steady_clock::now();
         const auto frame_duration = std::chrono::milliseconds(SLEEP);  // 16ms = ~60 FPS
@@ -239,20 +253,15 @@ void GameLoop::run() {
         while (is_running.load() && !current_race_finished.load()) {
 
             procesar_comandos();
-
             actualizar_fisica();
             detectar_colisiones();
             actualizar_estado_carrera();
-
-          
             update_checkpoints();
 
             if (all_players_finished_race()) {
                 current_race_finished = true;
             }
-
             enviar_estado_a_jugadores();
-
           
             for (auto& [id, p] : players) {
                 player_prev_pos[id] = {p->getX(), p->getY()};
@@ -353,6 +362,7 @@ bool GameLoop::all_players_disconnected() const {
     return connected_count <= 1; // Terminar si queda 0 o 1 solo
 }
 
+/* sin box2d
 void GameLoop::procesar_comandos() {
     ComandMatchDTO comando;
     float delta_time = SLEEP / 1000.0f;
@@ -437,11 +447,94 @@ void GameLoop::procesar_comandos() {
             default: break;
         }
     }
+}*/
+
+//con box2d
+void GameLoop::procesar_comandos() {
+    ComandMatchDTO comando;
+    float delta_time = SLEEP / 1000.0f;
+
+    while (comandos.try_pop(comando)) {
+        auto it = players.find(comando.player_id);
+        if (it == players.end()) continue;
+
+        Player* player = it->second.get();
+        Car* car = player->getCar();
+        if (!car) continue;
+
+        switch (comando.command) {
+            case GameCommand::ACCELERATE: car->accelerate(delta_time * comando.speed_boost); break;
+            case GameCommand::BRAKE: car->brake(delta_time * comando.speed_boost); break;
+            case GameCommand::TURN_LEFT: car->turn_left(delta_time * comando.turn_intensity); break;
+            case GameCommand::TURN_RIGHT: car->turn_right(delta_time * comando.turn_intensity); break;
+
+            case GameCommand::MOVE_UP: car->move_up(delta_time); break;
+            case GameCommand::MOVE_DOWN: car->move_down(delta_time); break;
+            case GameCommand::MOVE_LEFT: car->move_left(delta_time); break;
+            case GameCommand::MOVE_RIGHT: car->move_right(delta_time); break;
+
+            case GameCommand::USE_NITRO: car->activateNitro(); break;
+            case GameCommand::DISCONNECT: player->disconnect(); break;
+            case GameCommand::STOP_ALL: car->setCurrentSpeed(0); car->setVelocity(0,0); break;
+
+            case GameCommand::CHEAT_INVINCIBLE: car->repair(1000.0f); break;
+            case GameCommand::CHEAT_MAX_SPEED: car->setCurrentSpeed(car->getMaxSpeed()); break;
+
+            case GameCommand::CHEAT_WIN_RACE: {
+                int finish_idx = -1;
+                for (size_t i = 0; i < checkpoints.size(); ++i) {
+                    if (checkpoints[i].type == "finish") { finish_idx = (int)i; break; }
+                }
+                if (finish_idx != -1) {
+                    const auto& cp_finish = checkpoints[finish_idx];
+                    player->setPosition(cp_finish.x, cp_finish.y);
+                    player->getCar()->setPosition(cp_finish.x, cp_finish.y);
+                    player->setCheckpoint(cp_finish.id);
+                    player_prev_pos[comando.player_id] = {cp_finish.x, cp_finish.y};
+
+                    mark_player_finished_with_time(comando.player_id, 1);
+                    player_next_checkpoint[comando.player_id] = std::min(finish_idx + 1, (int)checkpoints.size() - 1);
+
+                    auto now = std::chrono::steady_clock::now();
+                    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - race_start_time);
+                    uint32_t current_time_ms = static_cast<uint32_t>(elapsed.count());
+
+                    for (auto& [other_id, other_player] : players) {
+                        if (other_id == comando.player_id) continue;
+                        if (!other_player->isDisconnected()) {
+                            if (!other_player->isFinished()) {
+                                mark_player_finished_with_time(other_id, current_time_ms);
+                            }
+                        }
+                    }
+                } else {
+                    mark_player_finished_with_time(comando.player_id, 1);
+                    auto now = std::chrono::steady_clock::now();
+                    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - race_start_time);
+                    uint32_t current_time_ms = static_cast<uint32_t>(elapsed.count());
+
+                    for (auto& [other_id, other_player] : players) {
+                        if (other_id == comando.player_id) continue;
+                        if (!other_player->isDisconnected()) {
+                            if (!other_player->isFinished()) {
+                                mark_player_finished_with_time(other_id, current_time_ms);
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+
+            default: break;
+        }
+    }
 }
 
 void GameLoop::actualizar_fisica() { 
-    if (!physics_world_created) return;
+    //Sin box2d
+    //return;
     
+    //con box2d
     b2World_Step(physics_world_id, TIME_STEP, VELOCITY_ITERATIONS);
     
     // Sincronizar todos los autos
@@ -449,6 +542,9 @@ void GameLoop::actualizar_fisica() {
         Car* car = player->getCar();
         if (car && car->hasPhysicsBody()) {
             car->syncFromPhysics();
+
+            player->setPosition(car->getX(), car->getY());
+            player->setAngle(car->getAngle());
         }
     }
 }
@@ -469,7 +565,7 @@ GameState GameLoop::create_snapshot() {
         player_list.push_back(player_ptr.get());
     }
 
-    // Obtener tiempos de la carrera actual
+    //Datos de la carrera actual
     std::map<int, uint32_t> current_race_times;
     if (current_race_index < race_finish_times.size()) {
         current_race_times = race_finish_times[current_race_index];
@@ -504,13 +600,15 @@ void GameLoop::load_spawn_points_for_current_race() {
                 spawn_points.emplace_back(x, y, a);
             }
         } else {
-            std::cout << "[GameLoop]  No se encontraron spawn points en el YAML." << std::endl;
+            std::cout << "[GameLoop] No se encontraron spawn points en el YAML." << std::endl;
         }
     } catch (const std::exception& e) {
-        std::cerr << "[GameLoop]  Error cargando spawns de " << current_map_yaml << ": " << e.what() << std::endl;
+        std::cerr << "[GameLoop] Error cargando spawns: " << e.what() << std::endl;
     }
 }
 
+//Sin box2d
+/*
 void GameLoop::reset_players_for_race() {
     load_spawn_points_for_current_race();
     load_checkpoints_for_current_race();
@@ -557,18 +655,12 @@ void GameLoop::reset_players_for_race() {
             std::tie(x, y, a) = spawn_points[idx];
         }
         
-        // NUEVO: Crear cuerpo físico en Box2D (pasamos puntero al world_id)
-        if (physics_world_created) {
-            player->getCar()->createPhysicsBody(&physics_world_id, x, y, a);
-            std::cout << "[GameLoop]   Physics body created for player " << id << std::endl;
-        } else {
-            std::cerr << "[GameLoop]   WARNING: Physics world not created, using legacy positioning" << std::endl;
-            // Fallback: posicionamiento legacy
+      
             player->setPosition(x, y);
             player->setAngle(a);
             player->getCar()->setPosition(x, y);
             player->getCar()->setAngle(a);
-        }
+        
         
         player_prev_pos[id] = {x, y};
         
@@ -576,15 +668,113 @@ void GameLoop::reset_players_for_race() {
     }
     
     std::cout << "[GameLoop] <<< Reseteo completado con " << idx << " jugadores" << std::endl;
+}*/
+
+//con box2d
+void GameLoop::reset_players_for_race() {
+    load_spawn_points_for_current_race();
+    load_checkpoints_for_current_race();
+    
+    try {
+        YAML::Node cfg = YAML::LoadFile("config.yaml");
+        if (cfg["checkpoint_tolerance_base"]) checkpoint_tol_base = cfg["checkpoint_tolerance_base"].as<float>();
+        if (cfg["checkpoint_tolerance_finish"]) checkpoint_tol_finish = cfg["checkpoint_tolerance_finish"].as<float>();
+        if (cfg["checkpoint_lookahead"]) checkpoint_lookahead = cfg["checkpoint_lookahead"].as<int>();
+        if (cfg["checkpoint_debug_enabled"]) checkpoint_debug_enabled = cfg["checkpoint_debug_enabled"].as<bool>();
+    } catch (...) {}
+
+    // Limpieza de estados
+    player_next_checkpoint.clear();
+    player_prev_pos.clear();
+    
+    // Si agregaste player_laps en el .h como te dije antes:
+    player_laps.clear(); 
+    player_lap_times.clear(); 
+
+    if (!checkpoints.empty()) {
+        int first_idx = 0;
+        for (size_t i = 0; i < checkpoints.size(); ++i) {
+            if (checkpoints[i].type != "start") { first_idx = (int)i; break; }
+        }
+        for (auto& [pid, player] : players) {
+            player_next_checkpoint[pid] = first_idx;
+            player_laps[pid] = 1; // Reiniciar vueltas
+        }
+    } else {
+        std::cerr << "[GameLoop] ❌ ERROR CRÍTICO: No se cargaron checkpoints.\n";
+    }
+    
+    if (spawn_points.empty()) std::cerr << "[GameLoop] ⚠️ NO HAY SPAWN POINTS!\n";
+    
+    std::cout << "[GameLoop] >>> Reseteando jugadores...\n";
+    
+    size_t idx = 0;
+    for (auto& [id, player] : players) {
+        if (!player->getCar()) continue;
+        
+        player->resetForNewRace();
+        player->getCar()->reset();
+        
+        float x = 100.f, y = 100.f, a = 0.f;
+        if (idx < spawn_points.size()) {
+            std::tie(x, y, a) = spawn_points[idx];
+        }
+        
+            // 1. Usamos getBodyId()
+            b2BodyId existingBodyId = player->getCar()->getBodyId();
+
+            // 2. Verificamos si es válido con la macro de v3
+            if (B2_IS_NON_NULL(existingBodyId) && b2Body_IsValid(existingBodyId)) {
+                
+                // 3. Usamos funciones globales (API C) en lugar de métodos (clases)
+                b2Vec2 position = {x, y};
+                b2Rot rotation = b2MakeRot(a); // Convertir ángulo a rotación
+                
+                // Teletransporte
+                b2Body_SetTransform(existingBodyId, position, rotation);
+                
+                // Frenar en seco
+                b2Body_SetLinearVelocity(existingBodyId, {0.0f, 0.0f});
+                b2Body_SetAngularVelocity(existingBodyId, 0.0f);
+                
+                // Despertar cuerpo
+                b2Body_SetAwake(existingBodyId, true);
+                
+            } else {
+                
+                player->getCar()->createPhysicsBody(&physics_world_id, x, y, a);
+            }
+        
+        player_prev_pos[id] = {x, y};
+        idx++;
+    }
+    std::cout << "[GameLoop] <<< Reseteo completado.\n";
 }
 
-void GameLoop::start_current_race() {
+//sin box2d
+/*void GameLoop::start_current_race() {
     if (current_race_index < races.size()) {
         current_map_yaml = races[current_race_index]->get_map_path();
         current_city_name = races[current_race_index]->get_city_name();
         current_race_finished = false;
         race_start_time = std::chrono::steady_clock::now();
     }
+}*/
+
+//Con Box2d
+void GameLoop::start_current_race() {
+    if (current_race_index >= races.size()) {
+        std::cerr << "[GameLoop] ERROR: No hay más carreras\n";
+        return;
+    }
+    const auto& race = races[current_race_index];
+    current_map_yaml = race->get_map_path();
+    current_city_name = race->get_city_name();
+    current_race_finished = false;
+
+    load_map_for_current_race();
+
+    race_start_time = std::chrono::steady_clock::now();
 }
 
 void GameLoop::finish_current_race() {
@@ -606,6 +796,8 @@ void GameLoop::finish_current_race() {
             current_city_name = next_race->get_city_name();
             current_race_finished = false;
             
+            //Para box2d
+            load_map_for_current_race();
             reset_players_for_race();
             race_start_time = std::chrono::steady_clock::now();
         }
@@ -682,4 +874,21 @@ void GameLoop::print_total_standings() const {
 
 void GameLoop::print_match_info() const {
     std::cout << "Match info: " << players.size() << " players, " << races.size() << " races.\n";
+}
+
+void GameLoop::load_map_for_current_race() {
+    if (!b2World_IsValid(physics_world_id)) {
+        std::cerr << "[GameLoop] ERROR: Physics world no existe!\n";
+        return;
+    }
+    
+    std::cout << "[GameLoop]  Cargando mapa en Box2D: " << current_map_yaml << "\n";
+    
+    try {
+        mapLoader.load_map(physics_world_id, obstacleManager, current_map_yaml);
+        std::cout << "[GameLoop] Mapa cargado en física\n";
+        
+    } catch (const std::exception& e) {
+        std::cerr << "[GameLoop] ERROR cargando mapa: " << e.what() << "\n";
+    }
 }

@@ -4,8 +4,8 @@
 #include <mutex>
 #include <utility>
 
-#include "common_src/game_state.h"
-#include "common_src/queue.h"
+#include "../../common_src/game_state.h"
+#include "../../common_src/queue.h"
 
 class ClientMonitor {
     std::list<std::pair<Queue<GameState>&, int>> queues_list;  // recurso compartido
