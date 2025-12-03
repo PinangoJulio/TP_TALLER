@@ -41,8 +41,7 @@ int MatchesMonitor::create_match(int max_players, const std::string& host_name, 
   
     player_to_match[host_name] = match_id;
 
-    std::cout << "[MatchesMonitor]   Match created: ID=" << match_id << " Host=" << host_name
-              << " (player_id=" << player_id << ")" << std::endl;
+
 
     return match_id;
 }
@@ -51,10 +50,6 @@ bool MatchesMonitor::join_match(int match_id, const std::string& player_name, in
                                 Queue<GameState>& sender_message_queue) {
     std::lock_guard<std::mutex> lock(mtx);
 
-    std::cout << "[MatchesMonitor] join_match() called: player=" << player_name
-              << " (id=" << player_id << "), match_id=" << match_id << std::endl;
-
-    
     if (player_to_match.find(player_name) != player_to_match.end()) {
         std::cerr << "[MatchesMonitor] Player '" << player_name << "' is already in match "
                   << player_to_match[player_name] << std::endl;
@@ -63,24 +58,19 @@ bool MatchesMonitor::join_match(int match_id, const std::string& player_name, in
 
     auto it = matches.find(match_id);
     if (it == matches.end()) {
-        std::cerr << "[MatchesMonitor] Match " << match_id << " not found" << std::endl;
         return false;
     }
-
     auto& match = it->second;
 
     if (!match->can_player_join_match()) {
-        std::cerr << "[MatchesMonitor] Match " << match_id << " is full or already started"
-                  << std::endl;
+
         return false;
     }
 
     bool success = match->add_player(player_id, player_name, sender_message_queue);
-
     if (success) {
         player_to_match[player_name] = match_id;
-        std::cout << "[MatchesMonitor]   " << player_name << " (id=" << player_id
-                  << ") joined match " << match_id << std::endl;
+
     } else {
         std::cerr << "[MatchesMonitor]   Failed to add " << player_name << " to match " << match_id
                   << std::endl;
@@ -94,14 +84,10 @@ bool MatchesMonitor::leave_match(const std::string& player_name) {
 
     auto it = player_to_match.find(player_name);
     if (it == player_to_match.end()) {
-        std::cout << "[MatchesMonitor] Player '" << player_name << "' is not in any match"
-                  << std::endl;
         return false;
     }
 
     int match_id = it->second;
-
-  
     unregister_player_socket(match_id, player_name);
 
     // Eliminar del lookup
@@ -116,19 +102,14 @@ bool MatchesMonitor::leave_match(const std::string& player_name) {
 
     int player_id = match_it->second->get_player_id_by_name(player_name);
     if (player_id == -1) {
-        std::cerr << "[MatchesMonitor] Player '" << player_name << "' not found in match "
-                  << match_id << std::endl;
+
         return false;
     }
 
     // Eliminar del match
     match_it->second->remove_player(player_id);
-
-    std::cout << "[MatchesMonitor]   " << player_name << " left match " << match_id << std::endl;
-
    
     if (match_it->second->is_empty()) {
-        std::cout << "[MatchesMonitor] Match " << match_id << " is empty, deleting..." << std::endl;
         player_sockets.erase(match_id);
         matches.erase(match_it);
     }
@@ -149,7 +130,6 @@ bool MatchesMonitor::leave_match_by_id(int player_id, int match_id) {
 
     // Si quedó vacío, eliminar
     if (it->second->is_empty()) {
-        std::cout << "[MatchesMonitor] Match " << match_id << " está vacío, eliminándolo...\n";
         matches.erase(it);
     }
 
@@ -293,22 +273,15 @@ std::map<int, PlayerLobbyInfo> MatchesMonitor::get_match_players_snapshot(int ma
 void MatchesMonitor::register_player_socket(int match_id, const std::string& player_name,
                                             Socket& socket) {
     std::lock_guard<std::mutex> lock(mtx);
-
     player_sockets[match_id][player_name] = &socket;
 
-    std::cout << "[MatchesMonitor] Socket registered: " << player_name << " in match " << match_id
-              << std::endl;
 }
 
 void MatchesMonitor::unregister_player_socket(int match_id, const std::string& player_name) {
-    // ⚠️ NO hacer lock aquí porque puede ser llamado desde leave_match que ya tiene lock
 
     auto it = player_sockets.find(match_id);
     if (it != player_sockets.end()) {
         it->second.erase(player_name);
-
-        std::cout << "[MatchesMonitor] Socket unregistered: " << player_name << " from match "
-                  << match_id << std::endl;
 
         if (it->second.empty()) {
             player_sockets.erase(it);
@@ -322,19 +295,12 @@ void MatchesMonitor::broadcast_to_match(int match_id, const std::vector<uint8_t>
 
     auto it = player_sockets.find(match_id);
     if (it == player_sockets.end()) {
-        std::cout << "[MatchesMonitor] No hay sockets registrados para match " << match_id
-                  << std::endl;
         return;
     }
-
-    std::cout << "[MatchesMonitor] Broadcasting to match " << match_id
-              << " (excluding: " << (exclude_player.empty() ? "none" : exclude_player) << ")"
-              << std::endl;
 
     int sent_count = 0;
     for (const auto& [player_name, socket] : it->second) {
         if (player_name == exclude_player) {
-            std::cout << "[MatchesMonitor]   Skipping " << player_name << " (sender)" << std::endl;
             continue;
         }
 
@@ -345,7 +311,6 @@ void MatchesMonitor::broadcast_to_match(int match_id, const std::vector<uint8_t>
             }
 
             socket->sendall(buffer.data(), buffer.size());
-            std::cout << "[MatchesMonitor]   Sent to " << player_name << std::endl;
             sent_count++;
 
         } catch (const std::exception& e) {
@@ -354,8 +319,6 @@ void MatchesMonitor::broadcast_to_match(int match_id, const std::vector<uint8_t>
         }
     }
 
-    std::cout << "[MatchesMonitor] Broadcast completed: " << sent_count << " messages sent to match "
-              << match_id << std::endl;
 }
 
 // ============================================
@@ -371,7 +334,6 @@ bool MatchesMonitor::start_match(int match_id) {
         return false;
     }
 
-    std::cout << "[MatchesMonitor] Starting match " << match_id << "\n";
     it->second->start_match();
     return true;
 }
@@ -381,7 +343,6 @@ Queue<ComandMatchDTO>* MatchesMonitor::get_command_queue(int match_id) {
 
     auto it = matches.find(match_id);
     if (it == matches.end()) {
-        std::cerr << "[MatchesMonitor] Match " << match_id << " not found\n";
         return nullptr;
     }
 

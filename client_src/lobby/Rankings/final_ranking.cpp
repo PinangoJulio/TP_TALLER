@@ -10,6 +10,7 @@ FinalRankingWindow::FinalRankingWindow(QWidget *parent)
     setWindowTitle("Need for Speed 2D - Resultados Finales");
     setFixedSize(700, 700);
 
+    // Intentar cargar fuente custom, fallback a sistema si falla
     customFontId = QFontDatabase::addApplicationFont("assets/fonts/arcade-classic.ttf");
     
     backgroundImage.load("assets/img/misc/sunset.png"); 
@@ -54,14 +55,14 @@ void FinalRankingWindow::setupUI() {
     scrollArea->setWidgetResizable(true);
     scrollArea->viewport()->setStyleSheet("background: transparent;");
 
-    // ESTILO SCROLLBAR:
+    // ESTILO SCROLLBAR
     scrollArea->setStyleSheet(
         "QScrollArea { background: transparent; border: none; }"
         "QScrollBar:vertical {"
         "   border: none;"
         "   background: rgba(0, 0, 0, 150);"
         "   width: 10px;"
-        "   margin: 0px 0px 0px 0px;"
+        "   margin: 0px;"
         "   border-radius: 5px;"
         "}"
         "QScrollBar::handle:vertical {"
@@ -69,9 +70,7 @@ void FinalRankingWindow::setupUI() {
         "   min-height: 20px;"
         "   border-radius: 5px;"
         "}"
-        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {"
-        "   height: 0px;"
-        "}"
+        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }"
     );
 
     // Contenedor vertical dentro del scroll
@@ -79,13 +78,13 @@ void FinalRankingWindow::setupUI() {
     resultsContainer->setStyleSheet("background: transparent;");
     resultsLayout = new QVBoxLayout(resultsContainer);
     resultsLayout->setAlignment(Qt::AlignTop); 
-    resultsLayout->setSpacing(10); // Espacio entre tarjetas
+    resultsLayout->setSpacing(10); 
     resultsLayout->setContentsMargins(0, 0, 15, 0);
 
     scrollArea->setWidget(resultsContainer);
 
-    // --- BOTÓN VOLVER ---
-    backButton = new QPushButton("Volver al Lobby", this);
+    // --- BOTÓN VOLVER (O SALIR) ---
+    backButton = new QPushButton("Salir del Juego", this);
     if (customFontId != -1) {
         QFont btnFont = customFont;
         btnFont.setPointSize(16);
@@ -115,11 +114,10 @@ void FinalRankingWindow::setupUI() {
 }
 
 QWidget* FinalRankingWindow::createRankingCard(const PlayerResult& result) {
-   
     QWidget* card = new QWidget();
-    card->setFixedHeight(80); // chequear porque no sé si me gusta esta dimension
+    card->setFixedHeight(80);
 
-    // Definir colores según el ranking
+    // Colores según ranking
     QString borderColor = "white";
     QString rankColor = "white";
     QString bgColor = "rgba(0, 0, 0, 220)";
@@ -129,16 +127,15 @@ QWidget* FinalRankingWindow::createRankingCard(const PlayerResult& result) {
         rankColor = "#FFD700";
         bgColor = "rgba(50, 40, 0, 220)";
     } else if (result.rank == 2) {
-        borderColor = "#D4D4D4";
+        borderColor = "#D4D4D4"; // Plata
         rankColor = "#D4D4D4";
         bgColor = "rgba(73, 73, 74, 220)";
     } else if (result.rank == 3) {
-        borderColor = "#CD7F32";
+        borderColor = "#CD7F32"; // Bronce
         rankColor = "#CD7F32";
         bgColor = "rgba(75, 43, 10, 220)";
     }
 
-    // Estilo general de la tarjeta
     card->setStyleSheet(QString(
         "QWidget { "
         "   background-color: %1; "
@@ -147,11 +144,9 @@ QWidget* FinalRankingWindow::createRankingCard(const PlayerResult& result) {
         "}"
     ).arg(bgColor, borderColor));
 
-    // Layout horizontal para organizar: #Rank | Nombre | Auto | Tiempo
     QHBoxLayout* layout = new QHBoxLayout(card);
     layout->setContentsMargins(20, 10, 20, 10);
 
-    // Fuente
     QFont font;
     if (customFontId != -1) {
         font = QFont(QFontDatabase::applicationFontFamilies(customFontId).at(0));
@@ -164,7 +159,7 @@ QWidget* FinalRankingWindow::createRankingCard(const PlayerResult& result) {
     rankLbl->setStyleSheet(QString("color: %1; border: none; background: transparent;").arg(rankColor));
     rankLbl->setFixedWidth(60);
 
-    // 2. Información del Jugador (Nombre arriba, Auto abajo)
+    // 2. Info Jugador
     QWidget* infoWidget = new QWidget();
     infoWidget->setStyleSheet("border: none; background: transparent;");
     QVBoxLayout* infoLayout = new QVBoxLayout(infoWidget);
@@ -184,35 +179,31 @@ QWidget* FinalRankingWindow::createRankingCard(const PlayerResult& result) {
     infoLayout->addWidget(nameLbl);
     infoLayout->addWidget(carLbl);
 
-    // 3. Tiempo / Puntaje
+    // 3. Tiempo
     QLabel* timeLbl = new QLabel(result.totalTime);
     font.setPointSize(20);
     timeLbl->setFont(font);
     timeLbl->setStyleSheet("color: #00FF00; border: none; background: transparent;");
     timeLbl->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
-    // Agregar todo al layout principal
     layout->addWidget(rankLbl);
-    layout->addWidget(infoWidget, 1); // El 1 hace que este widget ocupe el espacio sobrante
+    layout->addWidget(infoWidget, 1);
     layout->addWidget(timeLbl);
 
     return card;
 }
 
 void FinalRankingWindow::setResults(const std::vector<PlayerResult>& results) {
-    // limpiar resultados anteriores
     QLayoutItem* item;
     while ((item = resultsLayout->takeAt(0)) != nullptr) {
         delete item->widget();
         delete item;
     }
 
-    //  nuevas tarjetas
     for (const auto& player : results) {
         QWidget* card = createRankingCard(player);
         resultsLayout->addWidget(card);
     }
-    
     resultsLayout->addStretch();
 }
 

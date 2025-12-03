@@ -16,15 +16,13 @@ Acceptor::Acceptor(const char* servicename)
       is_running(true),
       is_accepting(false)
 {
-    std::cout << "[Acceptor] Socket created on port " << servicename << std::endl;
 }
 
 
 void Acceptor::notify_shutdown_to_all_clients() {
     std::lock_guard<std::mutex> lock(clients_mutex);
     
-    std::cout << "[Acceptor] 📢 Notifying " << clients_connected.size() 
-              << " clients about shutdown..." << std::endl;
+
     
     // Crear mensaje de shutdown
     std::vector<uint8_t> shutdown_msg;
@@ -48,11 +46,8 @@ void Acceptor::notify_shutdown_to_all_clients() {
         }
     }
     
-    std::cout << "[Acceptor]   Shutdown notifications sent" << std::endl;
 
-    
     // Esto previene que los receivers procesen DISCONNECT después del shutdown
-    std::cout << "[Acceptor] 🛑 Stopping all client connections..." << std::endl;
     for (auto* client : clients_connected) {
         if (client) {
             try {
@@ -63,7 +58,6 @@ void Acceptor::notify_shutdown_to_all_clients() {
             }
         }
     }
-    std::cout << "[Acceptor]   All connections stopped" << std::endl;
 }
 
 
@@ -71,7 +65,6 @@ void Acceptor::close_socket() {
     try {
         socket.shutdown(SHUT_RDWR);
         socket.close();
-        std::cout << "[Acceptor]   Socket closed" << std::endl;
     } catch (const std::exception& e) {
         std::cerr << "[Acceptor] Error closing socket: " << e.what() << std::endl;
     }
@@ -84,12 +77,7 @@ void Acceptor::manage_clients_connections(MatchesMonitor& monitor) {
     
     std::lock_guard<std::mutex> lock(clients_mutex);  
     clients_connected.push_back(new_client);
-    
-    std::cout << "==================================================" << std::endl;
-    std::cout << "[Acceptor] New connection accepted" << std::endl;
-    std::cout << "           Client ID: " << client_counter << std::endl;
-    std::cout << "           Total clients: " << clients_connected.size() << std::endl;
-    std::cout << "==================================================" << std::endl;
+
 }
 
 void Acceptor::clear_disconnected_clients() {
@@ -99,13 +87,10 @@ void Acceptor::clear_disconnected_clients() {
 
     for (auto it = clients_connected.begin(); it != clients_connected.end();) {
         if (!(*it)->is_running()) {
-            int client_id = (*it)->get_id();
             (*it)->stop_connection();
             delete *it;
             it = clients_connected.erase(it);
 
-            std::cout << "[Acceptor] Client " << client_id 
-                      << " disconnected and cleaned up" << std::endl;
         } else {
             ++it;
         }
@@ -119,9 +104,6 @@ void Acceptor::clear_disconnected_clients() {
 
 void Acceptor::clear_all_connections() {
     std::lock_guard<std::mutex> lock(clients_mutex);  
-    
-    std::cout << "[Acceptor] Clearing all " << clients_connected.size() 
-              << " connections..." << std::endl;
 
     for (auto* ch : clients_connected) {
         ch->stop_connection();
@@ -129,11 +111,9 @@ void Acceptor::clear_all_connections() {
     }
     clients_connected.clear();
 
-    std::cout << "[Acceptor] All connections closed" << std::endl;
 }
 
 void Acceptor::stop_accepting() {
-    std::cout << "[Acceptor] Stop signal received" << std::endl;
     is_running = false;
     is_accepting = false;
 }
@@ -153,12 +133,10 @@ void Acceptor::run() {
         }
     }
 
-    std::cout << "[Acceptor] Thread stopped" << std::endl;
 }
 
 void Acceptor::stop() {
-    std::cout << "[Acceptor] 🛑 SHUTDOWN: Stopping acceptor..." << std::endl;
-    
+
     is_running = false;
     is_accepting = false;
     
@@ -167,8 +145,7 @@ void Acceptor::stop() {
 
 
 Acceptor::~Acceptor() {
-    std::cout << "[Acceptor] Destructor called" << std::endl;
-    
+
     // No llamar a stop() si ya se llamó
     if (is_running) {
         stop();
@@ -187,6 +164,5 @@ Acceptor::~Acceptor() {
         }
     }
     clients_connected.clear();
-    
-    std::cout << "[Acceptor]   Destructor completed" << std::endl;
+
 }

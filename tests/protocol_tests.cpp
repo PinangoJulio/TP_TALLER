@@ -946,6 +946,7 @@ TEST(GameSnapshotProtocolTest, SendAndReceiveSnapshotBasic) {
     p1.health = 75.0f; p1.nitro_amount = 50.0f; p1.nitro_active = true;
     p1.completed_laps = 1; p1.current_checkpoint = 2; p1.position_in_race = 3;
     p1.race_time_ms = 120000;
+    p1.total_time_ms = 120000;
     p1.race_finished = false; p1.is_alive = true; p1.disconnected = false;
     sent.players.push_back(p1);
 
@@ -1065,6 +1066,7 @@ TEST(GameSnapshotProtocolTest, SendAndReceiveSnapshotMultiplePlayers) {
         p.health = 100; p.nitro_amount = 0; p.nitro_active = false;
         p.completed_laps = 0; p.current_checkpoint = 0; p.position_in_race = i+1;
         p.race_time_ms = 0;
+        p.total_time_ms = 0;
         p.race_finished = false; p.is_alive = true; p.disconnected = false;
         sent.players.push_back(p);
     }
@@ -1161,7 +1163,7 @@ TEST(GameSnapshotProtocolTest, SendAndReceiveSnapshotMultiplePlayers) {
     p.pos_x = 10.0f; p.pos_y = 20.0f; p.angle = 0.0f; p.speed = 0.0f;
     p.velocity_x = 0; p.velocity_y = 0; p.health = 80; p.nitro_amount = 0;
     p.completed_laps = 0; p.current_checkpoint = 0; p.position_in_race = 1;
-    p.race_time_ms = 0; p.race_finished = false; p.is_alive = true; p.disconnected = false;
+    p.race_time_ms = 0; p.total_time_ms = 0; p.race_finished = false; p.is_alive = true; p.disconnected = false;
     sent.players.push_back(p);
 
     for (int i = 0; i < expected_checkpoints; ++i) {

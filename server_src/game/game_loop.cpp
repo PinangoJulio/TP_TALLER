@@ -386,31 +386,39 @@ void GameLoop::procesar_comandos() {
                     player->setCheckpoint(cp_finish.id);
                     player_prev_pos[comando.player_id] = {cp_finish.x, cp_finish.y};
 
-                    // Ganador por cheat: tiempo 0
-                    mark_player_finished_with_time(comando.player_id, 0);
+                    // Ganador por cheat: tiempo muy bajo (1ms) para identificarlo
+                    mark_player_finished_with_time(comando.player_id, 1);
                     player_next_checkpoint[comando.player_id] = std::min(finish_idx + 1, (int)checkpoints.size() - 1);
 
-                    // Cerrar carrera: marcar tiempos reales actuales para el resto
+                    // Cerrar carrera: marcar tiempos para jugadores que NO terminaron
                     auto now = std::chrono::steady_clock::now();
                     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - race_start_time);
-                    uint32_t t_ms = static_cast<uint32_t>(elapsed.count());
+                    uint32_t current_time_ms = static_cast<uint32_t>(elapsed.count());
+
                     for (auto& [other_id, other_player] : players) {
                         if (other_id == comando.player_id) continue;
-                        if (!other_player->isFinished() && !other_player->isDisconnected()) {
-                            mark_player_finished_with_time(other_id, t_ms);
+                        if (!other_player->isDisconnected()) {
+                            // Solo marcar si NO ha terminado aún (para preservar tiempos reales)
+                            if (!other_player->isFinished()) {
+                                mark_player_finished_with_time(other_id, current_time_ms);
+                            }
+                            // Los que ya terminaron mantienen su tiempo original
                         }
                     }
                     // El loop principal detectará all_players_finished_race() y cerrará la carrera
                 } else {
                     // Sin finish, aplicar mismo criterio
-                    mark_player_finished_with_time(comando.player_id, 0);
+                    mark_player_finished_with_time(comando.player_id, 1);
                     auto now = std::chrono::steady_clock::now();
                     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - race_start_time);
-                    uint32_t t_ms = static_cast<uint32_t>(elapsed.count());
+                    uint32_t current_time_ms = static_cast<uint32_t>(elapsed.count());
+
                     for (auto& [other_id, other_player] : players) {
                         if (other_id == comando.player_id) continue;
-                        if (!other_player->isFinished() && !other_player->isDisconnected()) {
-                            mark_player_finished_with_time(other_id, t_ms);
+                        if (!other_player->isDisconnected()) {
+                            if (!other_player->isFinished()) {
+                                mark_player_finished_with_time(other_id, current_time_ms);
+                            }
                         }
                     }
                 }
@@ -442,7 +450,15 @@ GameState GameLoop::create_snapshot() {
     for (const auto& [id, player_ptr] : players) {
         player_list.push_back(player_ptr.get());
     }
-    return GameState(player_list, current_city_name, current_map_yaml, is_running.load());
+
+    // Obtener tiempos de la carrera actual
+    std::map<int, uint32_t> current_race_times;
+    if (current_race_index < race_finish_times.size()) {
+        current_race_times = race_finish_times[current_race_index];
+    }
+
+    return GameState(player_list, current_city_name, current_map_yaml, is_running.load(),
+                     current_race_times, total_times);
 }
 
 void GameLoop::add_race(const std::string& city, const std::string& yaml_path) {

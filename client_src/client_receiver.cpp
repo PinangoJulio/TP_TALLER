@@ -13,7 +13,6 @@ ClientReceiver::ClientReceiver(ClientProtocol& protocol, Queue<GameState>& queue
                 game_state_snapshot = protocol.receive_snapshot();
     
                 if (game_state_snapshot.players.empty()) {
-                    std::cout << "[ClientReceiver] Snapshot vacío recibido, esperando..." << std::endl;
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                     continue;
                 }
@@ -32,8 +31,7 @@ ClientReceiver::ClientReceiver(ClientProtocol& protocol, Queue<GameState>& queue
 
                     snapshots_queue.close();
                     this->stop();
-                    
-                    // ✅ Re-lanzar la excepción para que Client::start() la capture
+
                     throw;
                 }
                 
