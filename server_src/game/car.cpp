@@ -95,16 +95,18 @@ void Car::rechargeNitro(float amount) {
 // ==========================================================
 // C++
 void Car::update(float delta_time) {
+    (void)delta_time; //esto va solo si se usa box2d, porque no iria el otro codigo
     if (is_destroyed)
         return;
 
-    // recalcular componentes de velocidad por si no se actualizan en accelerate/brake
+    /*
+    // --- LÓGICA LEGACY (Solo se ejecuta si NO hay Box2D) ---
     velocity_x = current_speed * std::cos(angle);
     velocity_y = current_speed * std::sin(angle);
 
-    // integrar posición
     x += velocity_x * delta_time;
     y += velocity_y * delta_time;
+    */
 }
 
 void Car::accelerate(float delta_time) {
@@ -118,6 +120,24 @@ void Car::accelerate(float delta_time) {
         nitro_amount = std::max(0.0f, nitro_amount - (20.0f * delta_time));
         if (nitro_amount <= 0) {
             deactivateNitro();
+        }
+    }
+
+    //Con Box2d
+    velocity_x = current_speed * std::cos(angle);
+    velocity_y = current_speed * std::sin(angle);
+
+    if (has_physics_body && physics_body_data) {
+        b2BodyId bodyId = *static_cast<b2BodyId*>(physics_body_data);
+        if (b2Body_IsValid(bodyId)) {
+            // Convertir velocidad de píxeles/seg a metros/seg
+            float vx_m = pixelsToMeters(velocity_x);
+            float vy_m = pixelsToMeters(velocity_y);
+            b2Vec2 vel = {vx_m, vy_m};
+            
+            b2Body_SetLinearVelocity(bodyId, vel);
+            
+            b2Body_SetAwake(bodyId, true);
         }
     }
 
@@ -298,6 +318,8 @@ void Car::apply_friction(float delta_time) {
     }
 }
 
+//Turn left y right sin box2d
+/*
 void Car::turn_left(float delta_time) {
     if (is_destroyed || current_speed < 5.0f)
         return;  // No girar si está muy lento
@@ -324,7 +346,7 @@ void Car::turn_right(float delta_time) {
         angle += 2.0f * M_PI;
     while (angle >= 2.0f * M_PI)
         angle -= 2.0f * M_PI;
-}
+}*/
 
 // resetear para una nueva carrera
 void Car::reset() {
@@ -348,6 +370,87 @@ void Car::reset() {
 // MÉTODOS BOX2D V3
 // ============================================
 
+// Turn aplicando box2d
+void Car::turn_left(float delta_time) {
+    // 1. Validaciones básicas (igual que antes)
+    if (is_destroyed || current_speed < 1.0f) // Bajé un poco el límite para que sea más responsivo
+        return;
+
+    // 2. Calcular nuevo ángulo
+    float turn_rate = handling * delta_time;
+    angle -= turn_rate;
+
+    // Normalizar ángulo (Matemática básica)
+    while (angle < 0) angle += 2.0f * M_PI;
+    while (angle >= 2.0f * M_PI) angle -= 2.0f * M_PI;
+
+    
+        b2BodyId bodyId = *static_cast<b2BodyId*>(physics_body_data);
+        
+        if (b2Body_IsValid(bodyId)) {
+            // A) Rotar el cuerpo físico en el mundo
+            // Obtenemos la posición actual para no moverlo, solo rotarlo
+            b2Vec2 position = b2Body_GetPosition(bodyId);
+            b2Rot newRotation = b2MakeRot(angle);
+            b2Body_SetTransform(bodyId, position, newRotation);
+
+            // B) "Agarre de neumáticos": Redirigir la velocidad actual al nuevo ángulo
+            // Si no haces esto, el auto gira pero sigue resbalando hacia la dirección vieja (Drift infinito)
+            
+            // Calculamos el vector de dirección basado en el NUEVO ángulo
+            float vx_new = current_speed * std::cos(angle);
+            float vy_new = current_speed * std::sin(angle);
+            
+            // Convertimos a Metros para Box2D
+            b2Vec2 velocity_vector = {
+                pixelsToMeters(vx_new), 
+                pixelsToMeters(vy_new)
+            };
+
+            // Aplicamos la nueva velocidad redirigida
+            b2Body_SetLinearVelocity(bodyId, velocity_vector);
+            
+            // Despertar al cuerpo
+            b2Body_SetAwake(bodyId, true);
+        }
+
+}
+
+void Car::turn_right(float delta_time) {
+    if (is_destroyed || current_speed < 1.0f)
+        return;
+
+    float turn_rate = handling * delta_time;
+    angle += turn_rate;
+
+    // Normalizar ángulo
+    while (angle < 0) angle += 2.0f * M_PI;
+    while (angle >= 2.0f * M_PI) angle -= 2.0f * M_PI;
+
+    // --- BOX2D LOGIC ---
+    if (has_physics_body && physics_body_data) {
+        b2BodyId bodyId = *static_cast<b2BodyId*>(physics_body_data);
+        
+        if (b2Body_IsValid(bodyId)) {
+            // A) Rotar cuerpo
+            b2Vec2 position = b2Body_GetPosition(bodyId);
+            b2Rot newRotation = b2MakeRot(angle);
+            b2Body_SetTransform(bodyId, position, newRotation);
+
+            // B) Redirigir velocidad (Grip)
+            float vx_new = current_speed * std::cos(angle);
+            float vy_new = current_speed * std::sin(angle);
+            
+            b2Vec2 velocity_vector = {
+                pixelsToMeters(vx_new), 
+                pixelsToMeters(vy_new)
+            };
+
+            b2Body_SetLinearVelocity(bodyId, velocity_vector);
+            b2Body_SetAwake(bodyId, true);
+        }
+    }
+}
 void Car::createPhysicsBody(void* world_id_ptr, float spawn_x_px, float spawn_y_px, float spawn_angle) {
     if (!world_id_ptr) {
         std::cerr << "[Car] ERROR: Null world ID!" << std::endl;

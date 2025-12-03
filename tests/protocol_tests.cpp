@@ -946,6 +946,7 @@ TEST(GameSnapshotProtocolTest, SendAndReceiveSnapshotBasic) {
     p1.health = 75.0f; p1.nitro_amount = 50.0f; p1.nitro_active = true;
     p1.completed_laps = 1; p1.current_checkpoint = 2; p1.position_in_race = 3;
     p1.race_time_ms = 120000;
+    p1.total_time_ms = 120000;
     p1.race_finished = false; p1.is_alive = true; p1.disconnected = false;
     sent.players.push_back(p1);
 
@@ -1065,6 +1066,7 @@ TEST(GameSnapshotProtocolTest, SendAndReceiveSnapshotMultiplePlayers) {
         p.health = 100; p.nitro_amount = 0; p.nitro_active = false;
         p.completed_laps = 0; p.current_checkpoint = 0; p.position_in_race = i+1;
         p.race_time_ms = 0;
+        p.total_time_ms = 0;
         p.race_finished = false; p.is_alive = true; p.disconnected = false;
         sent.players.push_back(p);
     }
@@ -1161,7 +1163,7 @@ TEST(GameSnapshotProtocolTest, SendAndReceiveSnapshotMultiplePlayers) {
     p.pos_x = 10.0f; p.pos_y = 20.0f; p.angle = 0.0f; p.speed = 0.0f;
     p.velocity_x = 0; p.velocity_y = 0; p.health = 80; p.nitro_amount = 0;
     p.completed_laps = 0; p.current_checkpoint = 0; p.position_in_race = 1;
-    p.race_time_ms = 0; p.race_finished = false; p.is_alive = true; p.disconnected = false;
+    p.race_time_ms = 0; p.total_time_ms = 0; p.race_finished = false; p.is_alive = true; p.disconnected = false;
     sent.players.push_back(p);
 
     for (int i = 0; i < expected_checkpoints; ++i) {
@@ -1211,3 +1213,484 @@ TEST(GameSnapshotProtocolTest, SendAndReceiveSnapshotMultiplePlayers) {
     client_thread.join();
     server_thread.join();
 }*/
+
+// ============================================
+// TESTS ADICIONALES PARA SNAPSHOT Y GAMESTATE
+// ============================================
+
+TEST(GameStateSnapshotTest, EmptySnapshotSerialization) {
+    GameState sent;
+    sent.race_info.status = MatchStatus::IN_PROGRESS;
+    sent.race_info.remaining_time_ms = 300000;
+    sent.race_current_info.city = "TestCity";
+    sent.race_current_info.race_name = "TestRace";
+    sent.race_current_info.total_laps = 1;
+    sent.race_current_info.total_checkpoints = 0;
+
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+        ServerProtocol sp(client_conn);
+        EXPECT_TRUE(sp.send_snapshot(sent));
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        ClientProtocol cp(kHost, kPort);
+        GameState received = cp.receive_snapshot();
+
+        EXPECT_EQ(received.race_info.status, sent.race_info.status);
+        EXPECT_EQ(received.race_info.remaining_time_ms, sent.race_info.remaining_time_ms);
+        EXPECT_EQ(received.players.size(), 0u);
+        EXPECT_EQ(received.npcs.size(), 0u);
+        EXPECT_EQ(received.events.size(), 0u);
+        EXPECT_EQ(received.checkpoints.size(), 0u);
+        EXPECT_EQ(received.hints.size(), 0u);
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+TEST(GameStateSnapshotTest, SinglePlayerSnapshot) {
+    GameState sent;
+    sent.race_info.status = MatchStatus::IN_PROGRESS;
+    sent.race_info.remaining_time_ms = 500000;
+    sent.race_info.race_number = 1;
+    sent.race_info.total_races = 3;
+
+    InfoPlayer p;
+    p.player_id = 42;
+    p.username = "TestPlayer";
+    p.car_name = "Turbo";
+    p.car_type = "Sport";
+    p.pos_x = 100.5f;
+    p.pos_y = 200.7f;
+    p.angle = 1.57f;  // 90 grados
+    p.speed = 120.0f;
+    p.velocity_x = 50.0f;
+    p.velocity_y = 100.0f;
+    p.health = 85;
+    p.nitro_amount = 60;
+    p.completed_laps = 2;
+    p.current_checkpoint = 5;
+    p.position_in_race = 1;
+    p.race_time_ms = 45000;
+    p.total_time_ms = 90000;
+    p.race_finished = false;
+    p.is_alive = true;
+    p.disconnected = false;
+
+    sent.players.push_back(p);
+    sent.race_current_info.city = "TestCity";
+    sent.race_current_info.race_name = "TestRace";
+    sent.race_current_info.total_laps = 3;
+    sent.race_current_info.total_checkpoints = 10;
+
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+        ServerProtocol sp(client_conn);
+        EXPECT_TRUE(sp.send_snapshot(sent));
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        ClientProtocol cp(kHost, kPort);
+        GameState received = cp.receive_snapshot();
+
+        ASSERT_EQ(received.players.size(), 1u);
+        const auto& rp = received.players[0];
+
+        EXPECT_EQ(rp.player_id, p.player_id);
+        EXPECT_EQ(rp.username, p.username);
+        EXPECT_EQ(rp.car_name, p.car_name);
+        EXPECT_EQ(rp.car_type, p.car_type);
+        EXPECT_FLOAT_EQ(rp.pos_x, p.pos_x);
+        EXPECT_FLOAT_EQ(rp.pos_y, p.pos_y);
+        EXPECT_FLOAT_EQ(rp.angle, p.angle);
+        EXPECT_FLOAT_EQ(rp.speed, p.speed);
+        EXPECT_FLOAT_EQ(rp.velocity_x, p.velocity_x);
+        EXPECT_FLOAT_EQ(rp.velocity_y, p.velocity_y);
+        EXPECT_EQ(rp.health, p.health);
+        EXPECT_EQ(rp.nitro_amount, p.nitro_amount);
+        EXPECT_EQ(rp.completed_laps, p.completed_laps);
+        EXPECT_EQ(rp.current_checkpoint, p.current_checkpoint);
+        EXPECT_EQ(rp.position_in_race, p.position_in_race);
+        EXPECT_EQ(rp.race_time_ms, p.race_time_ms);
+        EXPECT_EQ(rp.total_time_ms, p.total_time_ms);
+        EXPECT_EQ(rp.race_finished, p.race_finished);
+        EXPECT_EQ(rp.is_alive, p.is_alive);
+        EXPECT_EQ(rp.disconnected, p.disconnected);
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+TEST(GameStateSnapshotTest, MultiplePlayersSnapshot) {
+    GameState sent;
+    sent.race_info.status = MatchStatus::IN_PROGRESS;
+    sent.race_info.remaining_time_ms = 450000;
+    sent.race_info.race_number = 2;
+    sent.race_info.total_races = 3;
+
+    // Agregar 5 jugadores con diferentes estados
+    for (int i = 0; i < 5; ++i) {
+        InfoPlayer p;
+        p.player_id = i + 1;
+        p.username = "Player" + std::to_string(i + 1);
+        p.car_name = "Car" + std::to_string(i + 1);
+        p.car_type = (i % 2 == 0) ? "Sport" : "Truck";
+        p.pos_x = 100.0f * i;
+        p.pos_y = 200.0f * i;
+        p.angle = 0.5f * i;
+        p.speed = 50.0f + (i * 10.0f);
+        p.velocity_x = 25.0f * i;
+        p.velocity_y = 30.0f * i;
+        p.health = 100 - (i * 5);
+        p.nitro_amount = 50 + (i * 10);
+        p.completed_laps = i;
+        p.current_checkpoint = i * 2;
+        p.position_in_race = i + 1;
+        p.race_time_ms = 10000 * (i + 1);
+        p.total_time_ms = 20000 * (i + 1);
+        p.race_finished = (i == 4);
+        p.is_alive = (i != 2);  // Player 3 está muerto
+        p.disconnected = (i == 3);  // Player 4 desconectado
+
+        sent.players.push_back(p);
+    }
+
+    sent.race_current_info.city = "MultiCity";
+    sent.race_current_info.race_name = "MultiRace";
+    sent.race_current_info.total_laps = 5;
+    sent.race_current_info.total_checkpoints = 20;
+
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+        ServerProtocol sp(client_conn);
+        EXPECT_TRUE(sp.send_snapshot(sent));
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        ClientProtocol cp(kHost, kPort);
+        GameState received = cp.receive_snapshot();
+
+        ASSERT_EQ(received.players.size(), 5u);
+
+        for (size_t i = 0; i < 5; ++i) {
+            const auto& rp = received.players[i];
+            EXPECT_EQ(rp.player_id, i + 1);
+            EXPECT_EQ(rp.username, "Player" + std::to_string(i + 1));
+            EXPECT_EQ(rp.position_in_race, i + 1);
+            EXPECT_EQ(rp.race_finished, (i == 4));
+            EXPECT_EQ(rp.is_alive, (i != 2));
+            EXPECT_EQ(rp.disconnected, (i == 3));
+        }
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+TEST(GameStateSnapshotTest, SnapshotWithCheckpoints) {
+    GameState sent;
+    sent.race_info.status = MatchStatus::IN_PROGRESS;
+    sent.race_info.remaining_time_ms = 400000;
+
+    // Agregar 10 checkpoints
+    for (int i = 0; i < 10; ++i) {
+        CheckpointInfo cp;
+        cp.id = 100 + i;
+        cp.pos_x = 500.0f + (i * 50.0f);
+        cp.pos_y = 300.0f + (i * 30.0f);
+        cp.width = 40.0f;
+        cp.angle = 0.0f;
+        cp.is_start = (i == 0);
+        cp.is_finish = (i == 9);
+
+        sent.checkpoints.push_back(cp);
+    }
+
+    sent.race_current_info.city = "CPCity";
+    sent.race_current_info.race_name = "CPRace";
+    sent.race_current_info.total_laps = 1;
+    sent.race_current_info.total_checkpoints = 10;
+
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+        ServerProtocol sp(client_conn);
+        EXPECT_TRUE(sp.send_snapshot(sent));
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        ClientProtocol cp(kHost, kPort);
+        GameState received = cp.receive_snapshot();
+
+        ASSERT_EQ(received.checkpoints.size(), 10u);
+
+        for (size_t i = 0; i < 10; ++i) {
+            const auto& rcp = received.checkpoints[i];
+            EXPECT_EQ(rcp.id, 100 + i);
+            EXPECT_FLOAT_EQ(rcp.pos_x, 500.0f + (i * 50.0f));
+            EXPECT_FLOAT_EQ(rcp.pos_y, 300.0f + (i * 30.0f));
+            EXPECT_FLOAT_EQ(rcp.width, 40.0f);
+            EXPECT_EQ(rcp.is_start, (i == 0));
+            EXPECT_EQ(rcp.is_finish, (i == 9));
+        }
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+
+
+
+TEST(GameStateSnapshotTest, SnapshotWithEvents) {
+    GameState sent;
+    sent.race_info.status = MatchStatus::IN_PROGRESS;
+    sent.race_info.remaining_time_ms = 250000;
+
+    // Agregar diferentes tipos de eventos
+    GameEvent explosion;
+    explosion.type = GameEvent::EXPLOSION;
+    explosion.player_id = 1;
+    explosion.pos_x = 150.0f;
+    explosion.pos_y = 250.0f;
+    sent.events.push_back(explosion);
+
+    GameEvent collision;
+    collision.type = GameEvent::HEAVY_COLLISION;
+    collision.player_id = 2;
+    collision.pos_x = 300.0f;
+    collision.pos_y = 400.0f;
+    sent.events.push_back(collision);
+
+    GameEvent checkpoint;
+    checkpoint.type = GameEvent::CHECKPOINT_REACHED;
+    checkpoint.player_id = 3;
+    checkpoint.pos_x = 500.0f;
+    checkpoint.pos_y = 600.0f;
+    sent.events.push_back(checkpoint);
+
+    sent.race_current_info.city = "EventCity";
+    sent.race_current_info.race_name = "EventRace";
+    sent.race_current_info.total_laps = 1;
+    sent.race_current_info.total_checkpoints = 0;
+
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+        ServerProtocol sp(client_conn);
+        EXPECT_TRUE(sp.send_snapshot(sent));
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        ClientProtocol cp(kHost, kPort);
+        GameState received = cp.receive_snapshot();
+
+        ASSERT_EQ(received.events.size(), 3u);
+
+        EXPECT_EQ(received.events[0].type, GameEvent::EXPLOSION);
+        EXPECT_EQ(received.events[0].player_id, 1);
+        EXPECT_FLOAT_EQ(received.events[0].pos_x, 150.0f);
+
+        EXPECT_EQ(received.events[1].type, GameEvent::HEAVY_COLLISION);
+        EXPECT_EQ(received.events[1].player_id, 2);
+
+        EXPECT_EQ(received.events[2].type, GameEvent::CHECKPOINT_REACHED);
+        EXPECT_EQ(received.events[2].player_id, 3);
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+
+TEST(GameStateSnapshotTest, SnapshotWithDifferentRaceStatuses) {
+    // Test con diferentes estados de carrera
+    std::vector<MatchStatus> race_statuses = {
+        MatchStatus::WAITING_FOR_PLAYERS,
+        MatchStatus::IN_PROGRESS,
+        MatchStatus::FINISHED
+    };
+
+    for (auto status : race_statuses) {
+        GameState sent;
+        sent.race_info.status = status;
+        sent.race_info.remaining_time_ms = 100000;
+        sent.race_current_info.city = "StatusCity";
+        sent.race_current_info.race_name = "StatusRace";
+        sent.race_current_info.total_laps = 1;
+        sent.race_current_info.total_checkpoints = 0;
+
+        std::thread server_thread([&]() {
+            Socket server_socket(kPort);
+            Socket client_conn = server_socket.accept();
+            ServerProtocol sp(client_conn);
+            EXPECT_TRUE(sp.send_snapshot(sent));
+        });
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+        std::thread client_thread([&, status]() {
+            ClientProtocol cp(kHost, kPort);
+            GameState received = cp.receive_snapshot();
+
+            EXPECT_EQ(received.race_info.status, status);
+        });
+
+        client_thread.join();
+        server_thread.join();
+
+        // Pequeña pausa entre tests
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+}
+
+TEST(GameStateSnapshotTest, SnapshotWithMaxPlayers) {
+    GameState sent;
+    sent.race_info.status = MatchStatus::IN_PROGRESS;
+    sent.race_info.remaining_time_ms = 500000;
+    sent.race_info.race_number = 1;
+    sent.race_info.total_races = 3;
+
+    // Agregar máximo de jugadores (8)
+    for (int i = 0; i < MAX_PLAYERS; ++i) {
+        InfoPlayer p;
+        p.player_id = i + 1;
+        p.username = "MaxPlayer" + std::to_string(i + 1);
+        p.car_name = "MaxCar" + std::to_string(i + 1);
+        p.car_type = (i % 3 == 0) ? "Sport" : (i % 3 == 1) ? "Truck" : "Bike";
+        p.pos_x = 100.0f * i;
+        p.pos_y = 200.0f * i;
+        p.angle = 0.5f * i;
+        p.speed = 80.0f + (i * 5.0f);
+        p.velocity_x = 40.0f;
+        p.velocity_y = 40.0f;
+        p.health = 100 - (i * 10);
+        p.nitro_amount = 100 - (i * 12);
+        p.completed_laps = i / 2;
+        p.current_checkpoint = i;
+        p.position_in_race = i + 1;
+        p.race_time_ms = 5000 * (i + 1);
+        p.total_time_ms = 10000 * (i + 1);
+        p.race_finished = false;
+        p.is_alive = true;
+        p.disconnected = false;
+
+        sent.players.push_back(p);
+    }
+
+    sent.race_current_info.city = "MaxCity";
+    sent.race_current_info.race_name = "MaxRace";
+    sent.race_current_info.total_laps = 5;
+    sent.race_current_info.total_checkpoints = 20;
+
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+        ServerProtocol sp(client_conn);
+        EXPECT_TRUE(sp.send_snapshot(sent));
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        ClientProtocol cp(kHost, kPort);
+        GameState received = cp.receive_snapshot();
+
+        ASSERT_EQ(received.players.size(), MAX_PLAYERS);
+
+        for (size_t i = 0; i < MAX_PLAYERS; ++i) {
+            EXPECT_EQ(received.players[i].player_id, i + 1);
+            EXPECT_EQ(received.players[i].position_in_race, i + 1);
+        }
+    });
+
+    client_thread.join();
+    server_thread.join();
+}
+
+TEST(GameStateSnapshotTest, SnapshotSequence) {
+    // Test enviando múltiples snapshots en secuencia
+    std::vector<GameState> snapshots(3);
+
+    for (int i = 0; i < 3; ++i) {
+        snapshots[i].race_info.status = MatchStatus::IN_PROGRESS;
+        snapshots[i].race_info.remaining_time_ms = 500000 - (i * 50000);
+        snapshots[i].race_info.race_number = 1;
+        snapshots[i].race_info.total_races = 3;
+
+        InfoPlayer p;
+        p.player_id = 1;
+        p.username = "SeqPlayer";
+        p.car_name = "SeqCar";
+        p.car_type = "Sport";
+        p.pos_x = 100.0f * (i + 1);  // Posición cambia
+        p.pos_y = 200.0f * (i + 1);
+        p.angle = 0.5f * i;
+        p.speed = 100.0f + (i * 10.0f);  // Velocidad cambia
+        p.velocity_x = 50.0f;
+        p.velocity_y = 50.0f;
+        p.health = 100 - (i * 5);  // Vida disminuye
+        p.nitro_amount = 100 - (i * 10);  // Nitro disminuye
+        p.completed_laps = 0;
+        p.current_checkpoint = i;  // Checkpoint avanza
+        p.position_in_race = 1;
+        p.race_time_ms = 10000 * (i + 1);  // Tiempo aumenta
+        p.total_time_ms = 20000 * (i + 1);
+        p.race_finished = false;
+        p.is_alive = true;
+        p.disconnected = false;
+
+        snapshots[i].players.push_back(p);
+        snapshots[i].race_current_info.city = "SeqCity";
+        snapshots[i].race_current_info.race_name = "SeqRace";
+        snapshots[i].race_current_info.total_laps = 1;
+        snapshots[i].race_current_info.total_checkpoints = 5;
+    }
+
+    std::thread server_thread([&]() {
+        Socket server_socket(kPort);
+        Socket client_conn = server_socket.accept();
+        ServerProtocol sp(client_conn);
+
+        for (int i = 0; i < 3; ++i) {
+            EXPECT_TRUE(sp.send_snapshot(snapshots[i]));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(kDelay));
+
+    std::thread client_thread([&]() {
+        ClientProtocol cp(kHost, kPort);
+
+        for (int i = 0; i < 3; ++i) {
+            GameState received = cp.receive_snapshot();
+
+            EXPECT_EQ(received.race_info.remaining_time_ms, 500000u - (i * 50000));
+            ASSERT_EQ(received.players.size(), 1u);
+            EXPECT_FLOAT_EQ(received.players[0].pos_x, 100.0f * (i + 1));
+            EXPECT_FLOAT_EQ(received.players[0].speed, 100.0f + (i * 10.0f));
+            EXPECT_EQ(received.players[0].health, 100 - (i * 5));
+            EXPECT_EQ(received.players[0].current_checkpoint, i);
+        }
+    });
+
+    client_thread.join();
+    server_thread.join();
+}

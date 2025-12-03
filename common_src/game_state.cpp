@@ -8,7 +8,9 @@
 
 // Constructor que convierte Player* a InfoPlayer
 GameState::GameState(const std::vector<Player*>& player_list, const std::string& city,
-                     const std::string& map_path, bool running) {
+                     const std::string& map_path, bool running,
+                     const std::map<int, uint32_t>& current_race_times,
+                     const std::map<int, uint32_t>& total_times) {
     // Llenar información de todos los jugadores
     for (const auto& player_ptr : player_list) {
         if (!player_ptr)
@@ -44,7 +46,13 @@ GameState::GameState(const std::vector<Player*>& player_list, const std::string&
         info.completed_laps = player_ptr->getCompletedLaps();
         info.current_checkpoint = player_ptr->getCurrentCheckpoint();
         info.position_in_race = player_ptr->getPositionInRace();
-        info.race_time_ms = 0;  // TODO: Calcular tiempo real
+
+        // Tiempos de carrera
+        auto race_time_it = current_race_times.find(info.player_id);
+        info.race_time_ms = (race_time_it != current_race_times.end()) ? race_time_it->second : 0;
+
+        auto total_time_it = total_times.find(info.player_id);
+        info.total_time_ms = (total_time_it != total_times.end()) ? total_time_it->second : 0;
 
         // Estados
         info.is_drifting = player_ptr->isDrifting();

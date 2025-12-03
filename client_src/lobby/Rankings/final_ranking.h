@@ -4,12 +4,20 @@
 #include <QWidget>
 #include <QLabel>
 #include <QPushButton>
-#include <QListWidget>
 #include <QScrollArea>
 #include <QVBoxLayout>
 #include <vector>
-#include "../lobby/view/base_lobby.h"
-#include "../lobby/view/common_types.h"
+#include <QString>
+// Quitamos dependencia de common_types si no es necesaria, o la definimos aquí para ser autocontenidos
+#include "../view/base_lobby.h"
+
+// Definimos la estructura exacta que la vista espera recibir del cliente
+struct PlayerResult {
+    int rank;
+    QString playerName;
+    QString carName;
+    QString totalTime; // Tiempo ya formateado como string (ej: "02:15.400")
+};
 
 class FinalRankingWindow : public BaseLobby {
     Q_OBJECT
@@ -28,13 +36,11 @@ protected:
 
 private:
     void setupUI();
-   
     QWidget* createRankingCard(const PlayerResult& result); 
 
     QPixmap backgroundImage;
     QLabel* titleLabel;
     
-    // Contenedor para la lista de tarjetas
     QWidget* resultsContainer; 
     QVBoxLayout* resultsLayout;
     QScrollArea* scrollArea;

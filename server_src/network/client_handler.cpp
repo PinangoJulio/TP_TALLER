@@ -10,12 +10,10 @@ ClientHandler::ClientHandler(Socket skt, int id, MatchesMonitor& monitor)
 
       void ClientHandler::send_shutdown_message(const std::vector<uint8_t>& msg) {
         try {
-            std::cout << "[ClientHandler " << client_id << "] Sending shutdown message..." << std::endl;
-            
+
             // Enviar mensaje directamente por el socket
             skt.sendall(msg.data(), msg.size());
             
-            std::cout << "[ClientHandler " << client_id << "] Shutdown message sent" << std::endl;
         } catch (const std::exception& e) {
             std::cerr << "[ClientHandler " << client_id 
                       << "] Error sending shutdown: " << e.what() << std::endl;
@@ -51,11 +49,8 @@ bool ClientHandler::is_running() {
 }
 
 ClientHandler::~ClientHandler() {
-    std::cout << "[ClientHandler " << client_id << "] Destructor called" << std::endl;
-    
     stop_connection();
-    
-    // Hacer join del receiver
+
     try {
         receiver.join();
     } catch (const std::exception& e) {
@@ -63,12 +58,10 @@ ClientHandler::~ClientHandler() {
                   << e.what() << std::endl;
     }
 
-    // Cerrar el socket completamente (si no se cerró ya)
     try {
         skt.close();
     } catch (...) {
         // Ignorar si ya estaba cerrado
     }
 
-    std::cout << "[ClientHandler " << client_id << "] Destroyed" << std::endl;
 }

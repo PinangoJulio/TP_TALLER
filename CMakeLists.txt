@@ -132,11 +132,9 @@ add_library(taller_common STATIC common_src/config.h common_src/config.cpp
 add_subdirectory(common_src)
 include(cmake/CompilerWarnings.cmake)
 set_project_warnings(taller_common ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
-target_include_directories(taller_common PUBLIC .)
+target_include_directories(taller_common PUBLIC .${box2d_SOURCE_DIR}/include)
 
-# Box2D está fuera para evitar propagación al cliente. Usar el alias yaml-cpp
-# (ya sea del sistema o del FetchContent)
-target_link_libraries(taller_common PUBLIC yaml-cpp)
+target_link_libraries(taller_common PUBLIC yaml-cpp box2d)
 
 # =======================================================
 # Librería de Lobby (compartida entre server y tests)

@@ -7,9 +7,7 @@ Server::Server(const char* servicename)
 }
 
 void Server::accept_connection() {
-    std::cout << "[Server] Starting acceptor thread..." << std::endl;
     acceptor.start();
-    std::cout << "[Server] Waiting for connections..." << std::endl;
 }
 
 void Server::shutdown() {
@@ -31,16 +29,13 @@ void Server::shutdown() {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     
     // 4. Cerrar el socket del acceptor (desbloquea accept())
-    std::cout << "[Server] Closing acceptor socket..." << std::endl;
     acceptor.close_socket();
     
     // 5. Esperar a que termine el thread
-    std::cout << "[Server] Waiting for acceptor thread..." << std::endl;
     if (acceptor.is_alive()) {
         acceptor.join();
     }
     
-    std::cout << "[Server]   Server shutdown complete" << std::endl;
 }
 
 void Server::start() {

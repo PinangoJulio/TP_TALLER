@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <map>
 
 // Forward declarations (las clases del servidor se incluirán en el .cpp)
 class Player;
@@ -67,7 +68,8 @@ struct InfoPlayer {
     int completed_laps = 0;
     int current_checkpoint = 0;  // Índice del siguiente checkpoint
     int position_in_race = 0;    // 1st, 2nd, 3rd, etc.
-    int32_t race_time_ms = 0;        // Tiempo transcurrido en la carrera (ms)
+    int32_t race_time_ms = 0;        // Tiempo de la carrera actual (ms)
+    int32_t total_time_ms = 0;       // Tiempo total acumulado de todas las carreras (ms)
 
     // Estado del jugador
     bool race_finished = false;
@@ -164,7 +166,9 @@ struct GameState {
     // Constructor que llena el snapshot desde el servidor
     // La implementación está en common_src/game_state.cpp
     GameState(const std::vector<Player*>& players, const std::string& city,
-              const std::string& map_path, bool running);
+              const std::string& map_path, bool running,
+              const std::map<int, uint32_t>& current_race_times = {},
+              const std::map<int, uint32_t>& total_times = {});
 
     // ---- Buscar jugador por ID ----
     InfoPlayer* findPlayer(int id) const {

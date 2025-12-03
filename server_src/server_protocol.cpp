@@ -305,6 +305,7 @@ bool ServerProtocol::send_snapshot(const GameState& snapshot) {
 
         // race time
         push_back_uint32_t(buffer, p.race_time_ms);
+        push_back_uint32_t(buffer, p.total_time_ms);
 
         // estados
         buffer.push_back(p.race_finished ? 1 : 0);
@@ -419,8 +420,6 @@ bool ServerProtocol::send_race_paths(const std::vector<std::string>& yaml_paths)
     // 4. Enviar buffer
     socket.sendall(buffer.data(), buffer.size());
 
-    std::cout << "[ServerProtocol]   Sent " << yaml_paths.size()
-              << " race paths to client" << std::endl;
 
     return true;
 }

@@ -340,8 +340,6 @@ int32_t ClientProtocol::read_int32() {
 GameState ClientProtocol::receive_snapshot() {
     uint8_t type = read_message_type();
     if (type != (uint8_t)ServerMessageType::GAME_STATE_UPDATE) {
-        std::cout << "[ClientProtocol] Warning: Expected GAME_STATE_UPDATE, got "
-                  << static_cast<int>(type) << std::endl;
 
         // Manejo robusto: no intentes parsear como snapshot un mensaje diferente
         if (type == 0xFF /* MSG_ERROR */) {
@@ -411,6 +409,7 @@ GameState ClientProtocol::receive_snapshot() {
         p.position_in_race   = read_uint8();
 
         p.race_time_ms = read_uint32();
+        p.total_time_ms = read_uint32();
 
         p.race_finished = read_uint8() != 0;
         p.is_alive      = read_uint8() != 0;
@@ -418,7 +417,6 @@ GameState ClientProtocol::receive_snapshot() {
 
     }
 
-    // 2. CHECKPOINTS  -- CORRECCIÓN: no hacer resize + push_back (evitaba duplicados)
     uint16_t checkpointCount = read_uint16();
     state.checkpoints.clear();
     state.checkpoints.reserve(checkpointCount);
@@ -477,19 +475,9 @@ GameState ClientProtocol::receive_snapshot() {
 }
 
 
-
-
-
-
-
-
-
-
-
 int ClientProtocol::receive_client_id() {
     // Leer el ID del cliente enviado por el servidor
     uint16_t client_id = read_uint16();
-    std::cout << "[ClientProtocol] Received client ID: " << client_id << std::endl;
     return static_cast<int>(client_id);
 }
 
@@ -552,12 +540,9 @@ std::vector<std::string> ClientProtocol::receive_race_paths() {
     for (uint8_t i = 0; i < num_races; ++i) {
         std::string path = read_string();
         paths.push_back(path);
-        std::cout << "[ClientProtocol]   Race " << static_cast<int>(i + 1)
-                  << ": " << path << std::endl;
+
     }
 
-    std::cout << "[ClientProtocol] Received " << static_cast<int>(num_races)
-              << " race paths" << std::endl;
 
     return paths;
 }
