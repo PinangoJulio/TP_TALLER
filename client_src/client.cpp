@@ -1,22 +1,19 @@
 #include "client.h"
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_ttf.h>
+// [CORRECCIÓN]: Al compilar con CMake FetchContent, los headers están en la raíz,
+// no dentro de una carpeta SDL2/.
+#include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_ttf.h>
 
 #include <QApplication>
 #include <QCoreApplication>
 #include <QEventLoop>
 #include <QObject>
 #include <SDL2pp/SDL2pp.hh>
-#include <algorithm>
 #include <chrono>
-#include <cstdio>
 #include <iostream>
 #include <thread>
-#include <iomanip>
-#include <sstream>
-
 #include "client_event_handler.h"
 #include "lobby/controller/lobby_controller.h"
 #include "game/game_renderer.h"

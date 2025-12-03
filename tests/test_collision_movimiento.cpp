@@ -1,4 +1,5 @@
-#include <SDL2/SDL_image.h>
+#include <SDL.h>
+#include <SDL_image.h>
 
 #include <SDL2pp/Rect.hh>
 #include <SDL2pp/Renderer.hh>
