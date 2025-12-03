@@ -12,7 +12,7 @@
 #include "../../common_src/config.h"
 #include "race.h"
 
-// 1. Inicializar is_game_started en false
+
 GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues)
     : is_running(false), 
       match_finished(false), 
@@ -32,7 +32,7 @@ GameLoop::~GameLoop() {
     players.clear();
 }
 
-// 2. Implementación del método para desbloquear el loop
+
 void GameLoop::start_game() {
     std::cout << "[GameLoop] >>> SEÑAL DE INICIO RECIBIDA. Desbloqueando simulación.\n";
     is_game_started = true;
@@ -206,7 +206,7 @@ void GameLoop::run() {
 
     print_match_info();
 
-    // 🔧 CORRECCIÓN: Inicializar variables de mapa ANTES de resetear jugadores
+   
     if (!races.empty()) {
         // 1. Obtener datos de la primera carrera
         const auto& first_race = races[0];
@@ -431,92 +431,102 @@ void GameLoop::procesar_comandos() {
     }
 }
 void GameLoop::actualizar_fisica() {
-    float dt = SLEEP / 1000.0f; // Delta time en segundos
+    float total_dt = SLEEP / 1000.0f; // Delta time total del frame (aprox 0.016s)
+
+    
+    int sub_steps = 10; 
+    float sub_dt = total_dt / sub_steps;
+
+    // LÍMITES DEL MAPA (AJUSTADO A TU IMAGEN)
+    float map_limit_x = 4640.0f;
+    float map_limit_y = 4672.0f;
 
     for (auto& [id, player] : players) {
         Car* car = player->getCar();
         if (!car || car->isDestroyed()) continue;
 
-        // 1. Obtener estado actual
-        float old_x = car->getX();
-        float old_y = car->getY();
-        // Nivel actual (necesitas agregar este campo a Player o Car, asumimos 0 por defecto o gestionado)
-        // Por ahora lo simulamos localmente o lo agregamos a la clase Car más adelante.
-        int current_level = 0; // TODO: Obtener del player->getLevel();
+        for (int i = 0; i < sub_steps; ++i) {
+         
+            float old_x = car->getX();
+            float old_y = car->getY();
+            
+          
+            car->update(sub_dt);
+            
+            float new_x = car->getX();
+            float new_y = car->getY();
 
-        // 2. Pre-calcular siguiente posición basada en velocidad actual
-        // El método car->update() actualiza la posición interna. 
-        // Para integrar con colisiones, necesitamos separar "calcular movimiento" de "aplicar movimiento".
-        // Como Car::update ya modifica x/y, vamos a guardar el estado previo, dejar que update corra,
-        // y si hay colisión, revertir o corregir.
-        
-        car->update(dt); // El auto se mueve "ciegamente"
-        
-        float new_x = car->getX();
-        float new_y = car->getY();
-
-        // 3. Verificar colisión con el mapa
-        if (collision_manager) {
-            CollisionResult col = collision_manager->checkCollision(
-                (int)old_x, (int)old_y, current_level, (int)new_x, (int)new_y
-            );
-
-            if (col.is_wall) {
-                // ¡COLISIÓN!
-                // Revertir a la posición anterior
-                car->setPosition(old_x, old_y);
-                car->setColliding(true);
-
-                // Aplicar rebote simple (física arcade)
-                // V_new = V_old - 2 * (V_old . N) * N
-                float vx = car->getVelocityX();
-                float vy = car->getVelocityY();
+           
+            if (collision_manager) {
+             
+                int current_level = 0; 
                 
-                // Producto punto
-                float dot = vx * col.normal_x + vy * col.normal_y;
-                
-                // Factor de rebote (elasticidad), 0.5 rebota la mitad, 1.0 rebota todo
-                float elasticity = 0.5f; 
+                CollisionResult col = collision_manager->checkCollision(
+                    (int)old_x, (int)old_y, current_level, (int)new_x, (int)new_y
+                );
 
-                float new_vx = vx - (1.0f + elasticity) * dot * col.normal_x;
-                float new_vy = vy - (1.0f + elasticity) * dot * col.normal_y;
+                if (col.is_wall) {
+                   
+                 
+                    car->setPosition(old_x, old_y);
+                    car->setColliding(true);
 
-                // Aplicar nueva velocidad
-                car->setVelocity(new_vx, new_vy);
-                
-                // Reducir un poco la velocidad por el impacto (fricción de choque)
-                float current_speed = car->getCurrentSpeed();
-                car->setCurrentSpeed(current_speed * 0.5f); // Pierde 50% de velocidad
-                
-                // Opcional: Daño por choque a alta velocidad
-                if (current_speed > 50.0f) {
-                    car->takeDamage(10.0f);
-                }
+                    
+                    float vx = car->getVelocityX();
+                    float vy = car->getVelocityY();
+                    
+                  
+                    float dot = vx * col.normal_x + vy * col.normal_y;
+                    
+                  
+                    float elasticity = 0.5f; 
 
-            } else {
-                car->setColliding(false);
+                    
+                    float new_vx = vx - (1.0f + elasticity) * dot * col.normal_x;
+                    float new_vy = vy - (1.0f + elasticity) * dot * col.normal_y;
+
+                    car->setVelocity(new_vx, new_vy);
+                    
+                    
+                    float current_speed = car->getCurrentSpeed();
+                    car->setCurrentSpeed(current_speed * 0.5f); 
+                    
                 
-                // Manejo de rampas / cambio de nivel
-                // Si entra a una rampa, podríamos cambiar lógica de nivel para el futuro
-                if (col.is_on_ramp) {
-                    // Lógica simple: si voy rápido y es rampa, asumo que quiero cruzar
-                    // Aquí podrías implementar lógica más compleja de dirección
+                    break; 
+
+                } else {
+                    car->setColliding(false);
                 }
             }
         }
+
+       
+        float cx = car->getX();
+        float cy = car->getY();
+        bool clamped = false;
+
+        if (cx < 0.0f) { cx = 0.0f; clamped = true; }
+        if (cy < 0.0f) { cy = 0.0f; clamped = true; }
+        if (cx > map_limit_x) { cx = map_limit_x; clamped = true; }
+        if (cy > map_limit_y) { cy = map_limit_y; clamped = true; }
+
+        if (clamped) {
+            car->setPosition(cx, cy);
+           
+        }
         
-        // Sincronizar Player wrapper con Car
+       
         player->setPosition(car->getX(), car->getY());
         player->setAngle(car->getAngle());
         player->setSpeed(car->getCurrentSpeed());
     }
 }
 
-void GameLoop::detectar_colisiones() { /* Collision logic here */ }
+void GameLoop::detectar_colisiones() { }
 
-void GameLoop::actualizar_estado_carrera() { /* Checkpoints logic here */ }
+void GameLoop::actualizar_estado_carrera() { }
 
-void GameLoop::verificar_ganadores() { /* Win condition logic here */ }
+void GameLoop::verificar_ganadores() { }
 
 void GameLoop::enviar_estado_a_jugadores() {
     GameState snapshot = create_snapshot();
@@ -573,32 +583,18 @@ void GameLoop::load_spawn_points_for_current_race() {
 
 void GameLoop::reset_players_for_race() {
 
-      // 1. CARGAR COLLISION MANAGER PARA EL MAPA ACTUAL
-    // Construimos las rutas de las imágenes basándonos en la ciudad y nombre de carrera
-    // Se asume estructura: server_src/city_maps/City/Race.yaml
-    // Imágenes esperadas: server_src/city_maps/City/layers/camino.png, etc.
-    // O si están en el mismo yaml, las leemos de ahí.
-    
-    // Para simplificar y dado que usas una estructura como "ruta-1.yaml", 
-    // voy a intentar deducir las rutas o leerlas de un patrón común.
-    // AJUSTA ESTAS RUTAS SEGÚN TU ESTRUCTURA DE CARPETAS REAL.
-    
-    // Ejemplo basado en tu create_match_window:
-    // assets/img/map/layers/vice-city/camino.png
-    
-    // Normalizar nombre de ciudad para rutas (minusculas, guiones)
+   
     std::string city_clean = current_city_name; 
-    // Aquí deberías tener una función utilitaria para limpiar strings igual que en el cliente
-    // Por ahora asumo que viene limpia o uso una lógica simple:
+
     std::transform(city_clean.begin(), city_clean.end(), city_clean.begin(), ::tolower);
     std::replace(city_clean.begin(), city_clean.end(), ' ', '-');
     std::replace(city_clean.begin(), city_clean.end(), '_', '-');
 
-    // Rutas relativas al ejecutable del servidor
+   
     std::string base_path = "assets/img/map/layers/" + city_clean + "/";
     std::string path_camino = base_path + "camino.png";
     std::string path_puentes = base_path + "puentes.png";
-    std::string path_rampas = base_path + "rampas.png"; // Opcional
+    std::string path_rampas = base_path + "rampas.png"; 
 
     std::cout << "[GameLoop] Cargando colisiones desde: " << base_path << std::endl;
     
