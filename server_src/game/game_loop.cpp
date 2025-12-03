@@ -432,8 +432,17 @@ void GameLoop::procesar_comandos() {
 }
 
 void GameLoop::actualizar_fisica() { 
-    // Integración Box2D
-    // for (auto& [id, player] : players) { if (player->getCar()) player->getCar()->update(SLEEP/1000.0f); }
+    if (!physics_world_created) return;
+    
+    b2World_Step(physics_world_id, TIME_STEP, VELOCITY_ITERATIONS);
+    
+    // Sincronizar todos los autos
+    for (auto& [id, player] : players) {
+        Car* car = player->getCar();
+        if (car && car->hasPhysicsBody()) {
+            car->syncFromPhysics();
+        }
+    }
 }
 void GameLoop::detectar_colisiones() { /* Collision logic here */ }
 
@@ -487,9 +496,9 @@ void GameLoop::load_spawn_points_for_current_race() {
 }
 
 void GameLoop::reset_players_for_race() {
-
     load_spawn_points_for_current_race();
     load_checkpoints_for_current_race();
+    
     try {
         YAML::Node cfg = YAML::LoadFile("config.yaml");
         if (cfg["checkpoint_tolerance_base"]) checkpoint_tol_base = cfg["checkpoint_tolerance_base"].as<float>();
@@ -497,8 +506,10 @@ void GameLoop::reset_players_for_race() {
         if (cfg["checkpoint_lookahead"]) checkpoint_lookahead = cfg["checkpoint_lookahead"].as<int>();
         if (cfg["checkpoint_debug_enabled"]) checkpoint_debug_enabled = cfg["checkpoint_debug_enabled"].as<bool>();
     } catch (...) {}
+    
     player_next_checkpoint.clear();
     player_prev_pos.clear();
+    
     if (!checkpoints.empty()) {
         int first_idx = 0;
         for (size_t i = 0; i < checkpoints.size(); ++i) {
@@ -508,34 +519,47 @@ void GameLoop::reset_players_for_race() {
             player_next_checkpoint[pid] = first_idx;
         }
     }
+    
     if (spawn_points.empty()) {
         std::cerr << "[GameLoop]   NO HAY SPAWN POINTS! Usando posiciones por defecto" << std::endl;
     }
-
+    
+    std::cout << "[GameLoop] >>> Reseteando jugadores con Box2D..." << std::endl;
+    
     size_t idx = 0;
     for (auto& [id, player] : players) {
         if (!player->getCar()) {
             std::cout << "[GameLoop]   Jugador " << id << " no tiene auto, saltando..." << std::endl;
             continue;
         }
-
+        
         player->resetForNewRace();
         player->getCar()->reset();
-
+        
         float x = 100.f, y = 100.f, a = 0.f;
         if (idx < spawn_points.size()) {
             std::tie(x, y, a) = spawn_points[idx];
         }
-
-        player->setPosition(x, y);
-        player->setAngle(a);
-        player->getCar()->setPosition(x, y);
-        player->getCar()->setAngle(a);
+        
+        // NUEVO: Crear cuerpo físico en Box2D (pasamos puntero al world_id)
+        if (physics_world_created) {
+            player->getCar()->createPhysicsBody(&physics_world_id, x, y, a);
+            std::cout << "[GameLoop]   Physics body created for player " << id << std::endl;
+        } else {
+            std::cerr << "[GameLoop]   WARNING: Physics world not created, using legacy positioning" << std::endl;
+            // Fallback: posicionamiento legacy
+            player->setPosition(x, y);
+            player->setAngle(a);
+            player->getCar()->setPosition(x, y);
+            player->getCar()->setAngle(a);
+        }
+        
         player_prev_pos[id] = {x, y};
-
+        
         idx++;
     }
-    std::cout << "[GameLoop] <<< Reseteo completado" << std::endl;
+    
+    std::cout << "[GameLoop] <<< Reseteo completado con " << idx << " jugadores" << std::endl;
 }
 
 void GameLoop::start_current_race() {

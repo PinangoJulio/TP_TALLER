@@ -1,6 +1,6 @@
 #include "game_renderer.h"
 
-#include <SDL2/SDL_image.h>
+#include <SDL_image.h>
 #include <yaml-cpp/yaml.h>
 
 #include <algorithm>

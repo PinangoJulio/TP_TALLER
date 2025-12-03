@@ -8,8 +8,6 @@
 struct b2BodyId;
 struct b2WorldId;
 
-// Solo incluir las constantes (no dependen de Box2D)
-#include "physics_constants.h"
 
 /*
  * Car: Representa un auto con física y stats
@@ -41,8 +39,8 @@ private:
     float velocity_x;
     float velocity_y;
 
-    // ---- BOX2D v3 (IDs opacos, no necesitan definición completa) ----
-    b2BodyId body_id;
+    // ---- BOX2D v3 ----
+    void* physics_body_data; 
     bool has_physics_body;
     float car_size_px;
 
@@ -123,11 +121,11 @@ public:
     bool isColliding() const { return is_colliding; }
 
     // ---- BOX2D v3 ----
-    void createPhysicsBody(b2WorldId world_id, float spawn_x_px, float spawn_y_px, float spawn_angle);
+    void createPhysicsBody(void* world_id, float spawn_x_px, float spawn_y_px, float spawn_angle);
     void syncFromPhysics();
-    void destroyPhysicsBody(b2WorldId world_id);
-    b2BodyId getBodyId() const { return body_id; }
+    void destroyPhysicsBody(void* world_id);
     bool hasPhysicsBody() const { return has_physics_body; }
+    void* getPhysicsBodyData() { return physics_body_data; }
 
     // ---- RESET ----
     void reset();
@@ -136,7 +134,7 @@ public:
     const std::string& getModelName() const { return model_name; }
     const std::string& getCarType() const { return car_type; }
 
-    ~Car() = default;
+    ~Car();
 };
 
 #endif  // CAR_H

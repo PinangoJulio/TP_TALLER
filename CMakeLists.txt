@@ -257,6 +257,7 @@ target_link_libraries(
                         # test no las usa)
           SDL2pp::SDL2pp # Para la ventana y renderizado
           SDL2_image # Para cargar los PNG
+          box2d
 )
 
 set_target_properties(collision_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY
@@ -266,7 +267,6 @@ if(TALLER_TESTS)
   add_subdirectory(tests)
   set_project_warnings(taller_tests ${TALLER_MAKE_WARNINGS_AS_ERRORS} TRUE)
 
-  # CORRECCIÓN CRÍTICA: Añadir TODAS las implementaciones de la lógica.
   target_sources(
     taller_tests
     PRIVATE # Implementaciones de Monitor y Partida (que contienen los

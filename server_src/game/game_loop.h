@@ -154,8 +154,8 @@ private:
     b2WorldId physics_world_id;
     bool physics_world_created;
     const float TIME_STEP = 1.0f / 60.0f;
-    const int32 VELOCITY_ITERATIONS = 8;
-    const int32 POSITION_ITERATIONS = 3;
+    const int32_t VELOCITY_ITERATIONS = 8;
+    const int32_t POSITION_ITERATIONS = 3;
 
 public:
     GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues);
