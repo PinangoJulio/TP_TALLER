@@ -17,7 +17,7 @@ target_sources(client
     lobby/controller/lobby_controller.cpp
 
     #game
-    game/collision_manager.cpp
+   # game/collision_manager.cpp
     game/game_renderer.cpp
     client_event_handler.cpp
     lobby/Rankings/final_ranking.cpp
@@ -46,7 +46,7 @@ target_sources(client
     lobby/controller/lobby_controller.h
 
     #game
-    game/collision_manager.h
+   # game/collision_manager.h
     game/game_renderer.h
     client_event_handler.h
     

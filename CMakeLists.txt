@@ -42,43 +42,43 @@ set(CMAKE_AUTOUIC ON)
 
 include(FetchContent)
 
-# --- SDL y SDL2pp (para cliente/editor) ---
-if(TALLER_CLIENT OR TALLER_EDITOR)
-  FetchContent_Declare(
-    SDL2
-    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG release-2.30.8
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE
-    OVERRIDE_FIND_PACKAGE)
-  FetchContent_Declare(
-    SDL2_image
-    GIT_REPOSITORY https://github.com/libsdl-org/SDL_image.git
-    GIT_TAG release-2.8.2
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE
-    OVERRIDE_FIND_PACKAGE)
-  FetchContent_Declare(
-    SDL2_mixer
-    GIT_REPOSITORY https://github.com/libsdl-org/SDL_mixer.git
-    GIT_TAG release-2.8.0
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE
-    OVERRIDE_FIND_PACKAGE)
-  FetchContent_Declare(
-    SDL2_ttf
-    GIT_REPOSITORY https://github.com/libsdl-org/SDL_ttf.git
-    GIT_TAG release-2.22.0
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE
-    OVERRIDE_FIND_PACKAGE)
-  FetchContent_Declare(
-    libSDL2pp
-    OVERRIDE_FIND_PACKAGE
-    URL https://github.com/libSDL2pp/libSDL2pp/archive/cc198c9a5657048bee67ece82de620b2d5661084.zip
-  )
-  FetchContent_MakeAvailable(SDL2 SDL2_image SDL2_mixer SDL2_ttf libSDL2pp)
-endif()
+# --- SDL y SDL2pp ---
+# MOVIDO FUERA DEL IF: taller_common necesita SDL, así que debe estar disponible siempre.
+FetchContent_Declare(
+  SDL2
+  GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+  GIT_TAG release-2.30.8
+  GIT_SHALLOW TRUE
+  GIT_PROGRESS TRUE
+  OVERRIDE_FIND_PACKAGE)
+FetchContent_Declare(
+  SDL2_image
+  GIT_REPOSITORY https://github.com/libsdl-org/SDL_image.git
+  GIT_TAG release-2.8.2
+  GIT_SHALLOW TRUE
+  GIT_PROGRESS TRUE
+  OVERRIDE_FIND_PACKAGE)
+FetchContent_Declare(
+  SDL2_mixer
+  GIT_REPOSITORY https://github.com/libsdl-org/SDL_mixer.git
+  GIT_TAG release-2.8.0
+  GIT_SHALLOW TRUE
+  GIT_PROGRESS TRUE
+  OVERRIDE_FIND_PACKAGE)
+FetchContent_Declare(
+  SDL2_ttf
+  GIT_REPOSITORY https://github.com/libsdl-org/SDL_ttf.git
+  GIT_TAG release-2.22.0
+  GIT_SHALLOW TRUE
+  GIT_PROGRESS TRUE
+  OVERRIDE_FIND_PACKAGE)
+FetchContent_Declare(
+  libSDL2pp
+  OVERRIDE_FIND_PACKAGE
+  URL https://github.com/libSDL2pp/libSDL2pp/archive/cc198c9a5657048bee67ece82de620b2d5661084.zip
+)
+FetchContent_MakeAvailable(SDL2 SDL2_image SDL2_mixer SDL2_ttf libSDL2pp)
+
 
 # --- Box2D Integration (IMPORTANTE: Usar nombre en minúsculas) ---
 FetchContent_Declare(
@@ -133,9 +133,8 @@ include(cmake/CompilerWarnings.cmake)
 set_project_warnings(taller_common ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 target_include_directories(taller_common PUBLIC .)
 
-# Box2D está fuera para evitar propagación al cliente. Usar el alias yaml-cpp
-# (ya sea del sistema o del FetchContent)
-target_link_libraries(taller_common PUBLIC yaml-cpp)
+# AGREGADO: SDL2 y SDL2pp ahora son dependencias de common (necesario para collision_manager)
+target_link_libraries(taller_common PUBLIC yaml-cpp SDL2::SDL2 SDL2pp::SDL2pp SDL2_image::SDL2_image)
 
 # =======================================================
 # Librería de Lobby (compartida entre server y tests)
@@ -241,25 +240,25 @@ endif()
 # =======================================================
 # Target del Test de Colisión y Movimiento
 # =======================================================
-add_executable(collision_test tests/test_collision_movimiento.cpp
-                              client_src/game/collision_manager.cpp)
+#add_executable(collision_test tests/test_collision_movimiento.cpp
+ #                             client_src/game/collision_manager.cpp)
 
-target_include_directories(
-  collision_test
-  PRIVATE ${CMAKE_SOURCE_DIR}
-          # ${libSDL2pp_SOURCE_DIR} # Necesario para SDL2pp
-          ${libSDL2pp_SOURCE_DIR}/include)
+# target_include_directories(
+#   collision_test
+#   PRIVATE ${CMAKE_SOURCE_DIR}
+#           # ${libSDL2pp_SOURCE_DIR} # Necesario para SDL2pp
+#           ${libSDL2pp_SOURCE_DIR}/include)
 
-target_link_libraries(
-  collision_test
-  PRIVATE taller_common # Para dependencias comunes (socket, etc., aunque este
-                        # test no las usa)
-          SDL2pp::SDL2pp # Para la ventana y renderizado
-          SDL2_image # Para cargar los PNG
-)
+# target_link_libraries(
+#   collision_test
+#   PRIVATE taller_common # Para dependencias comunes (socket, etc., aunque este
+#                         # test no las usa)
+#           SDL2pp::SDL2pp # Para la ventana y renderizado
+#           SDL2_image # Para cargar los PNG
+# )
 
-set_target_properties(collision_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY
-                                                ${CMAKE_SOURCE_DIR})
+#set_target_properties(collision_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+#                                                ${CMAKE_SOURCE_DIR})
 if(TALLER_TESTS)
   add_executable(taller_tests)
   add_subdirectory(tests)

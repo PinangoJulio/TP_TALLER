@@ -12,7 +12,7 @@
 #include "../../common_src/config.h"
 #include "race.h"
 
-// 1. Inicializar is_game_started en false
+
 GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues)
     : is_running(false), 
       match_finished(false), 
@@ -21,17 +21,33 @@ GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues)
       queues_players(queues),
       current_race_index(0), 
       current_race_finished(false), 
-      spawns_loaded(false)
+      spawns_loaded(false),
+      collision_manager(nullptr) 
 {
-    std::cout << "[GameLoop] Constructor OK. Listo para gestionar múltiples carreras.\n";
+    /*Box2D
+     b2WorldDef worldDef = b2DefaultWorldDef();
+    worldDef.gravity = {0.0f, 0.0f}; // Sin gravedad (vista top-down)
+
+    physics_world_id = b2CreateWorld(&worldDef);
+
+    if (b2World_IsValid(physics_world_id)) {
+        std::cout << "[GameLoop] Box2D World creado exitosamente\n";
+    }*/
+    std::cout << "[GameLoop] Constructor OK.\n";
 }
 
 GameLoop::~GameLoop() {
     is_running = false;
+    /*Box2d
+    if (b2World_IsValid(physics_world_id)) {
+        b2DestroyWorld(physics_world_id);
+        std::cout << "[GameLoop] Box2D World destruido\n";
+    }
+    */
     players.clear();
 }
 
-// 2. Implementación del método para desbloquear el loop
+
 void GameLoop::start_game() {
     std::cout << "[GameLoop] >>> SEÑAL DE INICIO RECIBIDA. Desbloqueando simulación.\n";
     is_game_started = true;
@@ -179,7 +195,7 @@ void GameLoop::run() {
     match_finished = false;
     current_race_index = 0;
 
-    // A) ESPERAR A QUE HAYA CARRERAS CONFIGURADAS
+   
     auto wait_start = std::chrono::steady_clock::now();
     while (is_running.load() && races.empty()) {
         auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
@@ -205,18 +221,22 @@ void GameLoop::run() {
 
     print_match_info();
 
-    // 🔧 CORRECCIÓN: Inicializar variables de mapa ANTES de resetear jugadores
+   
     if (!races.empty()) {
-        // 1. Obtener datos de la primera carrera
+        //botener datos de la primera carrera
         const auto& first_race = races[0];
         current_map_yaml = first_race->get_map_path();
         current_city_name = first_race->get_city_name();
         current_race_finished = false;
         
-        // 2. Resetear jugadores con las posiciones spawn del YAML
+        /*Crear mapa box2d
+            load_map_for_current_race();
+        */
+
+        //resetear jugadores con las posiciones spawn del YAML
         reset_players_for_race();
         
-        // 3. Marcar inicio oficial de tiempos
+        //marcar inicio oficial de tiempos
         race_start_time = std::chrono::steady_clock::now();
         std::cout << "[GameLoop]   Cronómetro iniciado\n";
     }
@@ -429,16 +449,151 @@ void GameLoop::procesar_comandos() {
         }
     }
 }
+void GameLoop::actualizar_fisica() {
+    float total_dt = SLEEP / 1000.0f;
+    int sub_steps = 10; 
+    float sub_dt = total_dt / sub_steps;
 
-void GameLoop::actualizar_fisica() { 
-    // Integración Box2D
-    // for (auto& [id, player] : players) { if (player->getCar()) player->getCar()->update(SLEEP/1000.0f); }
+    // LÍMITES DEL MAPA
+    float map_limit_x = 4640.0f;
+    float map_limit_y = 4672.0f;
+    
+    // --- AJUSTE DE RADIO ---
+    float car_radius = 12.0f; 
+    float min_dist_collision = car_radius * 2.0f; 
+    float min_dist_sq = min_dist_collision * min_dist_collision; 
+
+    for (auto& [id, player] : players) {
+        Car* car = player->getCar();
+        if (!car || car->isDestroyed()) continue;
+
+      
+        for (int i = 0; i < sub_steps; ++i) {
+            float old_x = car->getX();
+            float old_y = car->getY();
+            
+            car->update(sub_dt);
+            
+            float new_x = car->getX();
+            float new_y = car->getY();
+            bool collision_detected = false;
+
+           
+            for (auto& [other_id, other_player] : players) {
+                if (id == other_id) continue;
+                
+                Car* other_car = other_player->getCar();
+                if (!other_car || other_car->isDestroyed()) continue;
+
+                float dx = new_x - other_car->getX();
+                float dy = new_y - other_car->getY();
+                float dist_sq = dx*dx + dy*dy;
+
+                if (dist_sq < min_dist_sq) {
+                  
+                    collision_detected = true;
+                    
+                    float dist = std::sqrt(dist_sq);
+                    if (dist == 0) dist = 0.01f;
+                    float nx = dx / dist;
+                    float ny = dy / dist;
+
+                    
+                    car->setPosition(old_x, old_y);
+                    car->setColliding(true);
+
+                 
+                    float vx = car->getVelocityX();
+                    float vy = car->getVelocityY();
+
+                    float dot = vx * nx + vy * ny;
+                    float elasticity = 0.8f; 
+
+                   
+                    if (dot < 0) {
+                        float new_vx = vx - (1.0f + elasticity) * dot * nx;
+                        float new_vy = vy - (1.0f + elasticity) * dot * ny;
+                        car->setVelocity(new_vx, new_vy);
+                    }
+                    
+                    break; 
+                }
+            }
+
+            if (collision_detected) {
+                break; 
+            }
+
+            // COLISIÓN CON PAREDES
+            if (collision_manager) {
+                int current_level = 0; 
+                CollisionResult col = collision_manager->checkCollision(
+                    (int)old_x, (int)old_y, current_level, (int)new_x, (int)new_y
+                );
+
+                if (col.is_wall) {
+                    car->setPosition(old_x, old_y);
+                    car->setColliding(true);
+
+                    float vx = car->getVelocityX();
+                    float vy = car->getVelocityY();
+                    float dot = vx * col.normal_x + vy * col.normal_y;
+                    float elasticity = 0.5f; 
+
+                    float new_vx = vx - (1.0f + elasticity) * dot * col.normal_x;
+                    float new_vy = vy - (1.0f + elasticity) * dot * col.normal_y;
+
+                    car->setVelocity(new_vx, new_vy);
+                    
+                    float current_speed = car->getCurrentSpeed();
+                    car->setCurrentSpeed(current_speed * 0.5f);
+                    
+                   // if (current_speed > 50.0f) car->takeDamage(10.0f);
+
+                    break; 
+                } else {
+                    car->setColliding(false);
+                }
+            }
+        } 
+
+        //  CLAMP (Límites del mapa)
+        float cx = car->getX();
+        float cy = car->getY();
+        if (cx < 0.0f) car->setPosition(0.0f, cy);
+        else if (cx > map_limit_x) car->setPosition(map_limit_x, cy);
+        
+        cx = car->getX(); 
+        if (cy < 0.0f) car->setPosition(cx, 0.0f);
+        else if (cy > map_limit_y) car->setPosition(cx, map_limit_y);
+
+        
+        player->setPosition(car->getX(), car->getY());
+        player->setAngle(car->getAngle());
+        player->setSpeed(car->getCurrentSpeed());
+    }
+
+    /*Con Box2d
+        b2World_Step(physics_world_id, TIME_STEP, VELOCITY_ITERATIONS);
+    
+        // Sincronizar todos los autos
+        for (auto& [id, player] : players) {
+            Car* car = player->getCar();
+            if (car && car->hasPhysicsBody()) {
+                car->syncFromPhysics();
+
+                player->setPosition(car->getX(), car->getY());
+                player->setAngle(car->getAngle());
+            }
+        }
+    */
 }
-void GameLoop::detectar_colisiones() { /* Collision logic here */ }
 
-void GameLoop::actualizar_estado_carrera() { /* Checkpoints logic here */ }
+void GameLoop::detectar_colisiones() { }
 
-void GameLoop::verificar_ganadores() { /* Win condition logic here */ }
+void GameLoop::actualizar_estado_carrera() { }
+
+void GameLoop::verificar_ganadores() { }
 
 void GameLoop::enviar_estado_a_jugadores() {
     GameState snapshot = create_snapshot();
@@ -495,6 +650,28 @@ void GameLoop::load_spawn_points_for_current_race() {
 
 void GameLoop::reset_players_for_race() {
 
+    std::string city_clean = current_city_name; 
+
+    std::transform(city_clean.begin(), city_clean.end(), city_clean.begin(), ::tolower);
+    std::replace(city_clean.begin(), city_clean.end(), ' ', '-');
+    std::replace(city_clean.begin(), city_clean.end(), '_', '-');
+
+   
+    std::string base_path = "assets/img/map/layers/" + city_clean + "/";
+    std::string path_camino = base_path + "camino.png";
+    std::string path_puentes = base_path + "puentes.png";
+    std::string path_rampas = base_path + "rampas.png"; 
+
+    std::cout << "[GameLoop] Cargando colisiones desde: " << base_path << std::endl;
+    
+    try {
+        collision_manager = std::make_unique<CollisionManager>(path_camino, path_puentes, path_rampas);
+    } catch (const std::exception& e) {
+        std::cerr << "[GameLoop] ⚠️ Error cargando CollisionManager: " << e.what() << std::endl;
+        std::cerr << "[GameLoop] -> Se jugará SIN colisiones de mapa." << std::endl;
+        collision_manager = nullptr;
+    }
+
     load_spawn_points_for_current_race();
     load_checkpoints_for_current_race();
     try {
@@ -504,6 +681,7 @@ void GameLoop::reset_players_for_race() {
         if (cfg["checkpoint_lookahead"]) checkpoint_lookahead = cfg["checkpoint_lookahead"].as<int>();
         if (cfg["checkpoint_debug_enabled"]) checkpoint_debug_enabled = cfg["checkpoint_debug_enabled"].as<bool>();
     } catch (...) {}
+
     player_next_checkpoint.clear();
     player_prev_pos.clear();
     if (!checkpoints.empty()) {
@@ -538,6 +716,29 @@ void GameLoop::reset_players_for_race() {
         player->setAngle(a);
         player->getCar()->setPosition(x, y);
         player->getCar()->setAngle(a);
+
+        /*Con Box2d aqui crearia el auto y le asiganria los datos para iniciar la carrera
+        b2BodyId existingBodyId = player->getCar()->getBodyId();
+        
+        if (B2_IS_NON_NULL(existingBodyId) && b2Body_IsValid(existingBodyId)) {
+            b2Vec2 position = {pixelsToMeters(x), pixelsToMeters(y)};
+            b2Rot rotation = b2MakeRot(a);
+            b2Body_SetTransform(existingBodyId, position, rotation);
+            b2Body_SetLinearVelocity(existingBodyId, {0.0f, 0.0f});
+            b2Body_SetAngularVelocity(existingBodyId, 0.0f);
+            b2Body_SetAwake(existingBodyId, true);
+            
+            std::cout << "[GameLoop]   Player " << id << " body reset at (" 
+                      << x << ", " << y << ")\n";
+        } else {
+            player->getCar()->createPhysicsBody(&physics_world_id, x, y, a);
+            std::cout << "[GameLoop]   Player " << id << " body created at (" 
+                      << x << ", " << y << ")\n";
+        }
+        
+        // Sincronizar posición lógica
+        player->getCar()->syncFromPhysics();
+        player->setPosition(player->getCar()->getX(), player->getCar()->getY());*/
         player_prev_pos[id] = {x, y};
 
         idx++;
@@ -550,6 +751,9 @@ void GameLoop::start_current_race() {
         current_map_yaml = races[current_race_index]->get_map_path();
         current_city_name = races[current_race_index]->get_city_name();
         current_race_finished = false;
+
+        //Con Box2d
+        //load_map_for_current_race();
         race_start_time = std::chrono::steady_clock::now();
     }
 }
@@ -573,6 +777,9 @@ void GameLoop::finish_current_race() {
             current_city_name = next_race->get_city_name();
             current_race_finished = false;
             
+            //Para box2d
+            //load_map_for_current_race();
+
             reset_players_for_race();
             race_start_time = std::chrono::steady_clock::now();
         }
@@ -650,3 +857,22 @@ void GameLoop::print_total_standings() const {
 void GameLoop::print_match_info() const {
     std::cout << "Match info: " << players.size() << " players, " << races.size() << " races.\n";
 }
+
+/*Para box2d
+void GameLoop::load_map_for_current_race() {
+    if (!b2World_IsValid(physics_world_id)) {
+        std::cerr << "[GameLoop] ERROR: Physics world no existe!\n";
+        return;
+    }
+    
+    std::cout << "[GameLoop]  Cargando mapa en Box2D: " << current_map_yaml << "\n";
+    
+    try {
+        mapLoader.load_map(physics_world_id, obstacleManager, current_map_yaml);
+        std::cout << "[GameLoop] Mapa cargado en física\n";
+        
+    } catch (const std::exception& e) {
+        std::cerr << "[GameLoop] ERROR cargando mapa: " << e.what() << "\n";
+    }
+}
+*/

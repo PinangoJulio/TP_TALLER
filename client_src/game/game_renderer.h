@@ -7,7 +7,7 @@
 #include <memory>
 #include <vector>
 #include "../../common_src/game_state.h"
-#include "collision_manager.h" 
+#include "../../common_src/collision_manager.h" 
 
 class GameRenderer {
 private:
