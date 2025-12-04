@@ -2,7 +2,7 @@
 
 **Materia:** Taller de Programación I (75.42) - FI-UBA
 **Cuatrimestre:** 2C 2025
-**Grupo:** [21]
+**Grupo:** 21
 **Repositorio:** [[Link al repo de Github](https://github.com/PinangoJulio/TP_TALLER)]
 
 ## 1. Integrantes y División de Tareas
