@@ -1,21 +1,21 @@
 #include "final_ranking.h"
-#include <QHeaderView>
-#include <QPainter>
+
 #include <QFontDatabase>
 #include <QHBoxLayout>
+#include <QHeaderView>
+#include <QPainter>
 
-FinalRankingWindow::FinalRankingWindow(QWidget *parent)
-    : BaseLobby(parent), customFontId(-1) {
-    
+FinalRankingWindow::FinalRankingWindow(QWidget* parent) : BaseLobby(parent), customFontId(-1) {
     setWindowTitle("Need for Speed 2D - Resultados Finales");
     setFixedSize(700, 700);
 
     // Intentar cargar fuente custom, fallback a sistema si falla
     customFontId = QFontDatabase::addApplicationFont("assets/fonts/arcade-classic.ttf");
-    
-    backgroundImage.load("assets/img/misc/sunset.png"); 
+
+    backgroundImage.load("assets/img/misc/sunset.png");
     if (!backgroundImage.isNull()) {
-        backgroundImage = backgroundImage.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+        backgroundImage =
+            backgroundImage.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }
 
     setupUI();
@@ -39,13 +39,11 @@ void FinalRankingWindow::setupUI() {
         titleFont.setPointSize(36);
         titleLabel->setFont(titleFont);
     }
-    titleLabel->setStyleSheet(
-        "color: #ffffff; "
-        "background-color: rgba(0, 0, 0, 200); "
-        "padding: 10px; "
-        "border: 2px solid #FFD700; "
-        "border-radius: 10px;"
-    );
+    titleLabel->setStyleSheet("color: #ffffff; "
+                              "background-color: rgba(0, 0, 0, 200); "
+                              "padding: 10px; "
+                              "border: 2px solid #FFD700; "
+                              "border-radius: 10px;");
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setGeometry(100, 40, 500, 70);
 
@@ -66,19 +64,18 @@ void FinalRankingWindow::setupUI() {
         "   border-radius: 5px;"
         "}"
         "QScrollBar::handle:vertical {"
-        "   background: #FFD700;" 
+        "   background: #FFD700;"
         "   min-height: 20px;"
         "   border-radius: 5px;"
         "}"
-        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }"
-    );
+        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }");
 
     // Contenedor vertical dentro del scroll
     resultsContainer = new QWidget();
     resultsContainer->setStyleSheet("background: transparent;");
     resultsLayout = new QVBoxLayout(resultsContainer);
-    resultsLayout->setAlignment(Qt::AlignTop); 
-    resultsLayout->setSpacing(10); 
+    resultsLayout->setAlignment(Qt::AlignTop);
+    resultsLayout->setSpacing(10);
     resultsLayout->setContentsMargins(0, 0, 15, 0);
 
     scrollArea->setWidget(resultsContainer);
@@ -90,27 +87,64 @@ void FinalRankingWindow::setupUI() {
         btnFont.setPointSize(16);
         backButton->setFont(btnFont);
     }
-    backButton->setStyleSheet(
-        "QPushButton {"
-        "   background-color: rgba(0, 0, 0, 230);"
-        "   color: white;"
-        "   border: 3px solid white;"
-        "   border-radius: 5px;"
-        "   padding: 15px;"
-        "}"
-        "QPushButton:hover {"
-        "   background-color: #333333;"
-        "   border: 3px solid #00FF00;"
-        "}"
-    );
+    backButton->setStyleSheet("QPushButton {"
+                              "   background-color: rgba(0, 0, 0, 230);"
+                              "   color: white;"
+                              "   border: 3px solid white;"
+                              "   border-radius: 5px;"
+                              "   padding: 15px;"
+                              "}"
+                              "QPushButton:hover {"
+                              "   background-color: #333333;"
+                              "   border: 3px solid #00FF00;"
+                              "}");
     backButton->setCursor(Qt::PointingHandCursor);
     backButton->setGeometry(200, 610, 300, 70);
-    
-    connect(backButton, &QPushButton::clicked, this, [this](){
-        emit returnToLobbyRequested();
+
+    connect(backButton, &QPushButton::clicked, this, [this]() {
+        // 1. Guardar la posición actual de la ventana para que la imagen aparezca encima
+        QRect currentPos = this->geometry();
+
+        // 2. Crear un Label independiente (Overlay)
+        QLabel* finalOverlay = new QLabel(nullptr);
+
+        // Configurar ventana: Sin bordes, siempre visible, tamaño fijo 700x700
+        finalOverlay->setWindowFlags(Qt::Window | Qt::FramelessWindowHint |
+                                     Qt::WindowStaysOnTopHint);
+        finalOverlay->setFixedSize(700, 700);
+        finalOverlay->setStyleSheet("background-color: black;");
+        finalOverlay->setAlignment(Qt::AlignCenter);
+
+        // 3. Mover la nueva ventana exactamente a donde estaba el ranking
+        finalOverlay->move(currentPos.topLeft());
+
+        // 4. Cargar la imagen
+        QPixmap finalPix("assets/img/misc/final.png");  // <--- TU RUTA
+
+        if (!finalPix.isNull()) {
+            // Escalar la imagen exactamente a 700x700
+            finalOverlay->setPixmap(
+                finalPix.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+        } else {
+            // Texto de respaldo si falla la carga
+            finalOverlay->setText("GRACIAS POR JUGAR");
+            finalOverlay->setStyleSheet(
+                "font-size: 40px; color: white; background-color: black; border: 2px solid white;");
+        }
+
+        // 5. Ocultar la ventana de ranking y mostrar la imagen
+        this->hide();
+        finalOverlay->show();
+
+        // 6. Esperar 5 segundos y cerrar la aplicación
+        QTimer::singleShot(5000, [finalOverlay]() {
+            finalOverlay->close();
+            delete finalOverlay;   // Liberar memoria
+            QApplication::quit();  // CERRAR JUEGO
+        });
     });
 
-    setupMusicControl(); 
+    setupMusicControl();
 }
 
 QWidget* FinalRankingWindow::createRankingCard(const PlayerResult& result) {
@@ -123,26 +157,25 @@ QWidget* FinalRankingWindow::createRankingCard(const PlayerResult& result) {
     QString bgColor = "rgba(0, 0, 0, 220)";
 
     if (result.rank == 1) {
-        borderColor = "#FFD700"; // Oro
+        borderColor = "#FFD700";  // Oro
         rankColor = "#FFD700";
         bgColor = "rgba(50, 40, 0, 220)";
     } else if (result.rank == 2) {
-        borderColor = "#D4D4D4"; // Plata
+        borderColor = "#D4D4D4";  // Plata
         rankColor = "#D4D4D4";
         bgColor = "rgba(73, 73, 74, 220)";
     } else if (result.rank == 3) {
-        borderColor = "#CD7F32"; // Bronce
+        borderColor = "#CD7F32";  // Bronce
         rankColor = "#CD7F32";
         bgColor = "rgba(75, 43, 10, 220)";
     }
 
-    card->setStyleSheet(QString(
-        "QWidget { "
-        "   background-color: %1; "
-        "   border: 2px solid %2; "
-        "   border-radius: 10px; "
-        "}"
-    ).arg(bgColor, borderColor));
+    card->setStyleSheet(QString("QWidget { "
+                                "   background-color: %1; "
+                                "   border: 2px solid %2; "
+                                "   border-radius: 10px; "
+                                "}")
+                            .arg(bgColor, borderColor));
 
     QHBoxLayout* layout = new QHBoxLayout(card);
     layout->setContentsMargins(20, 10, 20, 10);
@@ -156,14 +189,15 @@ QWidget* FinalRankingWindow::createRankingCard(const PlayerResult& result) {
     QLabel* rankLbl = new QLabel(QString("#%1").arg(result.rank));
     font.setPointSize(28);
     rankLbl->setFont(font);
-    rankLbl->setStyleSheet(QString("color: %1; border: none; background: transparent;").arg(rankColor));
+    rankLbl->setStyleSheet(
+        QString("color: %1; border: none; background: transparent;").arg(rankColor));
     rankLbl->setFixedWidth(60);
 
     // 2. Info Jugador
     QWidget* infoWidget = new QWidget();
     infoWidget->setStyleSheet("border: none; background: transparent;");
     QVBoxLayout* infoLayout = new QVBoxLayout(infoWidget);
-    infoLayout->setContentsMargins(0,0,0,0);
+    infoLayout->setContentsMargins(0, 0, 0, 0);
     infoLayout->setSpacing(2);
 
     QLabel* nameLbl = new QLabel(result.playerName);

@@ -8,10 +8,14 @@
 #include <QVBoxLayout>
 #include <vector>
 #include <QString>
-// Quitamos dependencia de common_types si no es necesaria, o la definimos aquí para ser autocontenidos
+#include <QApplication>
+#include <QScreen>
+#include <QTimer>
+#include <QLabel>
+
 #include "../view/base_lobby.h"
 
-// Definimos la estructura exacta que la vista espera recibir del cliente
+
 struct PlayerResult {
     int rank;
     QString playerName;
