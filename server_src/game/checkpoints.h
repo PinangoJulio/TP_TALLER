@@ -1,9 +1,7 @@
 #ifndef CHECKPOINTS_H
 #define CHECKPOINTS_H
-
 #include <string>
 
-// Copiamos EXACTAMENTE la estructura que usan tus compañeros en GameLoop
 struct Checkpoint {
     int id;
     std::string type; 
