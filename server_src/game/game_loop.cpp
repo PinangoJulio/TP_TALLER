@@ -180,7 +180,7 @@ void GameLoop::run() {
     match_finished = false;
     current_race_index = 0;
 
-    // A) ESPERAR A QUE HAYA CARRERAS CONFIGURADAS
+   
     auto wait_start = std::chrono::steady_clock::now();
     while (is_running.load() && races.empty()) {
         auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
@@ -208,16 +208,16 @@ void GameLoop::run() {
 
    
     if (!races.empty()) {
-        // 1. Obtener datos de la primera carrera
+        //botener datos de la primera carrera
         const auto& first_race = races[0];
         current_map_yaml = first_race->get_map_path();
         current_city_name = first_race->get_city_name();
         current_race_finished = false;
         
-        // 2. Resetear jugadores con las posiciones spawn del YAML
+        //resetear jugadores con las posiciones spawn del YAML
         reset_players_for_race();
         
-        // 3. Marcar inicio oficial de tiempos
+        //marcar inicio oficial de tiempos
         race_start_time = std::chrono::steady_clock::now();
         std::cout << "[GameLoop]   Cronómetro iniciado\n";
     }
@@ -431,91 +431,124 @@ void GameLoop::procesar_comandos() {
     }
 }
 void GameLoop::actualizar_fisica() {
-    float total_dt = SLEEP / 1000.0f; // Delta time total del frame (aprox 0.016s)
-
-    
+    float total_dt = SLEEP / 1000.0f;
     int sub_steps = 10; 
     float sub_dt = total_dt / sub_steps;
 
-    // LÍMITES DEL MAPA (AJUSTADO A TU IMAGEN)
+    // LÍMITES DEL MAPA
     float map_limit_x = 4640.0f;
     float map_limit_y = 4672.0f;
+    
+    // --- AJUSTE DE RADIO ---
+    float car_radius = 12.0f; 
+    float min_dist_collision = car_radius * 2.0f; 
+    float min_dist_sq = min_dist_collision * min_dist_collision; 
 
     for (auto& [id, player] : players) {
         Car* car = player->getCar();
         if (!car || car->isDestroyed()) continue;
 
+      
         for (int i = 0; i < sub_steps; ++i) {
-         
             float old_x = car->getX();
             float old_y = car->getY();
             
-          
             car->update(sub_dt);
             
             float new_x = car->getX();
             float new_y = car->getY();
+            bool collision_detected = false;
 
            
-            if (collision_manager) {
-             
-                int current_level = 0; 
+            for (auto& [other_id, other_player] : players) {
+                if (id == other_id) continue;
                 
+                Car* other_car = other_player->getCar();
+                if (!other_car || other_car->isDestroyed()) continue;
+
+                float dx = new_x - other_car->getX();
+                float dy = new_y - other_car->getY();
+                float dist_sq = dx*dx + dy*dy;
+
+                if (dist_sq < min_dist_sq) {
+                  
+                    collision_detected = true;
+                    
+                    float dist = std::sqrt(dist_sq);
+                    if (dist == 0) dist = 0.01f;
+                    float nx = dx / dist;
+                    float ny = dy / dist;
+
+                    
+                    car->setPosition(old_x, old_y);
+                    car->setColliding(true);
+
+                 
+                    float vx = car->getVelocityX();
+                    float vy = car->getVelocityY();
+
+                    float dot = vx * nx + vy * ny;
+                    float elasticity = 0.8f; 
+
+                   
+                    if (dot < 0) {
+                        float new_vx = vx - (1.0f + elasticity) * dot * nx;
+                        float new_vy = vy - (1.0f + elasticity) * dot * ny;
+                        car->setVelocity(new_vx, new_vy);
+                    }
+                    
+                    break; 
+                }
+            }
+
+            if (collision_detected) {
+                break; 
+            }
+
+            // COLISIÓN CON PAREDES
+            if (collision_manager) {
+                int current_level = 0; 
                 CollisionResult col = collision_manager->checkCollision(
                     (int)old_x, (int)old_y, current_level, (int)new_x, (int)new_y
                 );
 
                 if (col.is_wall) {
-                   
-                 
                     car->setPosition(old_x, old_y);
                     car->setColliding(true);
 
-                    
                     float vx = car->getVelocityX();
                     float vy = car->getVelocityY();
-                    
-                  
                     float dot = vx * col.normal_x + vy * col.normal_y;
-                    
-                  
                     float elasticity = 0.5f; 
 
-                    
                     float new_vx = vx - (1.0f + elasticity) * dot * col.normal_x;
                     float new_vy = vy - (1.0f + elasticity) * dot * col.normal_y;
 
                     car->setVelocity(new_vx, new_vy);
                     
-                    
                     float current_speed = car->getCurrentSpeed();
-                    car->setCurrentSpeed(current_speed * 0.5f); 
+                    car->setCurrentSpeed(current_speed * 0.5f);
                     
-                
-                    break; 
+                   // if (current_speed > 50.0f) car->takeDamage(10.0f);
 
+                    break; 
                 } else {
                     car->setColliding(false);
                 }
             }
-        }
+        } 
 
-       
+        //  CLAMP (Límites del mapa)
         float cx = car->getX();
         float cy = car->getY();
-        bool clamped = false;
-
-        if (cx < 0.0f) { cx = 0.0f; clamped = true; }
-        if (cy < 0.0f) { cy = 0.0f; clamped = true; }
-        if (cx > map_limit_x) { cx = map_limit_x; clamped = true; }
-        if (cy > map_limit_y) { cy = map_limit_y; clamped = true; }
-
-        if (clamped) {
-            car->setPosition(cx, cy);
-           
-        }
+        if (cx < 0.0f) car->setPosition(0.0f, cy);
+        else if (cx > map_limit_x) car->setPosition(map_limit_x, cy);
         
-       
+        cx = car->getX(); 
+        if (cy < 0.0f) car->setPosition(cx, 0.0f);
+        else if (cy > map_limit_y) car->setPosition(cx, map_limit_y);
+
+        
         player->setPosition(car->getX(), car->getY());
         player->setAngle(car->getAngle());
         player->setSpeed(car->getCurrentSpeed());
