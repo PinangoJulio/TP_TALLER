@@ -11,10 +11,10 @@ Mayormente todos los integrantes participarion en cada una de las fases de la cr
 
 | Integrante | Responsabilidades Principales |
 |------------|-------------------------------|
-| Lourdes De Meglio | [ Lógica del Servidor, Gameloop ] |
-| Fabiola Romero | [Ej: Interfaz gráfica (Qt), mapas y checkpoints] |
-| Julianna Sanchez | [Boxd2d, fisicas, implementacion de caminos] |
-| Julio Piñango | [ Lobby,reveivwe, socket de clientes, shutdown del servidor ] |
+| Lourdes De Meglio | Lógica del Servidor, Gameloop |
+| Fabiola Romero |  Interfaz gráfica (Qt), mapas y checkpoints |
+| Julianna Sanchez | Boxd2d, fisicas, implementacion de caminos |
+| Julio Piñango | Lobby,reveiver, socket de clientes, shutdown del servidor  |
 
 **Nota:** Aunque hubo tareas asignadas, todos los integrantes participaron en el debugging y en la integración final del código.
 
