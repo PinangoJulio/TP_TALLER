@@ -188,13 +188,12 @@ TP_TALLER/
 El archivo `config.yaml` contiene la configuración del servidor:
 
 ```yaml
-# config.yaml
 server:
   port: 8080
   max_players: 8
   
 game:
-  max_race_time_ms: 600000  # 10 minutos
+  max_race_time_ms: 600000 
   countdown_seconds: 3
   
 cars:
@@ -203,7 +202,6 @@ cars:
     max_speed: 200.0
     acceleration: 50.0
     health: 80.0
-    # ... más configuración
 ```
 
 **Importante:** No es necesario modificar este archivo para uso normal. Solo edítalo si quieres ajustar parámetros del juego.
