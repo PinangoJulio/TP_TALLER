@@ -108,7 +108,6 @@ void FinalRankingWindow::setupUI() {
 
         QLabel* finalOverlay = new QLabel(nullptr);
 
-        /
         finalOverlay->setWindowFlags(Qt::Window | Qt::FramelessWindowHint |
                                      Qt::WindowStaysOnTopHint);
         finalOverlay->setFixedSize(700, 700);

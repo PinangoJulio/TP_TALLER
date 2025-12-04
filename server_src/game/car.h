@@ -38,8 +38,9 @@ private:
     float velocity_x;  // Velocidad en X
     float velocity_y;  // Velocidad en Y
 
-    // ---- BOX2D (cuando se implemente) ----
-    // b2Body* body;             // Cuerpo de Box2D
+    // ---- BOX2D ----
+    // b2BodyId bodyId; 
+    //float car_size_px;
 
     // ---- ESTADO ----
     bool is_drifting;
@@ -116,6 +117,15 @@ public:
 
     void setColliding(bool colliding) { is_colliding = colliding; }
     bool isColliding() const { return is_colliding; }
+    
+    /*
+    // ---- BOX2D v3 ----
+    void createPhysicsBody(void* world_id, float spawn_x_px, float spawn_y_px, float spawn_angle);
+    void syncFromPhysics();
+    void destroyPhysicsBody(void* world_id);
+    bool hasPhysicsBody() const { return B2_IS_NON_NULL(bodyId); }
+    b2BodyId getBodyId() { return this->bodyId; }
+    */
 
     // ---- RESET ----
     void reset();

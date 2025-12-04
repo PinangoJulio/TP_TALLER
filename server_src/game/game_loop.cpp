@@ -24,11 +24,26 @@ GameLoop::GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues)
       spawns_loaded(false),
       collision_manager(nullptr) 
 {
+    /*Box2D
+     b2WorldDef worldDef = b2DefaultWorldDef();
+    worldDef.gravity = {0.0f, 0.0f}; // Sin gravedad (vista top-down)
+
+    physics_world_id = b2CreateWorld(&worldDef);
+
+    if (b2World_IsValid(physics_world_id)) {
+        std::cout << "[GameLoop] Box2D World creado exitosamente\n";
+    }*/
     std::cout << "[GameLoop] Constructor OK.\n";
 }
 
 GameLoop::~GameLoop() {
     is_running = false;
+    /*Box2d
+    if (b2World_IsValid(physics_world_id)) {
+        b2DestroyWorld(physics_world_id);
+        std::cout << "[GameLoop] Box2D World destruido\n";
+    }
+    */
     players.clear();
 }
 
@@ -214,6 +229,10 @@ void GameLoop::run() {
         current_city_name = first_race->get_city_name();
         current_race_finished = false;
         
+        /*Crear mapa box2d
+            load_map_for_current_race();
+        */
+
         //resetear jugadores con las posiciones spawn del YAML
         reset_players_for_race();
         
@@ -553,6 +572,21 @@ void GameLoop::actualizar_fisica() {
         player->setAngle(car->getAngle());
         player->setSpeed(car->getCurrentSpeed());
     }
+
+    /*Con Box2d
+        b2World_Step(physics_world_id, TIME_STEP, VELOCITY_ITERATIONS);
+    
+        // Sincronizar todos los autos
+        for (auto& [id, player] : players) {
+            Car* car = player->getCar();
+            if (car && car->hasPhysicsBody()) {
+                car->syncFromPhysics();
+
+                player->setPosition(car->getX(), car->getY());
+                player->setAngle(car->getAngle());
+            }
+        }
+    */
 }
 
 void GameLoop::detectar_colisiones() { }
@@ -616,7 +650,6 @@ void GameLoop::load_spawn_points_for_current_race() {
 
 void GameLoop::reset_players_for_race() {
 
-   
     std::string city_clean = current_city_name; 
 
     std::transform(city_clean.begin(), city_clean.end(), city_clean.begin(), ::tolower);
@@ -683,6 +716,29 @@ void GameLoop::reset_players_for_race() {
         player->setAngle(a);
         player->getCar()->setPosition(x, y);
         player->getCar()->setAngle(a);
+
+        /*Con Box2d aqui crearia el auto y le asiganria los datos para iniciar la carrera
+        b2BodyId existingBodyId = player->getCar()->getBodyId();
+        
+        if (B2_IS_NON_NULL(existingBodyId) && b2Body_IsValid(existingBodyId)) {
+            b2Vec2 position = {pixelsToMeters(x), pixelsToMeters(y)};
+            b2Rot rotation = b2MakeRot(a);
+            b2Body_SetTransform(existingBodyId, position, rotation);
+            b2Body_SetLinearVelocity(existingBodyId, {0.0f, 0.0f});
+            b2Body_SetAngularVelocity(existingBodyId, 0.0f);
+            b2Body_SetAwake(existingBodyId, true);
+            
+            std::cout << "[GameLoop]   Player " << id << " body reset at (" 
+                      << x << ", " << y << ")\n";
+        } else {
+            player->getCar()->createPhysicsBody(&physics_world_id, x, y, a);
+            std::cout << "[GameLoop]   Player " << id << " body created at (" 
+                      << x << ", " << y << ")\n";
+        }
+        
+        // Sincronizar posición lógica
+        player->getCar()->syncFromPhysics();
+        player->setPosition(player->getCar()->getX(), player->getCar()->getY());*/
         player_prev_pos[id] = {x, y};
 
         idx++;
@@ -695,6 +751,9 @@ void GameLoop::start_current_race() {
         current_map_yaml = races[current_race_index]->get_map_path();
         current_city_name = races[current_race_index]->get_city_name();
         current_race_finished = false;
+
+        //Con Box2d
+        //load_map_for_current_race();
         race_start_time = std::chrono::steady_clock::now();
     }
 }
@@ -718,6 +777,9 @@ void GameLoop::finish_current_race() {
             current_city_name = next_race->get_city_name();
             current_race_finished = false;
             
+            //Para box2d
+            //load_map_for_current_race();
+
             reset_players_for_race();
             race_start_time = std::chrono::steady_clock::now();
         }
@@ -795,3 +857,22 @@ void GameLoop::print_total_standings() const {
 void GameLoop::print_match_info() const {
     std::cout << "Match info: " << players.size() << " players, " << races.size() << " races.\n";
 }
+
+/*Para box2d
+void GameLoop::load_map_for_current_race() {
+    if (!b2World_IsValid(physics_world_id)) {
+        std::cerr << "[GameLoop] ERROR: Physics world no existe!\n";
+        return;
+    }
+    
+    std::cout << "[GameLoop]  Cargando mapa en Box2D: " << current_map_yaml << "\n";
+    
+    try {
+        mapLoader.load_map(physics_world_id, obstacleManager, current_map_yaml);
+        std::cout << "[GameLoop] Mapa cargado en física\n";
+        
+    } catch (const std::exception& e) {
+        std::cerr << "[GameLoop] ERROR cargando mapa: " << e.what() << "\n";
+    }
+}
+*/

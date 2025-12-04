@@ -28,7 +28,7 @@ class Race;
 
 class GameLoop : public Thread {
 private:
-    // ... (Miembros existentes)
+    
     std::atomic<bool> is_running;
     std::atomic<bool> match_finished;  
     std::atomic<bool> is_game_started;
@@ -49,7 +49,7 @@ private:
     std::vector<std::tuple<float, float, float>> spawn_points;
     bool spawns_loaded;
 
-    // ✅ NUEVO: Collision Manager
+    // Collision Manager
     std::unique_ptr<CollisionManager> collision_manager;
 
     // Checkpoints y lógica interna
@@ -68,6 +68,16 @@ private:
     float checkpoint_tol_finish = 3.0f;
     int checkpoint_lookahead = 3;
     bool checkpoint_debug_enabled = true; 
+
+    /* ---- BOX2D v3 ----
+    b2WorldId physics_world_id;
+    const float TIME_STEP = 1.0f / 60.0f;
+    const int32_t VELOCITY_ITERATIONS = 8;
+    const int32_t POSITION_ITERATIONS = 3;
+
+    MapLoader mapLoader;
+    ObstacleManager obstacleManager;
+    */
 
     // Tiempos
     std::chrono::steady_clock::time_point race_start_time;
@@ -99,6 +109,10 @@ private:
     void mark_player_finished_with_time(int player_id, uint32_t finish_time_ms);
     void print_current_race_table() const;
     void print_total_standings() const;
+
+    /*Box2d
+    void load_map_for_current_race();
+    */
 
 public:
     GameLoop(Queue<ComandMatchDTO>& comandos, ClientMonitor& queues);
