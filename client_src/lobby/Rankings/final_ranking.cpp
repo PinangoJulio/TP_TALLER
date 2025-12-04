@@ -47,13 +47,13 @@ void FinalRankingWindow::setupUI() {
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setGeometry(100, 40, 500, 70);
 
-    // --- ÁREA DE SCROLL PARA LOS RESULTADOS ---
+  
     scrollArea = new QScrollArea(this);
     scrollArea->setGeometry(50, 130, 600, 450);
     scrollArea->setWidgetResizable(true);
     scrollArea->viewport()->setStyleSheet("background: transparent;");
 
-    // ESTILO SCROLLBAR
+  
     scrollArea->setStyleSheet(
         "QScrollArea { background: transparent; border: none; }"
         "QScrollBar:vertical {"
@@ -70,7 +70,7 @@ void FinalRankingWindow::setupUI() {
         "}"
         "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }");
 
-    // Contenedor vertical dentro del scroll
+    
     resultsContainer = new QWidget();
     resultsContainer->setStyleSheet("background: transparent;");
     resultsLayout = new QVBoxLayout(resultsContainer);
@@ -102,45 +102,45 @@ void FinalRankingWindow::setupUI() {
     backButton->setGeometry(200, 610, 300, 70);
 
     connect(backButton, &QPushButton::clicked, this, [this]() {
-        // 1. Guardar la posición actual de la ventana para que la imagen aparezca encima
+        
         QRect currentPos = this->geometry();
 
-        // 2. Crear un Label independiente (Overlay)
+
         QLabel* finalOverlay = new QLabel(nullptr);
 
-        // Configurar ventana: Sin bordes, siempre visible, tamaño fijo 700x700
+        /
         finalOverlay->setWindowFlags(Qt::Window | Qt::FramelessWindowHint |
                                      Qt::WindowStaysOnTopHint);
         finalOverlay->setFixedSize(700, 700);
         finalOverlay->setStyleSheet("background-color: black;");
         finalOverlay->setAlignment(Qt::AlignCenter);
 
-        // 3. Mover la nueva ventana exactamente a donde estaba el ranking
+      
         finalOverlay->move(currentPos.topLeft());
 
-        // 4. Cargar la imagen
-        QPixmap finalPix("assets/img/misc/final.png");  // <--- TU RUTA
+    
+        QPixmap finalPix("assets/img/misc/final.png"); 
 
         if (!finalPix.isNull()) {
-            // Escalar la imagen exactamente a 700x700
+            
             finalOverlay->setPixmap(
                 finalPix.scaled(700, 700, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
         } else {
-            // Texto de respaldo si falla la carga
+          
             finalOverlay->setText("GRACIAS POR JUGAR");
             finalOverlay->setStyleSheet(
                 "font-size: 40px; color: white; background-color: black; border: 2px solid white;");
         }
 
-        // 5. Ocultar la ventana de ranking y mostrar la imagen
+        
         this->hide();
         finalOverlay->show();
 
-        // 6. Esperar 5 segundos y cerrar la aplicación
+    
         QTimer::singleShot(5000, [finalOverlay]() {
             finalOverlay->close();
-            delete finalOverlay;   // Liberar memoria
-            QApplication::quit();  // CERRAR JUEGO
+            delete finalOverlay;   
+            QApplication::quit(); 
         });
     });
 
@@ -151,7 +151,7 @@ QWidget* FinalRankingWindow::createRankingCard(const PlayerResult& result) {
     QWidget* card = new QWidget();
     card->setFixedHeight(80);
 
-    // Colores según ranking
+   
     QString borderColor = "white";
     QString rankColor = "white";
     QString bgColor = "rgba(0, 0, 0, 220)";
@@ -213,7 +213,7 @@ QWidget* FinalRankingWindow::createRankingCard(const PlayerResult& result) {
     infoLayout->addWidget(nameLbl);
     infoLayout->addWidget(carLbl);
 
-    // 3. Tiempo
+  
     QLabel* timeLbl = new QLabel(result.totalTime);
     font.setPointSize(20);
     timeLbl->setFont(font);
