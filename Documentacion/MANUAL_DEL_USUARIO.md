@@ -21,9 +21,13 @@
 
 ## Introducción
 
-**Need for Speed 2D** es un juego de carreras multijugador en 2D inspirado en el clásico Need for Speed. Compite contra hasta 7 jugadores en carreras por 3 ciudades icónicas: **Liberty City**, **San Andreas** y **Vice City**.
+**Need for Speed 2D** es un juego de carreras multijugador en 2D inspirado en el clásico Need for Speed. Compite contra hasta 8 jugadores en carreras por 3 ciudades icónicas del Grand Theft Auto: **Liberty City**, **San Andreas** y **Vice City**.
 
-### Características Principales
+### Video Promocional 
+
+Link al video: https://www.youtube.com/watch?v=_z2H5_P65eg
+
+### Características Principales del juego
 
 - **3 Ciudades únicas** con múltiples circuitos
 - **Variedad de autos** con diferentes características
@@ -98,6 +102,11 @@ cd TP_TALLER
 ```bash
 sudo make install
 ```
+o en su defecto: 
+
+```bash
+./install.sh
+```
 
 Este comando realiza automáticamente:
 1. Corrige permisos de carpetas
@@ -106,7 +115,7 @@ Este comando realiza automáticamente:
 4. Ejecuta los tests unitarios
 5. Instala los binarios en el sistema
 
-**Tiempo estimado:** 5-10 minutos (puede tomar un tiempo, dependiendo de tu hardware)
+**Tiempo estimado:** 5-10 minutos (puede tomar un tiempo, dependiendo del hardware de la computadora donde se instale)
 
 #### Paso 2: Verificar la Instalación
 
@@ -325,7 +334,7 @@ Cuando todos los jugadores estén listos, el host puede iniciar la partida.
 
 ### Paso 7: Finalizar la Carrera
 
-Debes cruzar **todos los checkpoints** en orden hasta llegar al **checkpoint FINISH** (rojo).
+Debes cruzar **todos los checkpoints** en orden hasta llegar al **checkpoint FINISH** (En rojo).
 
 #### Cuando Terminas una Carrera
 
@@ -336,10 +345,6 @@ Debes cruzar **todos los checkpoints** en orden hasta llegar al **checkpoint FIN
 #### Ranking Final
 
 Después de completar todas las carreras, se muestra el **Ranking Total**:
-
-```
-(mostrar imagen de ranking)
-```
 
 ---
 
@@ -388,9 +393,6 @@ sudo apt install libyaml-cpp-dev
 ### ¿Cuántos jugadores pueden jugar simultáneamente?
 Hasta **8 jugadores** en la misma partida.
 
-### ¿Puedo crear nuevas ciudades?
-No, el juego tiene **3 ciudades fijas**: Liberty City, San Andreas y Vice City. Pero puedes **editar** los circuitos existentes con el editor.
-
 ### ¿Los cambios en el editor afectan al servidor inmediatamente?
 Sí, pero debes **reiniciar el servidor** para que cargue los cambios.
 
@@ -412,10 +414,10 @@ No, el auto seleccionado se mantiene para **toda la partida**.
 
 ### Desarrolladores
 Este proyecto fue desarrollado por:
-- Nombre 1 -
-- Nombre 2 -
-- Nombre 3 -
-- Nombre 4 -
+- Nombre 1 -Lourdes De Meglio
+- Nombre 2 - Fabiola Romero
+- Nombre 3 - Julianna Sanchez
+- Nombre 4 - Julio Piñango 
 
 ---
 
