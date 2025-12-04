@@ -110,6 +110,7 @@ void Car::update(float delta_time) {
     */
 }
 
+/*Sin box2d
 void Car::accelerate(float delta_time) {
     if (is_destroyed)
         return;
@@ -141,9 +142,35 @@ void Car::accelerate(float delta_time) {
 
     current_speed = std::min(max_speed, current_speed + effective_acceleration * delta_time);
     update(delta_time);
+}*/
+
+
+//con box2d
+void Car::accelerate(float delta_time) {
+    if (is_destroyed) return;
+    
+    if (B2_IS_NULL(bodyId) || !b2Body_IsValid(bodyId)) return;
+
+    float effective_acceleration = acceleration;
+    if (nitro_active) {
+        effective_acceleration *= nitro_boost;
+        nitro_amount = std::max(0.0f, nitro_amount - (20.0f * delta_time));
+        if (nitro_amount <= 0) deactivateNitro();
+    }
+
+    current_speed = std::min(max_speed, current_speed + effective_acceleration * delta_time);
+    
+    float fx = current_speed * std::cos(angle);
+    float fy = current_speed * std::sin(angle);
+    
+    b2Vec2 velocity = {pixelsToMeters(fx), pixelsToMeters(fy)};
+    b2Body_SetLinearVelocity(bodyId, velocity);
+    b2Body_SetAwake(bodyId, true);
 }
 
 // ... MOVIMIENTO EN 4 DIRECCIONES...
+
+/* sin box2d
 void Car::move_up(float delta_time) {
     if (is_destroyed) return;
     float effective_acceleration = acceleration;
@@ -163,7 +190,39 @@ void Car::move_up(float delta_time) {
     current_speed = total_speed;
     x += velocity_x * delta_time;
     y += velocity_y * delta_time;
+}*/
+
+//Con box2d
+
+void Car::move_up(float delta_time) {
+    if (is_destroyed) return;
+    if (B2_IS_NULL(bodyId) || !b2Body_IsValid(bodyId)) return;
+
+    float effective_acceleration = acceleration;
+    if (nitro_active) {
+        effective_acceleration *= nitro_boost;
+        nitro_amount = std::max(0.0f, nitro_amount - (20.0f * delta_time));
+        if (nitro_amount <= 0) deactivateNitro();
+    }
+
+    b2Vec2 currentVel = b2Body_GetLinearVelocity(bodyId);
+    currentVel.y -= pixelsToMeters(effective_acceleration * delta_time);
+    
+    // Limitar velocidad máxima
+    float speed = std::sqrt(currentVel.x * currentVel.x + currentVel.y * currentVel.y);
+    if (speed > pixelsToMeters(max_speed)) {
+        float scale = pixelsToMeters(max_speed) / speed;
+        currentVel.x *= scale;
+        currentVel.y *= scale;
+    }
+    
+    b2Body_SetLinearVelocity(bodyId, currentVel);
+    b2Body_SetAwake(bodyId, true);
+    
+    syncFromPhysics();
 }
+
+// Replicar lo mismo para move_down, move_left, move_right
 
 void Car::move_down(float delta_time) {
     if (is_destroyed) return;
@@ -228,6 +287,8 @@ void Car::move_right(float delta_time) {
     y += velocity_y * delta_time;
 }
 
+//sin box2d
+/*
 void Car::brake(float delta_time) {
     if (is_destroyed)
         return;
@@ -237,8 +298,22 @@ void Car::brake(float delta_time) {
 
     velocity_x = current_speed * std::cos(angle);
     velocity_y = current_speed * std::sin(angle);
-}
+}*/
 
+//con box2d
+void Car::brake(float delta_time) {
+    if (is_destroyed) return;
+    if (B2_IS_NULL(bodyId) || !b2Body_IsValid(bodyId)) return;
+
+    float brake_force = acceleration * 2.0f;
+    current_speed = std::max(0.0f, current_speed - brake_force * delta_time);
+
+    b2Vec2 currentVel = b2Body_GetLinearVelocity(bodyId);
+    float scale = (current_speed / max_speed) * 0.5f; // Frenado gradual
+    b2Body_SetLinearVelocity(bodyId, {currentVel.x * scale, currentVel.y * scale});
+}
+//Sin box2d
+/*
 void Car::apply_friction(float delta_time) {
     if (is_destroyed)
         return;
@@ -256,6 +331,21 @@ void Car::apply_friction(float delta_time) {
 
         x += velocity_x * delta_time;
         y += velocity_y * delta_time;
+    }
+}*/
+
+//con box2d
+void Car::apply_friction(float delta_time) {
+    (void)delta_time;  
+
+    if (is_destroyed) return;
+    if (B2_IS_NULL(bodyId) || !b2Body_IsValid(bodyId)) return;
+
+    syncFromPhysics();
+    
+    if (current_speed < 0.5f) {
+        current_speed = 0.0f;
+        b2Body_SetLinearVelocity(bodyId, {0.0f, 0.0f});
     }
 }
 

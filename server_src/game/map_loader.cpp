@@ -13,6 +13,12 @@ void MapLoader::load_map(b2WorldId world, ObstacleManager& obstacle_manager, con
     
     YAML::Node map = YAML::LoadFile(map_path);
     
+    std::cout << "[MapLoader] Layers in YAML:" << std::endl;
+    if (map["walls_chain"]) std::cout << "  - walls_chain ✓" << std::endl;
+    if (map["nivel0"]) std::cout << "  - nivel0 ✓" << std::endl;
+    if (map["puentes"]) std::cout << "  - puentes ✓" << std::endl;
+    if (map["rampas"]) std::cout << "  - rampas ✓" << std::endl;
+    
     // 1. INTENTAR CARGAR PAREDES NUEVAS
     if (map["walls_chain"]) {
         std::cout << "[MapLoader]  Usando capa optimizada 'walls_chain'...\n";

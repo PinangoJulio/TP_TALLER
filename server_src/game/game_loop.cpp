@@ -547,6 +547,7 @@ void GameLoop::actualizar_fisica() {
             player->setAngle(car->getAngle());
         }
     }
+    std::cout << "Box2D Step" << std::endl;
 }
 void GameLoop::detectar_colisiones() { /* Collision logic here */ }
 
@@ -679,15 +680,10 @@ void GameLoop::reset_players_for_race() {
         YAML::Node cfg = YAML::LoadFile("config.yaml");
         if (cfg["checkpoint_tolerance_base"]) checkpoint_tol_base = cfg["checkpoint_tolerance_base"].as<float>();
         if (cfg["checkpoint_tolerance_finish"]) checkpoint_tol_finish = cfg["checkpoint_tolerance_finish"].as<float>();
-        if (cfg["checkpoint_lookahead"]) checkpoint_lookahead = cfg["checkpoint_lookahead"].as<int>();
-        if (cfg["checkpoint_debug_enabled"]) checkpoint_debug_enabled = cfg["checkpoint_debug_enabled"].as<bool>();
     } catch (...) {}
 
-    // Limpieza de estados
     player_next_checkpoint.clear();
     player_prev_pos.clear();
-    
-    // Si agregaste player_laps en el .h como te dije antes:
     player_laps.clear(); 
     player_lap_times.clear(); 
 
@@ -698,15 +694,15 @@ void GameLoop::reset_players_for_race() {
         }
         for (auto& [pid, player] : players) {
             player_next_checkpoint[pid] = first_idx;
-            player_laps[pid] = 1; // Reiniciar vueltas
+            player_laps[pid] = 1;
         }
-    } else {
-        std::cerr << "[GameLoop] ❌ ERROR CRÍTICO: No se cargaron checkpoints.\n";
     }
     
-    if (spawn_points.empty()) std::cerr << "[GameLoop] ⚠️ NO HAY SPAWN POINTS!\n";
+    if (spawn_points.empty()) {
+        std::cerr << "[GameLoop] ⚠️ NO HAY SPAWN POINTS!\n";
+    }
     
-    std::cout << "[GameLoop] >>> Reseteando jugadores...\n";
+    std::cout << "[GameLoop] >>> Reseteando jugadores con Box2D...\n";
     
     size_t idx = 0;
     for (auto& [id, player] : players) {
@@ -720,35 +716,32 @@ void GameLoop::reset_players_for_race() {
             std::tie(x, y, a) = spawn_points[idx];
         }
         
-            // 1. Usamos getBodyId()
-            b2BodyId existingBodyId = player->getCar()->getBodyId();
-
-            // 2. Verificamos si es válido con la macro de v3
-            if (B2_IS_NON_NULL(existingBodyId) && b2Body_IsValid(existingBodyId)) {
-                
-                // 3. Usamos funciones globales (API C) en lugar de métodos (clases)
-                b2Vec2 position = {x, y};
-                b2Rot rotation = b2MakeRot(a); // Convertir ángulo a rotación
-                
-                // Teletransporte
-                b2Body_SetTransform(existingBodyId, position, rotation);
-                
-                // Frenar en seco
-                b2Body_SetLinearVelocity(existingBodyId, {0.0f, 0.0f});
-                b2Body_SetAngularVelocity(existingBodyId, 0.0f);
-                
-                // Despertar cuerpo
-                b2Body_SetAwake(existingBodyId, true);
-                
-            } else {
-                
-                player->getCar()->createPhysicsBody(&physics_world_id, x, y, a);
-            }
+        b2BodyId existingBodyId = player->getCar()->getBodyId();
+        
+        if (B2_IS_NON_NULL(existingBodyId) && b2Body_IsValid(existingBodyId)) {
+            b2Vec2 position = {pixelsToMeters(x), pixelsToMeters(y)};
+            b2Rot rotation = b2MakeRot(a);
+            b2Body_SetTransform(existingBodyId, position, rotation);
+            b2Body_SetLinearVelocity(existingBodyId, {0.0f, 0.0f});
+            b2Body_SetAngularVelocity(existingBodyId, 0.0f);
+            b2Body_SetAwake(existingBodyId, true);
+            
+            std::cout << "[GameLoop]   Player " << id << " body reset at (" 
+                      << x << ", " << y << ")\n";
+        } else {
+            player->getCar()->createPhysicsBody(&physics_world_id, x, y, a);
+            std::cout << "[GameLoop]   Player " << id << " body created at (" 
+                      << x << ", " << y << ")\n";
+        }
+        
+        // Sincronizar posición lógica
+        player->getCar()->syncFromPhysics();
+        player->setPosition(player->getCar()->getX(), player->getCar()->getY());
         
         player_prev_pos[id] = {x, y};
         idx++;
     }
-    std::cout << "[GameLoop] <<< Reseteo completado.\n";
+    std::cout << "[GameLoop] <<< Reseteo completado con " << idx << " jugadores.\n";
 }
 
 //sin box2d
